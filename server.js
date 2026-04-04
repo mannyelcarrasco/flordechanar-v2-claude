@@ -204,6 +204,22 @@ app.put('/api/cursos/:id', verifyToken, async (req, res) => {
     }
 });
 
+// Eliminar Curso (Protegido Admin)
+app.delete('/api/cursos/:id', verifyToken, async (req, res) => {
+    // Para mayor seguridad solo el admin (o el creador) debería poder borrar.
+    // Asumiremos que estudiante no puede.
+    if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
+    try {
+        // Primero eliminar inscripciones que dependan del curso para no romper base de datos
+        await pool.query('DELETE FROM inscripciones WHERE curso_id = ?', [req.params.id]);
+        await pool.query('DELETE FROM cursos WHERE id = ?', [req.params.id]);
+        res.json({ success: true, message: 'Curso eliminado' });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error al eliminar curso' });
+    }
+});
+
 // Cursos del Alumno
 app.get('/api/cursos/mis-cursos', verifyToken, async (req, res) => {
     try {
