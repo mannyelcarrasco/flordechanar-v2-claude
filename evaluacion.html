@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluación Teórica | Flor de Chañar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root{--bg:#F9F6F0;--bg2:#F2EDE4;--p:#687A61;--pd:#52634C;--s:#2C3531;--ac:#D4A373;--w:#fff;--t:#333;--l:#666;--err:#EF4444;--f:'Inter',sans-serif;--fs:'Playfair Display',serif;--r:12px;--rf:9999px;--tr:all .25s ease}
+        *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--f);background:var(--bg);color:var(--t);-webkit-font-smoothing:antialiased;min-height:100vh}
+        /* Topbar */
+        .hdr{background:var(--s);height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 2rem;position:sticky;top:0;z-index:10}
+        .hdr-l{display:flex;align-items:center;gap:1rem}
+        .hdr-title{color:#fff;font-family:var(--fs);font-size:1rem}
+        .hdr-sub{color:rgba(255,255,255,.5);font-size:.8rem}
+        .timer-wrap{display:flex;align-items:center;gap:.65rem;background:rgba(255,255,255,.08);padding:.4rem 1rem;border-radius:var(--rf)}
+        .timer-icon{color:var(--ac);font-size:1.1rem}
+        .timer-val{font-size:1.1rem;font-weight:700;color:#fff;font-variant-numeric:tabular-nums}
+        .timer-warn{color:var(--err)}
+        .btn{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1.15rem;border-radius:var(--rf);font-size:.83rem;font-weight:600;cursor:pointer;border:none;transition:var(--tr);font-family:var(--f)}
+        .bp{background:var(--p);color:#fff}.bp:hover{background:var(--pd)}
+        .bo{background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.2);color:#fff}.bo:hover{background:rgba(255,255,255,.15)}
+
+        /* Layout */
+        .exam-layout{display:grid;grid-template-columns:1fr 260px;max-width:1000px;margin:2rem auto;gap:2rem;padding:0 1.5rem}
+
+        /* Question card */
+        .q-card{background:var(--w);border-radius:var(--r);padding:1.5rem;margin-bottom:1.25rem;box-shadow:0 2px 10px rgba(0,0,0,.04);transition:var(--tr)}
+        .q-num-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--l);margin-bottom:.85rem;display:flex;align-items:center;justify-content:space-between}
+        .q-pts{background:rgba(104,122,97,.1);color:var(--pd);padding:.15rem .5rem;border-radius:4px;font-size:.7rem;font-weight:700}
+        .q-text{font-size:1rem;font-weight:600;color:var(--s);margin-bottom:1.25rem;line-height:1.5}
+
+        /* Options */
+        .options{list-style:none;display:flex;flex-direction:column;gap:.6rem}
+        .opt{display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;border:1.5px solid #E5E7EB;border-radius:var(--r);cursor:pointer;transition:var(--tr)}
+        .opt:hover{border-color:var(--p);background:rgba(104,122,97,.03)}
+        .opt.selected{border-color:var(--p);background:rgba(104,122,97,.07)}
+        .opt.correct{border-color:#22C55E;background:rgba(34,197,94,.07)}
+        .opt.wrong{border-color:var(--err);background:rgba(239,68,68,.06)}
+        .opt-radio{width:18px;height:18px;border-radius:50%;border:2px solid #D1D5DB;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:var(--tr)}
+        .opt.selected .opt-radio{border-color:var(--p);background:var(--p)}
+        .opt.selected .opt-radio::after{content:'';width:6px;height:6px;border-radius:50%;background:#fff}
+        .opt-text{font-size:.9rem;color:var(--t);flex:1}
+
+        /* Development */
+        .dev-textarea{width:100%;min-height:160px;padding:.85rem 1rem;border:1.5px solid #E5E7EB;border-radius:var(--r);font-family:var(--f);font-size:.9rem;color:var(--s);resize:vertical;outline:none;transition:var(--tr);line-height:1.6}
+        .dev-textarea:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(104,122,97,.08)}
+        .dev-hint{font-size:.77rem;color:var(--l);margin-top:.5rem}
+        .char-count{text-align:right;font-size:.75rem;color:var(--l);margin-top:.35rem}
+
+        /* Progress nav */
+        .q-nav{display:flex;align-items:center;justify-content:space-between;margin-top:1.5rem}
+        .nav-btn{display:flex;align-items:center;gap:.4rem;padding:.55rem 1.1rem;border-radius:var(--rf);font-size:.83rem;font-weight:600;cursor:pointer;border:1.5px solid #E5E7EB;background:var(--w);color:var(--s);transition:var(--tr)}
+        .nav-btn:hover{border-color:var(--p);color:var(--p)}
+        .nav-btn:disabled{opacity:.4;cursor:not-allowed}
+        .nav-indicator{font-size:.82rem;color:var(--l)}
+
+        /* Sidebar */
+        .sidebar{position:sticky;top:80px;align-self:start}
+        .sc{background:var(--w);border-radius:var(--r);padding:1.2rem;box-shadow:0 2px 10px rgba(0,0,0,.04);margin-bottom:1.25rem}
+        .sc h4{font-family:var(--f);font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--l);margin-bottom:1rem;display:flex;align-items:center;gap:.35rem}
+        .q-dots{display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem}
+        .q-dot{width:100%;aspect-ratio:1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;cursor:pointer;transition:var(--tr);border:1.5px solid #E5E7EB;background:var(--w);color:var(--l)}
+        .q-dot:hover{border-color:var(--p);color:var(--p)}
+        .q-dot.answered{background:rgba(104,122,97,.1);border-color:var(--p);color:var(--pd)}
+        .q-dot.current{background:var(--p);border-color:var(--p);color:#fff}
+        .prog-summary{display:flex;flex-direction:column;gap:.5rem;font-size:.83rem}
+        .pr{display:flex;justify-content:space-between}.pv{font-weight:700;color:var(--s)}
+        .warn-box{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:var(--r);padding:.85rem;font-size:.82rem;color:var(--err);display:none}
+
+        /* Submit confirm */
+        .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+        .modal-bg.open{display:flex}
+        .modal{background:var(--w);border-radius:var(--r);padding:2rem;width:90%;max-width:440px;text-align:center}
+        .modal h3{font-size:1.3rem;margin-bottom:.75rem}
+        .modal p{color:var(--l);font-size:.9rem;margin-bottom:1.5rem;line-height:1.6}
+        .modal-acts{display:flex;gap:.75rem;justify-content:center}
+        .btn-cancel{background:var(--bg2);color:var(--s);border:none;padding:.65rem 1.5rem;border-radius:var(--rf);font-size:.9rem;font-weight:600;cursor:pointer;font-family:var(--f)}
+
+        /* Result screen */
+        .result-screen{display:none;text-align:center;padding:3rem 1rem;max-width:600px;margin:0 auto}
+        .result-icon{font-size:4rem;margin-bottom:1rem}
+        .result-grade{font-size:4rem;font-weight:700;color:var(--p);font-family:var(--fs)}
+        .result-msg{font-size:1.1rem;color:var(--l);margin:.5rem 0 2rem}
+        .result-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;max-width:400px;margin:0 auto 2rem}
+        .rs{background:var(--w);border-radius:var(--r);padding:1rem;box-shadow:0 2px 10px rgba(0,0,0,.04)}.rsn{font-size:1.5rem;font-weight:700;color:var(--s)}.rsl{font-size:.75rem;color:var(--l)}
+
+        /* Toast */
+        .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--s);color:#fff;padding:.85rem 1.3rem;border-radius:var(--r);display:none;align-items:center;gap:.7rem;z-index:9999;font-size:.85rem;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+        .toast i{color:var(--p);font-size:1.2rem}
+        @keyframes sU{from{opacity:0;transform:translateY(20px)}to{opacity:1}}
+        .toast.show{display:flex;animation:sU .3s ease}
+        @media(max-width:768px){.exam-layout{grid-template-columns:1fr}.sidebar{display:none}}
+    </style>
+</head>
+<body>
+
+<div class="hdr">
+    <div class="hdr-l">
+        <div>
+            <div class="hdr-title">Evaluación Teórica — Pares Avanzados</div>
+            <div class="hdr-sub">Diplomado Biomagnetismo Clínico · Prof. Elena Soto</div>
+        </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:1.25rem">
+        <div class="timer-wrap"><i class="ph ph-clock timer-icon"></i><span class="timer-val" id="timerDisplay">58:30</span></div>
+        <button class="btn bo" onclick="showToast('Borrador guardado automáticamente')"><i class="ph ph-floppy-disk"></i> Guardar bor.</button>
+        <button class="btn bp" onclick="document.getElementById('submitModal').classList.add('open')"><i class="ph ph-paper-plane-tilt"></i> Entregar</button>
+    </div>
+</div>
+
+<div id="examContent">
+<div class="exam-layout">
+    <!-- Questions -->
+    <div id="questArea">
+        <!-- Q1 -->
+        <div class="q-card" id="qcard-1">
+            <div class="q-num-label">Pregunta 1 de 5 <span class="q-pts">1 pto</span></div>
+            <div class="q-text">¿Cuál es la polaridad correcta del par Hígado-Hipotálamo en Biomagnetismo?</div>
+            <ul class="options">
+                <li class="opt" onclick="selectOpt(this,1)"><div class="opt-radio"></div><div class="opt-text">Positivo en hígado, negativo en hipotálamo</div></li>
+                <li class="opt" onclick="selectOpt(this,1)"><div class="opt-radio"></div><div class="opt-text">Negativo en hígado, positivo en hipotálamo</div></li>
+                <li class="opt" onclick="selectOpt(this,1)"><div class="opt-radio"></div><div class="opt-text">Ambos positivos</div></li>
+                <li class="opt" onclick="selectOpt(this,1)"><div class="opt-radio"></div><div class="opt-text">La polaridad no importa en este par</div></li>
+            </ul>
+        </div>
+
+        <!-- Q2 -->
+        <div class="q-card" id="qcard-2" style="display:none">
+            <div class="q-num-label">Pregunta 2 de 5 <span class="q-pts">1 pto</span></div>
+            <div class="q-text">¿Cuántos minutos mínimos se recomienda mantener los imanes en una sesión estándar?</div>
+            <ul class="options">
+                <li class="opt" onclick="selectOpt(this,2)"><div class="opt-radio"></div><div class="opt-text">20 minutos</div></li>
+                <li class="opt" onclick="selectOpt(this,2)"><div class="opt-radio"></div><div class="opt-text">45 a 60 minutos</div></li>
+                <li class="opt" onclick="selectOpt(this,2)"><div class="opt-radio"></div><div class="opt-text">120 minutos</div></li>
+                <li class="opt" onclick="selectOpt(this,2)"><div class="opt-radio"></div><div class="opt-text">Depende del paciente</div></li>
+            </ul>
+        </div>
+
+        <!-- Q3 -->
+        <div class="q-card" id="qcard-3" style="display:none">
+            <div class="q-num-label">Pregunta 3 de 5 <span class="q-pts">1 pto</span></div>
+            <div class="q-text">¿Qué instrumento se usa para identificar la respuesta del kinesio-test?</div>
+            <ul class="options">
+                <li class="opt" onclick="selectOpt(this,3)"><div class="opt-radio"></div><div class="opt-text">Espectrómetro de campo</div></li>
+                <li class="opt" onclick="selectOpt(this,3)"><div class="opt-radio"></div><div class="opt-text">La resistencia muscular del paciente</div></li>
+                <li class="opt" onclick="selectOpt(this,3)"><div class="opt-radio"></div><div class="opt-text">Un magnetómetro digital</div></li>
+                <li class="opt" onclick="selectOpt(this,3)"><div class="opt-radio"></div><div class="opt-text">Un electroscopio</div></li>
+            </ul>
+        </div>
+
+        <!-- Q4: Development -->
+        <div class="q-card" id="qcard-4" style="display:none">
+            <div class="q-num-label">Pregunta 4 de 5 <span class="q-pts">3 pts · Desarrollo</span></div>
+            <div class="q-text">Explica el concepto de resonancia biomagnética y cómo influye en el protocolo de tratamiento. Fundamenta tu respuesta con al menos 2 ejemplos clínicos.</div>
+            <textarea class="dev-textarea" id="dev-4" placeholder="Escribe tu respuesta aquí..." oninput="updateCharCount(this,'cc-4')"></textarea>
+            <div class="dev-hint"><i class="ph ph-info"></i> Extensión mínima recomendada: 150 palabras. Tu respuesta será revisada manualmente por la instructora.</div>
+            <div class="char-count" id="cc-4">0 palabras</div>
+        </div>
+
+        <!-- Q5 -->
+        <div class="q-card" id="qcard-5" style="display:none">
+            <div class="q-num-label">Pregunta 5 de 5 <span class="q-pts">1 pto</span></div>
+            <div class="q-text">¿Cuál es la intensidad mínima de imán recomendada para terapia biomagnética?</div>
+            <ul class="options">
+                <li class="opt" onclick="selectOpt(this,5)"><div class="opt-radio"></div><div class="opt-text">500 Gauss</div></li>
+                <li class="opt" onclick="selectOpt(this,5)"><div class="opt-radio"></div><div class="opt-text">1000 Gauss</div></li>
+                <li class="opt" onclick="selectOpt(this,5)"><div class="opt-radio"></div><div class="opt-text">2500 Gauss</div></li>
+                <li class="opt" onclick="selectOpt(this,5)"><div class="opt-radio"></div><div class="opt-text">5000 Gauss</div></li>
+            </ul>
+        </div>
+
+        <!-- Navigation -->
+        <div class="q-nav">
+            <button class="nav-btn" id="prevBtn" onclick="navigate(-1)" disabled><i class="ph ph-arrow-left"></i> Anterior</button>
+            <span class="nav-indicator" id="navIndicator">Pregunta 1 de 5</span>
+            <button class="nav-btn" id="nextBtn" onclick="navigate(1)">Siguiente <i class="ph ph-arrow-right"></i></button>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sc">
+            <h4><i class="ph ph-squares-four"></i> Navegación</h4>
+            <div class="q-dots">
+                <div class="q-dot current" id="dot-1" onclick="goTo(1)">1</div>
+                <div class="q-dot" id="dot-2" onclick="goTo(2)">2</div>
+                <div class="q-dot" id="dot-3" onclick="goTo(3)">3</div>
+                <div class="q-dot" id="dot-4" onclick="goTo(4)">4</div>
+                <div class="q-dot" id="dot-5" onclick="goTo(5)">5</div>
+            </div>
+            <div style="margin-top:.75rem;display:flex;gap:.75rem;font-size:.75rem;color:var(--l)">
+                <span><span style="display:inline-block;width:10px;height:10px;background:rgba(104,122,97,.2);border-radius:3px;margin-right:3px"></span>Resp.</span>
+                <span><span style="display:inline-block;width:10px;height:10px;background:var(--p);border-radius:3px;margin-right:3px"></span>Actual</span>
+            </div>
+        </div>
+        <div class="sc">
+            <h4><i class="ph ph-chart-pie"></i> Tu Progreso</h4>
+            <div class="prog-summary">
+                <div class="pr"><span>Respondidas</span><span class="pv" id="answeredCount">0 / 5</span></div>
+                <div class="pr"><span>Sin responder</span><span class="pv" id="unansweredCount">5</span></div>
+                <div class="pr"><span>Tipo desarrollo</span><span class="pv">1</span></div>
+            </div>
+        </div>
+        <div class="warn-box" id="warnBox"><i class="ph ph-warning"></i> ¡Tienes preguntas sin responder! Revisa antes de entregar.</div>
+    </div>
+</div>
+</div>
+
+<!-- Result Screen -->
+<div class="result-screen" id="resultScreen">
+    <div class="result-icon">🌿</div>
+    <div class="result-grade" id="resultGrade">6.2</div>
+    <div class="result-msg">¡Bien hecho, María! Tu evaluación ha sido enviada correctamente.<br>Las preguntas de desarrollo serán revisadas por la instructora.</div>
+    <div class="result-stats">
+        <div class="rs"><div class="rsn">3/4</div><div class="rsl">Correctas MC</div></div>
+        <div class="rs"><div class="rsn">7 min</div><div class="rsl">Tiempo usado</div></div>
+        <div class="rs"><div class="rsn" style="color:var(--ac)">+120 XP</div><div class="rsl">Puntos ganados</div></div>
+    </div>
+    <a href="dashboard.html" class="btn bp" style="font-size:.95rem;padding:.8rem 2rem">Volver al Aula <i class="ph ph-house"></i></a>
+</div>
+
+<!-- Submit Modal -->
+<div class="modal-bg" id="submitModal">
+    <div class="modal">
+        <h3>¿Entregar evaluación?</h3>
+        <p>Una vez enviada no podrás modificar tus respuestas. <span id="missingWarn"></span></p>
+        <div class="modal-acts">
+            <button class="btn-cancel" onclick="document.getElementById('submitModal').classList.remove('open')">Revisar</button>
+            <button class="btn bp" onclick="submitExam()"><i class="ph ph-paper-plane-tilt"></i> Entregar</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"><i class="ph ph-floppy-disk"></i><span id="tM">Guardado</span></div>
+
+<script>
+let currentQ = 1;
+const totalQ = 5;
+const answered = new Set();
+
+function selectOpt(el, q) {
+    el.closest('ul').querySelectorAll('.opt').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    answered.add(q);
+    updateProgress();
+    document.getElementById(`dot-${q}`).classList.add('answered');
+    showToast('Respuesta guardada automáticamente');
+}
+
+function navigate(dir) {
+    const next = currentQ + dir;
+    if(next < 1 || next > totalQ) return;
+    goTo(next);
+}
+
+function goTo(q) {
+    document.getElementById(`qcard-${currentQ}`).style.display = 'none';
+    document.getElementById(`dot-${currentQ}`).classList.remove('current');
+    currentQ = q;
+    document.getElementById(`qcard-${currentQ}`).style.display = 'block';
+    document.getElementById(`dot-${currentQ}`).classList.add('current');
+    document.getElementById('navIndicator').textContent = `Pregunta ${currentQ} de ${totalQ}`;
+    document.getElementById('prevBtn').disabled = currentQ === 1;
+    document.getElementById('nextBtn').textContent = currentQ === totalQ ? 'Finalizar' : 'Siguiente';
+    document.getElementById('nextBtn').innerHTML = currentQ === totalQ ? 'Ver resumen <i class="ph ph-check"></i>' : 'Siguiente <i class="ph ph-arrow-right"></i>';
+    if(currentQ === totalQ) document.getElementById('nextBtn').onclick = () => document.getElementById('submitModal').classList.add('open');
+    else document.getElementById('nextBtn').onclick = () => navigate(1);
+}
+
+function updateProgress() {
+    const a = answered.size;
+    document.getElementById('answeredCount').textContent = `${a} / ${totalQ}`;
+    document.getElementById('unansweredCount').textContent = totalQ - a;
+    const w = document.getElementById('warnBox');
+    w.style.display = a < totalQ ? 'block' : 'none';
+}
+
+function updateCharCount(ta, id) {
+    const words = ta.value.trim().split(/\s+/).filter(w=>w).length;
+    document.getElementById(id).textContent = `${words} palabras`;
+    if(ta.value.trim()) { answered.add(4); updateProgress(); document.getElementById('dot-4').classList.add('answered'); }
+}
+
+function submitExam() {
+    document.getElementById('submitModal').classList.remove('open');
+    document.getElementById('examContent').style.display = 'none';
+    document.getElementById('resultScreen').style.display = 'block';
+    document.querySelector('.hdr-sub').textContent = '¡Evaluación entregada exitosamente!';
+}
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('tM').textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Timer
+let secs = 58 * 60 + 30;
+setInterval(() => {
+    secs--;
+    if(secs < 0) { submitExam(); return; }
+    const m = String(Math.floor(secs/60)).padStart(2,'0');
+    const s = String(secs%60).padStart(2,'0');
+    const el = document.getElementById('timerDisplay');
+    el.textContent = `${m}:${s}`;
+    if(secs < 300) el.classList.add('timer-warn');
+}, 1000);
+</script>
+</body>
+</html>

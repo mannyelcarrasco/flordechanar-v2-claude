@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clase en Vivo | Flor de Chañar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root {
+            --color-bg: #0F1117; --color-panel: #1A1D27; --color-border: rgba(255,255,255,0.08);
+            --color-primary: #687A61; --color-accent: #D4A373; --color-live: #EF4444;
+            --color-xp: #F59E0B; --color-white: #FFFFFF; --color-text: rgba(255,255,255,0.85);
+            --font-sans: 'Inter', sans-serif; --font-serif: 'Playfair Display', serif;
+            --radius-md: 10px; --radius-full: 9999px; --transition: all 0.25s ease;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--font-sans); background: var(--color-bg); color: var(--color-text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; -webkit-font-smoothing: antialiased; }
+
+        /* Top Bar */
+        .live-topbar {
+            height: 56px; background: var(--color-panel); border-bottom: 1px solid var(--color-border);
+            display: flex; align-items: center; justify-content: space-between; padding: 0 1.25rem; flex-shrink: 0;
+        }
+        .lt-left { display: flex; align-items: center; gap: 1.2rem; }
+        .live-pill { background: var(--color-live); color: white; font-size: 0.72rem; font-weight: 700; padding: 0.25rem 0.65rem; border-radius: var(--radius-full); display: flex; align-items: center; gap: 0.3rem; }
+        .live-dot-sm { width: 6px; height: 6px; border-radius: 50%; background: white; animation: blink 1.2s infinite; }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+        .lesson-name { font-size: 0.92rem; font-weight: 600; }
+        .lesson-sub { font-size: 0.78rem; color: rgba(255,255,255,0.5); }
+        .lt-right { display: flex; align-items: center; gap: 0.75rem; }
+        .viewers { font-size: 0.82rem; color: rgba(255,255,255,0.6); display: flex; align-items: center; gap: 0.3rem; }
+        .timer { font-size: 0.9rem; font-weight: 700; color: var(--color-accent); font-variant-numeric: tabular-nums; }
+        .back-btn { color: rgba(255,255,255,0.5); font-size: 0.82rem; display: flex; align-items: center; gap: 0.3rem; text-decoration: none; transition: var(--transition); }
+        .back-btn:hover { color: white; }
+
+        /* Main Layout */
+        .live-layout { display: flex; flex: 1; overflow: hidden; }
+
+        /* Video Area */
+        .video-main { flex: 1; display: flex; flex-direction: column; background: #000; position: relative; }
+        .video-stage { flex: 1; display: flex; align-items: center; justify-content: center; background: #000; position: relative; }
+        .instructor-video {
+            width: 100%; height: 100%; object-fit: cover; opacity: 0.75;
+            background: linear-gradient(135deg, #1a2a1f 0%, #0d1a0f 100%);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .instructor-placeholder { text-align: center; }
+        .instructor-avatar-lg { width: 100px; height: 100px; border-radius: 50%; background: var(--color-primary); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 700; color: white; margin: 0 auto 1rem; border: 3px solid rgba(255,255,255,0.2); }
+        .instructor-name { font-size: 1.1rem; font-weight: 600; color: white; }
+        .instructor-role { font-size: 0.82rem; color: rgba(255,255,255,0.5); margin-top: 0.3rem; }
+        .speaking-indicator { display: flex; align-items: flex-end; gap: 3px; height: 20px; margin: 1rem auto 0; width: fit-content; }
+        .speaking-bar { width: 4px; background: var(--color-primary); border-radius: 2px; animation: eq 0.8s ease-in-out infinite alternate; }
+        .speaking-bar:nth-child(1) { height: 8px; animation-delay: 0s; }
+        .speaking-bar:nth-child(2) { height: 16px; animation-delay: 0.15s; }
+        .speaking-bar:nth-child(3) { height: 12px; animation-delay: 0.3s; }
+        .speaking-bar:nth-child(4) { height: 20px; animation-delay: 0.1s; }
+        .speaking-bar:nth-child(5) { height: 10px; animation-delay: 0.25s; }
+        @keyframes eq { from { height: 4px; } to { height: var(--h, 16px); } }
+
+        /* My Video Pip */
+        .pip-video {
+            position: absolute; bottom: 1rem; right: 1rem; width: 160px; height: 100px;
+            border-radius: var(--radius-md); background: var(--color-panel); border: 2px solid var(--color-border);
+            display: flex; align-items: center; justify-content: center; overflow: hidden; flex-direction: column; gap: 0.5rem;
+        }
+        .pip-video .user-avatar-sm { width: 40px; height: 40px; border-radius: 50%; background: var(--color-primary); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem; }
+        .pip-label { font-size: 0.7rem; color: rgba(255,255,255,0.5); }
+
+        /* Attendees Strip */
+        .attendees { height: 80px; background: var(--color-panel); border-top: 1px solid var(--color-border); display: flex; align-items: center; gap: 0.5rem; padding: 0 1rem; overflow-x: auto; }
+        .attendee-thumb { width: 52px; height: 52px; border-radius: var(--radius-md); background: #2a2d3a; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: var(--transition); flex-shrink: 0; }
+        .attendee-thumb:hover { transform: scale(1.1); }
+        .attendee-thumb.me { border: 2px solid var(--color-primary); }
+        .attendee-thumb.raised { position: relative; }
+        .attendee-thumb.raised::after { content: '✋'; position: absolute; top: -8px; right: -8px; font-size: 0.9rem; }
+        .attendees-count { font-size: 0.78rem; color: rgba(255,255,255,0.4); white-space: nowrap; padding-left: 0.5rem; }
+
+        /* Controls Bar */
+        .controls-bar {
+            height: 70px; background: var(--color-panel); border-top: 1px solid var(--color-border);
+            display: flex; align-items: center; justify-content: center; gap: 1rem; flex-shrink: 0;
+        }
+        .ctrl-btn {
+            display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
+            width: 60px; height: 52px; border-radius: var(--radius-md); border: none;
+            background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.8); cursor: pointer;
+            font-size: 1.1rem; font-family: var(--font-sans); transition: var(--transition);
+        }
+        .ctrl-btn span { font-size: 0.6rem; color: rgba(255,255,255,0.5); }
+        .ctrl-btn:hover { background: rgba(255,255,255,0.12); color: white; }
+        .ctrl-btn.active-ctrl { background: var(--color-primary); color: white; }
+        .ctrl-btn.danger { background: var(--color-live); color: white; }
+
+        /* Right: Live Chat */
+        .live-chat { width: 300px; background: var(--color-panel); border-left: 1px solid var(--color-border); display: flex; flex-direction: column; flex-shrink: 0; }
+        .lc-header { padding: 1rem; border-bottom: 1px solid var(--color-border); display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 700; }
+        .lc-tabs { display: flex; gap: 0; }
+        .lc-tab { flex: 1; padding: 0.6rem; font-size: 0.78rem; font-weight: 500; border: none; background: none; color: rgba(255,255,255,0.4); cursor: pointer; border-bottom: 2px solid transparent; transition: var(--transition); }
+        .lc-tab.active { color: white; border-bottom-color: var(--color-primary); }
+
+        .chat-messages { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
+        .chat-msg { display: flex; flex-direction: column; gap: 0.2rem; }
+        .chat-name { font-size: 0.72rem; font-weight: 700; }
+        .chat-text { font-size: 0.85rem; color: rgba(255,255,255,0.8); line-height: 1.4; }
+        .chat-name.instructor-c { color: var(--color-accent); }
+        .chat-name.me-c { color: var(--color-primary); }
+        .chat-emoji { font-size: 1.3rem; }
+
+        .chat-input-area { padding: 0.75rem; border-top: 1px solid var(--color-border); }
+        .ci-row { display: flex; gap: 0.5rem; align-items: center; }
+        .ci-field { flex: 1; background: rgba(255,255,255,0.06); border: 1px solid var(--color-border); border-radius: var(--radius-full); padding: 0.6rem 1rem; font-family: var(--font-sans); font-size: 0.85rem; color: white; outline: none; }
+        .ci-field::placeholder { color: rgba(255,255,255,0.3); }
+        .ci-field:focus { border-color: var(--color-primary); }
+        .ci-send { width: 34px; height: 34px; border-radius: 50%; background: var(--color-primary); border: none; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: var(--transition); flex-shrink: 0; }
+        .ci-send:hover { background: var(--color-primary-dark, #52634C); }
+        .emoji-bar { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+        .e-btn { font-size: 1.3rem; cursor: pointer; transition: var(--transition); background: none; border: none; }
+        .e-btn:hover { transform: scale(1.3); }
+
+        @media (max-width: 900px) { .live-chat { display: none; } }
+    </style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="live-topbar">
+    <div class="lt-left">
+        <a href="dashboard.html" class="back-btn"><i class="ph ph-arrow-left"></i></a>
+        <div class="live-pill"><div class="live-dot-sm"></div> EN VIVO</div>
+        <div>
+            <div class="lesson-name">Biomagnetismo Clínico — Módulo 4: Pares Avanzados</div>
+            <div class="lesson-sub">Con Elena Soto · Iniciada hace 14 min</div>
+        </div>
+    </div>
+    <div class="lt-right">
+        <div class="viewers"><i class="ph ph-users"></i> 24 conectados</div>
+        <div class="timer" id="liveTimer">00:14:32</div>
+    </div>
+</div>
+
+<!-- Layout -->
+<div class="live-layout">
+
+    <!-- Video Area -->
+    <div class="video-main">
+        <div class="video-stage">
+            <div class="instructor-video">
+                <div class="instructor-placeholder">
+                    <div class="instructor-avatar-lg">E</div>
+                    <div class="instructor-name">Elena Soto</div>
+                    <div class="instructor-role">Terapeuta Certificada · Instructora Principal</div>
+                    <div class="speaking-indicator">
+                        <div class="speaking-bar" style="--h:8px"></div>
+                        <div class="speaking-bar" style="--h:16px"></div>
+                        <div class="speaking-bar" style="--h:12px"></div>
+                        <div class="speaking-bar" style="--h:20px"></div>
+                        <div class="speaking-bar" style="--h:10px"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- PiP Self Video -->
+            <div class="pip-video">
+                <div class="user-avatar-sm">M</div>
+                <div class="pip-label">Tú</div>
+            </div>
+        </div>
+
+        <!-- Attendees Strip -->
+        <div class="attendees">
+            <div class="attendee-thumb me" title="Tú" style="background: rgba(104,122,97,0.3);">M</div>
+            <div class="attendee-thumb" style="background:#2d3a52;">C</div>
+            <div class="attendee-thumb raised" style="background:#3a2d52;">J</div>
+            <div class="attendee-thumb" style="background:#523a2d;">A</div>
+            <div class="attendee-thumb" style="background:#2d5242;">P</div>
+            <div class="attendee-thumb" style="background:#4a3d2d;">R</div>
+            <div class="attendee-thumb" style="background:#2d4a52;">L</div>
+            <div class="attendee-thumb" style="background:#52342d;">K</div>
+            <div class="attendees-count">+16 más</div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls-bar">
+            <button class="ctrl-btn" id="btn-mic" onclick="toggleCtrl(this)">
+                <i class="ph ph-microphone-slash"></i><span>Micrófono</span>
+            </button>
+            <button class="ctrl-btn" onclick="toggleCtrl(this)">
+                <i class="ph ph-video-camera-slash"></i><span>Cámara</span>
+            </button>
+            <button class="ctrl-btn" onclick="toggleCtrl(this)">
+                <i class="ph ph-hand-raised"></i><span>Mano</span>
+            </button>
+            <button class="ctrl-btn" onclick="toggleCtrl(this)">
+                <i class="ph ph-smiley"></i><span>Reacciones</span>
+            </button>
+            <button class="ctrl-btn danger" onclick="endClass()">
+                <i class="ph ph-phone-disconnect"></i><span>Salir</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Live Chat -->
+    <div class="live-chat">
+        <div class="lc-tabs">
+            <button class="lc-tab active">Chat en Vivo</button>
+            <button class="lc-tab">Preguntas (3)</button>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="chat-msg"><div class="chat-name instructor-c">Elena Soto 👩‍🏫</div><div class="chat-text">¡Bienvenidos a la clase de hoy! Empezamos en 2 minutos 🌿</div></div>
+            <div class="chat-msg"><div class="chat-name" style="color:#8B6BAE;">Catalina R.</div><div class="chat-text">Buenas noches, Elena! Muy emocionada con este módulo.</div></div>
+            <div class="chat-msg"><div class="chat-name" style="color:#5B8A72;">Javiera M.</div><div class="chat-text">¡Hola a todas! Aquí desde Temuco 👋</div></div>
+            <div class="chat-msg chat-emoji">🙏 💚 🌱</div>
+            <div class="chat-msg"><div class="chat-name instructor-c">Elena Soto</div><div class="chat-text">El material de hoy está disponible en el aula. Descárguenlo para seguir la lección paso a paso.</div></div>
+            <div class="chat-msg"><div class="chat-name me-c">María G. (Tú)</div><div class="chat-text">Gracias, Elena! Tengo una duda sobre la lección anterior...</div></div>
+            <div class="chat-msg"><div class="chat-name instructor-c">Elena Soto</div><div class="chat-text">¡Claro, María! Al final de la clase abrimos espacio de preguntas, o puedes escribirla en la pestaña "Preguntas" 😊</div></div>
+        </div>
+
+        <div class="chat-input-area">
+            <div class="emoji-bar">
+                <button class="e-btn" onclick="sendEmoji('🙏')">🙏</button>
+                <button class="e-btn" onclick="sendEmoji('💚')">💚</button>
+                <button class="e-btn" onclick="sendEmoji('🌟')">🌟</button>
+                <button class="e-btn" onclick="sendEmoji('🙌')">🙌</button>
+                <button class="e-btn" onclick="sendEmoji('❤️')">❤️</button>
+            </div>
+            <div class="ci-row">
+                <input type="text" class="ci-field" id="chatInput" placeholder="Escribe un mensaje..." onkeypress="handleChatKey(event)">
+                <button class="ci-send" onclick="sendChat()"><i class="ph ph-paper-plane-tilt"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Timer
+    let seconds = 14 * 60 + 32;
+    setInterval(() => {
+        seconds++;
+        const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+        const s = String(seconds % 60).padStart(2, '0');
+        document.getElementById('liveTimer').textContent = `00:${m}:${s}`;
+    }, 1000);
+
+    // Chat
+    function sendChat() {
+        const input = document.getElementById('chatInput');
+        const text = input.value.trim();
+        if (!text) return;
+        const div = document.createElement('div');
+        div.className = 'chat-msg';
+        div.innerHTML = `<div class="chat-name me-c">María G. (Tú)</div><div class="chat-text">${text}</div>`;
+        document.getElementById('chatMessages').appendChild(div);
+        input.value = '';
+        document.getElementById('chatMessages').scrollTop = 99999;
+    }
+
+    function handleChatKey(e) { if (e.key === 'Enter') sendChat(); }
+
+    function sendEmoji(em) {
+        const div = document.createElement('div');
+        div.className = 'chat-msg chat-emoji';
+        div.textContent = em;
+        document.getElementById('chatMessages').appendChild(div);
+        document.getElementById('chatMessages').scrollTop = 99999;
+    }
+
+    function toggleCtrl(btn) { btn.classList.toggle('active-ctrl'); }
+
+    function endClass() {
+        if (confirm('¿Deseas salir de la clase en vivo?')) window.location.href = 'dashboard.html';
+    }
+</script>
+</body>
+</html>

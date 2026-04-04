@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biomagnetismo Clínico | Mi Aula</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root {
+            --color-bg: #F9F6F0; --color-bg-alt: #F2EDE4;
+            --color-primary: #687A61; --color-primary-dark: #52634C;
+            --color-secondary: #2C3531; --color-accent: #D4A373;
+            --color-white: #FFFFFF; --color-text-main: #333333; --color-text-light: #666666;
+            --color-xp: #F59E0B; --color-live: #EF4444;
+            --font-serif: 'Playfair Display', serif; --font-sans: 'Inter', sans-serif;
+            --radius-md: 12px; --radius-lg: 20px; --radius-full: 9999px;
+            --transition: all 0.3s ease;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--font-sans); background: var(--color-bg); color: var(--color-text-main); -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; color: inherit; }
+        h1,h2,h3,h4 { font-family: var(--font-serif); color: var(--color-secondary); }
+
+        /* Top Bar */
+        .topbar {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+            background: var(--color-secondary); height: 60px;
+            display: flex; align-items: center; justify-content: space-between; padding: 0 1.5rem;
+        }
+        .tb-left { display: flex; align-items: center; gap: 1rem; }
+        .tb-back { color: rgba(255,255,255,0.7); display: flex; align-items: center; gap: 0.3rem; font-size: 0.88rem; transition: var(--transition); }
+        .tb-back:hover { color: white; }
+        .tb-title { color: white; font-family: var(--font-serif); font-size: 1rem; }
+        .tb-right { display: flex; align-items: center; gap: 1rem; }
+        .tb-progress { display: flex; align-items: center; gap: 0.75rem; color: white; font-size: 0.85rem; }
+        .tb-bar { width: 120px; height: 6px; background: rgba(255,255,255,0.2); border-radius: var(--radius-full); }
+        .tb-fill { height: 100%; width: 57%; background: var(--color-xp); border-radius: var(--radius-full); }
+
+        /* Layout */
+        .course-layout { display: grid; grid-template-columns: 280px 1fr 300px; height: 100vh; padding-top: 60px; }
+
+        /* Left: Lesson List */
+        .lesson-sidebar {
+            background: var(--color-white); border-right: 1px solid #E2E8F0;
+            overflow-y: auto; padding: 1.5rem 0;
+        }
+        .ls-header { padding: 0 1.25rem 1rem; border-bottom: 1px solid #E2E8F0; margin-bottom: 0.5rem; }
+        .ls-header h3 { font-size: 0.95rem; font-family: var(--font-sans); font-weight: 600; color: var(--color-secondary); }
+        .ls-header p { font-size: 0.8rem; color: var(--color-text-light); margin-top: 0.3rem; }
+
+        .module-block { margin-bottom: 0.5rem; }
+        .module-title {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.75rem 1.25rem; font-size: 0.82rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.5px; color: var(--color-primary-dark);
+            cursor: pointer; background: rgba(104,122,97,0.05);
+        }
+        .lesson-item {
+            display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 1.25rem;
+            font-size: 0.88rem; color: var(--color-text-main); cursor: pointer;
+            transition: var(--transition); border-left: 3px solid transparent;
+        }
+        .lesson-item:hover { background: var(--color-bg); }
+        .lesson-item.active { background: rgba(104,122,97,0.08); border-left-color: var(--color-primary); color: var(--color-primary-dark); font-weight: 600; }
+        .lesson-item.done { color: var(--color-text-light); }
+        .lesson-icon { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; flex-shrink: 0; }
+        .lesson-icon.done-ic { background: rgba(104,122,97,0.15); color: var(--color-primary); }
+        .lesson-icon.active-ic { background: var(--color-primary); color: white; }
+        .lesson-icon.pending-ic { background: #E2E8F0; color: #94a3b8; }
+        .lesson-duration { margin-left: auto; font-size: 0.75rem; color: #94a3b8; }
+
+        /* Center: Video & Content */
+        .main-lesson { overflow-y: auto; background: var(--color-bg); }
+        .video-container {
+            background: #000; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center;
+            position: relative; cursor: pointer;
+        }
+        .video-thumb { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; }
+        .play-btn {
+            position: absolute; width: 72px; height: 72px; border-radius: 50%;
+            background: rgba(255,255,255,0.9); display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem; color: var(--color-secondary); transition: var(--transition);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+        .play-btn:hover { transform: scale(1.1); background: white; }
+        .video-overlay-text { position: absolute; bottom: 1rem; left: 1rem; color: rgba(255,255,255,0.8); font-size: 0.85rem; }
+
+        .lesson-content { padding: 2rem; }
+        .lc-meta { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.2rem; font-size: 0.85rem; color: var(--color-text-light); }
+        .lc-meta .badge { background: rgba(104,122,97,0.1); color: var(--color-primary-dark); padding: 0.2rem 0.6rem; border-radius: 4px; font-weight: 600; }
+        .lesson-content h1 { font-size: 1.8rem; margin-bottom: 1.5rem; }
+        .lesson-content p { color: var(--color-text-light); line-height: 1.75; margin-bottom: 1.25rem; }
+
+        /* Key Takeaways */
+        .takeaway-box { background: rgba(104,122,97,0.06); border: 1.5px solid rgba(104,122,97,0.2); border-radius: var(--radius-md); padding: 1.5rem; margin: 1.5rem 0; }
+        .takeaway-box h4 { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; font-family: var(--font-sans); font-size: 0.9rem; font-weight: 700; text-transform: uppercase; color: var(--color-primary-dark); }
+        .takeaway-box ul { list-style: none; }
+        .takeaway-box li { display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.4rem 0; font-size: 0.92rem; color: var(--color-text-main); }
+        .takeaway-box li::before { content: '✦'; color: var(--color-primary); font-size: 0.8rem; margin-top: 3px; flex-shrink: 0; }
+
+        /* Downloads */
+        .downloads { margin: 2rem 0; }
+        .downloads h3 { font-family: var(--font-sans); font-size: 0.95rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--color-text-light); margin-bottom: 1rem; }
+        .file-item {
+            display: flex; align-items: center; gap: 1rem; padding: 0.9rem 1rem;
+            border: 1.5px solid #E2E8F0; border-radius: var(--radius-md); margin-bottom: 0.6rem;
+            transition: var(--transition); cursor: pointer; background: var(--color-white);
+        }
+        .file-item:hover { border-color: var(--color-primary); background: rgba(104,122,97,0.03); }
+        .file-icon { width: 40px; height: 40px; border-radius: var(--radius-md); background: rgba(104,122,97,0.1); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: var(--color-primary); flex-shrink: 0; }
+        .file-info { flex: 1; }
+        .file-name { font-size: 0.9rem; font-weight: 600; color: var(--color-secondary); }
+        .file-size { font-size: 0.78rem; color: var(--color-text-light); margin-top: 2px; }
+        .file-dl { color: var(--color-primary); font-size: 1.1rem; }
+
+        /* Navigation buttons */
+        .lesson-nav { display: flex; justify-content: space-between; align-items: center; padding: 2rem; border-top: 1px solid #E2E8F0; margin-top: 1rem; }
+        .btn-nav { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: var(--radius-full); font-size: 0.92rem; font-weight: 600; transition: var(--transition); border: 1.5px solid #E2E8F0; background: white; cursor: pointer; color: var(--color-secondary); }
+        .btn-nav:hover { border-color: var(--color-primary); color: var(--color-primary); }
+        .btn-complete { background: var(--color-primary); color: white; border-color: var(--color-primary); }
+        .btn-complete:hover { background: var(--color-primary-dark); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(104,122,97,0.25); }
+        .xp-toast { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: var(--color-xp); font-weight: 600; }
+
+        /* Right: Comments */
+        .comments-panel { background: var(--color-white); border-left: 1px solid #E2E8F0; display: flex; flex-direction: column; overflow: hidden; }
+        .cp-header { padding: 1.2rem 1.25rem; border-bottom: 1px solid #E2E8F0; display: flex; align-items: center; justify-content: space-between; }
+        .cp-header h3 { font-family: var(--font-sans); font-size: 0.95rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
+        .tab-toggle { display: flex; background: var(--color-bg); border-radius: var(--radius-full); padding: 3px; }
+        .tt-btn { padding: 0.35rem 0.8rem; font-size: 0.8rem; font-weight: 500; border: none; background: none; border-radius: var(--radius-full); cursor: pointer; color: var(--color-text-light); transition: var(--transition); }
+        .tt-btn.active { background: white; color: var(--color-secondary); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+
+        .comments-list { flex: 1; overflow-y: auto; padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+        .comment-item { display: flex; gap: 0.75rem; }
+        .cm-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--color-primary); display: flex; align-items: center; justify-content: center; font-size: 0.78rem; font-weight: 700; color: white; flex-shrink: 0; }
+        .cm-body { flex: 1; }
+        .cm-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem; }
+        .cm-name { font-size: 0.82rem; font-weight: 700; color: var(--color-secondary); }
+        .cm-time { font-size: 0.75rem; color: var(--color-text-light); }
+        .cm-text { font-size: 0.88rem; color: var(--color-text-main); line-height: 1.5; background: var(--color-bg); padding: 0.6rem 0.9rem; border-radius: 0 var(--radius-md) var(--radius-md) var(--radius-md); }
+        .cm-actions { display: flex; gap: 0.8rem; margin-top: 0.4rem; }
+        .cm-act { font-size: 0.75rem; color: var(--color-text-light); cursor: pointer; display: flex; align-items: center; gap: 0.2rem; transition: var(--transition); }
+        .cm-act:hover { color: var(--color-primary); }
+        .cm-likes { color: var(--color-accent); font-weight: 600; }
+        .cm-reply { padding-left: 1rem; border-left: 2px solid var(--color-bg-alt); margin-top: 0.6rem; }
+
+        /* Instructor comment (highlighted) */
+        .cm-avatar.instructor { background: var(--color-accent); }
+        .cm-name .instructor-tag { font-size: 0.65rem; background: rgba(212,163,115,0.15); color: var(--color-accent); padding: 0.1rem 0.4rem; border-radius: 4px; font-weight: 600; }
+
+        .comment-input { padding: 1rem 1.25rem; border-top: 1px solid #E2E8F0; }
+        .ci-wrap { display: flex; gap: 0.6rem; align-items: flex-end; }
+        .ci-textarea { flex: 1; padding: 0.7rem 0.9rem; border: 1.5px solid #E2E8F0; border-radius: var(--radius-md); font-family: var(--font-sans); font-size: 0.88rem; resize: none; outline: none; transition: var(--transition); color: var(--color-text-main); background: var(--color-bg); }
+        .ci-textarea:focus { border-color: var(--color-primary); background: white; }
+        .ci-btn { width: 38px; height: 38px; border-radius: 50%; background: var(--color-primary); color: white; border: none; display: flex; align-items: center; justify-content: center; font-size: 1rem; cursor: pointer; transition: var(--transition); flex-shrink: 0; }
+        .ci-btn:hover { background: var(--color-primary-dark); }
+
+        /* XP Toast */
+        @keyframes toastPop { 0%{transform:translateY(20px);opacity:0} 20%{transform:translateY(0);opacity:1} 80%{transform:translateY(0);opacity:1} 100%{transform:translateY(-20px);opacity:0} }
+        .xp-notification { position: fixed; bottom: 2rem; right: 2rem; background: var(--color-secondary); color: white; padding: 1rem 1.5rem; border-radius: var(--radius-md); display: flex; align-items: center; gap: 0.75rem; font-weight: 600; z-index: 9999; display: none; animation: toastPop 3s ease forwards; }
+        .xp-notification i { color: var(--color-xp); font-size: 1.3rem; }
+
+        @media (max-width: 1100px) { .comments-panel { display: none; } .course-layout { grid-template-columns: 260px 1fr; } }
+        @media (max-width: 768px) { .lesson-sidebar { display: none; } .course-layout { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="topbar">
+    <div class="tb-left">
+        <a href="dashboard.html" class="tb-back"><i class="ph ph-arrow-left"></i> Mi Aula</a>
+        <span style="color:rgba(255,255,255,0.2);">|</span>
+        <span class="tb-title">Biomagnetismo Clínico Integral</span>
+    </div>
+    <div class="tb-right">
+        <div class="tb-progress">
+            <span>Progreso:</span>
+            <div class="tb-bar"><div class="tb-fill"></div></div>
+            <span>57%</span>
+        </div>
+    </div>
+</div>
+
+<!-- Layout -->
+<div class="course-layout">
+
+    <!-- Left: Lesson Sidebar -->
+    <div class="lesson-sidebar">
+        <div class="ls-header">
+            <h3>Contenido del Curso</h3>
+            <p>8 de 14 lecciones completadas</p>
+        </div>
+
+        <!-- Module 1 -->
+        <div class="module-block">
+            <div class="module-title">Módulo 1: Fundamentos <span style="color:var(--color-primary);">✓</span></div>
+            <div class="lesson-item done">
+                <div class="lesson-icon done-ic"><i class="ph ph-check"></i></div>
+                Introducción al Biomagnetismo
+                <span class="lesson-duration">12min</span>
+            </div>
+            <div class="lesson-item done">
+                <div class="lesson-icon done-ic"><i class="ph ph-check"></i></div>
+                Historia y Fundamentos
+                <span class="lesson-duration">18min</span>
+            </div>
+            <div class="lesson-item done">
+                <div class="lesson-icon done-ic"><i class="ph ph-check"></i></div>
+                El pH y la Enfermedad
+                <span class="lesson-duration">22min</span>
+            </div>
+        </div>
+
+        <!-- Module 2 -->
+        <div class="module-block">
+            <div class="module-title">Módulo 2: Técnica Básica</div>
+            <div class="lesson-item active">
+                <div class="lesson-icon active-ic"><i class="ph ph-play"></i></div>
+                <span>Los Pares Biomagnéticos</span>
+                <span class="lesson-duration">35min</span>
+            </div>
+            <div class="lesson-item">
+                <div class="lesson-icon pending-ic"><i class="ph ph-lock"></i></div>
+                Mapeo Corporal
+                <span class="lesson-duration">28min</span>
+            </div>
+            <div class="lesson-item">
+                <div class="lesson-icon pending-ic"><i class="ph ph-lock"></i></div>
+                Aplicación de Imanes
+                <span class="lesson-duration">40min</span>
+            </div>
+        </div>
+
+        <!-- Module 3 -->
+        <div class="module-block">
+            <div class="module-title">Módulo 3: Clínico Avanzado</div>
+            <div class="lesson-item">
+                <div class="lesson-icon pending-ic"><i class="ph ph-lock"></i></div>
+                Patologías y Pares
+                <span class="lesson-duration">45min</span>
+            </div>
+            <div class="lesson-item">
+                <div class="lesson-icon pending-ic"><i class="ph ph-lock"></i></div>
+                Casos Clínicos Reales
+                <span class="lesson-duration">60min</span>
+            </div>
+            <div class="lesson-item">
+                <div class="lesson-icon pending-ic"><i class="ph ph-video-camera" style="color:var(--color-live);"></i></div>
+                <span style="color:var(--color-live); font-weight: 600;">Clase en Vivo — Práctica</span>
+                <span class="lesson-duration">Live</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Center: Main Lesson -->
+    <div class="main-lesson">
+        <!-- Video Player Mock -->
+        <div class="video-container">
+            <img class="video-thumb" src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1200&q=80" alt="">
+            <div class="play-btn"><i class="ph ph-play"></i></div>
+            <div class="video-overlay-text"><i class="ph ph-clock"></i> 35:00 min</div>
+        </div>
+
+        <!-- Lesson Content -->
+        <div class="lesson-content">
+            <div class="lc-meta">
+                <span class="badge">Módulo 2 — Lección 4</span>
+                <span><i class="ph ph-clock"></i> 35 min</span>
+                <span><i class="ph ph-star" style="color:var(--color-xp);"></i> +80 XP al completar</span>
+            </div>
+            <h1>Los Pares Biomagnéticos: El Fundamento Clínico</h1>
+
+            <p>Los pares biomagnéticos son zonas específicas del cuerpo que albergan campos electromagnéticos con polaridad positiva o negativa. La disrulción de estos polos genera condiciones patológicas que pueden ser tratadas eficazmente con imanes terapéuticos de alta intensidad.</p>
+
+            <p>En esta lección aprenderás a identificar los 5 pares fundamentales más utilizados en la práctica clínica, comprenderás su relación con los órganos del sistema y aprenderás el protocolo de diagnóstico inicial mediante kinesio-test biomagnético.</p>
+
+            <div class="takeaway-box">
+                <h4><i class="ph ph-lightbulb"></i> Puntos Clave de esta Lección</h4>
+                <ul>
+                    <li>Los pares biomagnéticos funcionan siempre en dualidad positivo-negativo.</li>
+                    <li>El órgano implicado determina la zona del par a tratar.</li>
+                    <li>La fuerza del imán (mínimo 1000 Gauss) es fundamental para el resultado.</li>
+                    <li>El tiempo de aplicación estándar es de 45 a 60 minutos por sesión.</li>
+                </ul>
+            </div>
+
+            <p>Recuerda siempre evaluar el estado emocional del paciente antes de cada sesión, ya que el Biomagnetismo actúa de manera integral sobre mente y cuerpo, no solo sobre el aspecto físico del padecimiento.</p>
+
+            <!-- Downloadable Materials -->
+            <div class="downloads">
+                <h3><i class="ph ph-download-simple"></i> Materiales de esta Lección</h3>
+                <div class="file-item">
+                    <div class="file-icon"><i class="ph ph-file-pdf"></i></div>
+                    <div class="file-info">
+                        <div class="file-name">Mapa de Pares Biomagnéticos Fundamentales.pdf</div>
+                        <div class="file-size">PDF · 2.4 MB · Lectura complementaria</div>
+                    </div>
+                    <div class="file-dl"><i class="ph ph-download-simple"></i></div>
+                </div>
+                <div class="file-item">
+                    <div class="file-icon"><i class="ph ph-file-xls"></i></div>
+                    <div class="file-info">
+                        <div class="file-name">Protocolo de Registro de Sesión.xlsx</div>
+                        <div class="file-size">Excel · 340 KB · Plantilla clínica</div>
+                    </div>
+                    <div class="file-dl"><i class="ph ph-download-simple"></i></div>
+                </div>
+                <div class="file-item">
+                    <div class="file-icon"><i class="ph ph-film-strip"></i></div>
+                    <div class="file-info">
+                        <div class="file-name">Video Bonus: Demostración de Kinesio-test.mp4</div>
+                        <div class="file-size">MP4 · 180 MB · Recurso offline</div>
+                    </div>
+                    <div class="file-dl"><i class="ph ph-download-simple"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="lesson-nav">
+            <button class="btn-nav"><i class="ph ph-arrow-left"></i> Lección Anterior</button>
+            <div class="xp-toast"><i class="ph ph-star"></i> Completa para ganar +80 XP</div>
+            <button class="btn-nav btn-complete" onclick="completeLesson()">Marcar Completada <i class="ph ph-check-circle"></i></button>
+        </div>
+    </div>
+
+    <!-- Right: Comments -->
+    <div class="comments-panel">
+        <div class="cp-header">
+            <h3><i class="ph ph-chats-circle" style="color:var(--color-primary);"></i> Comentarios (14)</h3>
+            <div class="tab-toggle">
+                <button class="tt-btn active">Todos</button>
+                <button class="tt-btn">Dudas</button>
+            </div>
+        </div>
+
+        <div class="comments-list">
+            <!-- Instructor -->
+            <div class="comment-item">
+                <div class="cm-avatar instructor">E</div>
+                <div class="cm-body">
+                    <div class="cm-header">
+                        <span class="cm-name">Elena Soto <span class="instructor-tag">Instructora</span></span>
+                        <span class="cm-time">Hace 2 días</span>
+                    </div>
+                    <div class="cm-text" style="background:rgba(212,163,115,0.08); border:1px solid rgba(212,163,115,0.2);">Recuerden practicar el kinesio-test con una persona de confianza antes de su primera sesión clínica. ¡La práctica hace al maestro! Si tienen preguntas, estoy aquí 🌿</div>
+                    <div class="cm-actions"><span class="cm-act cm-likes"><i class="ph ph-heart-fill"></i> 12</span></div>
+                </div>
+            </div>
+
+            <!-- User 1 -->
+            <div class="comment-item">
+                <div class="cm-avatar" style="background:#8B6BAE;">C</div>
+                <div class="cm-body">
+                    <div class="cm-header"><span class="cm-name">Catalina R.</span><span class="cm-time">Hace 1 día</span></div>
+                    <div class="cm-text">¿El par Hígado-Hipotálamo siempre se aplica con el imán positivo en el hígado? Tengo dudas con la orientación.</div>
+                    <div class="cm-actions">
+                        <span class="cm-act cm-likes"><i class="ph ph-heart"></i> 3</span>
+                        <span class="cm-act"><i class="ph ph-chat"></i> Responder</span>
+                    </div>
+                    <div class="cm-reply">
+                        <div class="comment-item">
+                            <div class="cm-avatar instructor" style="width:26px;height:26px;font-size:0.7rem;">E</div>
+                            <div class="cm-body">
+                                <div class="cm-header"><span class="cm-name">Elena Soto <span class="instructor-tag">Instructora</span></span><span class="cm-time">Hace 22h</span></div>
+                                <div class="cm-text" style="font-size:0.84rem;">¡Exacto, Catalina! El polo positivo (negro) va siempre sobre el órgano con mayor densidad. En el par Hígado-Hipotálamo, el positivo va en el hígado. ✅</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User 2 -->
+            <div class="comment-item">
+                <div class="cm-avatar" style="background:#5B8A72;">J</div>
+                <div class="cm-body">
+                    <div class="cm-header"><span class="cm-name">Javiera M.</span><span class="cm-time">Hace 18h</span></div>
+                    <div class="cm-text">Increíble el material de esta lección. El PDF con el mapa de pares es un recurso de oro. ¡Gracias, Elena!</div>
+                    <div class="cm-actions">
+                        <span class="cm-act cm-likes"><i class="ph ph-heart-fill"></i> 8</span>
+                        <span class="cm-act"><i class="ph ph-chat"></i> Responder</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User 3 (me) -->
+            <div class="comment-item">
+                <div class="cm-avatar">M</div>
+                <div class="cm-body">
+                    <div class="cm-header"><span class="cm-name" style="color:var(--color-primary);">María G. (Tú)</span><span class="cm-time">Hace 5h</span></div>
+                    <div class="cm-text" style="background:rgba(104,122,97,0.06); border:1px solid rgba(104,122,97,0.15);">Me pregunto si la intensidad del imán cambia en pacientes pediátricos. ¿Hay un protocolo diferente para niños?</div>
+                    <div class="cm-actions">
+                        <span class="cm-act cm-likes"><i class="ph ph-heart"></i> 1</span>
+                        <span class="cm-act"><i class="ph ph-chat"></i> Responder</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input -->
+        <div class="comment-input">
+            <div class="ci-wrap">
+                <textarea class="ci-textarea" rows="2" placeholder="Haz una pregunta o comparte tu experiencia..."></textarea>
+                <button class="ci-btn"><i class="ph ph-paper-plane-tilt"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- XP Toast -->
+<div class="xp-notification" id="xpToast">
+    <i class="ph ph-star-four"></i>
+    <div>+80 XP ganados — ¡Excelente progreso! <br><span style="font-size:0.8rem; font-weight:400; color:rgba(255,255,255,0.7);">Ya completaste 9 lecciones</span></div>
+</div>
+
+<script>
+    function completeLesson() {
+        const toast = document.getElementById('xpToast');
+        toast.style.display = 'flex';
+        setTimeout(() => { toast.style.display = 'none'; }, 3500);
+        document.querySelector('.btn-complete').innerHTML = '✅ Completada';
+        document.querySelector('.btn-complete').style.background = 'var(--color-accent)';
+    }
+
+    // Lesson sidebar click
+    document.querySelectorAll('.lesson-item').forEach(item => {
+        item.addEventListener('click', function() {
+            if (!this.classList.contains('done') && !this.classList.contains('active')) return;
+            document.querySelectorAll('.lesson-item').forEach(i => { i.classList.remove('active'); i.querySelector('.lesson-icon').className = 'lesson-icon pending-ic'; i.querySelector('.lesson-icon').innerHTML = '<i class="ph ph-lock"></i>'; });
+            this.classList.add('active');
+        });
+    });
+</script>
+</body>
+</html>
