@@ -148,6 +148,17 @@ function verifyToken(req, res, next) {
 
 // --- Rutas de Cursos y LMS ---
 
+// Obtener lista de profesores (Para el frontend de Creador de Cursos / Admin)
+app.get('/api/usuarios/profesores', verifyToken, async (req, res) => {
+    try {
+        const [profesores] = await pool.query('SELECT id, nombre, email FROM usuarios WHERE rol = "profesor" OR rol = "admin"');
+        res.json(profesores);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error al obtener profesores' });
+    }
+});
+
 // Obtener todos los cursos (Público - para la vitrina)
 app.get('/api/cursos', async (req, res) => {
     try {
@@ -164,10 +175,11 @@ app.get('/api/cursos', async (req, res) => {
 app.post('/api/cursos', verifyToken, async (req, res) => {
     if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
     try {
-        const { titulo, descripcion, precio, portada_url, estado } = req.body;
+        const { titulo, descripcion, precio, portada_url, estado, profesor_id } = req.body;
+        const profAsignado = profesor_id || req.usuario.id;
         const result = await pool.query(
             'INSERT INTO cursos (titulo, descripcion, precio, portada_url, estado, profesor_id) VALUES (?, ?, ?, ?, ?, ?)',
-            [titulo, descripcion, precio, portada_url, estado, req.usuario.id]
+            [titulo, descripcion, precio, portada_url, estado, profAsignado]
         );
         res.json({ success: true, id: result[0].insertId });
     } catch (e) {
@@ -176,7 +188,24 @@ app.post('/api/cursos', verifyToken, async (req, res) => {
     }
 });
 
-// Obtener un curso específico
+// Cursos del Profesor (Para el panel del Profesor)
+app.get('/api/cursos/dictados', verifyToken, async (req, res) => {
+    if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
+    try {
+        const [cursos] = await pool.query(`
+            SELECT c.*, 
+                   (SELECT COUNT(*) FROM inscripciones WHERE curso_id = c.id) as alumnos 
+            FROM cursos c 
+            WHERE c.profesor_id = ?
+        `, [req.usuario.id]);
+        res.json(cursos);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error al obtener cursos dictados' });
+    }
+});
+
+// Inscribirse en un curso (Alumno)específico
 app.get('/api/cursos/:id', verifyToken, async (req, res) => {
     try {
         const [cursos] = await pool.query('SELECT * FROM cursos WHERE id = ?', [req.params.id]);
@@ -192,10 +221,11 @@ app.get('/api/cursos/:id', verifyToken, async (req, res) => {
 app.put('/api/cursos/:id', verifyToken, async (req, res) => {
     if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
     try {
-        const { titulo, descripcion, precio, portada_url, estado } = req.body;
+        const { titulo, descripcion, precio, portada_url, estado, profesor_id } = req.body;
+        const profAsignado = profesor_id || req.usuario.id;
         await pool.query(
-            'UPDATE cursos SET titulo=?, descripcion=?, precio=?, portada_url=?, estado=? WHERE id=?',
-            [titulo, descripcion, precio, portada_url, estado, req.params.id]
+            'UPDATE cursos SET titulo=?, descripcion=?, precio=?, portada_url=?, estado=?, profesor_id=? WHERE id=?',
+            [titulo, descripcion, precio, portada_url, estado, profAsignado, req.params.id]
         );
         res.json({ success: true, message: 'Curso actualizado con éxito' });
     } catch (e) {
