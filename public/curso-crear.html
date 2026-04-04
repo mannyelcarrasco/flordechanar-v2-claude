@@ -129,16 +129,12 @@
     </style>
 </head>
 <body>
-
-<!-- Header -->
 <div class="hdr">
-    <div class="hdr-l">
-        <a href="admin.html" class="hdr-back"><i class="ph ph-arrow-left"></i> Admin</a>
-        <span class="hdr-sep">|</span>
-        <span class="hdr-title">Crear Nuevo Curso</span>
-    </div>
+    <a href="javascript:goBack()" class="hdr-back"><i class="ph ph-arrow-left"></i> Volver</a>
+    <div class="hdr-title">Crear Nuevo Curso</div>
     <div class="hdr-r">
-        <button class="btn bo" onclick="saveDraft()"><i class="ph ph-floppy-disk"></i> Guardar borrador</button>
+        <button class="btn bo" id="deleteBtn" style="display:none; border-color: #EF4444; color: #EF4444;" onclick="deleteCourse()"><i class="ph ph-trash"></i> Eliminar</button>
+        <button class="btn bo" onclick="saveDraft()"><i class="ph ph-floppy-disk"></i> Guardar Borrador</button>
         <button class="btn bp" onclick="publishCourse()"><i class="ph ph-paper-plane-tilt"></i> Publicar Curso</button>
     </div>
 </div>
@@ -492,6 +488,7 @@ window.addEventListener('load', async () => {
         currentCourseId = id;
         document.querySelector('.hdr-title').textContent = 'Editar Curso';
         document.querySelector('.pub-btn + button').innerHTML = '<i class="ph ph-paper-plane-tilt"></i> Guardar Cambios';
+        document.getElementById('deleteBtn').style.display = 'inline-flex';
         
         try {
             const token = localStorage.getItem('token');
@@ -555,12 +552,36 @@ async function publishCourse() {
             return;
         }
 
-        showToast(currentCourseId ? '✅ Curso actualizado' : '✅ Curso publicado y guardado en la base de datos');
-        setTimeout(()=>window.location.href='admin.html', 2000);
+        showToast(currentCourseId ? '✅ Curso actualizado' : '✅ Curso publicado y guardado');
+        setTimeout(() => goBack(), 2000);
 
     } catch (e) {
         showToast('⚠️ Error de conexión con el servidor');
     }
+}
+
+async function deleteCourse() {
+    if(!confirm('¿Estás seguro de que deseas eliminar este curso y todo su progreso permanentemente?')) return;
+    
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/cursos/' + currentCourseId, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if(res.ok) {
+            showToast('✅ Curso eliminado');
+            setTimeout(() => goBack(), 1500);
+        } else {
+            showToast('⚠️ Error al eliminar. Solo admin permitido.');
+        }
+    } catch(e) { console.error(e); }
+}
+
+function goBack() {
+    const rol = localStorage.getItem('rol');
+    if (rol === 'profesor') window.location.href = 'profesor.html?tab=cursos';
+    else window.location.href = 'admin.html?tab=cursos';
 }
 
 function showToast(msg) {

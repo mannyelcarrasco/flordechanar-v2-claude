@@ -118,7 +118,7 @@
 </head>
 <body>
 <aside class="sb">
-    <div class="sb-logo"><i class="ph ph-leaf"></i> Flor de Chañar</div>
+    <div class="sb-logo"><img src="logo.png" style="height:28px;border-radius:50%;margin-right:8px;object-fit:cover;"> Flor de Chañar</div>
     <div class="sb-role"><i class="ph ph-chalkboard-teacher"></i> Modo Profesor</div>
     <div class="sb-sect">Mi Espacio</div>
     <ul class="sb-nav">
@@ -333,6 +333,11 @@ function showT(msg,icon){const t=document.getElementById('toast');document.getEl
 function addFiles(input,listId){const l=document.getElementById(listId);l.style.display='flex';l.style.flexDirection='column';[...input.files].forEach(f=>{const d=document.createElement('div');d.className='fr';d.innerHTML=`<i class="ph ph-file"></i><span class="fn">${f.name}</span><span class="fs">${(f.size/1024/1024).toFixed(1)} MB</span><i class="ph ph-trash fd" onclick="this.parentNode.remove()"></i>`;l.appendChild(d)})}
 
 renderG();
+
+window.onload = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if(urlParams.get('tab') === 'cursos') sw(null, 'tc');
+};
 </script>
 </body>
 </html>

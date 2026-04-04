@@ -96,11 +96,24 @@
         .wh-section{margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid #F1F5F9}
         @media(max-width:768px){.stats{grid-template-columns:1fr 1fr}.int-grid{grid-template-columns:1fr}}
     </style>
+    <script>
+        window.onload = () => {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('tab') === 'cursos') st(null, 'tc');
+        };
+        function st(e, id) {
+            if(e) e.preventDefault();
+            document.querySelectorAll('.tp').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.querySelector(`[onclick="st(event,'${id}')"]`)?.classList.add('active');
+        }
+    </script>
 </head>
 <body>
 
 <aside class="sb">
-    <div class="sb-logo"><i class="ph ph-leaf"></i> Flor de Chañar</div>
+    <div class="sb-logo"><img src="logo.png" style="height:28px;border-radius:50%;margin-right:8px;object-fit:cover;"> Flor de Chañar</div>
     <div class="sb-role"><i class="ph ph-shield-check"></i> Administrador</div>
     <div class="sb-s">Plataforma</div>
     <ul class="sb-n">
@@ -574,6 +587,27 @@ async function renderAdminCourses() {
     }
 }
 renderAdminCourses();
+
+// Init default tab if provided in URL
+const urlParams = new URLSearchParams(window.location.search);
+if(urlParams.get('tab') === 'cursos') {
+    // Switch to 'Cursos' tab visually
+    const tabs = document.querySelectorAll('.tabs .tab');
+    if(tabs.length > 1) {
+        tabs.forEach(t => t.classList.remove('active'));
+        tabs[1].classList.add('active'); // Second tab is Cursos
+        document.querySelectorAll('.tp').forEach(t => t.classList.remove('active'));
+        document.getElementById('tc').classList.add('active');
+        
+        // Update header action button logic for Cursos
+        const hdrLbl=document.getElementById('headerActionLabel');
+        const hdrIc=document.getElementById('headerActionIcon');
+        const hdrBtn=document.getElementById('headerActionBtn');
+        hdrLbl.textContent='Crear Nuevo Curso';
+        hdrIc.className='ph ph-plus';
+        hdrBtn.onclick=function(){window.location.href='curso-crear.html'};
+    }
+}
 </script>
 </body>
 </html>
