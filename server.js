@@ -52,7 +52,35 @@ async function initDB() {
                 creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
-        console.log('Table usuarios checked/created.');
+
+        // Tabla Cursos
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS cursos (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                titulo VARCHAR(300) NOT NULL,
+                descripcion TEXT,
+                precio INT DEFAULT 0,
+                portada_url VARCHAR(500),
+                estado ENUM('borrador','publicado','archivado') DEFAULT 'borrador',
+                profesor_id INT,
+                creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (profesor_id) REFERENCES usuarios(id)
+            )
+        `);
+
+        // Tabla Inscripciones
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS inscripciones (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                usuario_id INT NOT NULL,
+                curso_id INT NOT NULL,
+                creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE (usuario_id, curso_id),
+                FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
+                FOREIGN KEY (curso_id) REFERENCES cursos(id)
+            )
+        `);
+        console.log('Tables checked/created: usuarios, cursos, inscripciones.');
 
         // Insert default admin if none exists
         const [rows] = await pool.query('SELECT * FROM usuarios WHERE rol = "admin"');
@@ -105,18 +133,84 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
+// Middleware Auth
+function verifyToken(req, res, next) {
+    const bearerHeader = req.headers['authorization'];
+    if (!bearerHeader) return res.status(403).json({ error: 'No token provided' });
+    
+    const token = bearerHeader.split(' ')[1];
+    jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_flordechanar', (err, decoded) => {
+        if (err) return res.status(401).json({ error: 'Unauthorized' });
+        req.usuario = decoded;
+        next();
+    });
+}
+
+// --- Rutas de Cursos y LMS ---
+
+// Obtener todos los cursos (Público - para la vitrina)
+app.get('/api/cursos', async (req, res) => {
+    try {
+        if (!pool) return res.status(500).json({ error: 'Database not connected' });
+        const [cursos] = await pool.query('SELECT c.id, c.titulo, c.descripcion, c.precio, c.portada_url, u.nombre as profesor FROM cursos c LEFT JOIN usuarios u ON c.profesor_id = u.id WHERE c.estado = "publicado"');
+        res.json(cursos);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error al obtener cursos' });
+    }
+});
+
+// Crear Curso (Protegido Admin/Profesor)
+app.post('/api/cursos', verifyToken, async (req, res) => {
+    if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
+    try {
+        const { titulo, descripcion, precio, portada_url, estado } = req.body;
+        const result = await pool.query(
+            'INSERT INTO cursos (titulo, descripcion, precio, portada_url, estado, profesor_id) VALUES (?, ?, ?, ?, ?, ?)',
+            [titulo, descripcion, precio, portada_url, estado, req.usuario.id]
+        );
+        res.json({ success: true, id: result[0].insertId });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error al crear curso' });
+    }
+});
+
+// Cursos del Alumno
+app.get('/api/cursos/mis-cursos', verifyToken, async (req, res) => {
+    try {
+        const [cursos] = await pool.query(`
+            SELECT c.* FROM cursos c
+            JOIN inscripciones i ON c.id = i.curso_id
+            WHERE i.usuario_id = ?
+        `, [req.usuario.id]);
+        res.json(cursos);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error al obtener mis cursos' });
+    }
+});
+
+// Inscribirse
+app.post('/api/cursos/inscribir', verifyToken, async (req, res) => {
+    try {
+        const { curso_id } = req.body;
+        await pool.query('INSERT IGNORE INTO inscripciones (usuario_id, curso_id) VALUES (?, ?)', [req.usuario.id, curso_id]);
+        res.json({ success: true, message: 'Inscrito correctamente' });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error en inscripción' });
+    }
+});
+
 // Any Uncaught API routes return 404
 app.use('/api', (req, res) => {
     res.status(404).json({ error: 'Endpoint no encontrado' });
 });
 
 // Frontend fallback: For any GET route not matched by static or api, serve index.html
-app.use((req, res, next) => {
-    if (req.method === 'GET') {
-        res.sendFile(path.join(__dirname, 'public', 'index.html'));
-    } else {
-        next();
-    }
+app.get(/.*/, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 const PORT = process.env.PORT || 3000;
