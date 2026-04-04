@@ -575,6 +575,17 @@
             
             .path-card { padding: 2rem 1.5rem; }
         }
+        /* WhatsApp flotante */
+        .wa-float{position:fixed;bottom:2rem;right:2rem;width:60px;height:60px;background:#25D366;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;color:#fff;box-shadow:0 4px 20px rgba(37,211,102,.4);z-index:9999;transition:all .3s ease;text-decoration:none;animation:waPulse 2.5s infinite}
+        .wa-float:hover{transform:scale(1.12);box-shadow:0 8px 30px rgba(37,211,102,.6)}
+        @keyframes waPulse{0%,100%{box-shadow:0 4px 20px rgba(37,211,102,.4)}50%{box-shadow:0 4px 30px rgba(37,211,102,.75)}}
+        /* Contacto */
+        .contacto-section{background:var(--color-bg-alt);padding:70px 0;text-align:center}
+        .contacto-section h2{margin-bottom:1rem}
+        .contacto-section p{color:var(--color-text-light);margin-bottom:2rem;max-width:520px;margin-left:auto;margin-right:auto}
+        .wa-cta{display:inline-flex;align-items:center;gap:.6rem;padding:1rem 2.2rem;background:#25D366;color:#fff;border-radius:var(--radius-full);font-size:1.05rem;font-weight:600;text-decoration:none;transition:var(--transition-smooth)}
+        .wa-cta:hover{background:#1ebe5d;transform:translateY(-2px);box-shadow:0 10px 25px rgba(37,211,102,.3)}
+        @media(max-width:768px){.wa-cta{font-size:.95rem;padding:.85rem 1.6rem}}
     </style>
 </head>
 <body>
@@ -582,8 +593,8 @@
     <!-- Header -->
     <header id="header">
         <div class="container header-content">
-            <a href="#" class="logo">
-                <i class="ph ph-leaf" style="color: var(--color-primary);"></i>
+            <a href="index.html" class="logo">
+                <img src="logo.png" alt="Flor de Chañar" style="height:52px;width:52px;object-fit:contain;border-radius:50%">
                 Flor de Chañar
             </a>
             
@@ -719,6 +730,26 @@
             </div>
         </div>
     </section>
+
+    <!-- Contacto Section -->
+    <section class="contacto-section" id="contacto">
+        <div class="container">
+            <h2>Contáctanos</h2>
+            <p>Escríbenos directamente por WhatsApp. Respondemos todas las consultas sobre terapias, cursos y disponibilidad de horarios.</p>
+            <a href="https://wa.me/56912345678?text=Hola%20Flor%20de%20Cha%C3%B1ar%2C%20me%20gustar%C3%ADa%20obtener%20m%C3%A1s%20informaci%C3%B3n" class="wa-cta" target="_blank">
+                <i class="ph ph-whatsapp-logo" style="font-size:1.4rem"></i>
+                Escríbenos por WhatsApp
+            </a>
+            <div style="margin-top:2.5rem;display:flex;justify-content:center;gap:3rem;flex-wrap:wrap;font-size:.9rem;color:var(--color-text-light)">
+                <div><i class="ph ph-map-pin" style="color:var(--color-primary)"></i> <strong>Calama</strong> &mdash; Región de Antofagasta</div>
+                <div><i class="ph ph-map-pin" style="color:var(--color-primary)"></i> <strong>La Serena</strong> &mdash; Región de Coquimbo</div>
+                <div><i class="ph ph-video-camera" style="color:var(--color-primary)"></i> <strong>Online</strong> &mdash; Todo Chile y exterior</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- WhatsApp Flotante -->
+    <a href="https://wa.me/56912345678?text=Hola%20Flor%20de%20Cha%C3%B1ar%2C%20me%20gustar%C3%ADa%20obtener%20m%C3%A1s%20informaci%C3%B3n" class="wa-float" target="_blank" title="Escríbenos por WhatsApp"><i class="ph ph-whatsapp-logo"></i></a>
 
     <!-- Footer -->
     <footer>

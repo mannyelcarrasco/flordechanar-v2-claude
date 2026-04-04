@@ -113,6 +113,9 @@
             .school-layout { grid-template-columns: 1fr; }
             .school-sidebar { position: relative; top: 0; }
         }
+        .wa-float{position:fixed;bottom:2rem;right:2rem;width:60px;height:60px;background:#25D366;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;color:#fff;box-shadow:0 4px 20px rgba(37,211,102,.4);z-index:9999;transition:all .3s ease;text-decoration:none;animation:waPulse 2.5s infinite}
+        .wa-float:hover{transform:scale(1.12);box-shadow:0 8px 30px rgba(37,211,102,.6)}
+        @keyframes waPulse{0%,100%{box-shadow:0 4px 20px rgba(37,211,102,.4)}50%{box-shadow:0 4px 30px rgba(37,211,102,.75)}}
         @media (max-width: 768px) {
             .nav-links, .header-actions .btn-primary { display: none; }
             .mobile-menu-btn { display: block; }
@@ -125,12 +128,14 @@
     <header id="header">
         <div class="container header-content">
             <a href="index.html" class="logo">
-                <i class="ph ph-leaf" style="color: var(--color-primary);"></i>Flor de Chañar
+                <img src="logo.png" alt="Flor de Chañar" style="height:52px;width:52px;object-fit:contain;border-radius:50%">
+                Flor de Chañar
             </a>
             <nav class="nav-links">
                 <a href="index.html">Inicio</a>
                 <a href="terapias.html">Terapias</a>
                 <a href="escuela.html" class="active">Escuela</a>
+                <a href="index.html#sedes">Sedes</a>
                 <a href="index.html#contacto">Contacto</a>
             </nav>
             <div class="header-actions">
@@ -233,6 +238,8 @@
             </main>
         </section>
     </div>
+    <!-- WhatsApp Flotante -->
+    <a href="https://wa.me/56912345678?text=Hola%20Flor%20de%20Cha%C3%B1ar%2C%20me%20gustar%C3%ADa%20obtener%20m%C3%A1s%20informaci%C3%B3n" class="wa-float" target="_blank" title="Escríbenos por WhatsApp"><i class="ph ph-whatsapp-logo"></i></a>
 
 </body>
 </html>

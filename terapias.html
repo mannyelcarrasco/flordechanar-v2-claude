@@ -117,6 +117,12 @@
         footer { background-color: var(--color-secondary); color: var(--color-white); padding: 60px 0 20px; }
         .footer-bottom { text-align: center; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); font-size: 0.85rem; margin-top: 4rem; }
 
+        /* WhatsApp flotante */
+        .wa-float{position:fixed;bottom:2rem;right:2rem;width:60px;height:60px;background:#25D366;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;color:#fff;box-shadow:0 4px 20px rgba(37,211,102,.4);z-index:9999;transition:all .3s ease;text-decoration:none;animation:waPulse 2.5s infinite}
+        .wa-float:hover{transform:scale(1.12);box-shadow:0 8px 30px rgba(37,211,102,.6)}
+        @keyframes waPulse{0%,100%{box-shadow:0 4px 20px rgba(37,211,102,.4)}50%{box-shadow:0 4px 30px rgba(37,211,102,.75)}}
+        /* Sede panels */
+        .sede-panel{display:none}.sede-panel.active{display:flex}
         @media (max-width: 768px) {
             .nav-links, .header-actions .btn-primary { display: none; }
             .mobile-menu-btn { display: block; }
@@ -130,12 +136,14 @@
     <header id="header">
         <div class="container header-content">
             <a href="index.html" class="logo">
-                <i class="ph ph-leaf" style="color: var(--color-primary);"></i>Flor de Chañar
+                <img src="logo.png" alt="Flor de Chañar" style="height:52px;width:52px;object-fit:contain;border-radius:50%">
+                Flor de Chañar
             </a>
             <nav class="nav-links">
                 <a href="index.html">Inicio</a>
                 <a href="terapias.html" class="active">Terapias</a>
                 <a href="escuela.html">Escuela</a>
+                <a href="index.html#sedes">Sedes</a>
                 <a href="index.html#contacto">Contacto</a>
             </nav>
             <div class="header-actions">
@@ -191,19 +199,45 @@
             <p>Selecciona tu ciudad. Nuestro nuevo sistema te permite reservar en menos de 1 minuto sin complicaciones ni registros extensos.</p>
             
             <div class="booking-tabs">
-                <button class="b-tab active">Sede Calama</button>
-                <button class="b-tab">Sede La Serena</button>
-                <button class="b-tab">Online (Videollamada)</button>
+                <button class="b-tab active" onclick="switchSede(this,'sede-calama')">Sede Calama</button>
+                <button class="b-tab" onclick="switchSede(this,'sede-serena')">Sede La Serena</button>
+                <button class="b-tab" onclick="switchSede(this,'sede-online')">Online (Videollamada)</button>
             </div>
 
-            <div class="mock-calendly">
-                <div style="text-align: center;">
-                    <i class="ph ph-calendar-check" style="font-size: 4rem; color: #cbd5e1; margin-bottom: 1rem;"></i>
-                    <p style="font-size: 1.2rem; color: #94a3b8;">Aquí se incrustará tu nuevo motor de reservas (ej. Calendly)<br>Cero fricción, 100% amigable en móviles.</p>
+            <!-- Panel Calama -->
+            <div class="mock-calendly sede-panel active" id="sede-calama">
+                <div style="text-align:center">
+                    <i class="ph ph-map-pin" style="font-size:3rem;color:#cbd5e1;margin-bottom:.75rem"></i>
+                    <p style="font-size:1.15rem;color:#94a3b8;margin-bottom:1rem"><strong style="color:#fff">Sede Calama</strong><br>Elige tu terapeuta y reserva tu hora.</p>
+                    <p style="font-size:.9rem;color:rgba(255,255,255,.5)">📍 Calama, Región de Antofagasta<br>📞 Contáctanos por WhatsApp para disponibilidad inmediata</p>
+                    <a href="https://wa.me/56912345678?text=Hola%2C%20quiero%20agendar%20una%20sesi%C3%B3n%20en%20Calama" target="_blank" style="display:inline-flex;align-items:center;gap:.5rem;margin-top:1.5rem;padding:.8rem 1.8rem;background:#25D366;color:#fff;border-radius:9999px;font-weight:600;text-decoration:none"><i class="ph ph-whatsapp-logo"></i> Agendar por WhatsApp</a>
+                </div>
+            </div>
+
+            <!-- Panel La Serena -->
+            <div class="mock-calendly sede-panel" id="sede-serena">
+                <div style="text-align:center">
+                    <i class="ph ph-waves" style="font-size:3rem;color:#cbd5e1;margin-bottom:.75rem"></i>
+                    <p style="font-size:1.15rem;color:#94a3b8;margin-bottom:1rem"><strong style="color:#fff">Sede La Serena</strong><br>Nueva locación, misma calidad de atención.</p>
+                    <p style="font-size:.9rem;color:rgba(255,255,255,.5)">📍 La Serena, Región de Coquimbo<br>📞 Contáctanos por WhatsApp para disponibilidad inmediata</p>
+                    <a href="https://wa.me/56912345678?text=Hola%2C%20quiero%20agendar%20una%20sesi%C3%B3n%20en%20La%20Serena" target="_blank" style="display:inline-flex;align-items:center;gap:.5rem;margin-top:1.5rem;padding:.8rem 1.8rem;background:#25D366;color:#fff;border-radius:9999px;font-weight:600;text-decoration:none"><i class="ph ph-whatsapp-logo"></i> Agendar por WhatsApp</a>
+                </div>
+            </div>
+
+            <!-- Panel Online -->
+            <div class="mock-calendly sede-panel" id="sede-online">
+                <div style="text-align:center">
+                    <i class="ph ph-video-camera" style="font-size:3rem;color:#cbd5e1;margin-bottom:.75rem"></i>
+                    <p style="font-size:1.15rem;color:#94a3b8;margin-bottom:1rem"><strong style="color:#fff">Sesión Online</strong><br>Videollamada desde donde estés, sin desplazamientos.</p>
+                    <p style="font-size:.9rem;color:rgba(255,255,255,.5)">🌐 Disponible para todo Chile y el exterior<br>📞 Contáctanos para coordinar día y hora</p>
+                    <a href="https://wa.me/56912345678?text=Hola%2C%20quiero%20agendar%20una%20sesi%C3%B3n%20online" target="_blank" style="display:inline-flex;align-items:center;gap:.5rem;margin-top:1.5rem;padding:.8rem 1.8rem;background:#25D366;color:#fff;border-radius:9999px;font-weight:600;text-decoration:none"><i class="ph ph-whatsapp-logo"></i> Agendar por WhatsApp</a>
                 </div>
             </div>
         </section>
     </div>
+
+    <!-- WhatsApp Flotante -->
+    <a href="https://wa.me/56912345678?text=Hola%20Flor%20de%20Cha%C3%B1ar%2C%20me%20gustar%C3%ADa%20obtener%20m%C3%A1s%20informaci%C3%B3n" class="wa-float" target="_blank" title="Escríbenos por WhatsApp"><i class="ph ph-whatsapp-logo"></i></a>
 
     <footer>
         <div class="container">
@@ -212,6 +246,14 @@
             </div>
         </div>
     </footer>
-    <script> document.getElementById('year').textContent = new Date().getFullYear(); </script>
+    <script>
+        document.getElementById('year').textContent = new Date().getFullYear();
+        function switchSede(btn, sedeId) {
+            document.querySelectorAll('.b-tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.sede-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById(sedeId).classList.add('active');
+        }
+    </script>
 </body>
 </html>
