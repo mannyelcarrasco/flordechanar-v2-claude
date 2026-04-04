@@ -166,32 +166,8 @@
         <div class="tw">
             <table>
                 <thead><tr><th>Curso</th><th>Estado</th><th>Alumnos</th><th>Promedio</th><th>Próx. Clase</th><th>Acciones</th></tr></thead>
-                <tbody>
-                    <tr>
-                        <td><div class="tn">Diplomado Biomagnetismo Clínico</div><div class="ts">Módulo 4 · 14 lecciones · Acceso completo</div></td>
-                        <td><span class="bp bpA">● Activo</span></td><td>42</td>
-                        <td><div class="pp"><div class="pb"><div class="pf" style="width:74%"></div></div><span class="pct">5.9/7.0</span></div></td>
-                        <td class="ts">Jue 27 Mar · 19:00h</td>
-                        <td><div style="display:flex;gap:.4rem">
-                            <button class="btn btn-o btn-sm" onclick="st(null,'tn')">Ver notas</button>
-                            <a href="curso-crear.html" class="btn btn-p btn-sm"><i class="ph ph-pencil"></i> Editar curso</a>
-                        </div></td>
-                    </tr>
-                    <tr>
-                        <td><div class="tn">Iniciación al Reiki Nivel 1 y 2</div><div class="ts">Módulo 2 · 8 lecciones · Acceso completo</div></td>
-                        <td><span class="bp bpA">● Activo</span></td><td>31</td>
-                        <td><div class="pp"><div class="pb"><div class="pf" style="width:82%"></div></div><span class="pct">6.2/7.0</span></div></td>
-                        <td class="ts">Vie 28 Mar · 18:00h</td>
-                        <td><div style="display:flex;gap:.4rem">
-                            <button class="btn btn-o btn-sm" onclick="st(null,'tn')">Ver notas</button>
-                            <a href="curso-crear.html" class="btn btn-p btn-sm"><i class="ph ph-pencil"></i> Editar curso</a>
-                        </div></td>
-                    </tr>
-                    <tr>
-                        <td><div class="tn">Terapia Floral — Módulo Avanzado</div><div class="ts">En preparación · Solo contenido</div></td>
-                        <td><span class="bp bpD">Borrador</span></td><td>—</td><td>—</td><td class="ts">Sin programar</td>
-                        <td><button class="btn btn-o btn-sm" onclick="st(null,'tu')">Subir contenido</button></td>
-                    </tr>
+                <tbody id="profesorCoursesBody">
+                    <tr><td colspan="6" style="text-align:center; padding: 2rem;">Cargando tus cursos asignados...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -344,7 +320,62 @@ renderG();
 window.onload = () => {
     const urlParams = new URLSearchParams(window.location.search);
     if(urlParams.get('tab') === 'cursos') sw(null, 'tc');
+    fetchDictados();
 };
+
+async function fetchDictados() {
+    const tbody = document.getElementById('profesorCoursesBody');
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/cursos/dictados', { headers: { 'Authorization': 'Bearer ' + token } });
+        if(!res.ok) throw new Error();
+        
+        const cursos = await res.json();
+        
+        if (cursos.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem;">Aún no tienes cursos asignados como responsable.</td></tr>';
+            
+            // Actualizar Stats a 0
+            document.querySelectorAll('.sn').forEach((el, index) => {
+                if(index === 0) el.textContent = '0';
+                if(index === 1) el.textContent = '0';
+            });
+            return;
+        }
+
+        tbody.innerHTML = '';
+        let totalAlumnos = 0;
+        
+        cursos.forEach(c => {
+            totalAlumnos += c.alumnos || 0;
+            const estadoCls = c.estado === 'publicado' ? 'bpA' : 'bpD';
+            const estadoTxt = c.estado === 'publicado' ? '● Activo' : 'Borrador';
+            
+            tbody.innerHTML += `
+                <tr>
+                    <td><div class="tn">${c.titulo}</div><div class="ts">Acceso asignado</div></td>
+                    <td><span class="bp ${estadoCls}">${estadoTxt}</span></td>
+                    <td>${c.alumnos || 0}</td>
+                    <td><span class="ts">Sin datos</span></td>
+                    <td class="ts">Sin programar</td>
+                    <td><div style="display:flex;gap:.4rem">
+                        <button class="btn btn-o btn-sm" onclick="showT('Próximamente','ph-info')">Ver notas</button>
+                        <a href="curso-crear.html?id=${c.id}" class="btn btn-p btn-sm"><i class="ph ph-pencil"></i> Editar curso</a>
+                    </div></td>
+                </tr>
+            `;
+        });
+        
+        // Actualizar Stats dinámicamente
+        document.querySelectorAll('.sn').forEach((el, index) => {
+            if(index === 0) el.textContent = cursos.length;
+            if(index === 1) el.textContent = totalAlumnos;
+        });
+
+    } catch(e) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem; color:red;">Error al cargar tus cursos dictados</td></tr>';
+    }
+}
 </script>
 </body>
 </html>

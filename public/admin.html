@@ -194,49 +194,16 @@
         <p style="font-size:.86rem;color:var(--l);margin-bottom:1.1rem">Define qué cursos puede ver, editar y evaluar cada profesor. Los cambios se guardan automáticamente.</p>
         <div class="matrix">
             <table>
-                <thead>
+                <thead id="accessTableHead">
                     <tr>
                         <th>Profesor</th>
-                        <th style="text-align:center">Biomagnetismo</th>
-                        <th style="text-align:center">Reiki</th>
-                        <th style="text-align:center">T. Floral</th>
-                        <th style="text-align:center">Masoterapia</th>
                         <th style="text-align:center">Puede Evaluar</th>
                         <th style="text-align:center">Puede Editar</th>
                         <th style="text-align:center">Clases en Vivo</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr>
-                        <td><div style="display:flex;align-items:center;gap:.6rem"><div style="width:28px;height:28px;border-radius:50%;background:var(--ac);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.72rem;color:#fff">E</div><div class="tn">Elena Soto</div></div></td>
-                        <td style="text-align:center"><input type="checkbox" class="chk" checked onchange="showT('Accesos actualizados')"></td>
-                        <td style="text-align:center"><input type="checkbox" class="chk" checked onchange="showT('Accesos actualizados')"></td>
-                        <td style="text-align:center"><input type="checkbox" class="chk" checked onchange="showT('Accesos actualizados')"></td>
-                        <td style="text-align:center"><input type="checkbox" class="chk" onchange="showT('Accesos actualizados')"></td>
-                        <td style="text-align:center"><input type="checkbox" class="chk" checked onchange="showT('Accesos actualizados')"></td>
-                        <td style="text-align:center"><input type="checkbox" class="chk" checked onchange="showT('Accesos actualizados')"></td>
-                        <td style="text-align:center"><input type="checkbox" class="chk" checked onchange="showT('Accesos actualizados')"></td>
-                    </tr>
-                    <tr>
-                        <td><div style="display:flex;align-items:center;gap:.6rem"><div style="width:28px;height:28px;border-radius:50%;background:var(--p);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.72rem;color:#fff">C</div><div class="tn">Carmen Ruiz</div></div></td>
-                        <td style="text-align:center"><input type="checkbox" class="chk" onchange="showT('Accesos actualizados')"></td>
-                        <td style="text-align:center"><input type="checkbox" class="chk" onchange="showT('Accesos actualizados')"></td>
-                        <td style="text-align:center"><input type="checkbox" class="chk" onchange="showT('Accesos actualizados')"></td>
-                        <td style="text-align:center"><input type="checkbox" class="chk" checked onchange="showT('Accesos actualizados')"></td>
-                        <td style="text-align:center"><input type="checkbox" class="chk" checked onchange="showT('Accesos actualizados')"></td>
-                        <td style="text-align:center"><input type="checkbox" class="chk" onchange="showT('Accesos actualizados')"></td>
-                        <td style="text-align:center"><input type="checkbox" class="chk" checked onchange="showT('Accesos actualizados')"></td>
-                    </tr>
-                    <tr>
-                        <td><div style="display:flex;align-items:center;gap:.6rem"><div style="width:28px;height:28px;border-radius:50%;background:#8B6BAE;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.72rem;color:#fff">R</div><div class="tn">Roberto Díaz <span class="bp2 bD" style="font-size:.62rem;margin-left:.3rem">Pendiente</span></div></div></td>
-                        <td style="text-align:center"><input type="checkbox" class="chk" onchange="showT('Accesos actualizados')"></td>
-                        <td style="text-align:center"><input type="checkbox" class="chk" checked onchange="showT('Accesos actualizados')"></td>
-                        <td style="text-align:center"><input type="checkbox" class="chk" onchange="showT('Accesos actualizados')"></td>
-                        <td style="text-align:center"><input type="checkbox" class="chk" onchange="showT('Accesos actualizados')"></td>
-                        <td style="text-align:center"><input type="checkbox" class="chk" onchange="showT('Accesos actualizados')"></td>
-                        <td style="text-align:center"><input type="checkbox" class="chk" onchange="showT('Accesos actualizados')"></td>
-                        <td style="text-align:center"><input type="checkbox" class="chk" onchange="showT('Accesos actualizados')"></td>
-                    </tr>
+                <tbody id="accessTableBody">
+                    <tr><td colspan="8" style="text-align:center; padding: 2rem;">Cargando matriz de acceso...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -589,6 +556,52 @@ async function renderAdminCourses() {
     }
 }
 renderAdminCourses();
+
+// Render Matrix de Accesos Profesores
+async function renderAccessMatrix() {
+    try {
+        const token = localStorage.getItem('token');
+        const resProf = await fetch('/api/usuarios/profesores', { headers: {'Authorization': 'Bearer ' + token} });
+        const profesores = await resProf.json();
+        
+        const resCur = await fetch('/api/cursos');
+        const cursos = await resCur.json();
+
+        // Build Head
+        let theadHTML = `<tr><th>Profesor</th>`;
+        cursos.forEach(c => {
+            let truncTitle = c.titulo.length > 20 ? c.titulo.substring(0,18)+'...' : c.titulo;
+            theadHTML += `<th style="text-align:center" title="${c.titulo}">${truncTitle}</th>`;
+        });
+        theadHTML += `<th style="text-align:center">Puede Evaluar</th><th style="text-align:center">Puede Editar</th><th style="text-align:center">Clases en Vivo</th></tr>`;
+        document.getElementById('accessTableHead').innerHTML = theadHTML;
+
+        // Build Body
+        let tbodyHTML = '';
+        profesores.forEach(p => {
+            const colors = ['#D4A373', '#687A61', '#8B6BAE'];
+            const bg = colors[p.id % colors.length];
+            const init = p.nombre.charAt(0).toUpperCase();
+
+            tbodyHTML += `<tr>
+                <td><div style="display:flex;align-items:center;gap:.6rem"><div style="width:28px;height:28px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.72rem;color:#fff">${init}</div><div class="tn">${p.nombre}</div></div></td>`;
+            
+            cursos.forEach(c => {
+                const isAssigned = (c.profesor_id === p.id);
+                tbodyHTML += `<td style="text-align:center"><input type="checkbox" class="chk" ${isAssigned ? 'checked' : ''} onchange="showT('Los accesos se otorgan al momento de Editar/Crear el curso.')"></td>`;
+            });
+            // Fixed base columns
+            tbodyHTML += `<td style="text-align:center"><input type="checkbox" class="chk" checked onchange="showT('Accesos actualizados')"></td>
+                          <td style="text-align:center"><input type="checkbox" class="chk" onchange="showT('Accesos actualizados')"></td>
+                          <td style="text-align:center"><input type="checkbox" class="chk" checked onchange="showT('Accesos actualizados')"></td></tr>`;
+        });
+        
+        document.getElementById('accessTableBody').innerHTML = tbodyHTML;
+    } catch(e) {
+        console.error(e);
+    }
+}
+renderAccessMatrix();
 
 // Init default tab if provided in URL
 const urlParams = new URLSearchParams(window.location.search);

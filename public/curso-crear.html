@@ -234,34 +234,8 @@
             <!-- Show when "Asignar a Profesor" is selected -->
             <div class="professor-assign" id="professorPanel">
                 <label class="fl" style="margin-bottom:.65rem">Selecciona el profesor responsable:</label>
-                <div class="prof-grid">
-                    <div class="prof-row" id="profElena" onclick="selectProf('elena')">
-                        <div class="prof-av" style="background:var(--ac)">E</div>
-                        <div style="flex:1">
-                            <div class="prof-name">Elena Soto</div>
-                            <div class="prof-spec">Especialista en Biomagnetismo · 3 cursos activos</div>
-                        </div>
-                        <div class="prof-perms"><span class="perm-tag perm-full">Acceso completo</span></div>
-                        <i class="ph ph-check-circle" style="color:var(--p);display:none" id="checkElena"></i>
-                    </div>
-                    <div class="prof-row" id="profCarmen" onclick="selectProf('carmen')">
-                        <div class="prof-av" style="background:var(--p)">C</div>
-                        <div style="flex:1">
-                            <div class="prof-name">Carmen Ruiz</div>
-                            <div class="prof-spec">Masoterapia y Terapias Corporales · 1 curso activo</div>
-                        </div>
-                        <div class="prof-perms"><span class="perm-tag perm-content">Contenido</span><span class="perm-tag perm-eval">Evaluaciones</span></div>
-                        <i class="ph ph-check-circle" style="color:var(--p);display:none" id="checkCarmen"></i>
-                    </div>
-                    <div class="prof-row" id="profRoberto" onclick="selectProf('roberto')">
-                        <div class="prof-av" style="background:#8B6BAE">R</div>
-                        <div style="flex:1">
-                            <div class="prof-name">Roberto Díaz</div>
-                            <div class="prof-spec">Reiki y Medicina Energética · Nuevo en la plataforma</div>
-                        </div>
-                        <div class="prof-perms"><span class="perm-tag perm-readonly">Solo contenido</span></div>
-                        <i class="ph ph-check-circle" style="color:var(--p);display:none" id="checkRoberto"></i>
-                    </div>
+                <div class="prof-grid" id="professorsContainer">
+                    <div style="font-size:0.85rem;color:var(--l);">Cargando profesores...</div>
                 </div>
 
                 <!-- Permission level for selected professor -->
@@ -387,28 +361,36 @@
 <div class="toast" id="toast"><i class="ph ph-check-circle"></i><span id="tM">Guardado</span></div>
 
 <script>
-let assignMode = 'admin';
-let selectedProf = null;
+let currentMode = 'admin';
+let selectedProfId = null;
 
 function selectMode(mode) {
-    assignMode = mode;
+    currentMode = mode;
     document.getElementById('modeAdmin').classList.toggle('selected', mode==='admin');
     document.getElementById('modeProfesor').classList.toggle('selected', mode==='profesor');
     document.getElementById('professorPanel').classList.toggle('visible', mode==='profesor');
     updateChecklist();
 }
 
-function selectProf(prof) {
-    selectedProf = prof;
-    ['elena','carmen','roberto'].forEach(p => {
-        document.getElementById('prof'+p.charAt(0).toUpperCase()+p.slice(1)).classList.toggle('selected', p===prof);
-        document.getElementById('check'+p.charAt(0).toUpperCase()+p.slice(1)).style.display = p===prof ? 'block' : 'none';
+function selectProfReal(id, name) {
+    selectedProfId = id;
+    document.querySelectorAll('.prof-row').forEach(row => {
+        row.classList.remove('selected');
     });
-    const names={elena:'Elena Soto',carmen:'Carmen Ruiz',roberto:'Roberto Díaz'};
-    document.getElementById('selectedProfName').textContent = names[prof];
+    document.querySelectorAll('.prof-row .ph-check-circle').forEach(icon => {
+        icon.style.display = 'none';
+    });
+    
+    const row = document.getElementById('profRow_' + id);
+    if(row) {
+        row.classList.add('selected');
+        document.getElementById('checkProf_' + id).style.display = 'block';
+    }
+    
+    document.getElementById('selectedProfName').textContent = name;
     document.getElementById('permPanel').style.display = 'block';
     updateChecklist();
-    showToast(`${names[prof]} seleccionada como responsable`);
+    showToast(`${name} seleccionada(o) como responsable`);
 }
 
 function addModule() {
@@ -448,7 +430,7 @@ function updateChecklist() {
     const price = document.getElementById('coursePrice').value || document.getElementById('accessType').value==='free';
     const cover = document.getElementById('coverPreview').style.display!=='none';
     const modules = document.querySelectorAll('.module-row').length > 0;
-    const assignOk = assignMode==='admin' || (assignMode==='profesor' && selectedProf);
+    const assignOk = currentMode==='admin' || (currentMode==='profesor' && selectedProfId !== null);
 
     setChk('chk-title', !!title);
     setChk('chk-cat', !!cat);
@@ -469,7 +451,8 @@ function updateChecklist() {
         const el = document.getElementById(`sn${i+2}`);
         if(el) { el.className = `step-num ${done?'done':'pending'}`; }
     });
-    if(step1) document.getElementById('sn1').className = 'step-num done';
+    const s1el = document.getElementById('sn1');
+    if(step1 && s1el) s1el.className = 'step-num done';
 }
 
 function setChk(id, done) {
@@ -477,10 +460,9 @@ function setChk(id, done) {
     if(el) el.classList.toggle('done', done);
 }
 
-let currentCourseId = null;
-
 // Init
 window.addEventListener('load', async () => {
+    await fetchProfessors();
     updateChecklist();
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get('id');
@@ -500,8 +482,20 @@ window.addEventListener('load', async () => {
                 document.getElementById('courseTitle').value = c.titulo;
                 document.querySelector('textarea.fc').value = c.descripcion || '';
                 document.getElementById('coursePrice').value = c.precio || '';
+                
+                if (c.profesor_id) {
+                    const profIdString = String(c.profesor_id);
+                    const currentUserStr = String(localStorage.getItem('userId' /* wait, let's just assume we check UI visually */));
+                    // Check if assigned strictly to someone else or if the user assigned it
+                    selectMode('profesor');
+                    selectProfReal(c.profesor_id, 'Profesor Asignado');
+                } else {
+                    selectMode('admin');
+                }
+
                 if(c.portada_url) {
                     document.getElementById('coverPreview').src = c.portada_url;
+                    currentCoverUrl = c.portada_url;
                     document.getElementById('coverPreview').style.display = 'block';
                     document.getElementById('coverDrop').style.display = 'none';
                 }
@@ -531,19 +525,25 @@ async function publishCourse() {
         const url = currentCourseId ? '/api/cursos/' + currentCourseId : '/api/cursos';
         const method = currentCourseId ? 'PUT' : 'POST';
 
+        const payload = {
+            titulo: title,
+            descripcion: desc,
+            precio: price,
+            portada_url: portada_url,
+            estado: 'publicado'
+        };
+
+        if (currentMode === 'profesor' && selectedProfId) {
+            payload.profesor_id = selectedProfId;
+        }
+
         const res = await fetch(url, {
             method: method,
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + token
             },
-            body: JSON.stringify({
-                titulo: title,
-                descripcion: desc,
-                precio: price,
-                portada_url: portada_url,
-                estado: 'publicado'
-            })
+            body: JSON.stringify(payload)
         });
 
         if(!res.ok) {
