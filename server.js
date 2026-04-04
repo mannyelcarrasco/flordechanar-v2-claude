@@ -111,8 +111,12 @@ app.use('/api', (req, res) => {
 });
 
 // Frontend fallback: For any GET route not matched by static or api, serve index.html
-app.get(/.*/, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+app.use((req, res, next) => {
+    if (req.method === 'GET') {
+        res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    } else {
+        next();
+    }
 });
 
 const PORT = process.env.PORT || 3000;
