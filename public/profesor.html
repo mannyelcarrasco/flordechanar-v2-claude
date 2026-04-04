@@ -328,7 +328,14 @@ function st(e,id){
     document.querySelectorAll('.tp').forEach(p=>p.classList.remove('active'));
     document.getElementById(id).classList.add('active');
 }
-function sw(e,id){if(e)e.preventDefault();const map={tc:0,tn:1,te:2,tu:3};document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===map[id]));document.querySelectorAll('.tp').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active')}
+function sw(e,id){
+    if(e)e.preventDefault();
+    document.querySelectorAll('.tp').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.sb-nav a').forEach(a=>a.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelectorAll(`[onclick="sw(event,'${id}')"]`).forEach(el=>el.classList.add('active'));
+}
 function showT(msg,icon){const t=document.getElementById('toast');document.getElementById('tM').textContent=msg;document.getElementById('tI').className='ph '+icon;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
 function addFiles(input,listId){const l=document.getElementById(listId);l.style.display='flex';l.style.flexDirection='column';[...input.files].forEach(f=>{const d=document.createElement('div');d.className='fr';d.innerHTML=`<i class="ph ph-file"></i><span class="fn">${f.name}</span><span class="fs">${(f.size/1024/1024).toFixed(1)} MB</span><i class="ph ph-trash fd" onclick="this.parentNode.remove()"></i>`;l.appendChild(d)})}
 

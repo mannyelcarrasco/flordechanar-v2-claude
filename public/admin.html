@@ -105,8 +105,10 @@
             if(e) e.preventDefault();
             document.querySelectorAll('.tp').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.sb-n a').forEach(a => a.classList.remove('active'));
+            
             document.getElementById(id).classList.add('active');
-            document.querySelector(`[onclick="st(event,'${id}')"]`)?.classList.add('active');
+            document.querySelectorAll(`[onclick="st(event,'${id}')"]`).forEach(el => el.classList.add('active'));
         }
     </script>
 </head>
@@ -591,22 +593,13 @@ renderAdminCourses();
 // Init default tab if provided in URL
 const urlParams = new URLSearchParams(window.location.search);
 if(urlParams.get('tab') === 'cursos') {
-    // Switch to 'Cursos' tab visually
-    const tabs = document.querySelectorAll('.tabs .tab');
-    if(tabs.length > 1) {
-        tabs.forEach(t => t.classList.remove('active'));
-        tabs[1].classList.add('active'); // Second tab is Cursos
-        document.querySelectorAll('.tp').forEach(t => t.classList.remove('active'));
-        document.getElementById('tc').classList.add('active');
-        
-        // Update header action button logic for Cursos
-        const hdrLbl=document.getElementById('headerActionLabel');
-        const hdrIc=document.getElementById('headerActionIcon');
-        const hdrBtn=document.getElementById('headerActionBtn');
-        hdrLbl.textContent='Crear Nuevo Curso';
-        hdrIc.className='ph ph-plus';
-        hdrBtn.onclick=function(){window.location.href='curso-crear.html'};
-    }
+    // Update header action button logic for Cursos
+    const hdrLbl=document.getElementById('headerActionLabel');
+    const hdrIc=document.getElementById('headerActionIcon');
+    const hdrBtn=document.getElementById('headerActionBtn');
+    hdrLbl.textContent='Crear Nuevo Curso';
+    hdrIc.className='ph ph-plus';
+    hdrBtn.onclick=function(){window.location.href='curso-crear.html'};
 }
 </script>
 </body>
