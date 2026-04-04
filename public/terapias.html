@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terapias y Agendamiento | Flor de Chañar</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        /* Shared Core CSS (Reused from index.html) */
+        :root {
+            --color-bg: #F9F6F0;
+            --color-bg-alt: #F2EDE4;
+            --color-primary: #687A61;
+            --color-primary-dark: #52634C;
+            --color-secondary: #2C3531;
+            --color-accent: #D4A373;
+            --color-accent-hover: #C59362;
+            --color-text-main: #333333;
+            --color-text-light: #666666;
+            --color-white: #FFFFFF;
+            --font-serif: 'Playfair Display', serif;
+            --font-sans: 'Inter', sans-serif;
+            --container-max-width: 1200px;
+            --radius-md: 12px;
+            --radius-lg: 24px;
+            --radius-full: 9999px;
+            --transition-smooth: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-sans); background-color: var(--color-bg);
+            color: var(--color-text-main); line-height: 1.6; overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1, h2, h3, h4, h5, h6 { font-family: var(--font-serif); color: var(--color-secondary); font-weight: 600; line-height: 1.2; }
+        a { text-decoration: none; color: inherit; }
+        .container { width: 100%; max-width: var(--container-max-width); margin: 0 auto; padding: 0 1.5rem; }
+
+        /* Header */
+        header { position: fixed; top: 0; left: 0; width: 100%; background-color: rgba(249, 246, 240, 0.9); backdrop-filter: blur(10px); z-index: 1000; border-bottom: 1px solid rgba(0, 0, 0, 0.05); }
+        .header-content { display: flex; justify-content: space-between; align-items: center; height: 80px; }
+        .logo { font-family: var(--font-serif); font-size: 1.5rem; font-weight: 700; color: var(--color-primary-dark); display: flex; align-items: center; gap: 0.5rem; }
+        .nav-links { display: flex; gap: 2rem; }
+        .nav-links a { font-size: 0.95rem; font-weight: 500; color: var(--color-secondary); transition: color 0.3s ease; }
+        .nav-links a:hover, .nav-links a.active { color: var(--color-primary); }
+        .header-actions { display: flex; align-items: center; gap: 1.5rem; }
+        
+        /* Buttons */
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.8rem 1.8rem; border-radius: var(--radius-full); font-weight: 500; font-size: 0.95rem; transition: var(--transition-smooth); cursor: pointer; border: none; }
+        .btn-primary { background-color: var(--color-primary); color: var(--color-white); }
+        .btn-primary:hover { background-color: var(--color-primary-dark); transform: translateY(-2px); box-shadow: 0 10px 20px rgba(104, 122, 97, 0.2); }
+        .btn-accent { background-color: var(--color-accent); color: var(--color-white); }
+        .btn-accent:hover { background-color: var(--color-accent-hover); transform: translateY(-2px); box-shadow: 0 10px 20px rgba(212, 163, 115, 0.2); }
+        
+        .mobile-menu-btn { display: none; font-size: 1.8rem; background: none; border: none; color: var(--color-secondary); cursor: pointer; }
+
+        /* Inner Hero */
+        .inner-hero {
+            padding-top: 150px; padding-bottom: 60px;
+            background-color: var(--color-bg-alt);
+            text-align: center;
+        }
+
+        .inner-hero h1 { font-size: 3.5rem; margin-bottom: 1rem; }
+        .inner-hero p { font-size: 1.1rem; color: var(--color-text-light); max-width: 600px; margin: 0 auto; }
+
+        /* Therapies Grid */
+        .therapies-section { padding: 80px 0; }
+        .therapies-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 2.5rem;
+        }
+        
+        .therapy-card {
+            background: var(--color-white); border-radius: var(--radius-lg); padding: 2.5rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03); transition: var(--transition-smooth);
+            border-top: 4px solid var(--color-accent);
+        }
+        .therapy-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.08); }
+        
+        .therapy-icon { font-size: 2.5rem; color: var(--color-accent); margin-bottom: 1.5rem; }
+        .therapy-card h3 { font-size: 1.6rem; margin-bottom: 1rem; }
+        .therapy-card p { color: var(--color-text-light); margin-bottom: 2rem; font-size: 0.95rem; }
+        
+        /* Modern Booking Section Mock (Replaces old software) */
+        .booking-integration {
+            background-color: var(--color-secondary); color: var(--color-white);
+            padding: 80px 0; margin-top: 40px; border-radius: var(--radius-lg);
+            text-align: center; margin-bottom: 80px; position: relative; overflow: hidden;
+        }
+        .booking-integration h2 { color: var(--color-white); margin-bottom: 1.5rem; font-size: 2.5rem; }
+        .booking-integration p { color: rgba(255,255,255,0.7); max-width: 600px; margin: 0 auto 3rem; }
+        
+        .booking-tabs {
+            display: flex; justify-content: center; gap: 1rem; margin-bottom: 3rem;
+        }
+        .b-tab {
+            padding: 1rem 2rem; border-radius: var(--radius-full); font-weight: 500; cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.2); transition: var(--transition-smooth); background: transparent; color: white;
+        }
+        .b-tab.active { background-color: var(--color-accent); border-color: var(--color-accent); }
+
+        .mock-calendly {
+            background: var(--color-white); border-radius: var(--radius-md); max-width: 800px;
+            margin: 0 auto; height: 400px; display: flex; align-items: center; justify-content: center;
+            color: var(--color-text-light); box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        /* Footer */
+        footer { background-color: var(--color-secondary); color: var(--color-white); padding: 60px 0 20px; }
+        .footer-bottom { text-align: center; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); font-size: 0.85rem; margin-top: 4rem; }
+
+        /* WhatsApp flotante */
+        .wa-float{position:fixed;bottom:2rem;right:2rem;width:60px;height:60px;background:#25D366;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;color:#fff;box-shadow:0 4px 20px rgba(37,211,102,.4);z-index:9999;transition:all .3s ease;text-decoration:none;animation:waPulse 2.5s infinite}
+        .wa-float:hover{transform:scale(1.12);box-shadow:0 8px 30px rgba(37,211,102,.6)}
+        @keyframes waPulse{0%,100%{box-shadow:0 4px 20px rgba(37,211,102,.4)}50%{box-shadow:0 4px 30px rgba(37,211,102,.75)}}
+        /* Sede panels */
+        .sede-panel{display:none}.sede-panel.active{display:flex}
+        @media (max-width: 768px) {
+            .nav-links, .header-actions .btn-primary { display: none; }
+            .mobile-menu-btn { display: block; }
+            .inner-hero h1 { font-size: 2.5rem; }
+            .booking-tabs { flex-direction: column; padding: 0 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header id="header">
+        <div class="container header-content">
+            <a href="index.html" class="logo">
+                <img src="logo.png" alt="Flor de Chañar" style="height:52px;width:52px;object-fit:contain;border-radius:50%">
+                Flor de Chañar
+            </a>
+            <nav class="nav-links">
+                <a href="index.html">Inicio</a>
+                <a href="terapias.html" class="active">Terapias</a>
+                <a href="escuela.html">Escuela</a>
+                <a href="index.html#sedes">Sedes</a>
+                <a href="index.html#contacto">Contacto</a>
+            </nav>
+            <div class="header-actions">
+                <a href="#agendar" class="btn btn-primary">Agendar Ahora</a>
+                <button class="mobile-menu-btn"><i class="ph ph-list"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <section class="inner-hero">
+        <div class="container">
+            <h1>Sanación y Equilibrio</h1>
+            <p>Descubre nuestras terapias clínicas diseñadas para restaurar tu salud física, mental y espiritual en un entorno de paz absoluta.</p>
+        </div>
+    </section>
+
+    <section class="container therapies-section">
+        <div class="therapies-grid">
+            <div class="therapy-card">
+                <i class="ph ph-magnet therapy-icon"></i>
+                <h3>Biomagnetismo Clínico</h3>
+                <p>Equilibra el pH de tu cuerpo y elimina patógenos mediante campos magnéticos precisos. Ideal para enfermedades crónicas y dolores.</p>
+                <a href="#agendar" style="color: var(--color-accent); font-weight: 600; font-size: 0.95rem;">Agendar Sesión <i class="ph ph-arrow-right"></i></a>
+            </div>
+
+            <div class="therapy-card">
+                <i class="ph ph-flower therapy-icon"></i>
+                <h3>Terapia Floral (Bach)</h3>
+                <p>Armoniza tus emociones y estados de ánimo con esencias florales naturales. Un viaje hacia la tranquilidad mental.</p>
+                <a href="#agendar" style="color: var(--color-accent); font-weight: 600; font-size: 0.95rem;">Agendar Sesión <i class="ph ph-arrow-right"></i></a>
+            </div>
+
+            <div class="therapy-card">
+                <i class="ph ph-hands-praying therapy-icon"></i>
+                <h3>Reiki y Canalización</h3>
+                <p>Desbloquea tus centros energéticos y permite que la energía universal restaure tu vitalidad y reduzca drásticamente tu estrés.</p>
+                <a href="#agendar" style="color: var(--color-accent); font-weight: 600; font-size: 0.95rem;">Agendar Sesión <i class="ph ph-arrow-right"></i></a>
+            </div>
+            
+            <div class="therapy-card">
+                <i class="ph ph-user-focus therapy-icon"></i>
+                <h3>Masoterapia Integral</h3>
+                <p>Alivio profundo de tensiones musculares. Combinamos técnicas de relajación, descontracturantes y drenaje linfático.</p>
+                <a href="#agendar" style="color: var(--color-accent); font-weight: 600; font-size: 0.95rem;">Agendar Sesión <i class="ph ph-arrow-right"></i></a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Seamless Booking Prototype -->
+    <div class="container">
+        <section class="booking-integration" id="agendar">
+            <h2>Agenda tu Espacio de Sanación</h2>
+            <p>Selecciona tu ciudad. Nuestro nuevo sistema te permite reservar en menos de 1 minuto sin complicaciones ni registros extensos.</p>
+            
+            <div class="booking-tabs">
+                <button class="b-tab active" onclick="switchSede(this,'sede-calama')">Sede Calama</button>
+                <button class="b-tab" onclick="switchSede(this,'sede-serena')">Sede La Serena</button>
+                <button class="b-tab" onclick="switchSede(this,'sede-online')">Online (Videollamada)</button>
+            </div>
+
+            <!-- Panel Calama -->
+            <div class="mock-calendly sede-panel active" id="sede-calama">
+                <div style="text-align:center">
+                    <i class="ph ph-map-pin" style="font-size:3rem;color:#cbd5e1;margin-bottom:.75rem"></i>
+                    <p style="font-size:1.15rem;color:#94a3b8;margin-bottom:1rem"><strong style="color:#fff">Sede Calama</strong><br>Elige tu terapeuta y reserva tu hora.</p>
+                    <p style="font-size:.9rem;color:rgba(255,255,255,.5)">📍 Calama, Región de Antofagasta<br>📞 Contáctanos por WhatsApp para disponibilidad inmediata</p>
+                    <a href="https://wa.me/56912345678?text=Hola%2C%20quiero%20agendar%20una%20sesi%C3%B3n%20en%20Calama" target="_blank" style="display:inline-flex;align-items:center;gap:.5rem;margin-top:1.5rem;padding:.8rem 1.8rem;background:#25D366;color:#fff;border-radius:9999px;font-weight:600;text-decoration:none"><i class="ph ph-whatsapp-logo"></i> Agendar por WhatsApp</a>
+                </div>
+            </div>
+
+            <!-- Panel La Serena -->
+            <div class="mock-calendly sede-panel" id="sede-serena">
+                <div style="text-align:center">
+                    <i class="ph ph-waves" style="font-size:3rem;color:#cbd5e1;margin-bottom:.75rem"></i>
+                    <p style="font-size:1.15rem;color:#94a3b8;margin-bottom:1rem"><strong style="color:#fff">Sede La Serena</strong><br>Nueva locación, misma calidad de atención.</p>
+                    <p style="font-size:.9rem;color:rgba(255,255,255,.5)">📍 La Serena, Región de Coquimbo<br>📞 Contáctanos por WhatsApp para disponibilidad inmediata</p>
+                    <a href="https://wa.me/56912345678?text=Hola%2C%20quiero%20agendar%20una%20sesi%C3%B3n%20en%20La%20Serena" target="_blank" style="display:inline-flex;align-items:center;gap:.5rem;margin-top:1.5rem;padding:.8rem 1.8rem;background:#25D366;color:#fff;border-radius:9999px;font-weight:600;text-decoration:none"><i class="ph ph-whatsapp-logo"></i> Agendar por WhatsApp</a>
+                </div>
+            </div>
+
+            <!-- Panel Online -->
+            <div class="mock-calendly sede-panel" id="sede-online">
+                <div style="text-align:center">
+                    <i class="ph ph-video-camera" style="font-size:3rem;color:#cbd5e1;margin-bottom:.75rem"></i>
+                    <p style="font-size:1.15rem;color:#94a3b8;margin-bottom:1rem"><strong style="color:#fff">Sesión Online</strong><br>Videollamada desde donde estés, sin desplazamientos.</p>
+                    <p style="font-size:.9rem;color:rgba(255,255,255,.5)">🌐 Disponible para todo Chile y el exterior<br>📞 Contáctanos para coordinar día y hora</p>
+                    <a href="https://wa.me/56912345678?text=Hola%2C%20quiero%20agendar%20una%20sesi%C3%B3n%20online" target="_blank" style="display:inline-flex;align-items:center;gap:.5rem;margin-top:1.5rem;padding:.8rem 1.8rem;background:#25D366;color:#fff;border-radius:9999px;font-weight:600;text-decoration:none"><i class="ph ph-whatsapp-logo"></i> Agendar por WhatsApp</a>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- WhatsApp Flotante -->
+    <a href="https://wa.me/56912345678?text=Hola%20Flor%20de%20Cha%C3%B1ar%2C%20me%20gustar%C3%ADa%20obtener%20m%C3%A1s%20informaci%C3%B3n" class="wa-float" target="_blank" title="Escríbenos por WhatsApp"><i class="ph ph-whatsapp-logo"></i></a>
+
+    <footer>
+        <div class="container">
+            <div class="footer-bottom">
+                &copy; <span id="year"></span> EyCT Flor de Chañar. Prototipo de Modernización.
+            </div>
+        </div>
+    </footer>
+    <script>
+        document.getElementById('year').textContent = new Date().getFullYear();
+        function switchSede(btn, sedeId) {
+            document.querySelectorAll('.b-tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.sede-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById(sedeId).classList.add('active');
+        }
+    </script>
+</body>
+</html>

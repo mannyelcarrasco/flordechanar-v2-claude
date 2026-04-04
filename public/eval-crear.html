@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor de Evaluación | Flor de Chañar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root{--bg:#F9F6F0;--bg2:#F2EDE4;--p:#687A61;--pd:#52634C;--s:#2C3531;--ac:#D4A373;--w:#fff;--t:#333;--l:#666;--inf:#3B82F6;--err:#EF4444;--f:'Inter',sans-serif;--fs:'Playfair Display',serif;--r:12px;--rf:9999px;--tr:all .25s ease}
+        *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--f);background:var(--bg);color:var(--t);-webkit-font-smoothing:antialiased}a{text-decoration:none;color:inherit}
+        .hdr{background:var(--s);height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 2rem;position:sticky;top:0;z-index:10}
+        .hdr-l{display:flex;align-items:center;gap:1rem}.hdr-back{color:rgba(255,255,255,.65);font-size:.85rem;display:flex;align-items:center;gap:.3rem}.hdr-back:hover{color:#fff}
+        .hdr-title{color:#fff;font-family:var(--fs);font-size:1rem}
+        .hdr-r{display:flex;gap:.75rem}
+        .btn{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1.15rem;border-radius:var(--rf);font-size:.83rem;font-weight:600;cursor:pointer;border:none;transition:var(--tr);font-family:var(--f)}
+        .bp{background:var(--p);color:#fff}.bp:hover{background:var(--pd)}
+        .bo{background:transparent;border:1.5px solid rgba(255,255,255,.25);color:rgba(255,255,255,.85)}.bo:hover{border-color:#fff;color:#fff}
+        .btn-sm{padding:.35rem .8rem;font-size:.77rem}
+
+        .editor-layout{display:grid;grid-template-columns:1fr 280px;gap:2rem;max-width:1100px;margin:2rem auto;padding:0 1.5rem}
+
+        /* Left: Questions */
+        .q-area{}
+        .q-meta{background:var(--w);border-radius:var(--r);padding:1.5rem;margin-bottom:1.5rem;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+        .q-meta h2{font-size:1.2rem;margin-bottom:1.1rem}
+        .fg{margin-bottom:.85rem}.fl{display:block;font-size:.79rem;font-weight:600;margin-bottom:.28rem;color:var(--s)}
+        .fc{width:100%;padding:.58rem .8rem;border:1.5px solid #E5E7EB;border-radius:8px;font-size:.84rem;font-family:var(--f);color:var(--s);outline:none;transition:var(--tr)}.fc:focus{border-color:var(--p)}
+        textarea.fc{resize:vertical;min-height:70px}
+        .two-col{display:grid;grid-template-columns:1fr 1fr;gap:.85rem}
+
+        /* Question Card */
+        .q-card{background:var(--w);border-radius:var(--r);padding:1.4rem;margin-bottom:1.1rem;box-shadow:0 2px 10px rgba(0,0,0,.04);position:relative;border-left:4px solid var(--p)}
+        .q-card.dev-type{border-left-color:var(--ac)}
+        .q-card.rub-type{border-left-color:var(--inf)}
+        .q-num{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--l);margin-bottom:.75rem;display:flex;align-items:center;justify-content:space-between}
+        .q-actions{display:flex;gap:.4rem}
+        .q-act{background:none;border:none;cursor:pointer;color:var(--l);font-size:1rem;transition:var(--tr);padding:.2rem}.q-act:hover{color:var(--err)}
+        .q-text-input{width:100%;padding:.65rem .8rem;border:1.5px solid #E5E7EB;border-radius:8px;font-family:var(--f);font-size:.9rem;color:var(--s);outline:none;margin-bottom:.85rem}.q-text-input:focus{border-color:var(--p)}
+        .options-list{list-style:none;display:flex;flex-direction:column;gap:.45rem}
+        .option-row{display:flex;align-items:center;gap:.6rem}
+        .opt-radio{width:16px;height:16px;accent-color:var(--p);cursor:pointer;flex-shrink:0}
+        .opt-input{flex:1;padding:.45rem .7rem;border:1.5px solid #E5E7EB;border-radius:6px;font-family:var(--f);font-size:.85rem;color:var(--s);outline:none}.opt-input:focus{border-color:var(--p)}
+        .opt-del{background:none;border:none;color:#CBD5E1;cursor:pointer;font-size:1rem}.opt-del:hover{color:var(--err)}
+        .add-opt{background:none;border:1.5px dashed #D1D5DB;border-radius:6px;padding:.4rem .75rem;font-family:var(--f);font-size:.78rem;color:var(--l);cursor:pointer;width:100%;margin-top:.5rem;transition:var(--tr)}.add-opt:hover{border-color:var(--p);color:var(--p)}
+        .q-score{display:flex;align-items:center;gap:.5rem;margin-top:.85rem;padding-top:.75rem;border-top:1px solid #F1F5F9;font-size:.8rem;color:var(--l)}
+        .score-input{width:54px;padding:.28rem .45rem;border:1.5px solid #E5E7EB;border-radius:6px;text-align:center;font-family:var(--f);font-size:.83rem;outline:none}.score-input:focus{border-color:var(--p)}
+
+        /* Dev question */
+        .dev-area{width:100%;min-height:80px;padding:.65rem .8rem;border:1.5px solid #E5E7EB;border-radius:8px;font-family:var(--f);font-size:.85rem;color:var(--l);outline:none;background:var(--bg);font-style:italic}.dev-area:focus{border-color:var(--ac);background:#fff}
+
+        /* Add section */
+        .add-q-bar{display:flex;gap:.75rem;justify-content:center;padding:1rem 0}
+        .add-q-btn{display:flex;align-items:center;gap:.4rem;padding:.55rem 1.1rem;border-radius:var(--rf);font-size:.82rem;font-weight:600;cursor:pointer;border:1.5px solid;transition:var(--tr);font-family:var(--f)}
+        .add-mc{border-color:var(--p);color:var(--p);background:#fff}.add-mc:hover{background:rgba(104,122,97,.06)}
+        .add-dev{border-color:var(--ac);color:var(--ac);background:#fff}.add-dev:hover{background:rgba(212,163,115,.06)}
+        .add-rub{border-color:var(--inf);color:var(--inf);background:#fff}.add-rub:hover{background:rgba(59,130,246,.06)}
+
+        /* Right sidebar */
+        .q-sidebar{position:sticky;top:80px;align-self:start}
+        .side-card{background:var(--w);border-radius:var(--r);padding:1.25rem;box-shadow:0 2px 10px rgba(0,0,0,.04);margin-bottom:1.25rem}
+        .side-card h4{font-family:var(--f);font-size:.83rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--l);margin-bottom:1rem;display:flex;align-items:center;gap:.4rem}
+        .q-index{list-style:none;display:flex;flex-direction:column;gap:.35rem}
+        .qi-item{padding:.45rem .65rem;border-radius:6px;font-size:.82rem;cursor:pointer;transition:var(--tr);display:flex;align-items:center;justify-content:space-between}
+        .qi-item:hover{background:var(--bg)}.qi-item.active-q{background:rgba(104,122,97,.1);color:var(--pd);font-weight:600}
+        .qi-type{font-size:.65rem;opacity:.65}
+        .stats-mini{display:flex;flex-direction:column;gap:.55rem;font-size:.83rem}
+        .stat-row{display:flex;justify-content:space-between}.stat-val{font-weight:700;color:var(--s)}
+
+        /* Toast */
+        .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--s);color:#fff;padding:.85rem 1.3rem;border-radius:var(--r);display:none;align-items:center;gap:.7rem;z-index:9999;font-size:.85rem;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+        .toast i{color:var(--p);font-size:1.2rem}
+        @keyframes sU{from{opacity:0;transform:translateY(20px)}to{opacity:1}}
+        .toast.show{display:flex;animation:sU .3s ease}
+    </style>
+</head>
+<body>
+
+<div class="hdr">
+    <div class="hdr-l">
+        <a href="profesor.html" class="hdr-back"><i class="ph ph-arrow-left"></i> Volver</a>
+        <span style="color:rgba(255,255,255,.2)">|</span>
+        <span class="hdr-title">Editor de Evaluación</span>
+    </div>
+    <div class="hdr-r">
+        <button class="btn bo" onclick="saveEval(false)"><i class="ph ph-eye"></i> Vista previa</button>
+        <button class="btn bo" onclick="saveEval(false)"><i class="ph ph-floppy-disk"></i> Borrador</button>
+        <button class="btn bp" onclick="saveEval(true)"><i class="ph ph-paper-plane-tilt"></i> Publicar</button>
+    </div>
+</div>
+
+<div class="editor-layout">
+    <!-- Left: Questions Area -->
+    <div class="q-area">
+        <!-- Meta -->
+        <div class="q-meta">
+            <h2>Configuración de la Evaluación</h2>
+            <div class="fg"><label class="fl">Título</label><input class="fc" type="text" value="Evaluación Teórica — Pares Avanzados"></div>
+            <div class="fg"><label class="fl">Instrucciones para el estudiante</label><textarea class="fc">Lee cuidadosamente cada pregunta antes de responder. Las preguntas de desarrollo requieren respuestas con fundamento clínico. Tienes 60 minutos para completar la evaluación.</textarea></div>
+            <div class="two-col">
+                <div class="fg"><label class="fl">Curso</label><select class="fc"><option>Diplomado Biomagnetismo Clínico</option><option>Reiki Nivel 1 y 2</option></select></div>
+                <div class="fg"><label class="fl">Tiempo límite</label><input class="fc" type="text" value="60 minutos"></div>
+            </div>
+            <div class="two-col">
+                <div class="fg"><label class="fl">Fecha de apertura</label><input class="fc" type="datetime-local"></div>
+                <div class="fg"><label class="fl">Fecha de cierre</label><input class="fc" type="datetime-local"></div>
+            </div>
+        </div>
+
+        <!-- Questions -->
+        <div id="questionsContainer">
+            <!-- Q1: Multiple Choice -->
+            <div class="q-card" id="q-1">
+                <div class="q-num">Pregunta 1 — Opción Múltiple <div class="q-actions"><button class="q-act" title="Duplicar"><i class="ph ph-copy"></i></button><button class="q-act" onclick="removeQ('q-1')" title="Eliminar"><i class="ph ph-trash"></i></button></div></div>
+                <input class="q-text-input" type="text" value="¿Cuál es la polaridad correcta del par Hígado-Hipotálamo en Biomagnetismo?">
+                <ul class="options-list" id="opts-1">
+                    <li class="option-row"><input type="radio" name="q1" class="opt-radio"><input class="opt-input" type="text" value="Positivo en hígado, negativo en hipotálamo (correcto)"><button class="opt-del"><i class="ph ph-x"></i></button></li>
+                    <li class="option-row"><input type="radio" name="q1" class="opt-radio"><input class="opt-input" type="text" value="Negativo en hígado, positivo en hipotálamo"><button class="opt-del" onclick="this.parentNode.remove()"><i class="ph ph-x"></i></button></li>
+                    <li class="option-row"><input type="radio" name="q1" class="opt-radio"><input class="opt-input" type="text" value="Ambos positivos"><button class="opt-del" onclick="this.parentNode.remove()"><i class="ph ph-x"></i></button></li>
+                    <li class="option-row"><input type="radio" name="q1" class="opt-radio"><input class="opt-input" type="text" value="La polaridad no importa en este par"><button class="opt-del" onclick="this.parentNode.remove()"><i class="ph ph-x"></i></button></li>
+                </ul>
+                <button class="add-opt" onclick="addOption('opts-1','q1')"><i class="ph ph-plus"></i> Agregar opción</button>
+                <div class="q-score"><i class="ph ph-star" style="color:var(--ac)"></i> Puntaje: <input class="score-input" type="number" value="1" min="0"> pts · <span style="color:var(--p);font-weight:600">Marcar respuesta correcta con el radio button</span></div>
+            </div>
+
+            <!-- Q2: Development -->
+            <div class="q-card dev-type" id="q-2">
+                <div class="q-num" style="color:var(--ac)">Pregunta 2 — Desarrollo Escrito <div class="q-actions"><button class="q-act"><i class="ph ph-copy"></i></button><button class="q-act" onclick="removeQ('q-2')"><i class="ph ph-trash"></i></button></div></div>
+                <input class="q-text-input" type="text" value="Explica el concepto de resonancia biomagnética y cómo influye en el protocolo de tratamiento. Fundamenta tu respuesta con al menos 2 ejemplos clínicos.">
+                <textarea class="dev-area" placeholder="[El estudiante escribirá su respuesta aquí durante la evaluación — espacio ilimitado]" disabled></textarea>
+                <div class="q-score"><i class="ph ph-star" style="color:var(--ac)"></i> Puntaje máximo: <input class="score-input" type="number" value="3" min="0"> pts · <span style="opacity:.7">El profesor asigna la nota manualmente</span></div>
+            </div>
+
+            <!-- Q3: Multiple Choice -->
+            <div class="q-card" id="q-3">
+                <div class="q-num">Pregunta 3 — Opción Múltiple <div class="q-actions"><button class="q-act"><i class="ph ph-copy"></i></button><button class="q-act" onclick="removeQ('q-3')"><i class="ph ph-trash"></i></button></div></div>
+                <input class="q-text-input" type="text" value="¿Cuántos minutos mínimos se recomienda mantener los imanes en una sesión estándar?">
+                <ul class="options-list" id="opts-3">
+                    <li class="option-row"><input type="radio" name="q3" class="opt-radio"><input class="opt-input" type="text" value="20 minutos"><button class="opt-del" onclick="this.parentNode.remove()"><i class="ph ph-x"></i></button></li>
+                    <li class="option-row"><input type="radio" name="q3" class="opt-radio"><input class="opt-input" type="text" value="45 a 60 minutos (correcto)"><button class="opt-del" onclick="this.parentNode.remove()"><i class="ph ph-x"></i></button></li>
+                    <li class="option-row"><input type="radio" name="q3" class="opt-radio"><input class="opt-input" type="text" value="120 minutos"><button class="opt-del" onclick="this.parentNode.remove()"><i class="ph ph-x"></i></button></li>
+                </ul>
+                <button class="add-opt" onclick="addOption('opts-3','q3')"><i class="ph ph-plus"></i> Agregar opción</button>
+                <div class="q-score"><i class="ph ph-star" style="color:var(--ac)"></i> Puntaje: <input class="score-input" type="number" value="1" min="0"> pts</div>
+            </div>
+        </div>
+
+        <!-- Add Question Buttons -->
+        <div class="add-q-bar">
+            <button class="add-q-btn add-mc" onclick="addMC()"><i class="ph ph-check-square"></i> Opción Múltiple</button>
+            <button class="add-q-btn add-dev" onclick="addDev()"><i class="ph ph-text-aa"></i> Desarrollo Escrito</button>
+            <button class="add-q-btn add-rub" onclick="addRub()"><i class="ph ph-list-checks"></i> Rúbrica</button>
+        </div>
+    </div>
+
+    <!-- Right Sidebar -->
+    <div class="q-sidebar">
+        <div class="side-card">
+            <h4><i class="ph ph-chart-pie"></i> Resumen</h4>
+            <div class="stats-mini">
+                <div class="stat-row"><span>Total preguntas</span><span class="stat-val" id="totalQ">3</span></div>
+                <div class="stat-row"><span>Opción múltiple</span><span class="stat-val" id="totalMC">2</span></div>
+                <div class="stat-row"><span>Desarrollo</span><span class="stat-val" id="totalDev">1</span></div>
+                <div class="stat-row"><span>Puntaje total</span><span class="stat-val">5 pts</span></div>
+                <div class="stat-row"><span>Tiempo estimado</span><span class="stat-val">60 min</span></div>
+            </div>
+        </div>
+        <div class="side-card">
+            <h4><i class="ph ph-list-numbers"></i> Índice de Preguntas</h4>
+            <ul class="q-index">
+                <li class="qi-item active-q">Pregunta 1 <span class="qi-type">Múltiple</span></li>
+                <li class="qi-item">Pregunta 2 <span class="qi-type">Desarrollo</span></li>
+                <li class="qi-item">Pregunta 3 <span class="qi-type">Múltiple</span></li>
+            </ul>
+        </div>
+        <div class="side-card">
+            <h4><i class="ph ph-info"></i> Vista del Estudiante</h4>
+            <p style="font-size:.81rem;color:var(--l);line-height:1.5;margin-bottom:1rem">Al publicar, los estudiantes verán esta evaluación en su aula con un temporizador y la opción de guardar como borrador.</p>
+            <a href="evaluacion.html" class="btn bp btn-sm" style="width:100%;justify-content:center"><i class="ph ph-eye"></i> Vista Estudiante</a>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"><i class="ph ph-check-circle"></i><span id="tM">Guardado</span></div>
+
+<script>
+let qCount = 3;
+
+function addOption(listId, name) {
+    const li = document.createElement('li');
+    li.className = 'option-row';
+    li.innerHTML = `<input type="radio" name="${name}" class="opt-radio"><input class="opt-input" type="text" placeholder="Escribe una opción..."><button class="opt-del" onclick="this.parentNode.remove()"><i class="ph ph-x"></i></button>`;
+    document.getElementById(listId).appendChild(li);
+}
+
+function addMC() {
+    qCount++;
+    const div = document.createElement('div');
+    div.className = 'q-card'; div.id = `q-${qCount}`;
+    div.innerHTML = `<div class="q-num">Pregunta ${qCount} — Opción Múltiple <div class="q-actions"><button class="q-act"><i class="ph ph-copy"></i></button><button class="q-act" onclick="removeQ('q-${qCount}')"><i class="ph ph-trash"></i></button></div></div>
+    <input class="q-text-input" type="text" placeholder="Escribe la pregunta aquí...">
+    <ul class="options-list" id="opts-${qCount}">
+        <li class="option-row"><input type="radio" name="q${qCount}" class="opt-radio"><input class="opt-input" type="text" placeholder="Opción A"><button class="opt-del" onclick="this.parentNode.remove()"><i class="ph ph-x"></i></button></li>
+        <li class="option-row"><input type="radio" name="q${qCount}" class="opt-radio"><input class="opt-input" type="text" placeholder="Opción B"><button class="opt-del" onclick="this.parentNode.remove()"><i class="ph ph-x"></i></button></li>
+    </ul>
+    <button class="add-opt" onclick="addOption('opts-${qCount}','q${qCount}')"><i class="ph ph-plus"></i> Agregar opción</button>
+    <div class="q-score"><i class="ph ph-star" style="color:var(--ac)"></i> Puntaje: <input class="score-input" type="number" value="1" min="0"> pts</div>`;
+    document.getElementById('questionsContainer').appendChild(div);
+    updateSummary();
+}
+
+function addDev() {
+    qCount++;
+    const div = document.createElement('div');
+    div.className = 'q-card dev-type'; div.id = `q-${qCount}`;
+    div.innerHTML = `<div class="q-num" style="color:var(--ac)">Pregunta ${qCount} — Desarrollo Escrito <div class="q-actions"><button class="q-act"><i class="ph ph-copy"></i></button><button class="q-act" onclick="removeQ('q-${qCount}')"><i class="ph ph-trash"></i></button></div></div>
+    <input class="q-text-input" type="text" placeholder="Escribe la pregunta de desarrollo...">
+    <textarea class="dev-area" placeholder="[Espacio de respuesta del estudiante]" disabled></textarea>
+    <div class="q-score"><i class="ph ph-star" style="color:var(--ac)"></i> Puntaje máximo: <input class="score-input" type="number" value="3" min="0"> pts</div>`;
+    document.getElementById('questionsContainer').appendChild(div);
+    updateSummary();
+}
+
+function addRub() {
+    qCount++;
+    const div = document.createElement('div');
+    div.className = 'q-card rub-type'; div.id = `q-${qCount}`;
+    div.innerHTML = `<div class="q-num" style="color:var(--inf)">Pregunta ${qCount} — Rúbrica <div class="q-actions"><button class="q-act"><i class="ph ph-copy"></i></button><button class="q-act" onclick="removeQ('q-${qCount}')"><i class="ph ph-trash"></i></button></div></div>
+    <input class="q-text-input" type="text" placeholder="Criterio a evaluar (ej: Técnica de aplicación del imán)...">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-top:.5rem">
+        <div style="text-align:center;padding:.5rem;background:rgba(239,68,68,.06);border-radius:8px;font-size:.8rem"><strong style="color:var(--err)">Insuficiente</strong><br><span style="color:var(--l)">0-1 pts</span></div>
+        <div style="text-align:center;padding:.5rem;background:rgba(245,158,11,.06);border-radius:8px;font-size:.8rem"><strong style="color:var(--xp,#F59E0B)">Satisfactorio</strong><br><span style="color:var(--l)">2-3 pts</span></div>
+        <div style="text-align:center;padding:.5rem;background:rgba(104,122,97,.06);border-radius:8px;font-size:.8rem"><strong style="color:var(--p)">Excelente</strong><br><span style="color:var(--l)">4-5 pts</span></div>
+    </div>
+    <div class="q-score"><i class="ph ph-star" style="color:var(--ac)"></i> Puntaje máximo: <input class="score-input" type="number" value="5" min="0"> pts · <span style="opacity:.7">El profesor evalúa presencialmente</span></div>`;
+    document.getElementById('questionsContainer').appendChild(div);
+    updateSummary();
+}
+
+function removeQ(id) {
+    const el = document.getElementById(id);
+    if(document.querySelectorAll('.q-card').length <= 1) return;
+    el.style.opacity = '0'; el.style.transform = 'translateX(-10px)'; el.style.transition = 'all .25s';
+    setTimeout(() => el.remove(), 250);
+    updateSummary();
+}
+
+function updateSummary() {
+    const cards = document.querySelectorAll('.q-card');
+    document.getElementById('totalQ').textContent = cards.length;
+    document.getElementById('totalMC').textContent = document.querySelectorAll('.q-card:not(.dev-type):not(.rub-type)').length;
+    document.getElementById('totalDev').textContent = document.querySelectorAll('.dev-type').length;
+}
+
+function saveEval(publish) {
+    const t = document.getElementById('toast');
+    document.getElementById('tM').textContent = publish ? '✅ Evaluación publicada — los estudiantes ya pueden verla' : 'Borrador guardado correctamente';
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3500);
+    if(publish) setTimeout(()=>window.location.href='profesor.html', 3600);
+}
+</script>
+</body>
+</html>

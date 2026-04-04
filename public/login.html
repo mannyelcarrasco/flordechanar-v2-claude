@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso Estudiantes | Escuela Flor de Chañar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root {
+            --color-bg: #F9F6F0; --color-bg-alt: #F2EDE4;
+            --color-primary: #687A61; --color-primary-dark: #52634C;
+            --color-secondary: #2C3531; --color-accent: #D4A373;
+            --color-white: #FFFFFF; --color-text-main: #333333; --color-text-light: #666666;
+            --font-serif: 'Playfair Display', serif; --font-sans: 'Inter', sans-serif;
+            --radius-md: 12px; --radius-lg: 24px; --radius-full: 9999px;
+            --transition: all 0.3s ease;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--font-sans); min-height: 100vh; display: grid;
+            grid-template-columns: 1fr 1fr; -webkit-font-smoothing: antialiased;
+        }
+        /* Left panel - Brand */
+        .brand-panel {
+            background-color: var(--color-secondary);
+            background-image: url('https://images.unsplash.com/photo-1600618528240-fb9fc964b853?auto=format&fit=crop&w=1200&q=80');
+            background-size: cover; background-position: center;
+            display: flex; flex-direction: column; justify-content: flex-end;
+            padding: 3rem; position: relative; overflow: hidden;
+        }
+        .brand-panel::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(to top, rgba(44,53,49,0.95) 40%, rgba(44,53,49,0.4) 100%);
+        }
+        .brand-content { position: relative; z-index: 1; color: white; }
+        .brand-logo { font-family: var(--font-serif); font-size: 1.8rem; font-weight: 700; color: white; display: flex; align-items: center; gap: 0.5rem; margin-bottom: auto; padding-bottom: 4rem; }
+        .brand-logo i { color: var(--color-primary); font-size: 2rem; }
+        .brand-quote { font-family: var(--font-serif); font-size: 2.2rem; font-style: italic; line-height: 1.3; margin-bottom: 1.5rem; }
+        .brand-stats { display: flex; gap: 3rem; }
+        .stat { text-align: center; }
+        .stat-num { font-size: 2rem; font-weight: 700; color: var(--color-accent); }
+        .stat-label { font-size: 0.85rem; color: rgba(255,255,255,0.7); }
+
+        /* Right panel - Form */
+        .form-panel {
+            background: var(--color-bg); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; padding: 3rem 2rem;
+            overflow-y: auto;
+        }
+        .form-container { width: 100%; max-width: 420px; }
+
+        /* Tabs */
+        .auth-tabs { display: flex; background: var(--color-bg-alt); border-radius: var(--radius-full); padding: 4px; margin-bottom: 2.5rem; }
+        .auth-tab {
+            flex: 1; padding: 0.7rem; border-radius: var(--radius-full); border: none;
+            background: none; font-family: var(--font-sans); font-size: 0.95rem; font-weight: 500;
+            color: var(--color-text-light); cursor: pointer; transition: var(--transition);
+        }
+        .auth-tab.active { background: var(--color-white); color: var(--color-secondary); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+
+        .form-title { font-family: var(--font-serif); font-size: 2rem; color: var(--color-secondary); margin-bottom: 0.5rem; }
+        .form-subtitle { color: var(--color-text-light); font-size: 0.95rem; margin-bottom: 2rem; }
+
+        .form-group { margin-bottom: 1.2rem; }
+        .form-label { display: block; font-size: 0.88rem; font-weight: 500; color: var(--color-text-main); margin-bottom: 0.4rem; }
+        .form-control {
+            width: 100%; padding: 0.85rem 1rem; border-radius: var(--radius-md);
+            border: 1.5px solid #E2E8F0; background: var(--color-white);
+            font-family: var(--font-sans); font-size: 0.95rem; color: var(--color-secondary);
+            transition: var(--transition); outline: none;
+        }
+        .form-control:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(104,122,97,0.1); }
+        .input-icon-wrap { position: relative; }
+        .input-icon-wrap .form-control { padding-left: 2.8rem; }
+        .input-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--color-text-light); font-size: 1.1rem; }
+
+        .btn-submit {
+            width: 100%; padding: 1rem; background: var(--color-primary); color: white;
+            border: none; border-radius: var(--radius-full); font-size: 1rem; font-weight: 600;
+            font-family: var(--font-sans); cursor: pointer; transition: var(--transition);
+            margin-top: 1rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+        }
+        .btn-submit:hover { background: var(--color-primary-dark); transform: translateY(-2px); box-shadow: 0 10px 20px rgba(104,122,97,0.25); }
+
+        .divider { display: flex; align-items: center; gap: 1rem; margin: 1.5rem 0; color: var(--color-text-light); font-size: 0.85rem; }
+        .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #E2E8F0; }
+
+        .forgot { text-align: right; font-size: 0.85rem; margin-top: 0.5rem; }
+        .forgot a { color: var(--color-primary); font-weight: 500; }
+
+        .form-panel { position: relative; }
+        .back-link { position: absolute; top: 1.5rem; left: 1.5rem; display: flex; align-items: center; gap: 0.3rem; color: var(--color-text-light); font-size: 0.9rem; }
+        .back-link:hover { color: var(--color-primary); }
+
+        .panel-hidden { display: none; }
+
+        @media (max-width: 768px) {
+            body { grid-template-columns: 1fr; }
+            .brand-panel { display: none; }
+            .form-panel { padding: 2rem 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Left: Brand Panel -->
+<div class="brand-panel">
+    <div class="brand-content">
+        <div class="brand-logo"><i class="ph ph-leaf"></i> Flor de Chañar</div>
+        <p class="brand-quote">"El conocimiento que sana comienza con un primer paso."</p>
+        <div class="brand-stats">
+            <div class="stat"><div class="stat-num">12+</div><div class="stat-label">Cursos</div></div>
+            <div class="stat"><div class="stat-num">500+</div><div class="stat-label">Estudiantes</div></div>
+            <div class="stat"><div class="stat-num">10+</div><div class="stat-label">Años de experiencia</div></div>
+        </div>
+    </div>
+</div>
+
+<!-- Right: Form Panel -->
+<div class="form-panel">
+    <a href="escuela.html" class="back-link"><i class="ph ph-arrow-left"></i> Volver a la Escuela</a>
+
+    <div class="form-container">
+        <!-- Tabs -->
+        <div class="auth-tabs">
+            <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Iniciar Sesión</button>
+            <button class="auth-tab" id="tab-register" onclick="switchTab('register')">Registrarme</button>
+        </div>
+
+        <!-- Login Form -->
+        <div id="panel-login">
+            <h1 class="form-title">Bienvenido de vuelta</h1>
+            <p class="form-subtitle">Ingresa a tu espacio de aprendizaje.</p>
+
+            <form onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label class="form-label">Correo electrónico</label>
+                    <div class="input-icon-wrap">
+                        <i class="ph ph-envelope input-icon"></i>
+                        <input type="email" class="form-control" placeholder="tu@correo.com" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Contraseña</label>
+                    <div class="input-icon-wrap">
+                        <i class="ph ph-lock input-icon"></i>
+                        <input type="password" class="form-control" placeholder="••••••••" required>
+                    </div>
+                    <div class="forgot"><a href="#">¿Olvidaste tu contraseña?</a></div>
+                </div>
+                <button type="submit" class="btn-submit">
+                    Ingresar al Aula <i class="ph ph-arrow-right"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- Register Form -->
+        <div id="panel-register" class="panel-hidden">
+            <h1 class="form-title">Comienza tu camino</h1>
+            <p class="form-subtitle">Crea tu cuenta gratuita y accede a los cursos.</p>
+
+            <form onsubmit="handleRegister(event)">
+                <div class="form-group">
+                    <label class="form-label">Nombre completo</label>
+                    <div class="input-icon-wrap">
+                        <i class="ph ph-user input-icon"></i>
+                        <input type="text" class="form-control" placeholder="Tu nombre" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Correo electrónico</label>
+                    <div class="input-icon-wrap">
+                        <i class="ph ph-envelope input-icon"></i>
+                        <input type="email" class="form-control" placeholder="tu@correo.cl" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Contraseña</label>
+                    <div class="input-icon-wrap">
+                        <i class="ph ph-lock input-icon"></i>
+                        <input type="password" class="form-control" placeholder="Mínimo 8 caracteres" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn-submit">
+                    Crear mi Cuenta <i class="ph ph-sparkle"></i>
+                </button>
+            </form>
+        </div>
+
+        <div class="divider">o accede directamente con</div>
+        <button style="width:100%;padding:0.85rem;background:white;border:1.5px solid #E2E8F0;border-radius:var(--radius-full);display:flex;justify-content:center;align-items:center;gap:0.5rem;font-size:0.95rem;font-weight:500;cursor:pointer;font-family:var(--font-sans);">
+            <img src="https://www.google.com/favicon.ico" width="18" height="18"> Google
+        </button>
+
+        <!-- Demo Role Access -->
+        <div style="margin-top:2rem; padding-top:1.5rem; border-top:1px solid #E2E8F0;">
+            <p style="font-size:0.78rem; text-align:center; color:var(--color-text-light); margin-bottom:1rem; text-transform:uppercase; letter-spacing:1px; font-weight:600;">Acceso demo por rol</p>
+            <div style="display:flex; flex-direction:column; gap:0.5rem;">
+                <a href="dashboard.html" style="display:flex;align-items:center;gap:0.75rem;padding:0.7rem 1rem;border-radius:var(--radius-md);border:1.5px solid #E2E8F0;background:white;font-size:0.87rem;font-weight:500;transition:all 0.2s;color:var(--color-secondary);" onmouseover="this.style.borderColor='var(--color-primary)'" onmouseout="this.style.borderColor='#E2E8F0'">
+                    <i class="ph ph-student" style="color:var(--color-primary);font-size:1.1rem;"></i>
+                    <div><div style="font-weight:600;">Acceso como Estudiante</div><div style="font-size:0.75rem;color:var(--color-text-light);">María González</div></div>
+                    <i class="ph ph-arrow-right" style="margin-left:auto;color:var(--color-text-light);"></i>
+                </a>
+                <a href="profesor.html" style="display:flex;align-items:center;gap:0.75rem;padding:0.7rem 1rem;border-radius:var(--radius-md);border:1.5px solid #E2E8F0;background:white;font-size:0.87rem;font-weight:500;transition:all 0.2s;color:var(--color-secondary);" onmouseover="this.style.borderColor='var(--color-accent)'" onmouseout="this.style.borderColor='#E2E8F0'">
+                    <i class="ph ph-chalkboard-teacher" style="color:var(--color-accent);font-size:1.1rem;"></i>
+                    <div><div style="font-weight:600;">Acceso como Profesora</div><div style="font-size:0.75rem;color:var(--color-text-light);">Elena Soto</div></div>
+                    <i class="ph ph-arrow-right" style="margin-left:auto;color:var(--color-text-light);"></i>
+                </a>
+                <a href="admin.html" style="display:flex;align-items:center;gap:0.75rem;padding:0.7rem 1rem;border-radius:var(--radius-md);border:1.5px solid #E2E8F0;background:white;font-size:0.87rem;font-weight:500;transition:all 0.2s;color:var(--color-secondary);" onmouseover="this.style.borderColor='#EF4444'" onmouseout="this.style.borderColor='#E2E8F0'">
+                    <i class="ph ph-shield-check" style="color:#EF4444;font-size:1.1rem;"></i>
+                    <div><div style="font-weight:600;">Acceso como Administrador</div><div style="font-size:0.75rem;color:var(--color-text-light);">Panel de control total</div></div>
+                    <i class="ph ph-arrow-right" style="margin-left:auto;color:var(--color-text-light);"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function switchTab(tab) {
+        document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+        document.getElementById('tab-' + tab).classList.add('active');
+        document.getElementById('panel-login').classList.toggle('panel-hidden', tab !== 'login');
+        document.getElementById('panel-register').classList.toggle('panel-hidden', tab !== 'register');
+    }
+    async function handleLogin(e) {
+        e.preventDefault();
+        const btn = e.target.querySelector('button[type="submit"]');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = 'Ingresando...';
+        btn.disabled = true;
+
+        const email = e.target.querySelector('input[type="email"]').value;
+        const password = e.target.querySelector('input[type="password"]').value;
+
+        try {
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await res.json();
+            
+            if (!res.ok) {
+                alert(data.error || 'Error al iniciar sesión');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                return;
+            }
+
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('rol', data.rol);
+            localStorage.setItem('nombre', data.nombre);
+
+            const destino = {
+                estudiante: 'dashboard.html',
+                profesor: 'profesor.html',
+                admin: 'admin.html'
+            }[data.rol] || 'dashboard.html';
+
+            window.location.href = destino;
+        } catch (error) {
+            console.error(error);
+            alert('Error de conexión con el servidor.');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+    
+    function handleRegister(e) {
+        e.preventDefault();
+        alert('El registro aún no está conectado al backend en esta demo, dirígete a Iniciar Sesión para usar la cuenta por defecto admin@flordechanar.cl / admin123');
+    }
+</script>
+</body>
+</html>
