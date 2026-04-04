@@ -167,11 +167,8 @@
         <div class="tw">
             <table>
                 <thead><tr><th>Curso</th><th>Profesor</th><th>Estudiantes</th><th>Estado</th><th>Fecha creación</th><th>Acciones</th></tr></thead>
-                <tbody>
-                    <tr><td><div class="tn">Diplomado Biomagnetismo Clínico</div><div class="ts">14 lecciones · 120 hrs</div></td><td>Elena Soto</td><td>42</td><td><span class="bp2 bA">Publicado</span></td><td class="ts">15 Feb 2026</td><td><a href="curso-crear.html" class="btn bo btn-sm">Editar</a></td></tr>
-                    <tr><td><div class="tn">Iniciación al Reiki Nivel 1 y 2</div><div class="ts">8 lecciones · 15 hrs</div></td><td>Elena Soto</td><td>31</td><td><span class="bp2 bA">Publicado</span></td><td class="ts">01 Mar 2026</td><td><a href="curso-crear.html" class="btn bo btn-sm">Editar</a></td></tr>
-                    <tr><td><div class="tn">Terapia Floral Avanzada</div><div class="ts">6 lecciones · 60 hrs</div></td><td>Elena Soto</td><td>0</td><td><span class="bp2 bD">Borrador</span></td><td class="ts">20 Mar 2026</td><td><a href="curso-crear.html" class="btn bo btn-sm">Editar</a></td></tr>
-                    <tr><td><div class="tn">Masoterapia Integral</div><div class="ts">10 lecciones · 40 hrs</div></td><td>Carmen Ruiz</td><td>18</td><td><span class="bp2 bA">Publicado</span></td><td class="ts">10 Ene 2026</td><td><a href="curso-crear.html" class="btn bo btn-sm">Editar</a></td></tr>
+                <tbody id="adminCoursesBody">
+                    <tr><td colspan="6" style="text-align:center; padding: 2rem;">Cargando cursos desde la base de datos...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -545,6 +542,38 @@ document.getElementById('whModalBg').addEventListener('click',function(e){if(e.t
 renderUsers();
 renderIntegrations();
 renderWebhooks();
+
+// Render Dynamic Courses inside Admin
+async function renderAdminCourses() {
+    const tbody = document.getElementById('adminCoursesBody');
+    try {
+        const res = await fetch('/api/cursos');
+        const cursos = await res.json();
+        
+        if (cursos.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem;">No hay cursos creados.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = '';
+        cursos.forEach(c => {
+            const priceFmt = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(c.precio);
+            tbody.innerHTML += `
+                <tr>
+                    <td><div class="tn">${c.titulo}</div><div class="ts">${priceFmt}</div></td>
+                    <td>${c.profesor || 'Admin'}</td>
+                    <td>0</td>
+                    <td><span class="bp2 bA">Publicado</span></td>
+                    <td class="ts">Reciente</td>
+                    <td><a href="#" class="btn bo btn-sm">Editar</a></td>
+                </tr>
+            `;
+        });
+    } catch(e) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem; color:red;">Error al cargar cursos</td></tr>';
+    }
+}
+renderAdminCourses();
 </script>
 </body>
 </html>
