@@ -79,7 +79,7 @@
         .xp-fill::after { content: ''; position: absolute; right: 0; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; background: var(--color-xp); border-radius: 50%; border: 3px solid white; }
         .xp-label { font-size: 0.88rem; font-weight: 600; white-space: nowrap; }
         .badges-row { display: flex; gap: 0.5rem; }
-        .badge-chip { display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.1); font-size: 1.4rem; title-attr: 'hola'; transition: var(--transition); cursor: default; position: relative; }
+        .badge-chip { display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.1); font-size: 1.4rem; transition: var(--transition); cursor: default; position: relative; }
         .badge-chip:hover { background: rgba(255,255,255,0.2); transform: scale(1.1); }
 
         /* Stats Row */
@@ -199,9 +199,9 @@
     </ul>
 
     <div class="sidebar-user">
-        <div class="user-avatar">M</div>
+        <div class="user-avatar" id="sidebarAvatar">M</div>
         <div>
-            <div class="user-name">María González</div>
+            <div class="user-name" id="sidebarName">Cargando...</div>
             <div class="user-role">Estudiante Activa</div>
             <div class="user-xp">⭐ 1.240 XP — Nivel 8</div>
         </div>
@@ -213,8 +213,8 @@
     <!-- Topbar -->
     <div class="topbar">
         <div class="topbar-greeting">
-            <h1>¡Hola, María! 🌿</h1>
-            <p>Tienes 2 lecciones pendientes y una clase en vivo esta tarde.</p>
+            <h1 id="greetingName">¡Hola! 🌿</h1>
+            <p>Tienes lecciones pendientes y una clase en vivo esta tarde.</p>
         </div>
         <div class="topbar-right">
             <button class="notif-btn"><i class="ph ph-bell"></i><span class="notif-dot"></span></button>
@@ -282,66 +282,8 @@
                 <a href="escuela.html">Ver todos →</a>
             </div>
 
-            <div class="course-list">
-                <!-- Course 1 -->
-                <div class="course-row" onclick="window.location='curso.html'">
-                    <div class="c-thumb" style="background-image:url('https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=200&q=80');"></div>
-                    <div class="c-info">
-                        <h3>Diplomado en Biomagnetismo Clínico Integral</h3>
-                        <div class="c-sub">
-                            <span><i class="ph ph-play-circle"></i> 8/14 lecciones</span>
-                            <span><i class="ph ph-clock"></i> ~3h restantes</span>
-                        </div>
-                        <div class="progress-wrap">
-                            <div class="progress-bar"><div class="progress-fill" style="width:57%;"></div></div>
-                            <div class="progress-pct">57%</div>
-                        </div>
-                    </div>
-                    <div class="c-action">
-                        <a href="curso.html" class="btn-continue">Continuar →</a>
-                        <div class="xp-earned"><i class="ph ph-star"></i> +450 XP obtenidos</div>
-                    </div>
-                </div>
-
-                <!-- Course 2 -->
-                <div class="course-row" onclick="window.location='curso.html'">
-                    <div class="c-thumb" style="background-image:url('https://images.unsplash.com/photo-1620608678078-1a52c1e637aa?auto=format&fit=crop&w=200&q=80');"></div>
-                    <div class="c-info">
-                        <h3>Iniciación al Reiki Nivel 1 y 2</h3>
-                        <div class="c-sub">
-                            <span><i class="ph ph-play-circle"></i> 3/8 lecciones</span>
-                            <span><i class="ph ph-clock"></i> ~2h restantes</span>
-                        </div>
-                        <div class="progress-wrap">
-                            <div class="progress-bar"><div class="progress-fill" style="width:37%;"></div></div>
-                            <div class="progress-pct">37%</div>
-                        </div>
-                    </div>
-                    <div class="c-action">
-                        <a href="curso.html" class="btn-continue">Continuar →</a>
-                        <div class="xp-earned"><i class="ph ph-star"></i> +210 XP obtenidos</div>
-                    </div>
-                </div>
-
-                <!-- Course 3 — Completed -->
-                <div class="course-row">
-                    <div class="c-thumb" style="background-image:url('https://images.unsplash.com/photo-1596178065887-1198b6148b2b?auto=format&fit=crop&w=200&q=80'); opacity:0.7;"></div>
-                    <div class="c-info">
-                        <h3>Terapia Floral — Módulo Introductorio</h3>
-                        <div class="c-sub">
-                            <span style="color:var(--color-primary);font-weight:600;">✅ Completado</span>
-                            <span><i class="ph ph-clock"></i> 8 hs totales</span>
-                        </div>
-                        <div class="progress-wrap">
-                            <div class="progress-bar"><div class="progress-fill" style="width:100%; background:var(--color-accent);"></div></div>
-                            <div class="progress-pct" style="color:var(--color-accent);">100%</div>
-                        </div>
-                    </div>
-                    <div class="c-action">
-                        <a href="#" class="btn-continue" style="background:var(--color-bg-alt); color:var(--color-primary);">🏆 Descargar Cert.</a>
-                        <div class="xp-earned"><i class="ph ph-star"></i> +580 XP obtenidos</div>
-                    </div>
-                </div>
+            <div class="course-list" id="myCoursesList">
+                <p style="color: var(--color-text-light); font-size: 0.9rem; text-align: center; padding: 2rem;">Cargando tus cursos...</p>
             </div>
         </div>
 
@@ -404,10 +346,74 @@
 
 <script>
     // Animate XP bar on load
-    window.addEventListener('load', () => {
+    window.addEventListener('load', async () => {
         setTimeout(() => {
             document.getElementById('xpFill').style.width = '62%';
         }, 300);
+
+        // Load User info
+        const nombre = localStorage.getItem('nombre') || 'Estudiante';
+        const token = localStorage.getItem('token');
+        
+        if(!token) {
+            window.location.href = 'login.html';
+            return;
+        }
+
+        document.getElementById('greetingName').textContent = `¡Hola, ${nombre.split(' ')[0]}! 🌿`;
+        document.getElementById('sidebarName').textContent = nombre;
+        document.getElementById('sidebarAvatar').textContent = nombre.charAt(0).toUpperCase();
+
+        // Load Mis Cursos
+        const list = document.getElementById('myCoursesList');
+        try {
+            const res = await fetch('/api/cursos/mis-cursos', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const cursos = await res.json();
+
+            if(!res.ok) throw new Error(cursos.error || 'Error fetching');
+
+            if(cursos.length === 0) {
+                list.innerHTML = `
+                    <div style="text-align:center; padding: 3rem 1rem; background: var(--color-white); border-radius: var(--radius-md);">
+                        <i class="ph ph-books" style="font-size: 3rem; color: #CBD5E1; margin-bottom: 1rem;"></i>
+                        <p style="color: var(--color-text-light); margin-bottom: 1rem;">Aún no estás inscrito en ningún curso.</p>
+                        <a href="escuela.html" class="btn-continue" style="display:inline-block;">Ir a la Escuela</a>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = '';
+            cursos.forEach(c => {
+                const cover = c.portada_url || 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=200&q=80';
+                list.innerHTML += `
+                    <div class="course-row" onclick="window.location='curso.html'">
+                        <div class="c-thumb" style="background-image:url('${cover}');"></div>
+                        <div class="c-info">
+                            <h3>${c.titulo}</h3>
+                            <div class="c-sub">
+                                <span><i class="ph ph-play-circle"></i> 0 lecciones completadas</span>
+                            </div>
+                            <div class="progress-wrap">
+                                <div class="progress-bar"><div class="progress-fill" style="width:0%;"></div></div>
+                                <div class="progress-pct">0%</div>
+                            </div>
+                        </div>
+                        <div class="c-action">
+                            <a href="curso.html" class="btn-continue">Empezar →</a>
+                            <div class="xp-earned"><i class="ph ph-star"></i> 0 XP obtenidos</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+        } catch(e) {
+            console.error(e);
+            list.innerHTML = '<p style="color:red; font-size:0.9rem;">Error al cargar tus cursos.</p>';
+        }
+
     });
 </script>
 </body>

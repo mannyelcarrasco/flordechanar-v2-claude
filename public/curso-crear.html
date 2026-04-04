@@ -483,11 +483,46 @@ function setChk(id, done) {
 
 function saveDraft() { showToast('Borrador guardado — visible solo para el admin'); }
 
-function publishCourse() {
+async function publishCourse() {
     const title = document.getElementById('courseTitle').value.trim();
     if(!title) { showToast('⚠️ Agrega un título antes de publicar'); return; }
-    showToast('✅ Curso publicado y disponible en la plataforma');
-    setTimeout(()=>window.location.href='admin.html', 2500);
+
+    const desc = document.querySelector('textarea.fc').value;
+    const priceRaw = document.getElementById('coursePrice').value;
+    const price = priceRaw ? parseInt(priceRaw) : 0;
+    
+    // Si la imagen importada no es archivo real, la dejamos nula, y q la vista default haga render
+    const portada_url = null; 
+
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/cursos', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({
+                titulo: title,
+                descripcion: desc,
+                precio: price,
+                portada_url: portada_url,
+                estado: 'publicado'
+            })
+        });
+
+        if(!res.ok) {
+            const errData = await res.json();
+            showToast('⚠️ No autorizado o error: ' + errData.error);
+            return;
+        }
+
+        showToast('✅ Curso publicado y guardado en la base de datos');
+        setTimeout(()=>window.location.href='admin.html', 2500);
+
+    } catch (e) {
+        showToast('⚠️ Error de conexión con el servidor');
+    }
 }
 
 function showToast(msg) {

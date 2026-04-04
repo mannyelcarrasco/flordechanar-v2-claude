@@ -183,57 +183,9 @@
                     <span style="color: var(--color-text-light);"><i class="ph ph-sliders"></i> Filtrar</span>
                 </div>
 
-                <div class="course-grid">
-                    <!-- Course 1 -->
-                    <div class="course-card">
-                        <div class="c-image img-1"></div>
-                        <div class="c-content">
-                            <div class="c-meta">
-                                <span class="badge">Diplomado</span>
-                                <span style="font-size: 0.8rem; color: var(--color-text-light);"><i class="ph ph-clock"></i> 120 hrs</span>
-                            </div>
-                            <h3>Diplomado en Biomagnetismo Clínico Integral</h3>
-                            <p>Aprende desde cero a dominar los pares biomagnéticos en una plataforma 100% libre de distracciones y fricciones.</p>
-                            <div class="c-footer">
-                                <div class="c-price">$150.000</div>
-                                <a href="login.html" style="color: var(--color-primary); font-weight: 600;">Inscribirme <i class="ph ph-arrow-right"></i></a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Course 2 -->
-                    <div class="course-card">
-                        <div class="c-image img-2"></div>
-                        <div class="c-content">
-                            <div class="c-meta">
-                                <span class="badge" style="background: rgba(212, 163, 115, 0.1); color: var(--color-accent);">Curso Breve</span>
-                                <span style="font-size: 0.8rem; color: var(--color-text-light);"><i class="ph ph-clock"></i> 15 hrs</span>
-                            </div>
-                            <h3>Iniciación al Reiki Nivel 1 y 2</h3>
-                            <p>Domina los principios del Reiki tradicional japonés. Certificación inmediata al terminar las lecciones en video.</p>
-                            <div class="c-footer">
-                                <div class="c-price">$45.000</div>
-                                <a href="login.html" style="color: var(--color-primary); font-weight: 600;">Inscribirme <i class="ph ph-arrow-right"></i></a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Course 3 -->
-                    <div class="course-card">
-                        <div class="c-image img-3"></div>
-                        <div class="c-content">
-                            <div class="c-meta">
-                                <span class="badge">Certificación</span>
-                                <span style="font-size: 0.8rem; color: var(--color-text-light);"><i class="ph ph-clock"></i> 60 hrs</span>
-                            </div>
-                            <h3>Terapia Floral Avanzada (Módulo Profesional)</h3>
-                            <p>Especialización para terapeutas enfocada en el sistema de Bach y patrones psicopatológicos complejos.</p>
-                            <div class="c-footer">
-                                <div class="c-price">$80.000</div>
-                                <a href="login.html" style="color: var(--color-primary); font-weight: 600;">Inscribirme <i class="ph ph-arrow-right"></i></a>
-                            </div>
-                        </div>
-                    </div>
+                <div class="course-grid" id="course-grid">
+                    <!-- Los cursos se cargarán dinámicamente aquí -->
+                    <p style="grid-column: 1/-1; text-align: center; color: var(--color-text-light); padding: 2rem;">Cargando catálogo de cursos...</p>
                 </div>
             </main>
         </section>
@@ -241,5 +193,76 @@
     <!-- WhatsApp Flotante -->
     <a href="https://wa.me/56912345678?text=Hola%20Flor%20de%20Cha%C3%B1ar%2C%20me%20gustar%C3%ADa%20obtener%20m%C3%A1s%20informaci%C3%B3n" class="wa-float" target="_blank" title="Escríbenos por WhatsApp"><i class="ph ph-whatsapp-logo"></i></a>
 
+    <!-- Frontend Script -->
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            const grid = document.getElementById('course-grid');
+            try {
+                const res = await fetch('/api/cursos');
+                const cursos = await res.json();
+                
+                if (cursos.length === 0) {
+                    grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--color-text-light); padding: 3rem;">Aún no hay cursos publicados en la escuela.</p>';
+                    return;
+                }
+
+                grid.innerHTML = '';
+                cursos.forEach(curso => {
+                    const priceFormatted = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(curso.precio);
+                    const cover = curso.portada_url || 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=600&q=80';
+                    
+                    grid.innerHTML += `
+                        <div class="course-card">
+                            <div class="c-image" style="background-image: url('${cover}')"></div>
+                            <div class="c-content">
+                                <div class="c-meta">
+                                    <span class="badge">Online</span>
+                                    <span style="font-size: 0.8rem; color: var(--color-text-light);"><i class="ph ph-chalkboard-teacher"></i> ${curso.profesor || 'Staff'}</span>
+                                </div>
+                                <h3>${curso.titulo}</h3>
+                                <p>${curso.descripcion}</p>
+                                <div class="c-footer">
+                                    <div class="c-price">${priceFormatted}</div>
+                                    <a href="javascript:void(0)" onclick="inscribir(${curso.id})" style="color: var(--color-primary); font-weight: 600;">Inscribirme <i class="ph ph-arrow-right"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch(e) {
+                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: red; padding: 2rem;">Error al cargar los cursos. Contacte soporte.</p>';
+            }
+        });
+
+        async function inscribir(curso_id) {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                // Not logged in -> Redirect to login
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/cursos/inscribir', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token 
+                    },
+                    body: JSON.stringify({ curso_id })
+                });
+
+                if (res.ok) {
+                    window.location.href = 'dashboard.html';
+                } else {
+                    const data = await res.json();
+                    alert(data.error || 'Error al intentar inscribirse.');
+                }
+            } catch(e) {
+                console.error(e);
+                alert('Error de conexión.');
+            }
+        }
+    </script>
 </body>
 </html>
