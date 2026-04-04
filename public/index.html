@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flor de Chañar | Escuela y Centro de Terapias</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        :root {
+            /* Color Palette for Wellness & Calm */
+            --color-bg: #F9F6F0; /* Warm Sand */
+            --color-bg-alt: #F2EDE4;
+            --color-primary: #687A61; /* Soft Sage Green */
+            --color-primary-dark: #52634C;
+            --color-secondary: #2C3531; /* Deep Forest Black */
+            --color-accent: #D4A373; /* Muted Terracotta/Sand for CTA */
+            --color-accent-hover: #C59362;
+            --color-text-main: #333333;
+            --color-text-light: #666666;
+            --color-white: #FFFFFF;
+            
+            /* Typography */
+            --font-serif: 'Playfair Display', serif;
+            --font-sans: 'Inter', sans-serif;
+            
+            /* Spacing & Layout */
+            --container-max-width: 1200px;
+            --radius-md: 12px;
+            --radius-lg: 24px;
+            --radius-full: 9999px;
+            
+            /* Transitions */
+            --transition-smooth: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--color-bg);
+            color: var(--color-text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: var(--font-serif);
+            color: var(--color-secondary);
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .container {
+            width: 100%;
+            max-width: var(--container-max-width);
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        /* --- Header --- */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(249, 246, 240, 0.9);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            transition: var(--transition-smooth);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 80px;
+        }
+
+        .logo {
+            font-family: var(--font-serif);
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--color-primary-dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--color-secondary);
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--color-primary);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .cart-icon {
+            position: relative;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: var(--color-secondary);
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -5px;
+            right: -8px;
+            background-color: var(--color-accent);
+            color: var(--color-white);
+            font-size: 0.7rem;
+            font-weight: 600;
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.8rem 1.8rem;
+            border-radius: var(--radius-full);
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: var(--transition-smooth);
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background-color: var(--color-primary);
+            color: var(--color-white);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--color-primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(104, 122, 97, 0.2);
+        }
+
+        .btn-accent {
+            background-color: var(--color-accent);
+            color: var(--color-white);
+        }
+
+        .btn-accent:hover {
+            background-color: var(--color-accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(212, 163, 115, 0.2);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: var(--color-secondary);
+            border: 1px solid var(--color-secondary);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--color-secondary);
+            color: var(--color-white);
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            font-size: 1.8rem;
+            background: none;
+            border: none;
+            color: var(--color-secondary);
+            cursor: pointer;
+        }
+
+        /* --- Hero Section --- */
+        .hero {
+            padding-top: 140px;
+            padding-bottom: 80px;
+            min-height: 90vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        .hero-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://images.unsplash.com/photo-1600618528240-fb9fc964b853?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.15;
+            z-index: -1;
+            /* Subtle breathing animation */
+            animation: breathe 20s infinite alternate ease-in-out;
+        }
+
+        @keyframes breathe {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.05); }
+        }
+
+        .hero-content {
+            max-width: 800px;
+            text-align: center;
+            margin: 0 auto;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            background-color: rgba(104, 122, 97, 0.1);
+            color: var(--color-primary-dark);
+            border-radius: var(--radius-full);
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            color: var(--color-secondary);
+        }
+
+        .hero h1 span {
+            color: var(--color-primary);
+            font-style: italic;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--color-text-light);
+            margin-bottom: 2.5rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-actions {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        /* --- Path Selector (Busco Sanar / Busco Aprender) --- */
+        .paths-section {
+            padding: 60px 0;
+            background-color: var(--color-bg-alt);
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .section-header h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .section-header p {
+            color: var(--color-text-light);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .paths-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .path-card {
+            background-color: var(--color-white);
+            border-radius: var(--radius-lg);
+            padding: 3rem;
+            text-align: center;
+            transition: var(--transition-smooth);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .path-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            transition: var(--transition-smooth);
+        }
+
+        .path-card.healing::before {
+            background-color: var(--color-accent);
+        }
+
+        .path-card.learning::before {
+            background-color: var(--color-primary);
+        }
+
+        .path-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.06);
+        }
+
+        .path-card:hover::before {
+            height: 10px;
+        }
+
+        .path-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            transition: var(--transition-smooth);
+        }
+
+        .path-card.healing .path-icon {
+            background-color: rgba(212, 163, 115, 0.1);
+            color: var(--color-accent);
+        }
+
+        .path-card.learning .path-icon {
+            background-color: rgba(104, 122, 97, 0.1);
+            color: var(--color-primary);
+        }
+
+        .path-card h3 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .path-card p {
+            color: var(--color-text-light);
+            margin-bottom: 2rem;
+            flex-grow: 1;
+        }
+
+        /* --- Locations Section (Calama & La Serena) --- */
+        .locations {
+            padding: 80px 0;
+            border-top: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .locations-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .location-card {
+            background: var(--color-white);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+            transition: var(--transition-smooth);
+        }
+
+        .location-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+        }
+
+        .loc-image {
+            height: 200px;
+            background-color: #E2E8F0;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        .loc-image.calama {
+            background-image: url('https://images.unsplash.com/photo-1545205597-3d9d02c29597?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'); /* Desert/Calama vibe */
+        }
+
+        .loc-image.serena {
+            background-image: url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'); /* Beach/La Serena vibe */
+        }
+
+        .loc-content {
+            padding: 2rem;
+        }
+
+        .loc-content h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .loc-content p {
+            color: var(--color-text-light);
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* App-like Booking UI Demo */
+        .booking-widget {
+            background-color: var(--color-bg-alt);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .booking-widget:hover {
+            background-color: rgba(104, 122, 97, 0.1);
+        }
+
+        .booking-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .booking-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: var(--color-text-light);
+        }
+
+        .booking-value {
+            font-weight: 500;
+            color: var(--color-secondary);
+        }
+
+
+        /* --- Footer --- */
+        footer {
+            background-color: var(--color-secondary);
+            color: var(--color-white);
+            padding: 60px 0 20px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 3rem;
+            margin-bottom: 4rem;
+        }
+
+        .footer-brand h2 {
+            color: var(--color-white);
+            margin-bottom: 1rem;
+        }
+
+        .footer-brand p {
+            color: rgba(255,255,255,0.7);
+            max-width: 300px;
+        }
+
+        .footer-links h4 {
+            color: var(--color-white);
+            margin-bottom: 1.5rem;
+            font-family: var(--font-sans);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9rem;
+        }
+
+        .footer-links ul {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.8rem;
+        }
+
+        .footer-links a {
+            color: rgba(255,255,255,0.7);
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--color-accent);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.5);
+            font-size: 0.85rem;
+        }
+
+        /* --- Animations & Utilities --- */
+        .fade-in-up {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.8s forwards;
+        }
+
+        .delay-1 { animation-delay: 0.2s; }
+        .delay-2 { animation-delay: 0.4s; }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* --- Responsive Design (Mobile First Focus) --- */
+        @media (max-width: 900px) {
+            .hero h1 { font-size: 3rem; }
+            .paths-grid { grid-template-columns: 1fr; }
+            .locations-grid { grid-template-columns: 1fr; }
+            .footer-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links, .header-actions .btn-primary { display: none; }
+            .mobile-menu-btn { display: block; }
+            
+            .hero { padding-top: 120px; text-align: center; }
+            .hero h1 { font-size: 2.5rem; }
+            .hero-actions { flex-direction: column; width: 100%; }
+            .hero-actions .btn { width: 100%; justify-content: center; }
+            
+            .section-header h2 { font-size: 2rem; }
+            
+            .path-card { padding: 2rem 1.5rem; }
+        }
+        /* WhatsApp flotante */
+        .wa-float{position:fixed;bottom:2rem;right:2rem;width:60px;height:60px;background:#25D366;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;color:#fff;box-shadow:0 4px 20px rgba(37,211,102,.4);z-index:9999;transition:all .3s ease;text-decoration:none;animation:waPulse 2.5s infinite}
+        .wa-float:hover{transform:scale(1.12);box-shadow:0 8px 30px rgba(37,211,102,.6)}
+        @keyframes waPulse{0%,100%{box-shadow:0 4px 20px rgba(37,211,102,.4)}50%{box-shadow:0 4px 30px rgba(37,211,102,.75)}}
+        /* Contacto */
+        .contacto-section{background:var(--color-bg-alt);padding:70px 0;text-align:center}
+        .contacto-section h2{margin-bottom:1rem}
+        .contacto-section p{color:var(--color-text-light);margin-bottom:2rem;max-width:520px;margin-left:auto;margin-right:auto}
+        .wa-cta{display:inline-flex;align-items:center;gap:.6rem;padding:1rem 2.2rem;background:#25D366;color:#fff;border-radius:var(--radius-full);font-size:1.05rem;font-weight:600;text-decoration:none;transition:var(--transition-smooth)}
+        .wa-cta:hover{background:#1ebe5d;transform:translateY(-2px);box-shadow:0 10px 25px rgba(37,211,102,.3)}
+        @media(max-width:768px){.wa-cta{font-size:.95rem;padding:.85rem 1.6rem}}
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header id="header">
+        <div class="container header-content">
+            <a href="index.html" class="logo">
+                <img src="logo.png" alt="Flor de Chañar" style="height:52px;width:52px;object-fit:contain;border-radius:50%">
+                Flor de Chañar
+            </a>
+            
+            <nav class="nav-links">
+                <a href="index.html">Inicio</a>
+                <a href="terapias.html">Terapias</a>
+                <a href="escuela.html">Escuela</a>
+                <a href="#sedes">Sedes</a>
+                <a href="#contacto">Contacto</a>
+            </nav>
+
+            <div class="header-actions">
+                <div class="cart-icon">
+                    <i class="ph ph-shopping-bag"></i>
+                    <span class="cart-badge">2</span>
+                </div>
+                <a href="terapias.html" class="btn btn-primary">Agendar Sesión</a>
+                <button class="mobile-menu-btn">
+                    <i class="ph ph-list"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero" id="inicio">
+        <div class="hero-bg"></div>
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-badge fade-in-up">Escuela y Centro de Terapias Naturales</div>
+                <h1 class="fade-in-up delay-1">Encuentra el equilibrio para tu <span>Cuerpo y Mente</span></h1>
+                <p class="fade-in-up delay-2">Un espacio de jerarquía dedicado a tu bienestar integral en Calama y La Serena. Únete a nuestra escuela para transformar vidas.</p>
+                <div class="hero-actions fade-in-up delay-2">
+                    <a href="terapias.html" class="btn btn-accent">
+                        Reservar Terapia <i class="ph ph-calendar-plus"></i>
+                    </a>
+                    <a href="escuela.html" class="btn btn-outline">
+                        Explorar Cursos <i class="ph ph-book-open"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Paths Section: Sell Better by segmenting Audiences -->
+    <section class="paths-section">
+        <div class="container">
+            <div class="section-header fade-in-up">
+                <h2>¿Cómo podemos ayudarte hoy?</h2>
+                <p>Selecciona tu camino y descubre una experiencia diseñada para ti y tu crecimiento personal.</p>
+            </div>
+            
+            <div class="paths-grid">
+                <!-- Path 1: Healing (Center) -->
+                <a href="terapias.html" class="path-card healing fade-in-up">
+                    <div class="path-icon">
+                        <i class="ph ph-hands-praying"></i>
+                    </div>
+                    <h3>Busco Sanar</h3>
+                    <p>Accede a terapias naturales personalizadas. Especialistas enfocados en tu salud y tranquilidad mental.</p>
+                    <span class="btn btn-outline" style="border-color: var(--color-accent); color: var(--color-accent);">
+                        Ver Terapias Clínicas <i class="ph ph-arrow-right"></i>
+                    </span>
+                </a>
+
+                <!-- Path 2: Learning (School) -->
+                <a href="escuela.html" class="path-card learning fade-in-up delay-1">
+                    <div class="path-icon">
+                        <i class="ph ph-student"></i>
+                    </div>
+                    <h3>Busco Aprender</h3>
+                    <p>Conviértete en terapeuta o expande tus conocimientos en nuestra escuela con plataforma online Cero Fricción.</p>
+                    <span class="btn btn-outline" style="border-color: var(--color-primary); color: var(--color-primary);">
+                        Ingresar a la Escuela <i class="ph ph-arrow-right"></i>
+                    </span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Locations Section: Scheduling friction-less -->
+    <section class="locations" id="sedes">
+        <div class="container">
+            <div class="section-header fade-in-up">
+                <h2>Cerca de ti</h2>
+                <p>Agenda tu sesión presencial en nuestros modernos centros de terapias, o reserva una sesión online desde cualquier lugar.</p>
+            </div>
+
+            <div class="locations-grid">
+                <!-- Calama -->
+                <div class="location-card fade-in-up">
+                    <div class="loc-image calama"></div>
+                    <div class="loc-content">
+                        <h3><i class="ph ph-map-pin" style="color: var(--color-primary);"></i> Calama</h3>
+                        <p>Nuestro centro originario, un oasis de paz en el desierto.</p>
+                        
+                        <!-- Simulated modern booking widget (Calendly/Amelia replacement idea) -->
+                        <div class="booking-widget">
+                            <div class="booking-info">
+                                <span class="booking-label">Próxima Disponibilidad</span>
+                                <span class="booking-value">Mañana, 10:00 AM</span>
+                            </div>
+                            <div class="btn btn-primary" style="padding: 0.5rem 1rem; border-radius: 8px;">
+                                Agendar aquí
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- La Serena -->
+                <div class="location-card fade-in-up delay-1">
+                    <div class="loc-image serena"></div>
+                    <div class="loc-content">
+                        <h3><i class="ph ph-map-pin" style="color: var(--color-primary);"></i> La Serena</h3>
+                        <p>Nueva locación. La brisa costera acompañando tu sanación.</p>
+                        
+                        <div class="booking-widget">
+                            <div class="booking-info">
+                                <span class="booking-label">Próxima Disponibilidad</span>
+                                <span class="booking-value">Jueves, 15:30 PM</span>
+                            </div>
+                            <div class="btn btn-primary" style="padding: 0.5rem 1rem; border-radius: 8px;">
+                                Agendar aquí
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 3rem;">
+                <p style="color: var(--color-text-light); margin-bottom: 1rem;">¿No estás en Calama o La Serena?</p>
+                <a href="#online" class="btn btn-outline">Reservar Terapia Online <i class="ph ph-video-camera"></i></a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contacto Section -->
+    <section class="contacto-section" id="contacto">
+        <div class="container">
+            <h2>Contáctanos</h2>
+            <p>Escríbenos directamente por WhatsApp. Respondemos todas las consultas sobre terapias, cursos y disponibilidad de horarios.</p>
+            <a href="https://wa.me/56912345678?text=Hola%20Flor%20de%20Cha%C3%B1ar%2C%20me%20gustar%C3%ADa%20obtener%20m%C3%A1s%20informaci%C3%B3n" class="wa-cta" target="_blank">
+                <i class="ph ph-whatsapp-logo" style="font-size:1.4rem"></i>
+                Escríbenos por WhatsApp
+            </a>
+            <div style="margin-top:2.5rem;display:flex;justify-content:center;gap:3rem;flex-wrap:wrap;font-size:.9rem;color:var(--color-text-light)">
+                <div><i class="ph ph-map-pin" style="color:var(--color-primary)"></i> <strong>Calama</strong> &mdash; Región de Antofagasta</div>
+                <div><i class="ph ph-map-pin" style="color:var(--color-primary)"></i> <strong>La Serena</strong> &mdash; Región de Coquimbo</div>
+                <div><i class="ph ph-video-camera" style="color:var(--color-primary)"></i> <strong>Online</strong> &mdash; Todo Chile y exterior</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- WhatsApp Flotante -->
+    <a href="https://wa.me/56912345678?text=Hola%20Flor%20de%20Cha%C3%B1ar%2C%20me%20gustar%C3%ADa%20obtener%20m%C3%A1s%20informaci%C3%B3n" class="wa-float" target="_blank" title="Escríbenos por WhatsApp"><i class="ph ph-whatsapp-logo"></i></a>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <h2>Flor de Chañar</h2>
+                    <p>Escuela y Centro de Terapias Naturales. Jerarquía, profesionalismo y paz interior al alcance de todos.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Navegación</h4>
+                    <ul>
+                        <li><a href="index.html">Inicio</a></li>
+                        <li><a href="terapias.html">Terapias</a></li>
+                        <li><a href="escuela.html">Escuela</a></li>
+                        <li><a href="#contacto">Contacto</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>Soporte</h4>
+                    <ul>
+                        <li><a href="#">Términos y Condiciones</a></li>
+                        <li><a href="#">Política de Privacidad</a></li>
+                        <li><a href="#">Portal del Alumno</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                &copy; <span id="year"></span> EyCT Flor de Chañar. Todos los derechos reservados.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        // Set current year
+        document.getElementById('year').textContent = new Date().getFullYear();
+
+        // Header scroll effect
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('header');
+            if (window.scrollY > 50) {
+                header.style.boxShadow = '0 4px 20px rgba(0,0,0,0.05)';
+            } else {
+                header.style.boxShadow = 'none';
+            }
+        });
+        
+        // Simple Intersection Observer for scroll animations if needed on larger pages
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animationPlayState = 'running';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
