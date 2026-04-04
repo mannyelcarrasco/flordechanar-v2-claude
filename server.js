@@ -110,8 +110,8 @@ app.use('/api', (req, res) => {
     res.status(404).json({ error: 'Endpoint no encontrado' });
 });
 
-// React / Frontend fallback: For any route not matched by static or api, serve index.html
-app.get('*', (req, res) => {
+// Frontend fallback: For any GET route not matched by static or api, serve index.html
+app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
