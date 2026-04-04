@@ -176,6 +176,34 @@ app.post('/api/cursos', verifyToken, async (req, res) => {
     }
 });
 
+// Obtener un curso específico
+app.get('/api/cursos/:id', verifyToken, async (req, res) => {
+    try {
+        const [cursos] = await pool.query('SELECT * FROM cursos WHERE id = ?', [req.params.id]);
+        if (cursos.length === 0) return res.status(404).json({ error: 'Curso no encontrado' });
+        res.json(cursos[0]);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error al obtener curso' });
+    }
+});
+
+// Actualizar Curso (Protegido Admin/Profesor)
+app.put('/api/cursos/:id', verifyToken, async (req, res) => {
+    if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
+    try {
+        const { titulo, descripcion, precio, portada_url, estado } = req.body;
+        await pool.query(
+            'UPDATE cursos SET titulo=?, descripcion=?, precio=?, portada_url=?, estado=? WHERE id=?',
+            [titulo, descripcion, precio, portada_url, estado, req.params.id]
+        );
+        res.json({ success: true, message: 'Curso actualizado con éxito' });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error al actualizar curso' });
+    }
+});
+
 // Cursos del Alumno
 app.get('/api/cursos/mis-cursos', verifyToken, async (req, res) => {
     try {
