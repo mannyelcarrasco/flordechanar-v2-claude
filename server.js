@@ -76,11 +76,35 @@ async function initDB() {
                 curso_id INT NOT NULL,
                 creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE (usuario_id, curso_id),
-                FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
-                FOREIGN KEY (curso_id) REFERENCES cursos(id)
+                FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+                FOREIGN KEY (curso_id) REFERENCES cursos(id) ON DELETE CASCADE
             )
         `);
-        console.log('Tables checked/created: usuarios, cursos, inscripciones.');
+
+        // Tabla Modulos
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS modulos (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                curso_id INT NOT NULL,
+                titulo VARCHAR(300) NOT NULL,
+                orden INT DEFAULT 0,
+                FOREIGN KEY (curso_id) REFERENCES cursos(id) ON DELETE CASCADE
+            )
+        `);
+
+        // Tabla Lecciones
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS lecciones (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                modulo_id INT NOT NULL,
+                titulo VARCHAR(300) NOT NULL,
+                descripcion TEXT,
+                video_url VARCHAR(500),
+                orden INT DEFAULT 0,
+                FOREIGN KEY (modulo_id) REFERENCES modulos(id) ON DELETE CASCADE
+            )
+        `);
+        console.log('Tables checked/created: usuarios, cursos, inscripciones, modulos, lecciones.');
 
         // Insert default admin if none exists
         const [rows] = await pool.query('SELECT * FROM usuarios WHERE rol = "admin"');
@@ -159,6 +183,39 @@ app.get('/api/usuarios/profesores', verifyToken, async (req, res) => {
     }
 });
 
+// Obtener lista completa de usuarios (Para Admin)
+app.get('/api/usuarios', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Permission denied' });
+    try {
+        const [usuarios] = await pool.query(`
+            SELECT u.id, u.nombre, u.email, u.rol, u.activo, u.creado_en,
+            (SELECT COUNT(*) FROM inscripciones WHERE usuario_id = u.id) as cursos_inscritos 
+            FROM usuarios u
+            ORDER BY u.creado_en DESC
+        `);
+        res.json(usuarios);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error al obtener usuarios' });
+    }
+});
+
+// Crear nuevo usuario (Admin)
+app.post('/api/usuarios/crear', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Permission denied' });
+    try {
+        const { nombre, email, password, rol } = req.body;
+        const pass = password || 'flordechanar123';
+        const salt = await bcrypt.genSalt(10);
+        const hash = await bcrypt.hash(pass, salt);
+        await pool.query('INSERT INTO usuarios (nombre, email, password, rol) VALUES (?, ?, ?, ?)', [nombre, email, hash, rol || 'estudiante']);
+        res.json({ success: true, message: 'Usuario creado' });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error al crear usuario' });
+    }
+});
+
 // Obtener todos los cursos (Público - para la vitrina)
 app.get('/api/cursos', async (req, res) => {
     try {
@@ -202,6 +259,84 @@ app.get('/api/cursos/dictados', verifyToken, async (req, res) => {
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: 'Error al obtener cursos dictados' });
+    }
+});
+
+// --- Rutas del Curriculum (Módulos y Lecciones) ---
+
+// Obtener curriculum completo de un curso
+app.get('/api/cursos/:id/curriculum', async (req, res) => {
+    try {
+        const [modulos] = await pool.query('SELECT * FROM modulos WHERE curso_id = ? ORDER BY orden ASC', [req.params.id]);
+        for (let m of modulos) {
+            const [lecciones] = await pool.query('SELECT * FROM lecciones WHERE modulo_id = ? ORDER BY orden ASC', [m.id]);
+            m.lecciones = lecciones;
+        }
+        res.json(modulos);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error al obtener curriculum' });
+    }
+});
+
+// Crear módulo
+app.post('/api/modulos', verifyToken, async (req, res) => {
+    try {
+        const { curso_id, titulo } = req.body;
+        const [result] = await pool.query('INSERT INTO modulos (curso_id, titulo) VALUES (?, ?)', [curso_id, titulo]);
+        res.json({ success: true, id: result.insertId });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error al crear módulo' });
+    }
+});
+
+// Eliminar módulo (Cascada borra lecciones por Foreign Key)
+app.delete('/api/modulos/:id', verifyToken, async (req, res) => {
+    try {
+        await pool.query('DELETE FROM modulos WHERE id = ?', [req.params.id]);
+        res.json({ success: true });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error al eliminar módulo' });
+    }
+});
+
+// Crear lección vacía
+app.post('/api/lecciones', verifyToken, async (req, res) => {
+    try {
+        const { modulo_id, titulo } = req.body;
+        const [result] = await pool.query('INSERT INTO lecciones (modulo_id, titulo, descripcion, video_url) VALUES (?, ?, "", "")', [modulo_id, titulo]);
+        res.json({ success: true, id: result.insertId });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error al crear lección' });
+    }
+});
+
+// Actualizar lección
+app.put('/api/lecciones/:id', verifyToken, async (req, res) => {
+    try {
+        const { titulo, descripcion, video_url } = req.body;
+        await pool.query(
+            'UPDATE lecciones SET titulo=?, descripcion=?, video_url=? WHERE id=?',
+            [titulo, descripcion, video_url, req.params.id]
+        );
+        res.json({ success: true });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error al actualizar lección' });
+    }
+});
+
+// Eliminar lección
+app.delete('/api/lecciones/:id', verifyToken, async (req, res) => {
+    try {
+        await pool.query('DELETE FROM lecciones WHERE id = ?', [req.params.id]);
+        res.json({ success: true });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error al eliminar lección' });
     }
 });
 
