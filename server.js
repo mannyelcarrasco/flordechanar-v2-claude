@@ -262,85 +262,34 @@ app.get('/api/cursos/dictados', verifyToken, async (req, res) => {
     }
 });
 
-// --- Rutas del Curriculum (Módulos y Lecciones) ---
-
-// Obtener curriculum completo de un curso
-app.get('/api/cursos/:id/curriculum', async (req, res) => {
+// Cursos del Alumno
+app.get('/api/cursos/mis-cursos', verifyToken, async (req, res) => {
     try {
-        const [modulos] = await pool.query('SELECT * FROM modulos WHERE curso_id = ? ORDER BY orden ASC', [req.params.id]);
-        for (let m of modulos) {
-            const [lecciones] = await pool.query('SELECT * FROM lecciones WHERE modulo_id = ? ORDER BY orden ASC', [m.id]);
-            m.lecciones = lecciones;
-        }
-        res.json(modulos);
+        const [cursos] = await pool.query(`
+            SELECT c.* FROM cursos c
+            JOIN inscripciones i ON c.id = i.curso_id
+            WHERE i.usuario_id = ?
+        `, [req.usuario.id]);
+        res.json(cursos);
     } catch (e) {
         console.error(e);
-        res.status(500).json({ error: 'Error al obtener curriculum' });
+        res.status(500).json({ error: 'Error al obtener mis cursos' });
     }
 });
 
-// Crear módulo
-app.post('/api/modulos', verifyToken, async (req, res) => {
+// Inscribirse
+app.post('/api/cursos/inscribir', verifyToken, async (req, res) => {
     try {
-        const { curso_id, titulo } = req.body;
-        const [result] = await pool.query('INSERT INTO modulos (curso_id, titulo) VALUES (?, ?)', [curso_id, titulo]);
-        res.json({ success: true, id: result.insertId });
+        const { curso_id } = req.body;
+        await pool.query('INSERT IGNORE INTO inscripciones (usuario_id, curso_id) VALUES (?, ?)', [req.usuario.id, curso_id]);
+        res.json({ success: true, message: 'Inscrito correctamente' });
     } catch (e) {
         console.error(e);
-        res.status(500).json({ error: 'Error al crear módulo' });
+        res.status(500).json({ error: 'Error en inscripción' });
     }
 });
 
-// Eliminar módulo (Cascada borra lecciones por Foreign Key)
-app.delete('/api/modulos/:id', verifyToken, async (req, res) => {
-    try {
-        await pool.query('DELETE FROM modulos WHERE id = ?', [req.params.id]);
-        res.json({ success: true });
-    } catch (e) {
-        console.error(e);
-        res.status(500).json({ error: 'Error al eliminar módulo' });
-    }
-});
-
-// Crear lección vacía
-app.post('/api/lecciones', verifyToken, async (req, res) => {
-    try {
-        const { modulo_id, titulo } = req.body;
-        const [result] = await pool.query('INSERT INTO lecciones (modulo_id, titulo, descripcion, video_url) VALUES (?, ?, "", "")', [modulo_id, titulo]);
-        res.json({ success: true, id: result.insertId });
-    } catch (e) {
-        console.error(e);
-        res.status(500).json({ error: 'Error al crear lección' });
-    }
-});
-
-// Actualizar lección
-app.put('/api/lecciones/:id', verifyToken, async (req, res) => {
-    try {
-        const { titulo, descripcion, video_url } = req.body;
-        await pool.query(
-            'UPDATE lecciones SET titulo=?, descripcion=?, video_url=? WHERE id=?',
-            [titulo, descripcion, video_url, req.params.id]
-        );
-        res.json({ success: true });
-    } catch (e) {
-        console.error(e);
-        res.status(500).json({ error: 'Error al actualizar lección' });
-    }
-});
-
-// Eliminar lección
-app.delete('/api/lecciones/:id', verifyToken, async (req, res) => {
-    try {
-        await pool.query('DELETE FROM lecciones WHERE id = ?', [req.params.id]);
-        res.json({ success: true });
-    } catch (e) {
-        console.error(e);
-        res.status(500).json({ error: 'Error al eliminar lección' });
-    }
-});
-
-// Inscribirse en un curso (Alumno)específico
+// Obtener Curso por ID (ruta genérica - debe ir DESPUÉS de las rutas específicas)
 app.get('/api/cursos/:id', verifyToken, async (req, res) => {
     try {
         const [cursos] = await pool.query('SELECT * FROM cursos WHERE id = ?', [req.params.id]);
@@ -371,12 +320,9 @@ app.put('/api/cursos/:id', verifyToken, async (req, res) => {
 
 // Eliminar Curso (Protegido Admin)
 app.delete('/api/cursos/:id', verifyToken, async (req, res) => {
-    // Para mayor seguridad solo el admin (o el creador) debería poder borrar.
-    // Asumiremos que estudiante no puede.
     if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
     try {
-        // Primero eliminar inscripciones que dependan del curso para no romper base de datos
-        await pool.query('DELETE FROM inscripciones WHERE curso_id = ?', [req.params.id]);
+        // ON DELETE CASCADE en modulos/lecciones/inscripciones se encarga automáticamente
         await pool.query('DELETE FROM cursos WHERE id = ?', [req.params.id]);
         res.json({ success: true, message: 'Curso eliminado' });
     } catch (e) {
@@ -385,30 +331,81 @@ app.delete('/api/cursos/:id', verifyToken, async (req, res) => {
     }
 });
 
-// Cursos del Alumno
-app.get('/api/cursos/mis-cursos', verifyToken, async (req, res) => {
+// --- Curriculum: Módulos y Lecciones ---
+
+// Obtener curriculum completo de un curso (módulos + lecciones anidadas)
+app.get('/api/cursos/:id/curriculum', async (req, res) => {
     try {
-        const [cursos] = await pool.query(`
-            SELECT c.* FROM cursos c
-            JOIN inscripciones i ON c.id = i.curso_id
-            WHERE i.usuario_id = ?
-        `, [req.usuario.id]);
-        res.json(cursos);
+        const [modulos] = await pool.query('SELECT * FROM modulos WHERE curso_id = ? ORDER BY orden ASC', [req.params.id]);
+        for (let m of modulos) {
+            const [lecciones] = await pool.query('SELECT * FROM lecciones WHERE modulo_id = ? ORDER BY orden ASC', [m.id]);
+            m.lecciones = lecciones;
+        }
+        res.json(modulos);
     } catch (e) {
         console.error(e);
-        res.status(500).json({ error: 'Error al obtener mis cursos' });
+        res.status(500).json({ error: 'Error al obtener curriculum' });
     }
 });
 
-// Inscribirse
-app.post('/api/cursos/inscribir', verifyToken, async (req, res) => {
+// Crear módulo
+app.post('/api/modulos', verifyToken, async (req, res) => {
     try {
-        const { curso_id } = req.body;
-        await pool.query('INSERT IGNORE INTO inscripciones (usuario_id, curso_id) VALUES (?, ?)', [req.usuario.id, curso_id]);
-        res.json({ success: true, message: 'Inscrito correctamente' });
+        const { curso_id, titulo } = req.body;
+        const [result] = await pool.query('INSERT INTO modulos (curso_id, titulo) VALUES (?, ?)', [curso_id, titulo]);
+        res.json({ success: true, id: result.insertId });
     } catch (e) {
         console.error(e);
-        res.status(500).json({ error: 'Error en inscripción' });
+        res.status(500).json({ error: 'Error al crear módulo' });
+    }
+});
+
+// Eliminar módulo (ON DELETE CASCADE borra sus lecciones automáticamente)
+app.delete('/api/modulos/:id', verifyToken, async (req, res) => {
+    try {
+        await pool.query('DELETE FROM modulos WHERE id = ?', [req.params.id]);
+        res.json({ success: true });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error al eliminar módulo' });
+    }
+});
+
+// Crear lección (vacía inicialmente)
+app.post('/api/lecciones', verifyToken, async (req, res) => {
+    try {
+        const { modulo_id, titulo } = req.body;
+        const [result] = await pool.query('INSERT INTO lecciones (modulo_id, titulo, descripcion, video_url) VALUES (?, ?, "", "")', [modulo_id, titulo]);
+        res.json({ success: true, id: result.insertId });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error al crear lección' });
+    }
+});
+
+// Actualizar lección (título, descripción, video)
+app.put('/api/lecciones/:id', verifyToken, async (req, res) => {
+    try {
+        const { titulo, descripcion, video_url } = req.body;
+        await pool.query(
+            'UPDATE lecciones SET titulo=?, descripcion=?, video_url=? WHERE id=?',
+            [titulo, descripcion, video_url, req.params.id]
+        );
+        res.json({ success: true });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error al actualizar lección' });
+    }
+});
+
+// Eliminar lección
+app.delete('/api/lecciones/:id', verifyToken, async (req, res) => {
+    try {
+        await pool.query('DELETE FROM lecciones WHERE id = ?', [req.params.id]);
+        res.json({ success: true });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error al eliminar lección' });
     }
 });
 
