@@ -259,22 +259,13 @@
                 <div class="sec-icon b"><i class="ph ph-list-numbers"></i></div>
                 <h3>Estructura del Currículum</h3>
             </div>
-            <p style="font-size:.84rem;color:var(--l);margin-bottom:1.1rem">Define los módulos del curso. Si asignaste a un profesor, él podrá agregar las lecciones dentro de cada módulo.</p>
+            <p style="font-size:.84rem;color:var(--l);margin-bottom:1.1rem">Define los módulos del curso y anexa las lecciones contenidas en cada uno de ellos. (Debes guardar el curso una vez para comenzar a crear el temario).</p>
 
             <div class="module-list" id="moduleList">
-                <div class="module-row">
-                    <i class="ph ph-dots-six-vertical module-handle"></i>
-                    <div style="flex:1"><div class="module-name">Módulo 1 — Fundamentos y Bases Teóricas</div><div class="module-lessons">0 lecciones · Sin contenido aún</div></div>
-                    <button class="module-del" onclick="this.closest('.module-row').remove()"><i class="ph ph-trash"></i></button>
-                </div>
-                <div class="module-row">
-                    <i class="ph ph-dots-six-vertical module-handle"></i>
-                    <div style="flex:1"><div class="module-name">Módulo 2 — Técnica y Práctica Básica</div><div class="module-lessons">0 lecciones · Sin contenido aún</div></div>
-                    <button class="module-del" onclick="this.closest('.module-row').remove()"><i class="ph ph-trash"></i></button>
-                </div>
+                <div style="font-size:.85rem; color:var(--l); text-align:center; padding:1.5rem">Guarda el curso al menos como <strong>Borrador</strong> para habilitar el constructor del currículum.</div>
             </div>
 
-            <div class="add-module-row">
+            <div class="add-module-row" style="display:none;" id="addModuleRowUI">
                 <input class="add-module-inp" id="newModInput" type="text" placeholder="Nombre del nuevo módulo...">
                 <button class="btn bp btn-sm" onclick="addModule()"><i class="ph ph-plus"></i> Agregar módulo</button>
             </div>
@@ -358,6 +349,23 @@
     </div>
 </div>
 
+<!-- Modal: Lección Editor -->
+<div class="modal-bg" id="lessonModalBg">
+    <div class="modal" style="max-width:650px">
+        <h3>Editor de Lección</h3>
+        <div class="fg"><label class="fl">Título de la lección</label><input class="fc" id="lecTitle" type="text" placeholder="Ej: Introducción a los conceptos clave"></div>
+        <div class="fg"><label class="fl">Contenido / Texto descriptivo</label>
+            <textarea class="fc" id="lecDesc" style="height:120px" placeholder="Escribe la explicación o el desarrollo de la lección aquí..."></textarea>
+            <div class="hint">Admite información larga para la clase textual.</div>
+        </div>
+        <div class="fg"><label class="fl">Enlace de Video (YouTube/Vimeo) — Opcional</label><input class="fc" id="lecVideo" type="url" placeholder="https://youtube.com/watch?v=..."></div>
+        <div class="modal-actions">
+            <button class="btn bo" onclick="closeLessonModal()">Cancelar</button>
+            <button class="btn bp" id="btnSaveLesson" onclick="saveLesson()"><i class="ph ph-floppy-disk"></i> Guardar Lección</button>
+        </div>
+    </div>
+</div>
+
 <div class="toast" id="toast"><i class="ph ph-check-circle"></i><span id="tM">Guardado</span></div>
 
 <script>
@@ -393,16 +401,162 @@ function selectProfReal(id, name) {
     showToast(`${name} seleccionada(o) como responsable`);
 }
 
-function addModule() {
-    const inp = document.getElementById('newModInput');
-    if(!inp.value.trim()) return;
-    const count = document.querySelectorAll('.module-row').length + 1;
-    const div = document.createElement('div');
-    div.className = 'module-row';
-    div.innerHTML = `<i class="ph ph-dots-six-vertical module-handle"></i><div style="flex:1"><div class="module-name">${inp.value.trim()}</div><div class="module-lessons">0 lecciones · Sin contenido</div></div><button class="module-del" onclick="this.closest('.module-row').remove()"><i class="ph ph-trash"></i></button>`;
-    document.getElementById('moduleList').appendChild(div);
-    inp.value = '';
+// Curriculum UI Logic
+let curriculumData = [];
+let currentLessonState = { isEdit: false, moduloId: null, leccionId: null };
+
+async function loadCurriculum() {
+    if(!currentCourseId) return;
+    document.getElementById('addModuleRowUI').style.display = 'flex';
+    
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/cursos/${currentCourseId}/curriculum`, { headers: {'Authorization': 'Bearer '+token} });
+        curriculumData = await res.json();
+        renderCurriculumUI();
+    } catch(e) { console.error('Error loadCurriculum', e); }
+}
+
+function renderCurriculumUI() {
+    const list = document.getElementById('moduleList');
+    if(curriculumData.length === 0) {
+        list.innerHTML = '<div style="font-size:.85rem; color:var(--l); text-align:center; padding:1.5rem">No has agregado ningún módulo aún.</div>';
+    } else {
+        list.innerHTML = '';
+        curriculumData.forEach(m => {
+            let html = `
+            <div class="module-row" style="flex-direction:column; align-items:stretch; padding:0; border:1px solid #E5E7EB; overflow:hidden;">
+                <div style="display:flex; align-items:center; padding:1rem; background:var(--bg2);">
+                    <i class="ph ph-dots-six-vertical module-handle"></i>
+                    <div style="flex:1">
+                        <div class="module-name">${m.titulo}</div>
+                        <div class="module-lessons">${m.lecciones ? m.lecciones.length : 0} lecciones registradas</div>
+                    </div>
+                    <button class="module-del" onclick="deleteModule(${m.id})"><i class="ph ph-trash"></i></button>
+                </div>
+                <div style="padding:1rem; padding-top:0; background:var(--bg2);">
+                    <div style="display:flex; flex-direction:column; gap:.5rem; margin-top:.5rem;">`;
+            
+            if(m.lecciones && m.lecciones.length > 0) {
+                m.lecciones.forEach(lec => {
+                    html += `
+                    <div style="display:flex; align-items:center; background:#fff; border:1px solid #E5E7EB; border-radius:var(--rf); padding:.5rem 1rem;">
+                        <i class="ph ph-video-camera" style="margin-right:.65rem; color:var(--p)"></i>
+                        <span style="flex:1; font-size:.84rem; font-weight:600; color:var(--s)">${lec.titulo}</span>
+                        <div style="display:flex; gap:.4rem;">
+                            <button class="btn bo btn-sm" onclick="openLessonModal(${m.id}, ${lec.id})" style="padding:.2rem .5rem"><i class="ph ph-pencil"></i></button>
+                            <button class="btn bo btn-sm" onclick="deleteLesson(${lec.id})" style="padding:.2rem .5rem; border-color:#EF4444; color:#EF4444"><i class="ph ph-trash"></i></button>
+                        </div>
+                    </div>`;
+                });
+            }
+            
+            html += `
+                    </div>
+                    <button class="btn bo btn-sm" style="width:100%; margin-top:.75rem; border:1.5px dashed #D1D5DB" onclick="openLessonModal(${m.id})">
+                        <i class="ph ph-plus"></i> Agregar Lección a este Módulo
+                    </button>
+                </div>
+            </div>`;
+            list.innerHTML += html;
+        });
+    }
     updateChecklist();
+}
+
+async function addModule() {
+    const inp = document.getElementById('newModInput');
+    const titulo = inp.value.trim();
+    if(!titulo || !currentCourseId) return;
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/modulos', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer '+token},
+            body: JSON.stringify({curso_id: currentCourseId, titulo})
+        });
+        if(res.ok) {
+            inp.value = '';
+            showToast('Módulo agregado');
+            loadCurriculum();
+        }
+    } catch(e) { showToast('Error al crear módulo'); }
+}
+
+async function deleteModule(id) {
+    if(!confirm('¿Eliminar este módulo y todas sus lecciones?')) return;
+    try {
+        const res = await fetch('/api/modulos/'+id, { method: 'DELETE', headers: {'Authorization': 'Bearer '+localStorage.getItem('token')} });
+        if(res.ok) loadCurriculum();
+    } catch(e) {}
+}
+
+function openLessonModal(modId, lecId = null) {
+    currentLessonState = { isEdit: !!lecId, moduloId: modId, leccionId: lecId };
+    
+    const titleInp = document.getElementById('lecTitle');
+    const descInp = document.getElementById('lecDesc');
+    const vidInp = document.getElementById('lecVideo');
+    
+    if(lecId) {
+        // Encontrar la leccion en el array
+        const mod = curriculumData.find(m => m.id === modId);
+        const lec = mod.lecciones.find(l => l.id === lecId);
+        titleInp.value = lec.titulo;
+        descInp.value = lec.descripcion || '';
+        vidInp.value = lec.video_url || '';
+    } else {
+        titleInp.value = ''; descInp.value = ''; vidInp.value = '';
+    }
+    
+    document.getElementById('lessonModalBg').classList.add('open');
+}
+
+function closeLessonModal() { document.getElementById('lessonModalBg').classList.remove('open'); }
+
+async function saveLesson() {
+    const titulo = document.getElementById('lecTitle').value.trim();
+    const desc = document.getElementById('lecDesc').value.trim();
+    const video = document.getElementById('lecVideo').value.trim();
+    if(!titulo) return showToast('El título de lección es obligatorio');
+    
+    const token = localStorage.getItem('token');
+    try {
+        if(currentLessonState.isEdit) {
+            await fetch('/api/lecciones/'+currentLessonState.leccionId, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer '+token},
+                body: JSON.stringify({ titulo, descripcion: desc, video_url: video })
+            });
+            showToast('Lección actualizada');
+        } else {
+            // crear nueva y luego hacer el PUT
+            const res = await fetch('/api/lecciones', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer '+token},
+                body: JSON.stringify({ modulo_id: currentLessonState.moduloId, titulo })
+            });
+            if(res.ok) {
+                const data = await res.json();
+                await fetch('/api/lecciones/'+data.id, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer '+token},
+                    body: JSON.stringify({ titulo, descripcion: desc, video_url: video })
+                });
+                showToast('Lección creada');
+            }
+        }
+        closeLessonModal();
+        loadCurriculum();
+    } catch(e) { showToast('Error al guardar lección'); }
+}
+
+async function deleteLesson(id) {
+    if(!confirm('¿Eliminar esta lección?')) return;
+    try {
+        const res = await fetch('/api/lecciones/'+id, { method: 'DELETE', headers: {'Authorization': 'Bearer '+localStorage.getItem('token')} });
+        if(res.ok) loadCurriculum();
+    } catch(e) {}
 }
 
 function previewCover(input) {
@@ -429,7 +583,7 @@ function updateChecklist() {
     const cat = document.getElementById('courseCategory').value;
     const price = document.getElementById('coursePrice').value || document.getElementById('accessType').value==='free';
     const cover = document.getElementById('coverPreview').style.display!=='none';
-    const modules = document.querySelectorAll('.module-row').length > 0;
+    const modules = curriculumData.length > 0;
     const assignOk = currentMode==='admin' || (currentMode==='profesor' && selectedProfId !== null);
 
     setChk('chk-title', !!title);
@@ -469,7 +623,6 @@ window.addEventListener('load', async () => {
     if(id) {
         currentCourseId = id;
         document.querySelector('.hdr-title').textContent = 'Editar Curso';
-        document.querySelector('.pub-btn + button').innerHTML = '<i class="ph ph-paper-plane-tilt"></i> Guardar Cambios';
         document.getElementById('deleteBtn').style.display = 'inline-flex';
         
         try {
@@ -484,9 +637,6 @@ window.addEventListener('load', async () => {
                 document.getElementById('coursePrice').value = c.precio || '';
                 
                 if (c.profesor_id) {
-                    const profIdString = String(c.profesor_id);
-                    const currentUserStr = String(localStorage.getItem('userId' /* wait, let's just assume we check UI visually */));
-                    // Check if assigned strictly to someone else or if the user assigned it
                     selectMode('profesor');
                     selectProfReal(c.profesor_id, 'Profesor Asignado');
                 } else {
@@ -504,10 +654,70 @@ window.addEventListener('load', async () => {
         } catch(e) {
             console.error('Error al cargar curso para editar', e);
         }
+        
+        // Cargar el curriculum real desde la BD
+        await loadCurriculum();
     }
+    
+    // Cerrar modal de lección al hacer click fuera
+    document.getElementById('lessonModalBg').addEventListener('click', function(e) {
+        if(e.target === this) closeLessonModal();
+    });
 });
 
-function saveDraft() { showToast('Borrador guardado — visible solo para el admin'); }
+async function saveDraft() {
+    const title = document.getElementById('courseTitle').value.trim();
+    if(!title) { showToast('⚠️ Agrega un título antes de guardar'); return; }
+
+    const desc = document.querySelector('textarea.fc').value;
+    const priceRaw = document.getElementById('coursePrice').value;
+    const price = priceRaw ? parseInt(priceRaw) : 0;
+
+    try {
+        const token = localStorage.getItem('token');
+        const url = currentCourseId ? '/api/cursos/' + currentCourseId : '/api/cursos';
+        const method = currentCourseId ? 'PUT' : 'POST';
+
+        const payload = {
+            titulo: title,
+            descripcion: desc,
+            precio: price,
+            portada_url: currentCoverUrl || null,
+            estado: 'borrador'
+        };
+
+        if (currentMode === 'profesor' && selectedProfId) {
+            payload.profesor_id = selectedProfId;
+        }
+
+        const res = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify(payload)
+        });
+
+        if(!res.ok) {
+            showToast('⚠️ Error al guardar borrador');
+            return;
+        }
+
+        const data = await res.json();
+        if(!currentCourseId && data.id) {
+            currentCourseId = data.id;
+            const newurl = window.location.pathname + '?id=' + currentCourseId;
+            window.history.pushState({}, '', newurl);
+            document.querySelector('.hdr-title').textContent = 'Editar Curso';
+            document.getElementById('deleteBtn').style.display = 'inline-flex';
+        }
+
+        showToast('✅ Borrador guardado');
+        // Una vez que tenemos ID, cargar el curriculum
+        await loadCurriculum();
+
+    } catch(e) {
+        showToast('⚠️ Error de conexión');
+    }
+}
 
 async function publishCourse() {
     const title = document.getElementById('courseTitle').value.trim();
@@ -516,9 +726,7 @@ async function publishCourse() {
     const desc = document.querySelector('textarea.fc').value;
     const priceRaw = document.getElementById('coursePrice').value;
     const price = priceRaw ? parseInt(priceRaw) : 0;
-    
-    // Si la imagen importada no es archivo real, la dejamos nula, y q la vista default haga render
-    const portada_url = null; 
+    const portada_url = currentCoverUrl || null;
 
     try {
         const token = localStorage.getItem('token');
@@ -539,20 +747,27 @@ async function publishCourse() {
 
         const res = await fetch(url, {
             method: method,
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + token
-            },
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
             body: JSON.stringify(payload)
         });
 
         if(!res.ok) {
             const errData = await res.json();
-            showToast('⚠️ No autorizado o error: ' + errData.error);
+            showToast('⚠️ Error: ' + errData.error);
             return;
         }
 
-        showToast(currentCourseId ? '✅ Curso actualizado' : '✅ Curso publicado y guardado');
+        const data = await res.json();
+        if(!currentCourseId && data.id) {
+            currentCourseId = data.id;
+            const newurl = window.location.pathname + '?id=' + currentCourseId;
+            window.history.pushState({}, '', newurl);
+            document.querySelector('.hdr-title').textContent = 'Editar Curso';
+            document.getElementById('deleteBtn').style.display = 'inline-flex';
+            await loadCurriculum();
+        }
+
+        showToast(currentCourseId ? '✅ Curso actualizado y publicado' : '✅ Curso publicado');
         setTimeout(() => goBack(), 2000);
 
     } catch (e) {

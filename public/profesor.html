@@ -227,17 +227,20 @@
         <div class="us">
             <div class="uc">
                 <h3><i class="ph ph-video-camera" style="color:var(--primary)"></i> Subir Nueva Lección</h3>
-                <div class="fg"><label class="fl">Curso</label><select class="fc"><option>Diplomado Biomagnetismo Clínico</option><option>Iniciación al Reiki Nivel 1 y 2</option><option>Terapia Floral Avanzada</option></select></div>
-                <div class="fg"><label class="fl">Módulo</label><select class="fc"><option>Módulo 1 — Fundamentos</option><option>Módulo 2 — Técnica Básica</option><option>Módulo 3 — Avanzado</option><option>+ Crear nuevo módulo</option></select></div>
-                <div class="fg"><label class="fl">Título de la Lección</label><input type="text" class="fc" placeholder="Ej: Pares del Sistema Hepático"></div>
-                <div class="fg"><label class="fl">Descripción</label><textarea class="fc" placeholder="Qué aprende el estudiante en esta lección..."></textarea></div>
-                <div class="fg">
-                    <label class="fl">Archivo de Video</label>
-                    <div class="dz" onclick="document.getElementById('vIn').click()"><i class="ph ph-film-strip"></i><p>Arrastra tu video o <span>selecciona</span><br><small>MP4, MOV · máx. 2 GB</small></p></div>
-                    <input type="file" id="vIn" style="display:none" accept="video/*" onchange="addFiles(this,'vList')">
-                    <div class="fl-list" id="vList"></div>
+                <div class="fg"><label class="fl">Curso</label>
+                    <select class="fc" id="uploadCursoSel" onchange="loadModulosForUpload(this.value)">
+                        <option value="">Cargando tus cursos...</option>
+                    </select>
                 </div>
-                <button class="btn btn-p" style="width:100%" onclick="showT('Lección guardada correctamente','ph-check-circle')"><i class="ph ph-upload-simple"></i> Subir Lección</button>
+                <div class="fg"><label class="fl">Módulo</label>
+                    <select class="fc" id="uploadModuloSel">
+                        <option value="">Selecciona primero un curso</option>
+                    </select>
+                </div>
+                <div class="fg"><label class="fl">Título de la Lección</label><input type="text" class="fc" id="uploadLecTitulo" placeholder="Ej: Pares del Sistema Hepático"></div>
+                <div class="fg"><label class="fl">Descripción</label><textarea class="fc" id="uploadLecDesc" placeholder="Qué aprende el estudiante en esta lección..."></textarea></div>
+                <div class="fg"><label class="fl">Enlace de Video (YouTube / Vimeo)</label><input type="url" class="fc" id="uploadLecVideo" placeholder="https://youtube.com/watch?v=..."></div>
+                <button class="btn btn-p" style="width:100%" onclick="subirLeccion()"><i class="ph ph-upload-simple"></i> Guardar Lección</button>
             </div>
             <div>
                 <div class="uc" style="margin-bottom:1.4rem">
@@ -317,11 +320,85 @@ function addFiles(input,listId){const l=document.getElementById(listId);l.style.
 
 renderG();
 
-window.onload = () => {
+window.onload = async () => {
     const urlParams = new URLSearchParams(window.location.search);
     if(urlParams.get('tab') === 'cursos') sw(null, 'tc');
-    fetchDictados();
+    await fetchDictados();
+    await loadUploadSelects();
 };
+
+async function loadUploadSelects() {
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/cursos/dictados', { headers: { 'Authorization': 'Bearer ' + token } });
+        if(!res.ok) return;
+        const cursos = await res.json();
+        const sel = document.getElementById('uploadCursoSel');
+        sel.innerHTML = '<option value="">-- Selecciona un curso --</option>';
+        cursos.forEach(c => {
+            sel.innerHTML += `<option value="${c.id}">${c.titulo}</option>`;
+        });
+    } catch(e) { console.error('Error cargando cursos para upload', e); }
+}
+
+async function loadModulosForUpload(cursoId) {
+    const modSel = document.getElementById('uploadModuloSel');
+    if (!cursoId) { modSel.innerHTML = '<option value="">Selecciona primero un curso</option>'; return; }
+    modSel.innerHTML = '<option>Cargando módulos...</option>';
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/cursos/${cursoId}/curriculum`, { headers: {'Authorization': 'Bearer '+token} });
+        const modulos = await res.json();
+        modSel.innerHTML = '<option value="">-- Selecciona un módulo --</option>';
+        if(modulos.length === 0) {
+            modSel.innerHTML = '<option value="">Sin módulos aún (créalos en el curso)</option>';
+            return;
+        }
+        modulos.forEach(m => {
+            modSel.innerHTML += `<option value="${m.id}">${m.titulo}</option>`;
+        });
+    } catch(e) { modSel.innerHTML = '<option value="">Error al cargar</option>'; }
+}
+
+async function subirLeccion() {
+    const moduloId = document.getElementById('uploadModuloSel').value;
+    const titulo = document.getElementById('uploadLecTitulo').value.trim();
+    const descripcion = document.getElementById('uploadLecDesc').value.trim();
+    const video_url = document.getElementById('uploadLecVideo').value.trim();
+
+    if(!moduloId || !titulo) {
+        showT('Selecciona un módulo y escribe un título', 'ph-warning');
+        return;
+    }
+
+    try {
+        const token = localStorage.getItem('token');
+        // Crear lección
+        const res = await fetch('/api/lecciones', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+            body: JSON.stringify({ modulo_id: moduloId, titulo })
+        });
+        const data = await res.json();
+        if(res.ok && data.id) {
+            // Guardar descripcion y video
+            await fetch('/api/lecciones/' + data.id, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+                body: JSON.stringify({ titulo, descripcion, video_url })
+            });
+            showT('✅ Lección guardada correctamente', 'ph-check-circle');
+            // Limpiar formulario
+            document.getElementById('uploadLecTitulo').value = '';
+            document.getElementById('uploadLecDesc').value = '';
+            document.getElementById('uploadLecVideo').value = '';
+        } else {
+            showT('⚠️ Error al guardar la lección', 'ph-warning');
+        }
+    } catch(e) {
+        showT('⚠️ Error de conexión', 'ph-warning');
+    }
+}
 
 async function fetchDictados() {
     const tbody = document.getElementById('profesorCoursesBody');

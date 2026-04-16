@@ -348,50 +348,42 @@
 <div class="toast" id="toast"><i class="ph ph-check-circle" id="tI"></i><span id="tM">Guardado</span></div>
 
 <script>
-const usersData=[
-    {name:'María González',email:'maria@gmail.cl',init:'MG',role:'Estudiante',courses:2,last:'Hoy 09:32',active:true},
-    {name:'Catalina Reyes',email:'cat@gmail.cl',init:'CR',role:'Estudiante',courses:1,last:'Ayer 22:10',active:true},
-    {name:'Elena Soto',email:'elena@flordechanar.cl',init:'ES',role:'Profesor',courses:3,last:'Hoy 08:15',active:true},
-    {name:'Carmen Ruiz',email:'carmen@flordechanar.cl',init:'CR',role:'Profesor',courses:1,last:'26 Mar',active:true},
-    {name:'Roberto Díaz',email:'roberto@gmail.cl',init:'RD',role:'Profesor',courses:0,last:'Nunca',active:false},
-    {name:'Javiera Morales',email:'javiera@gmail.cl',init:'JM',role:'Estudiante',courses:2,last:'Hoy 07:50',active:true},
-    {name:'Admin EyCT',email:'admin@flordechanar.cl',init:'A',role:'Admin',courses:0,last:'Ahora',active:true},
-];
+// Users backend integration
+async function renderUsers(){
+    const b = document.getElementById('usersBody');
+    b.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem;">Cargando usuarios...</td></tr>';
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/usuarios', { headers: { 'Authorization': 'Bearer ' + token } });
+        const users = await res.json();
+        
+        b.innerHTML = '';
+        if(users.length === 0) {
+            b.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem;">No hay usuarios.</td></tr>';
+            return;
+        }
 
-// Integrations data — all start disconnected
-const integrations = [
-    {id:'calendly',name:'Calendly',icon:'📅',desc:'Agendamiento de sesiones y citas',type:'API Key',connected:false},
-    {id:'gcal',name:'Google Calendar',icon:'🗓️',desc:'Sincronizar eventos y clases en vivo',type:'OAuth2',connected:false},
-    {id:'zoom',name:'Zoom',icon:'📹',desc:'Clases en vivo y videoconferencias',type:'API Key + Secret',connected:false},
-    {id:'surecart',name:'SureCart',icon:'💳',desc:'Pagos, suscripciones y matrículas',type:'API Key',connected:false},
-    {id:'mailchimp',name:'Mailchimp',icon:'📧',desc:'Email marketing y campañas automáticas',type:'API Key',connected:false},
-    {id:'n8n',name:'n8n',icon:'⚡',desc:'Automatizaciones y flujos de trabajo',type:'Webhook URL',connected:false},
-    {id:'whatsapp',name:'WhatsApp Business',icon:'💬',desc:'Notificaciones a estudiantes vía WhatsApp',type:'API Token',connected:false},
-    {id:'stripe',name:'Stripe',icon:'💰',desc:'Pasarela de pagos internacional',type:'API Key',connected:false},
-];
+        users.forEach(u => {
+            const roleCap = u.rol.charAt(0).toUpperCase() + u.rol.slice(1);
+            const init = u.nombre.charAt(0).toUpperCase();
+            // Assign colors dynamically or based on role
+            let bgCol = 'var(--p)';
+            if(u.rol === 'profesor') bgCol = 'var(--inf)';
+            if(u.rol === 'admin') bgCol = 'var(--err)';
 
-const roleColors={Estudiante:'var(--p)',Profesor:'var(--inf)',Admin:'var(--err)'};
-let currentIntId = null;
-
-function renderUsers(){
-    const b=document.getElementById('usersBody');b.innerHTML='';
-    usersData.forEach((u,i)=>{
-        b.innerHTML+=`<tr>
-            <td><div style="display:flex;align-items:center;gap:.65rem"><div style="width:30px;height:30px;border-radius:50%;background:${roleColors[u.role]};opacity:.85;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.72rem;color:#fff">${u.init}</div><div><div class="tn">${u.name}</div><div class="ts">${u.email}</div></div></div></td>
-            <td><select class="role-select" onchange="usersData[${i}].role=this.value;renderUsers();showT('Rol actualizado')">
-                <option${u.role==='Estudiante'?' selected':''}>Estudiante</option>
-                <option${u.role==='Profesor'?' selected':''}>Profesor</option>
-                <option${u.role==='Admin'?' selected':''}>Admin</option>
-            </select></td>
-            <td>${u.courses}</td>
-            <td class="ts">${u.last}</td>
-            <td><span class="bp2 ${u.active?'bA':'bD'}">${u.active?'Activo':'Inactivo'}</span></td>
-            <td><div style="display:flex;gap:.4rem"><button class="btn bo btn-sm" onclick="showT('Perfil de ${u.name} abierto')">Ver</button><button class="btn bd btn-sm" onclick="toggleUser(${i})">${u.active?'Suspender':'Activar'}</button></div></td>
-        </tr>`;
-    });
+            b.innerHTML += `<tr>
+                <td><div style="display:flex;align-items:center;gap:.65rem"><div style="width:30px;height:30px;border-radius:50%;background:${bgCol};opacity:.85;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.72rem;color:#fff">${init}</div><div><div class="tn">${u.nombre}</div><div class="ts">${u.email}</div></div></div></td>
+                <td>${roleCap}</td>
+                <td>${u.cursos_inscritos || 0}</td>
+                <td class="ts">Registrado</td>
+                <td><span class="bp2 ${u.activo ? 'bA' : 'bD'}">${u.activo ? 'Activo' : 'Inactivo'}</span></td>
+                <td><div style="display:flex;gap:.4rem"><button class="btn bo btn-sm" onclick="showT('Perfil de ${u.nombre} abierto')">Ver</button><button class="btn bd btn-sm" onclick="showT('Próximamente')">${u.activo ? 'Suspender' : 'Activar'}</button></div></td>
+            </tr>`;
+        });
+    } catch(e) {
+        b.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem; color:red;">Error al cargar usuarios</td></tr>';
+    }
 }
-
-function toggleUser(i){usersData[i].active=!usersData[i].active;renderUsers();showT('Estado actualizado')}
 
 // FIX 1: st() now clears BOTH .tab and .sb-n li a active classes
 function st(e,id){
@@ -416,10 +408,25 @@ function st(e,id){
     document.getElementById('headerActionLabel').textContent = isCursos ? 'Crear Curso' : 'Nuevo Usuario';
 }
 
+// Integrations data — all start disconnected
+const integrations = [
+    {id:'calendly',name:'Calendly',icon:'📅',desc:'Agendamiento de sesiones y citas',type:'API Key',connected:false},
+    {id:'gcal',name:'Google Calendar',icon:'🗓️',desc:'Sincronizar eventos y clases en vivo',type:'OAuth2',connected:false},
+    {id:'zoom',name:'Zoom',icon:'📹',desc:'Clases en vivo y videoconferencias',type:'API Key + Secret',connected:false},
+    {id:'surecart',name:'SureCart',icon:'💳',desc:'Pagos, suscripciones y matrículas',type:'API Key',connected:false},
+    {id:'mailchimp',name:'Mailchimp',icon:'📧',desc:'Email marketing y campañas automáticas',type:'API Key',connected:false},
+    {id:'n8n',name:'n8n',icon:'⚡',desc:'Automatizaciones y flujos de trabajo',type:'Webhook URL',connected:false},
+    {id:'whatsapp',name:'WhatsApp Business',icon:'💬',desc:'Notificaciones a estudiantes vía WhatsApp',type:'API Token',connected:false},
+    {id:'stripe',name:'Stripe',icon:'💰',desc:'Pasarela de pagos internacional',type:'API Key',connected:false},
+];
+let currentIntId = null;
+
 function headerAction(){
-    const label = document.getElementById('headerActionLabel').textContent;
-    if(label === 'Crear Curso') { window.location.href = 'curso-crear.html'; }
-    else { openModal(); }
+    if(document.getElementById('tc').classList.contains('active')) { 
+        window.location.href = 'curso-crear.html'; 
+    } else if(document.getElementById('tu').classList.contains('active')) {
+        openModal(); 
+    }
 }
 
 // --- Integrations ---
@@ -511,9 +518,34 @@ function saveWH(){
 }
 
 // --- User modal ---
-function openModal(){document.getElementById('modalBg').classList.add('open')}
-function closeModal(){document.getElementById('modalBg').classList.remove('open')}
-function addUser(){ showT('Usuario creado y notificado por correo');closeModal(); }
+function openModal(){document.getElementById('modalBg').classList.add('open');}
+function closeModal(){document.getElementById('modalBg').classList.remove('open');}
+async function addUser(){ 
+    const nombre = document.querySelector('#modalBg input[type="text"]').value;
+    const email = document.querySelector('#modalBg input[type="email"]').value;
+    const rolSel = document.querySelector('#modalBg select').value.toLowerCase();
+    
+    if(!nombre || !email) return showT('⚠️ Nombre y correo requeridos');
+
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/usuarios/crear', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ nombre, email, password: 'password123', rol: rolSel })
+        });
+        if(res.ok) {
+            showT('Usuario creado correctamente');
+            closeModal();
+            renderUsers();
+            if(rolSel === 'profesor') renderAccessMatrix();
+        } else {
+            showT('⚠️ Hubo un error al crear el usuario');
+        }
+    } catch(e) {
+        showT('⚠️ Error de conexión');
+    }
+}
 
 function showT(msg){const t=document.getElementById('toast');document.getElementById('tM').textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
 
@@ -547,12 +579,35 @@ async function renderAdminCourses() {
                     <td>0</td>
                     <td><span class="bp2 bA">Publicado</span></td>
                     <td class="ts">Reciente</td>
-                    <td><a href="curso-crear.html?id=${c.id}" class="btn bo btn-sm">Editar</a></td>
+                    <td><div style="display:flex;gap:.4rem">
+                        <a href="curso-crear.html?id=${c.id}" class="btn bo btn-sm">Editar</a>
+                        <button class="btn bo btn-sm" style="border-color: #EF4444; color: #EF4444;" onclick="eliminarCursoDesdeAdmin(${c.id}, '${c.titulo}')"><i class="ph ph-trash"></i></button>
+                    </div></td>
                 </tr>
             `;
         });
     } catch(e) {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem; color:red;">Error al cargar cursos</td></tr>';
+    }
+}
+
+async function eliminarCursoDesdeAdmin(id, titulo) {
+    if(!confirm('¿Estás seguro que deseas eliminar el curso: "' + titulo + '"? Esta acción no se puede deshacer.')) return;
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/cursos/' + id, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if(res.ok) {
+            showT('Curso eliminado');
+            renderAdminCourses();
+            renderAccessMatrix();
+        } else {
+            showT('⚠️ No se pudo eliminar el curso');
+        }
+    } catch(e) {
+        showT('⚠️ Error de red al eliminar el curso');
     }
 }
 renderAdminCourses();
