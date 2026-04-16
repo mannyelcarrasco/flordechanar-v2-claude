@@ -100,10 +100,20 @@ async function initDB() {
                 titulo VARCHAR(300) NOT NULL,
                 descripcion TEXT,
                 video_url VARCHAR(500),
+                tipo ENUM('video','texto','archivo','link') DEFAULT 'video',
+                duracion VARCHAR(50),
+                visibilidad ENUM('privada','muestra') DEFAULT 'privada',
                 orden INT DEFAULT 0,
                 FOREIGN KEY (modulo_id) REFERENCES modulos(id) ON DELETE CASCADE
             )
         `);
+        // Agregar columnas nuevas si ya existe la tabla (migración segura)
+        const alterCols = [
+            "ALTER TABLE lecciones ADD COLUMN IF NOT EXISTS tipo ENUM('video','texto','archivo','link') DEFAULT 'video'",
+            "ALTER TABLE lecciones ADD COLUMN IF NOT EXISTS duracion VARCHAR(50)",
+            "ALTER TABLE lecciones ADD COLUMN IF NOT EXISTS visibilidad ENUM('privada','muestra') DEFAULT 'privada'"
+        ];
+        for(const sql of alterCols) { try { await pool.query(sql); } catch(e) {} }
         console.log('Tables checked/created: usuarios, cursos, inscripciones, modulos, lecciones.');
 
         // Insert default admin if none exists
@@ -383,13 +393,13 @@ app.post('/api/lecciones', verifyToken, async (req, res) => {
     }
 });
 
-// Actualizar lección (título, descripción, video)
+// Actualizar lección (título, descripción, video, tipo, duración, visibilidad)
 app.put('/api/lecciones/:id', verifyToken, async (req, res) => {
     try {
-        const { titulo, descripcion, video_url } = req.body;
+        const { titulo, descripcion, video_url, tipo, duracion, visibilidad } = req.body;
         await pool.query(
-            'UPDATE lecciones SET titulo=?, descripcion=?, video_url=? WHERE id=?',
-            [titulo, descripcion, video_url, req.params.id]
+            'UPDATE lecciones SET titulo=?, descripcion=?, video_url=?, tipo=?, duracion=?, visibilidad=? WHERE id=?',
+            [titulo, descripcion, video_url, tipo || 'video', duracion || null, visibilidad || 'privada', req.params.id]
         );
         res.json({ success: true });
     } catch (e) {
