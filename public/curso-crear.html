@@ -772,54 +772,89 @@ function setChk(id, done) {
     if(el) el.classList.toggle('done', done);
 }
 
+// Cargar lista de profesores en el panel de asignación
+async function fetchProfessors() {
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/usuarios/profesores', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) return;
+        const profs = await res.json();
+        const container = document.getElementById('professorsPanel');
+        if (!container) return;
+        container.innerHTML = '';
+        profs.forEach(p => {
+            const init = p.nombre.charAt(0).toUpperCase();
+            container.innerHTML += `
+            <div class="prof-row" id="profRow_${p.id}" onclick="selectProfReal(${p.id}, '${p.nombre.replace(/'/g,"\\'")}')">
+                <div class="prof-av">${init}</div>
+                <div>
+                    <div style="font-size:.86rem;font-weight:600;color:var(--s)">${p.nombre}</div>
+                    <div style="font-size:.74rem;color:var(--l)">${p.email}</div>
+                </div>
+                <i class="ph ph-check-circle" id="checkProf_${p.id}" style="display:none;color:var(--p);margin-left:auto;font-size:1.1rem"></i>
+            </div>`;
+        });
+    } catch(e) {
+        console.warn('No se pudo cargar lista de profesores:', e);
+    }
+}
+
 // Init
 window.addEventListener('load', async () => {
-    await fetchProfessors();
+    try { await fetchProfessors(); } catch(e) { console.warn(e); }
     updateChecklist();
+
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get('id');
-    if(id) {
+    if (id) {
         currentCourseId = id;
         document.querySelector('.hdr-title').textContent = 'Editar Curso';
         document.getElementById('deleteBtn').style.display = 'inline-flex';
-        
-        try {
-            const token = localStorage.getItem('token');
-            const res = await fetch('/api/cursos/' + id, {
-                headers: { 'Authorization': 'Bearer ' + token }
-            });
-            if(res.ok) {
-                const c = await res.json();
-                document.getElementById('courseTitle').value = c.titulo;
-                document.getElementById('courseDesc').value = c.descripcion || '';
-                document.getElementById('coursePrice').value = c.precio || '';
-                
-                if (c.profesor_id) {
-                    selectMode('profesor');
-                    selectProfReal(c.profesor_id, 'Profesor Asignado');
-                } else {
-                    selectMode('admin');
-                }
 
-                if(c.portada_url) {
-                    document.getElementById('coverPreview').src = c.portada_url;
-                    currentCoverUrl = c.portada_url;
-                    document.getElementById('coverPreview').style.display = 'block';
-                    document.getElementById('coverDrop').style.display = 'none';
+        const token = localStorage.getItem('token');
+        if (!token) {
+            showToast('⚠️ Sesión expirada. Vuelve a iniciar sesión.');
+        } else {
+            try {
+                const res = await fetch('/api/cursos/' + id, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (res.status === 401 || res.status === 403) {
+                    showToast('⚠️ Sin autorización. Inicia sesión nuevamente.');
+                } else if (!res.ok) {
+                    showToast('⚠️ No se pudo cargar el curso (error ' + res.status + ')');
+                } else {
+                    const c = await res.json();
+                    document.getElementById('courseTitle').value = c.titulo || '';
+                    document.getElementById('courseDesc').value = c.descripcion || '';
+                    document.getElementById('coursePrice').value = c.precio || '';
+                    if (c.profesor_id) {
+                        selectMode('profesor');
+                        selectProfReal(c.profesor_id, c.profesor_nombre || 'Profesor asignado');
+                    } else {
+                        selectMode('admin');
+                    }
+                    if (c.portada_url) {
+                        document.getElementById('coverPreview').src = c.portada_url;
+                        currentCoverUrl = c.portada_url;
+                        document.getElementById('coverPreview').style.display = 'block';
+                        document.getElementById('coverDrop').style.display = 'none';
+                    }
+                    updateChecklist();
                 }
-                updateChecklist();
+            } catch(e) {
+                console.error('Error al cargar curso para editar:', e);
+                showToast('⚠️ Error de conexión al cargar el curso');
             }
-        } catch(e) {
-            console.error('Error al cargar curso para editar', e);
         }
-        
-        // Cargar el curriculum real desde la BD
+
         await loadCurriculum();
     }
-    
-    // Cerrar modal de lección al hacer click fuera
+
     document.getElementById('lessonModalBg').addEventListener('click', function(e) {
-        if(e.target === this) closeLessonModal();
+        if (e.target === this) closeLessonModal();
     });
 });
 
