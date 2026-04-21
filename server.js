@@ -225,6 +225,18 @@ app.post('/api/usuarios/crear', verifyToken, async (req, res) => {
         res.status(500).json({ error: 'Error al crear usuario' });
     }
 });
+// Obtener solo profesores (para el selector de curso-crear)
+app.get('/api/usuarios/profesores', verifyToken, async (req, res) => {
+    try {
+        const [profs] = await pool.query(
+            'SELECT id, nombre, email FROM usuarios WHERE rol = "profesor" ORDER BY nombre ASC'
+        );
+        res.json(profs);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error al obtener profesores' });
+    }
+});
 
 // Obtener todos los cursos (Público - para la vitrina)
 app.get('/api/cursos', async (req, res) => {
@@ -302,7 +314,13 @@ app.post('/api/cursos/inscribir', verifyToken, async (req, res) => {
 // Obtener Curso por ID (ruta genérica - debe ir DESPUÉS de las rutas específicas)
 app.get('/api/cursos/:id', verifyToken, async (req, res) => {
     try {
-        const [cursos] = await pool.query('SELECT * FROM cursos WHERE id = ?', [req.params.id]);
+        const [cursos] = await pool.query(
+            `SELECT c.*, u.nombre as profesor_nombre 
+             FROM cursos c 
+             LEFT JOIN usuarios u ON c.profesor_id = u.id 
+             WHERE c.id = ?`,
+            [req.params.id]
+        );
         if (cursos.length === 0) return res.status(404).json({ error: 'Curso no encontrado' });
         res.json(cursos[0]);
     } catch (e) {
