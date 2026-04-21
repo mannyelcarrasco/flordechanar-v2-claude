@@ -192,7 +192,7 @@
 
             <div class="fg"><label class="fl">Título del curso <span style="color:var(--err)">*</span></label><input class="fc" type="text" id="courseTitle" placeholder="Ej: Diplomado en Biomagnetismo Clínico Integral" oninput="updateChecklist()"></div>
             <div class="fg"><label class="fl">Subtítulo / descripción corta</label><input class="fc" type="text" placeholder="Ej: Aprende a dominar los pares biomagnéticos desde cero hasta nivel clínico"></div>
-            <div class="fg"><label class="fl">Descripción completa</label><textarea class="fc" rows="4" placeholder="Describe qué aprenderá el estudiante, a quién va dirigido y cuáles son los requisitos previos..."></textarea></div>
+            <div class="fg"><label class="fl">Descripción completa</label><textarea class="fc" id="courseDesc" rows="4" placeholder="Describe qué aprenderá el estudiante, a quién va dirigido y cuáles son los requisitos previos..."></textarea></div>
 
             <div class="two">
                 <div class="fg">
@@ -791,7 +791,7 @@ window.addEventListener('load', async () => {
             if(res.ok) {
                 const c = await res.json();
                 document.getElementById('courseTitle').value = c.titulo;
-                document.querySelector('textarea.fc').value = c.descripcion || '';
+                document.getElementById('courseDesc').value = c.descripcion || '';
                 document.getElementById('coursePrice').value = c.precio || '';
                 
                 if (c.profesor_id) {
@@ -827,7 +827,7 @@ async function saveDraft() {
     const title = document.getElementById('courseTitle').value.trim();
     if(!title) { showToast('⚠️ Agrega un título antes de guardar'); return; }
 
-    const desc = document.querySelector('textarea.fc').value;
+    const desc = document.getElementById('courseDesc').value;
     const priceRaw = document.getElementById('coursePrice').value;
     const price = priceRaw ? parseInt(priceRaw) : 0;
 
