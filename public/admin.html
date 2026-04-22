@@ -99,17 +99,11 @@
     <script>
         window.onload = () => {
             const params = new URLSearchParams(window.location.search);
-            if (params.get('tab') === 'cursos') st(null, 'tc');
+            if (params.get('tab') === 'cursos') {
+                // defer to after main script loads
+                window.addEventListener('DOMContentLoaded', () => {});
+            }
         };
-        function st(e, id) {
-            if(e) e.preventDefault();
-            document.querySelectorAll('.tp').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.sb-n a').forEach(a => a.classList.remove('active'));
-            
-            document.getElementById(id).classList.add('active');
-            document.querySelectorAll(`[onclick="st(event,'${id}')"]`).forEach(el => el.classList.add('active'));
-        }
     </script>
 </head>
 <body>
@@ -385,27 +379,34 @@ async function renderUsers(){
     }
 }
 
-// FIX 1: st() now clears BOTH .tab and .sb-n li a active classes
-function st(e,id){
-    // Clear all tab buttons
-    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-    // Clear all sidebar nav links
-    document.querySelectorAll('.sb-n li a').forEach(a=>a.classList.remove('active'));
-    // Add active to the clicked element (tab or nav link)
-    if(e && e.target) e.target.classList.add('active');
-    // Show the right panel
-    document.querySelectorAll('.tp').forEach(p=>p.classList.remove('active'));
+// Tab switching — única función st() en la página
+let activeTab = 'tu'; // pestaña activa por defecto: Usuarios
+
+function st(e, id) {
+    if (e) e.preventDefault();
+    activeTab = id;
+
+    // Panel content
+    document.querySelectorAll('.tp').forEach(t => t.classList.remove('active'));
     document.getElementById(id).classList.add('active');
-    // Sync the corresponding tab button if clicked from sidebar
-    const tabMap={tu:0,tc:1,ta:2,tr:3,ts:4};
-    if(e && e.target.closest('.sb-n')) {
-        const tabs = document.querySelectorAll('.tab');
-        if(tabs[tabMap[id]]) tabs[tabMap[id]].classList.add('active');
-    }
-    // Update header button
+
+    // Tab buttons
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.sb-n a').forEach(a => a.classList.remove('active'));
+    document.querySelectorAll(`[onclick="st(event,'${id}')"]`).forEach(el => el.classList.add('active'));
+
+    // Update header button label and action
     const isCursos = id === 'tc';
     document.getElementById('headerActionIcon').className = 'ph ph-plus';
     document.getElementById('headerActionLabel').textContent = isCursos ? 'Crear Curso' : 'Nuevo Usuario';
+}
+
+function headerAction() {
+    if (activeTab === 'tc') {
+        window.location.href = 'curso-crear.html';
+    } else {
+        openModal();
+    }
 }
 
 // Integrations data — all start disconnected
@@ -421,13 +422,7 @@ const integrations = [
 ];
 let currentIntId = null;
 
-function headerAction(){
-    if(document.getElementById('tc').classList.contains('active')) { 
-        window.location.href = 'curso-crear.html'; 
-    } else if(document.getElementById('tu').classList.contains('active')) {
-        openModal(); 
-    }
-}
+
 
 // --- Integrations ---
 function renderIntegrations(){
