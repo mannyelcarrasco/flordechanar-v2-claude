@@ -137,7 +137,7 @@
 <main class="main">
     <div class="ph">
         <div><h2>Panel de Administración</h2><p>Gestión de usuarios, roles, accesos y reportes de la plataforma.</p></div>
-        <button class="btn bp" id="headerActionBtn" onclick="headerAction()"><i class="ph ph-plus" id="headerActionIcon"></i> <span id="headerActionLabel">Nuevo Usuario</span></button>
+        <button class="btn bp" id="headerActionBtn" onclick="openModal()"><i class="ph ph-plus" id="headerActionIcon"></i> <span id="headerActionLabel">Nuevo Usuario</span></button>
     </div>
 
     <div class="stats">
@@ -390,22 +390,21 @@ function st(e, id) {
     document.querySelectorAll('.tp').forEach(t => t.classList.remove('active'));
     document.getElementById(id).classList.add('active');
 
-    // Tab buttons
+    // Tab buttons & sidebar links
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.sb-n a').forEach(a => a.classList.remove('active'));
     document.querySelectorAll(`[onclick="st(event,'${id}')"]`).forEach(el => el.classList.add('active'));
 
-    // Update header button label and action
-    const isCursos = id === 'tc';
-    document.getElementById('headerActionIcon').className = 'ph ph-plus';
-    document.getElementById('headerActionLabel').textContent = isCursos ? 'Crear Curso' : 'Nuevo Usuario';
-}
-
-function headerAction() {
-    if (activeTab === 'tc') {
-        window.location.href = 'curso-crear.html';
+    // Update header button — cambia onclick directamente en el DOM
+    const btn = document.getElementById('headerActionBtn');
+    const icon = document.getElementById('headerActionIcon');
+    const label = document.getElementById('headerActionLabel');
+    if (id === 'tc') {
+        btn.setAttribute('onclick', "window.location.href='curso-crear.html'");
+        label.textContent = 'Crear Curso';
     } else {
-        openModal();
+        btn.setAttribute('onclick', 'openModal()');
+        label.textContent = 'Nuevo Usuario';
     }
 }
 
