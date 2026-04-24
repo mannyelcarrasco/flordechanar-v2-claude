@@ -7,28 +7,30 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
-        :root{--bg:#F9F6F0;--bg2:#F2EDE4;--p:#687A61;--pd:#52634C;--s:#2C3531;--ac:#D4A373;--w:#fff;--t:#333;--l:#666;--inf:#3B82F6;--err:#EF4444;--f:'Inter',sans-serif;--fs:'Playfair Display',serif;--r:12px;--rf:9999px;--tr:all .25s ease}
-        *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--f);background:var(--bg);color:var(--t);-webkit-font-smoothing:antialiased}a{text-decoration:none;color:inherit}
+        :root{
+            --p:var(--primary); --pd:var(--primary-d);
+            --s:var(--secondary); --ac:var(--accent);
+            --w:var(--white); --t:var(--text); --l:var(--light);
+            --err:var(--danger); --inf:var(--info);
+            --f:var(--font); --fs:var(--serif);
+            --bg2:var(--bg-alt);
+        }
+
         .hdr{background:var(--s);height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 2rem;position:sticky;top:0;z-index:10}
         .hdr-l{display:flex;align-items:center;gap:1rem}.hdr-back{color:rgba(255,255,255,.65);font-size:.85rem;display:flex;align-items:center;gap:.3rem}.hdr-back:hover{color:#fff}
         .hdr-title{color:#fff;font-family:var(--fs);font-size:1rem}
         .hdr-r{display:flex;gap:.75rem}
-        .btn{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1.15rem;border-radius:var(--rf);font-size:.83rem;font-weight:600;cursor:pointer;border:none;transition:var(--tr);font-family:var(--f)}
         .bp{background:var(--p);color:#fff}.bp:hover{background:var(--pd)}
         .bo{background:transparent;border:1.5px solid rgba(255,255,255,.25);color:rgba(255,255,255,.85)}.bo:hover{border-color:#fff;color:#fff}
-        .btn-sm{padding:.35rem .8rem;font-size:.77rem}
 
         .editor-layout{display:grid;grid-template-columns:1fr 280px;gap:2rem;max-width:1100px;margin:2rem auto;padding:0 1.5rem}
 
         /* Left: Questions */
-        .q-area{}
         .q-meta{background:var(--w);border-radius:var(--r);padding:1.5rem;margin-bottom:1.5rem;box-shadow:0 2px 10px rgba(0,0,0,.04)}
         .q-meta h2{font-size:1.2rem;margin-bottom:1.1rem}
-        .fg{margin-bottom:.85rem}.fl{display:block;font-size:.79rem;font-weight:600;margin-bottom:.28rem;color:var(--s)}
-        .fc{width:100%;padding:.58rem .8rem;border:1.5px solid #E5E7EB;border-radius:8px;font-size:.84rem;font-family:var(--f);color:var(--s);outline:none;transition:var(--tr)}.fc:focus{border-color:var(--p)}
-        textarea.fc{resize:vertical;min-height:70px}
         .two-col{display:grid;grid-template-columns:1fr 1fr;gap:.85rem}
 
         /* Question Card */
@@ -68,12 +70,6 @@
         .qi-type{font-size:.65rem;opacity:.65}
         .stats-mini{display:flex;flex-direction:column;gap:.55rem;font-size:.83rem}
         .stat-row{display:flex;justify-content:space-between}.stat-val{font-weight:700;color:var(--s)}
-
-        /* Toast */
-        .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--s);color:#fff;padding:.85rem 1.3rem;border-radius:var(--r);display:none;align-items:center;gap:.7rem;z-index:9999;font-size:.85rem;box-shadow:0 10px 30px rgba(0,0,0,.2)}
-        .toast i{color:var(--p);font-size:1.2rem}
-        @keyframes sU{from{opacity:0;transform:translateY(20px)}to{opacity:1}}
-        .toast.show{display:flex;animation:sU .3s ease}
     </style>
 </head>
 <body>
@@ -185,6 +181,7 @@
 
 <div class="toast" id="toast"><i class="ph ph-check-circle"></i><span id="tM">Guardado</span></div>
 
+<script src="shared.js"></script>
 <script>
 const token = localStorage.getItem('token');
 if (!token) location.href = 'login.html';
@@ -345,12 +342,6 @@ function updateSummary() {
     document.getElementById('totalDev').textContent = document.querySelectorAll('.dev-type').length;
 }
 
-function showToast(msg) {
-    const t = document.getElementById('toast');
-    document.getElementById('tM').textContent = msg;
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 3500);
-}
 </script>
 </body>
 </html>

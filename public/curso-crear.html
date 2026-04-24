@@ -7,11 +7,18 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
-        :root{--bg:#F9F6F0;--bg2:#F2EDE4;--p:#687A61;--pd:#52634C;--s:#2C3531;--ac:#D4A373;--w:#fff;--t:#333;--l:#666;--err:#EF4444;--inf:#3B82F6;--xp:#F59E0B;--f:'Inter',sans-serif;--fs:'Playfair Display',serif;--r:12px;--rf:9999px;--tr:all .25s ease}
-        *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--f);background:var(--bg);color:var(--t);-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column}
-        a{text-decoration:none;color:inherit}h2,h3,h4{font-family:var(--fs);color:var(--s)}
+        :root{
+            --p:var(--primary); --pd:var(--primary-d);
+            --s:var(--secondary); --ac:var(--accent);
+            --w:var(--white); --t:var(--text); --l:var(--light);
+            --err:var(--danger); --inf:var(--info);
+            --f:var(--font); --fs:var(--serif);
+            --bg2:var(--bg-alt);
+        }
+        body{display:flex;flex-direction:column}
 
         /* Top Bar */
         .hdr{background:var(--s);height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 2rem;position:sticky;top:0;z-index:50;flex-shrink:0}
@@ -117,12 +124,6 @@
         .check-item.done .chk-circle::after{content:'';width:6px;height:6px;border-radius:50%;background:#fff}
         .pub-wrap{display:flex;flex-direction:column;gap:.55rem}
         .pub-btn{width:100%;justify-content:center}
-
-        /* Toast */
-        .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--s);color:#fff;padding:.85rem 1.3rem;border-radius:var(--r);display:none;align-items:center;gap:.7rem;z-index:9999;font-size:.85rem;box-shadow:0 10px 30px rgba(0,0,0,.2)}
-        .toast i{color:var(--p);font-size:1.2rem}
-        @keyframes sU{from{opacity:0;transform:translateY(20px)}to{opacity:1}}
-        .toast.show{display:flex;animation:sU .3s ease}
 
         /* Lesson Drawer (panel lateral) */
         .lesson-drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1100;opacity:0;pointer-events:none;transition:opacity .3s ease}
@@ -469,6 +470,7 @@
 
 <div class="toast" id="toast"><i class="ph ph-check-circle"></i><span id="tM">Guardado</span></div>
 
+<script src="shared.js"></script>
 <script>
 let currentMode = 'admin';
 let selectedProfId = null;
@@ -1036,12 +1038,6 @@ function goBack() {
     else window.location.href = 'admin.html?tab=cursos';
 }
 
-function showToast(msg) {
-    const t = document.getElementById('toast');
-    document.getElementById('tM').textContent = msg;
-    t.classList.add('show');
-    setTimeout(()=>t.classList.remove('show'), 3000);
-}
 </script>
 </body>
 </html>

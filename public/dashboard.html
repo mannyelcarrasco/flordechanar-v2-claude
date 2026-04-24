@@ -7,22 +7,20 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
         :root {
-            --color-bg: #F9F6F0; --color-bg-alt: #F2EDE4;
-            --color-primary: #687A61; --color-primary-dark: #52634C;
-            --color-secondary: #2C3531; --color-accent: #D4A373;
-            --color-accent-hover: #C59362; --color-white: #FFFFFF;
-            --color-text-main: #333333; --color-text-light: #666666;
-            --color-xp: #F59E0B; --color-live: #EF4444;
-            --font-serif: 'Playfair Display', serif; --font-sans: 'Inter', sans-serif;
+            --color-bg: var(--bg); --color-bg-alt: var(--bg-alt);
+            --color-primary: var(--primary); --color-primary-dark: var(--primary-d);
+            --color-secondary: var(--secondary); --color-accent: var(--accent);
+            --color-white: var(--white);
+            --color-text-main: var(--text); --color-text-light: var(--light);
+            --color-xp: var(--xp); --color-live: var(--danger);
+            --font-serif: var(--serif); --font-sans: var(--font);
             --sidebar-width: 260px; --radius-md: 12px; --radius-lg: 20px; --radius-full: 9999px;
             --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: var(--font-sans); background: var(--color-bg); color: var(--color-text-main); display: flex; min-height: 100vh; -webkit-font-smoothing: antialiased; }
-        a { text-decoration: none; color: inherit; }
 
         /* ---- SIDEBAR ---- */
         .sidebar {
@@ -344,6 +342,7 @@
     </div>
 </main>
 
+<script src="shared.js"></script>
 <script>
     // Animate XP bar on load
     window.addEventListener('load', async () => {

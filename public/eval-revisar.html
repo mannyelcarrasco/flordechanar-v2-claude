@@ -7,62 +7,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
-        :root {
-            --bg:#F9F6F0;--bg-alt:#F2EDE4;--primary:#687A61;--primary-d:#52634C;
-            --secondary:#2C3531;--accent:#D4A373;--white:#fff;--text:#333;--light:#666;
-            --xp:#F59E0B;--danger:#EF4444;--info:#3B82F6;--success:#10B981;
-            --font:'Inter',sans-serif;--serif:'Playfair Display',serif;
-            --sw:250px;--r:12px;--rf:9999px;--tr:all .25s ease;
-        }
-        *{margin:0;padding:0;box-sizing:border-box}
-        body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex;min-height:100vh}
-        a{text-decoration:none;color:inherit}
-        h2,h3,h4{font-family:var(--serif);color:var(--secondary)}
-
-        .sb{width:var(--sw);background:var(--secondary);min-height:100vh;position:fixed;display:flex;flex-direction:column;padding:1.25rem 0}
-        .sb-logo{padding:0 1.2rem 1.25rem;font-family:var(--serif);font-size:1.05rem;font-weight:700;color:#fff;display:flex;align-items:center;gap:.5rem;border-bottom:1px solid rgba(255,255,255,.08)}
-        .sb-role{margin:.85rem 1.2rem;background:rgba(104,122,97,.2);color:rgba(255,255,255,.8);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:.25rem .7rem;border-radius:var(--rf);display:flex;align-items:center;gap:.3rem}
-        .sb-nav{list-style:none;padding:0 .65rem}
-        .sb-nav li a{display:flex;align-items:center;gap:.6rem;padding:.6rem .8rem;border-radius:var(--r);color:rgba(255,255,255,.6);font-size:.86rem;font-weight:500;transition:var(--tr)}
-        .sb-nav li a:hover{background:rgba(255,255,255,.07);color:#fff}
-        .sb-nav li a.active{background:var(--primary);color:#fff}
-        .sb-user{margin-top:auto;padding:1.1rem;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:.65rem}
-        .sb-av{width:34px;height:34px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:.8rem}
-        .sb-un{font-size:.83rem;font-weight:600;color:#fff}
-        .sb-ur{font-size:.7rem;color:rgba(255,255,255,.45)}
-
-        .main{margin-left:var(--sw);flex:1;padding:1.75rem 2.25rem;max-width:calc(100% - var(--sw))}
-        .pg-hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;gap:1rem}
-        .pg-hd h2{font-size:1.4rem}
-        .pg-hd p{color:var(--light);font-size:.88rem;margin-top:.2rem}
-
-        .btn{display:inline-flex;align-items:center;gap:.4rem;padding:.6rem 1.25rem;border-radius:var(--rf);font-size:.85rem;font-weight:600;cursor:pointer;border:none;transition:var(--tr);font-family:var(--font)}
-        .btn-p{background:var(--primary);color:#fff}.btn-p:hover{background:var(--primary-d);transform:translateY(-1px)}
-        .btn-o{background:transparent;border:1.5px solid #D1D5DB;color:var(--secondary)}.btn-o:hover{border-color:var(--primary);color:var(--primary)}
-        .btn-sm{padding:.38rem .8rem;font-size:.78rem}
-        .btn-s{background:rgba(16,185,129,.1);color:#059669;border:1.5px solid rgba(16,185,129,.3)}.btn-s:hover{background:rgba(16,185,129,.2)}
-
-        .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem}
-        .sc{background:#fff;border-radius:var(--r);padding:1.1rem;box-shadow:0 2px 10px rgba(0,0,0,.04);display:flex;align-items:center;gap:.85rem}
-        .si{width:38px;height:38px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
-        .si.g{background:rgba(104,122,97,.12);color:var(--primary)}.si.a{background:rgba(245,158,11,.12);color:var(--xp)}.si.b{background:rgba(59,130,246,.12);color:var(--info)}.si.s{background:rgba(16,185,129,.12);color:var(--success)}
-        .sn{font-size:1.4rem;font-weight:700;color:var(--secondary);line-height:1}.sl{font-size:.73rem;color:var(--light);margin-top:2px}
-
-        .tw{background:#fff;border-radius:var(--r);box-shadow:0 2px 10px rgba(0,0,0,.04);overflow:hidden}
-        table{width:100%;border-collapse:collapse}
-        thead{background:var(--bg-alt)}
-        th{padding:.75rem .9rem;text-align:left;font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--light)}
-        td{padding:.8rem .9rem;font-size:.86rem;border-top:1px solid #F1F5F9;vertical-align:middle}
-        tr:hover td{background:#FAFAF8}
-        .tn{font-weight:600;color:var(--secondary)}.ts{font-size:.75rem;color:var(--light)}
-
-        .bp{display:inline-flex;align-items:center;gap:.2rem;padding:.2rem .55rem;border-radius:var(--rf);font-size:.7rem;font-weight:700}
-        .bpG{background:rgba(104,122,97,.1);color:var(--primary-d)}
-        .bpP{background:rgba(245,158,11,.12);color:#B45309}
-        .bpC{background:rgba(16,185,129,.12);color:#059669}
-        .bpR{background:rgba(239,68,68,.1);color:var(--danger)}
+        /* sc override: flex layout for stat cards */
+        .sc{display:flex;align-items:center;gap:.85rem}
 
         .nota-badge{display:inline-flex;align-items:center;justify-content:center;min-width:36px;padding:.2rem .45rem;border-radius:6px;font-size:.85rem;font-weight:700}
         .nEx{background:rgba(104,122,97,.1);color:var(--primary-d)}
@@ -99,11 +48,6 @@
         .score-input{width:72px;padding:.3rem .5rem;border:1.5px solid #E5E7EB;border-radius:8px;font-size:.88rem;text-align:center;font-family:var(--font);outline:none;transition:var(--tr)}
         .score-input:focus{border-color:var(--primary)}
         .score-max{font-size:.78rem;color:var(--light)}
-
-        .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--secondary);color:#fff;padding:.9rem 1.4rem;border-radius:var(--r);display:none;align-items:center;gap:.7rem;z-index:9999;font-size:.87rem;box-shadow:0 10px 30px rgba(0,0,0,.2)}
-        .toast i{color:var(--primary);font-size:1.25rem}
-        @keyframes sU{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
-        .toast.show{display:flex;animation:sU .3s ease}
 
         .empty{text-align:center;padding:3rem 1rem;color:var(--light)}
         .empty i{font-size:2.5rem;display:block;margin-bottom:.75rem;color:#D1D5DB}
@@ -184,6 +128,7 @@
 
 <div class="toast" id="toast"><i class="ph ph-check-circle" id="tI"></i><span id="tM"></span></div>
 
+<script src="shared.js"></script>
 <script>
 let evalId = null;
 let currentIntentoId = null;
@@ -430,13 +375,6 @@ function formatDate(dt) {
     return new Date(dt).toLocaleDateString('es-CL', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
 }
 
-function showToast(msg, icon) {
-    const t = document.getElementById('toast');
-    document.getElementById('tM').textContent = msg;
-    document.getElementById('tI').className = 'ph ' + (icon || 'ph-check-circle');
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 3500);
-}
 </script>
 </body>
 </html>
