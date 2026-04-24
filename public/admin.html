@@ -153,6 +153,7 @@
         <button class="tab" onclick="st(event,'tc')">Cursos</button>
         <button class="tab" onclick="st(event,'ti')">Inscripciones</button>
         <button class="tab" onclick="st(event,'ta')">Acceso Profesores</button>
+        <button class="tab" onclick="st(event,'tv')">Clases en Vivo</button>
         <button class="tab" onclick="st(event,'tr')">Reportes</button>
         <button class="tab" onclick="st(event,'ts')">Ajustes</button>
     </div>
@@ -223,6 +224,29 @@
         </div>
     </div>
 
+    <!-- TAB Clases en Vivo -->
+    <div id="tv" class="tp">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+            <div style="display:flex;gap:.65rem;align-items:center">
+                <input type="text" id="claseSearch" placeholder="🔍 Buscar clase..." oninput="filtrarClases()" style="padding:.5rem .85rem;border:1.5px solid #E5E7EB;border-radius:var(--rf);font-family:var(--f);font-size:.85rem;outline:none;width:240px">
+                <select id="claseEstadoFil" onchange="filtrarClases()" style="padding:.5rem .85rem;border:1.5px solid #E5E7EB;border-radius:var(--rf);font-family:var(--f);font-size:.85rem;background:var(--w);outline:none;cursor:pointer">
+                    <option value="">Todos los estados</option>
+                    <option value="programada">Programada</option>
+                    <option value="en_vivo">En Vivo</option>
+                    <option value="finalizada">Finalizada</option>
+                </select>
+            </div>
+        </div>
+        <div class="tw">
+            <table>
+                <thead><tr><th>Clase</th><th>Fecha</th><th>Profesor</th><th>Estado</th><th>Meet</th><th>Grabación</th><th>Acciones</th></tr></thead>
+                <tbody id="clasesBody">
+                    <tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--l)">Cargando clases...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <!-- TAB Reportes -->
     <div id="tr" class="tp">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
@@ -281,6 +305,38 @@
         </div>
     </div>
 </main>
+
+<!-- Modal: Clase en Vivo -->
+<div class="modal-bg" id="claseModalBg">
+    <div class="modal" style="max-width:520px">
+        <h3 id="claseModalTitle">Nueva Clase en Vivo</h3>
+        <input type="hidden" id="claseModalId">
+        <div class="fg"><label class="fl">Título de la clase</label><input class="fc" id="claseTitulo" type="text" placeholder="Ej: Módulo 4 — Pares Avanzados"></div>
+        <div class="fg"><label class="fl">Descripción (opcional)</label><textarea class="fc" id="claseDesc" rows="2" placeholder="Breve descripción del contenido..."></textarea></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+            <div class="fg"><label class="fl">Fecha y hora</label><input class="fc" id="claseFecha" type="datetime-local"></div>
+            <div class="fg"><label class="fl">Duración (min)</label><input class="fc" id="claseDuracion" type="number" value="60" min="15" max="480"></div>
+        </div>
+        <div class="fg"><label class="fl">Link de Google Meet</label><input class="fc" id="claseMeet" type="url" placeholder="https://meet.google.com/xxx-xxxx-xxx"></div>
+        <div class="fg"><label class="fl">YouTube ID (tras la clase)</label><input class="fc" id="claseYT" type="text" placeholder="Ej: dQw4w9WgXcQ"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+            <div class="fg"><label class="fl">Estado</label>
+                <select class="fc" id="claseEstado">
+                    <option value="programada">Programada</option>
+                    <option value="en_vivo">En Vivo</option>
+                    <option value="finalizada">Finalizada</option>
+                </select>
+            </div>
+            <div class="fg"><label class="fl">Curso asociado (opcional)</label>
+                <select class="fc" id="claseCurso"><option value="">— General —</option></select>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn bo" onclick="closeClaseModal()">Cancelar</button>
+            <button class="btn bp" onclick="guardarClase()"><i class="ph ph-floppy-disk"></i> Guardar</button>
+        </div>
+    </div>
+</div>
 
 <!-- Modal: Nuevo Usuario -->
 <div class="modal-bg" id="modalBg">
@@ -443,8 +499,15 @@ function st(e, id) {
         btn.style.display = 'inline-flex';
         btn.setAttribute('onclick', 'openInscModal()');
         label.textContent = 'Inscribir';
+    } else if (id === 'tv') {
+        btn.style.display = 'inline-flex';
+        btn.setAttribute('onclick', 'openClaseModal()');
+        document.getElementById('headerActionIcon').className = 'ph ph-video-camera';
+        label.textContent = 'Nueva Clase';
+        fetchClases();
     } else {
         btn.style.display = 'none';
+        document.getElementById('headerActionIcon').className = 'ph ph-plus';
     }
 }
 
@@ -729,6 +792,140 @@ async function crearInscripcion() {
 }
 
 document.getElementById('inscModalBg').addEventListener('click', function(e) { if(e.target===this) closeInscModal(); });
+
+// ── Clases en Vivo ──────────────────────────────────────────────────────────
+let allClases = [];
+
+async function fetchClases() {
+    const tbody = document.getElementById('clasesBody');
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/clases-vivo', { headers: { 'Authorization': 'Bearer ' + token } });
+        if (!res.ok) throw new Error();
+        allClases = await res.json();
+        renderClases(allClases);
+    } catch(e) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:red">Error al cargar clases.</td></tr>';
+    }
+}
+
+function renderClases(lista) {
+    const tbody = document.getElementById('clasesBody');
+    if (!lista.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--l)">Sin clases registradas.</td></tr>';
+        return;
+    }
+    const estadoMap = { programada:'bP', en_vivo:'bR', finalizada:'bA' };
+    const estadoLabel = { programada:'Programada', en_vivo:'🔴 En Vivo', finalizada:'Finalizada' };
+    tbody.innerHTML = lista.map(c => {
+        const fecha = new Date(c.fecha_inicio).toLocaleString('es-CL', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+        return `<tr>
+            <td><div class="tn">${c.titulo}</div><div class="ts">${c.duracion_min} min${c.curso_titulo ? ' · ' + c.curso_titulo : ''}</div></td>
+            <td class="ts">${fecha}</td>
+            <td class="ts">${c.profesor_nombre}</td>
+            <td><span class="bp2 ${estadoMap[c.estado]||'bD'}">${estadoLabel[c.estado]||c.estado}</span></td>
+            <td>${c.meet_url ? `<a href="${c.meet_url}" target="_blank" style="font-size:.78rem;color:var(--inf)"><i class="ph ph-arrow-square-out"></i> Meet</a>` : '<span style="color:var(--l);font-size:.78rem">—</span>'}</td>
+            <td>${c.youtube_id ? `<span style="font-size:.78rem;color:var(--p);font-weight:600"><i class="ph ph-youtube-logo"></i> ${c.youtube_id}</span>` : '<span style="color:var(--l);font-size:.78rem">Sin grabar</span>'}</td>
+            <td><div style="display:flex;gap:.4rem">
+                <button class="btn bo btn-sm" onclick="editClase(${c.id})"><i class="ph ph-pencil"></i></button>
+                <button class="btn btn-sm" style="background:rgba(239,68,68,.1);color:var(--err);border:none;cursor:pointer;border-radius:var(--rf);padding:.3rem .6rem;font-family:var(--f);font-weight:600" onclick="eliminarClase(${c.id})"><i class="ph ph-trash"></i></button>
+            </div></td>
+        </tr>`;
+    }).join('');
+}
+
+function filtrarClases() {
+    const q = document.getElementById('claseSearch').value.toLowerCase();
+    const est = document.getElementById('claseEstadoFil').value;
+    renderClases(allClases.filter(c =>
+        (!est || c.estado === est) &&
+        (!q || c.titulo.toLowerCase().includes(q) || (c.profesor_nombre||'').toLowerCase().includes(q))
+    ));
+}
+
+async function openClaseModal(id) {
+    const token = localStorage.getItem('token');
+    // Cargar cursos en el select
+    try {
+        const res = await fetch('/api/cursos');
+        const cursos = await res.json();
+        const sel = document.getElementById('claseCurso');
+        sel.innerHTML = '<option value="">— General —</option>' +
+            cursos.map(c => `<option value="${c.id}">${c.titulo}</option>`).join('');
+    } catch(e) {}
+
+    if (id) {
+        const c = allClases.find(x => x.id === id);
+        if (!c) return;
+        document.getElementById('claseModalTitle').textContent = 'Editar Clase';
+        document.getElementById('claseModalId').value = c.id;
+        document.getElementById('claseTitulo').value = c.titulo;
+        document.getElementById('claseDesc').value = c.descripcion || '';
+        document.getElementById('claseFecha').value = c.fecha_inicio ? c.fecha_inicio.slice(0,16) : '';
+        document.getElementById('claseDuracion').value = c.duracion_min;
+        document.getElementById('claseMeet').value = c.meet_url || '';
+        document.getElementById('claseYT').value = c.youtube_id || '';
+        document.getElementById('claseEstado').value = c.estado;
+        document.getElementById('claseCurso').value = c.curso_id || '';
+    } else {
+        document.getElementById('claseModalTitle').textContent = 'Nueva Clase en Vivo';
+        document.getElementById('claseModalId').value = '';
+        document.getElementById('claseTitulo').value = '';
+        document.getElementById('claseDesc').value = '';
+        document.getElementById('claseFecha').value = '';
+        document.getElementById('claseDuracion').value = 60;
+        document.getElementById('claseMeet').value = '';
+        document.getElementById('claseYT').value = '';
+        document.getElementById('claseEstado').value = 'programada';
+        document.getElementById('claseCurso').value = '';
+    }
+    document.getElementById('claseModalBg').classList.add('open');
+}
+
+function closeClaseModal() { document.getElementById('claseModalBg').classList.remove('open'); }
+
+async function guardarClase() {
+    const id = document.getElementById('claseModalId').value;
+    const body = {
+        titulo: document.getElementById('claseTitulo').value.trim(),
+        descripcion: document.getElementById('claseDesc').value.trim() || null,
+        fecha_inicio: document.getElementById('claseFecha').value,
+        duracion_min: parseInt(document.getElementById('claseDuracion').value) || 60,
+        meet_url: document.getElementById('claseMeet').value.trim() || null,
+        youtube_id: document.getElementById('claseYT').value.trim() || null,
+        estado: document.getElementById('claseEstado').value,
+        curso_id: document.getElementById('claseCurso').value || null
+    };
+    if (!body.titulo) return showT('⚠️ El título es requerido');
+    if (!body.fecha_inicio) return showT('⚠️ La fecha es requerida');
+    try {
+        const token = localStorage.getItem('token');
+        const url = id ? `/api/clases-vivo/${id}` : '/api/clases-vivo';
+        const method = id ? 'PUT' : 'POST';
+        const res = await fetch(url, {
+            method, headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify(body)
+        });
+        if (!res.ok) { const d = await res.json(); return showT('⚠️ ' + (d.error || 'Error')); }
+        showT(id ? 'Clase actualizada' : 'Clase creada correctamente');
+        closeClaseModal();
+        fetchClases();
+    } catch(e) { showT('⚠️ Error de conexión'); }
+}
+
+function editClase(id) { openClaseModal(id); }
+
+async function eliminarClase(id) {
+    if (!confirm('¿Eliminar esta clase? Esta acción no se puede deshacer.')) return;
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/clases-vivo/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+        if (res.ok) { showT('Clase eliminada'); fetchClases(); }
+        else showT('⚠️ Error al eliminar');
+    } catch(e) { showT('⚠️ Error de conexión'); }
+}
+
+document.getElementById('claseModalBg').addEventListener('click', function(e) { if(e.target===this) closeClaseModal(); });
 
 renderUsers();
 renderIntegrations();
