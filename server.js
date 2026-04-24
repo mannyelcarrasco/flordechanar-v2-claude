@@ -812,6 +812,58 @@ app.put('/api/intentos/:id/calificar', verifyToken, async (req, res) => {
     } catch (e) { console.error(e); res.status(500).json({ error: 'Error al calificar' }); }
 });
 
+// Stats globales para admin
+app.get('/api/admin/stats', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Permission denied' });
+    try {
+        const [[stats]] = await pool.query(`
+            SELECT
+                (SELECT COUNT(*) FROM usuarios WHERE rol = 'estudiante') as estudiantes,
+                (SELECT COUNT(*) FROM usuarios WHERE rol = 'profesor') as profesores,
+                (SELECT COUNT(*) FROM cursos WHERE estado = 'publicado') as cursos_publicados,
+                (SELECT COUNT(*) FROM inscripciones WHERE creado_en > DATE_SUB(NOW(), INTERVAL 30 DAY)) as inscripciones_mes
+        `);
+        res.json(stats);
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Error al obtener stats' }); }
+});
+
+// Listar todas las inscripciones (admin)
+app.get('/api/admin/inscripciones', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Permission denied' });
+    try {
+        const [rows] = await pool.query(`
+            SELECT i.id, i.creado_en,
+                   u.id as usuario_id, u.nombre as usuario_nombre, u.email as usuario_email,
+                   c.id as curso_id, c.titulo as curso_titulo, c.estado as curso_estado
+            FROM inscripciones i
+            JOIN usuarios u ON i.usuario_id = u.id
+            JOIN cursos c ON i.curso_id = c.id
+            ORDER BY i.creado_en DESC
+        `);
+        res.json(rows);
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Error al obtener inscripciones' }); }
+});
+
+// Inscribir manualmente (admin)
+app.post('/api/admin/inscripciones', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Permission denied' });
+    const { usuario_id, curso_id } = req.body;
+    if (!usuario_id || !curso_id) return res.status(400).json({ error: 'usuario_id y curso_id requeridos' });
+    try {
+        await pool.query('INSERT IGNORE INTO inscripciones (usuario_id, curso_id) VALUES (?, ?)', [usuario_id, curso_id]);
+        res.json({ ok: true });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Error al inscribir' }); }
+});
+
+// Eliminar inscripción (admin)
+app.delete('/api/admin/inscripciones/:id', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Permission denied' });
+    try {
+        await pool.query('DELETE FROM inscripciones WHERE id = ?', [req.params.id]);
+        res.json({ ok: true });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Error al eliminar inscripción' }); }
+});
+
 // Any Uncaught API routes return 404
 app.use('/api', (req, res) => {
     res.status(404).json({ error: 'Endpoint no encontrado' });

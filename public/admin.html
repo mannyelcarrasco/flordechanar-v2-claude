@@ -141,15 +141,16 @@
     </div>
 
     <div class="stats">
-        <div class="sc"><div class="si sig"><i class="ph ph-student"></i></div><div class="sn">524</div><div class="sl">Estudiantes registrados</div></div>
-        <div class="sc"><div class="si sia"><i class="ph ph-chalkboard-teacher"></i></div><div class="sn">8</div><div class="sl">Profesores activos</div></div>
-        <div class="sc"><div class="si sib"><i class="ph ph-books"></i></div><div class="sn">12</div><div class="sl">Cursos publicados</div></div>
-        <div class="sc"><div class="si sir"><i class="ph ph-warning"></i></div><div class="sn">3</div><div class="sl">Accesos pendientes</div></div>
+        <div class="sc"><div class="si sig"><i class="ph ph-student"></i></div><div><div class="sn" id="statEst">–</div><div class="sl">Estudiantes registrados</div></div></div>
+        <div class="sc"><div class="si sia"><i class="ph ph-chalkboard-teacher"></i></div><div><div class="sn" id="statProf">–</div><div class="sl">Profesores activos</div></div></div>
+        <div class="sc"><div class="si sib"><i class="ph ph-books"></i></div><div><div class="sn" id="statCursos">–</div><div class="sl">Cursos publicados</div></div></div>
+        <div class="sc"><div class="si sir"><i class="ph ph-trend-up"></i></div><div><div class="sn" id="statInsc">–</div><div class="sl">Inscripciones (30 días)</div></div></div>
     </div>
 
     <div class="tabs">
         <button class="tab active" onclick="st(event,'tu')">Usuarios</button>
         <button class="tab" onclick="st(event,'tc')">Cursos</button>
+        <button class="tab" onclick="st(event,'ti')">Inscripciones</button>
         <button class="tab" onclick="st(event,'ta')">Acceso Profesores</button>
         <button class="tab" onclick="st(event,'tr')">Reportes</button>
         <button class="tab" onclick="st(event,'ts')">Ajustes</button>
@@ -178,6 +179,24 @@
                 <thead><tr><th>Curso</th><th>Profesor</th><th>Estudiantes</th><th>Estado</th><th>Fecha creación</th><th>Acciones</th></tr></thead>
                 <tbody id="adminCoursesBody">
                     <tr><td colspan="6" style="text-align:center; padding: 2rem;">Cargando cursos desde la base de datos...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB Inscripciones -->
+    <div id="ti" class="tp">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+            <div style="display:flex;gap:.65rem;align-items:center">
+                <input type="text" id="inscSearch" placeholder="🔍 Buscar estudiante o curso..." oninput="filtrarInsc()" style="padding:.5rem .85rem;border:1.5px solid #E5E7EB;border-radius:var(--rf);font-family:var(--f);font-size:.85rem;outline:none;width:260px">
+            </div>
+            <button class="btn bp btn-sm" onclick="openInscModal()"><i class="ph ph-plus"></i> Inscribir Manualmente</button>
+        </div>
+        <div class="tw">
+            <table>
+                <thead><tr><th>Estudiante</th><th>Curso</th><th>Estado Curso</th><th>Fecha Inscripción</th><th></th></tr></thead>
+                <tbody id="inscBody">
+                    <tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--l)">Cargando inscripciones...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -269,23 +288,32 @@
         <div class="fg"><label class="fl">Nombre completo</label><input class="fc" type="text" placeholder="Nombre y apellido"></div>
         <div class="fg"><label class="fl">Correo electrónico</label><input class="fc" type="email" placeholder="correo@ejemplo.cl"></div>
         <div class="fg"><label class="fl">Rol</label>
-            <select class="fc">
-                <option>Estudiante</option>
-                <option>Profesor</option>
-                <option>Administrador</option>
-            </select>
-        </div>
-        <div class="fg"><label class="fl">Cursos asignados (si es Profesor)</label>
-            <select class="fc" multiple style="height:90px">
-                <option>Diplomado Biomagnetismo Clínico</option>
-                <option>Iniciación al Reiki</option>
-                <option>Terapia Floral Avanzada</option>
-                <option>Masoterapia Integral</option>
+            <select class="fc" id="modalRol">
+                <option value="estudiante">Estudiante</option>
+                <option value="profesor">Profesor</option>
+                <option value="admin">Administrador</option>
             </select>
         </div>
         <div class="modal-actions">
             <button class="btn bo" onclick="closeModal()">Cancelar</button>
             <button class="btn bp" onclick="addUser()"><i class="ph ph-user-plus"></i> Crear Usuario</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Inscribir manualmente -->
+<div class="modal-bg" id="inscModalBg">
+    <div class="modal" style="max-width:440px">
+        <h3>Inscribir Manualmente</h3>
+        <div class="fg"><label class="fl">Estudiante</label>
+            <select class="fc" id="inscUsuarioSel"><option value="">Cargando...</option></select>
+        </div>
+        <div class="fg"><label class="fl">Curso</label>
+            <select class="fc" id="inscCursoSel"><option value="">Cargando...</option></select>
+        </div>
+        <div class="modal-actions">
+            <button class="btn bo" onclick="closeInscModal()">Cancelar</button>
+            <button class="btn bp" onclick="crearInscripcion()"><i class="ph ph-plus"></i> Inscribir</button>
         </div>
     </div>
 </div>
@@ -395,7 +423,10 @@ function st(e, id) {
     document.querySelectorAll('.sb-n a').forEach(a => a.classList.remove('active'));
     document.querySelectorAll(`[onclick="st(event,'${id}')"]`).forEach(el => el.classList.add('active'));
 
-    // Header button: solo visible en Usuarios y Cursos
+    // Lazy-load tabs
+    if (id === 'ti') fetchInscripciones();
+
+    // Header button
     const btn = document.getElementById('headerActionBtn');
     const label = document.getElementById('headerActionLabel');
     if (id === 'tc') {
@@ -406,8 +437,11 @@ function st(e, id) {
         btn.style.display = 'inline-flex';
         btn.setAttribute('onclick', 'openModal()');
         label.textContent = 'Nuevo Usuario';
+    } else if (id === 'ti') {
+        btn.style.display = 'inline-flex';
+        btn.setAttribute('onclick', 'openInscModal()');
+        label.textContent = 'Inscribir';
     } else {
-        // Accesos, Reportes, Ajustes — ocultar botón
         btn.style.display = 'none';
     }
 }
@@ -539,11 +573,11 @@ function saveWH(){
 // --- User modal ---
 function openModal(){document.getElementById('modalBg').classList.add('open');}
 function closeModal(){document.getElementById('modalBg').classList.remove('open');}
-async function addUser(){ 
-    const nombre = document.querySelector('#modalBg input[type="text"]').value;
-    const email = document.querySelector('#modalBg input[type="email"]').value;
-    const rolSel = document.querySelector('#modalBg select').value.toLowerCase();
-    
+async function addUser(){
+    const nombre = document.querySelector('#modalBg input[type="text"]').value.trim();
+    const email = document.querySelector('#modalBg input[type="email"]').value.trim();
+    const rol = document.getElementById('modalRol').value;
+
     if(!nombre || !email) return showT('⚠️ Nombre y correo requeridos');
 
     try {
@@ -551,15 +585,17 @@ async function addUser(){
         const res = await fetch('/api/usuarios/crear', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-            body: JSON.stringify({ nombre, email, password: 'password123', rol: rolSel })
+            body: JSON.stringify({ nombre, email, password: 'password123', rol })
         });
         if(res.ok) {
-            showT('Usuario creado correctamente');
+            showT('Usuario creado · contraseña temporal: password123');
             closeModal();
             renderUsers();
-            if(rolSel === 'profesor') renderAccessMatrix();
+            loadStats();
+            if(rol === 'profesor') renderAccessMatrix();
         } else {
-            showT('⚠️ Hubo un error al crear el usuario');
+            const d = await res.json();
+            showT('⚠️ ' + (d.error || 'Error al crear usuario'));
         }
     } catch(e) {
         showT('⚠️ Error de conexión');
@@ -572,9 +608,132 @@ document.getElementById('modalBg').addEventListener('click',function(e){if(e.tar
 document.getElementById('intModalBg').addEventListener('click',function(e){if(e.target===this)closeIntModal()});
 document.getElementById('whModalBg').addEventListener('click',function(e){if(e.target===this)closeWHModal()});
 
+// Init admin name from JWT
+(function() {
+    const token = localStorage.getItem('token');
+    if (!token) { location.href = 'login.html'; return; }
+    try {
+        const p = JSON.parse(atob(token.split('.')[1]));
+        if (p.rol !== 'admin') { location.href = 'dashboard.html'; return; }
+        document.querySelector('.sb-un').textContent = p.nombre || 'Admin';
+    } catch(e) { location.href = 'login.html'; }
+})();
+
+async function loadStats() {
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/admin/stats', { headers: { 'Authorization': 'Bearer ' + token } });
+        if (!res.ok) return;
+        const s = await res.json();
+        document.getElementById('statEst').textContent = s.estudiantes ?? '–';
+        document.getElementById('statProf').textContent = s.profesores ?? '–';
+        document.getElementById('statCursos').textContent = s.cursos_publicados ?? '–';
+        document.getElementById('statInsc').textContent = s.inscripciones_mes ?? '–';
+        // Update sidebar user badge
+        const badge = document.querySelector('.sb-b');
+        if (badge) badge.textContent = s.estudiantes ?? '–';
+    } catch(e) { console.error('stats error', e); }
+}
+
+let allInscripciones = [];
+
+async function fetchInscripciones() {
+    const tbody = document.getElementById('inscBody');
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/admin/inscripciones', { headers: { 'Authorization': 'Bearer ' + token } });
+        if (!res.ok) throw new Error();
+        allInscripciones = await res.json();
+        renderInscripciones(allInscripciones);
+    } catch(e) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;color:red">Error al cargar inscripciones.</td></tr>';
+    }
+}
+
+function renderInscripciones(data) {
+    const tbody = document.getElementById('inscBody');
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--l)">Sin inscripciones.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = data.map(i => {
+        const estadoCls = i.curso_estado === 'publicado' ? 'bA' : 'bD';
+        const fecha = new Date(i.creado_en).toLocaleDateString('es-CL', { day:'numeric', month:'short', year:'numeric' });
+        return `<tr>
+            <td><div class="tn">${i.usuario_nombre}</div><div class="ts">${i.usuario_email}</div></td>
+            <td class="tn">${i.curso_titulo}</td>
+            <td><span class="bp2 ${estadoCls}">${i.curso_estado}</span></td>
+            <td class="ts">${fecha}</td>
+            <td><button class="btn btn-sm" style="background:rgba(239,68,68,.1);color:var(--err);border:none;cursor:pointer;border-radius:var(--rf);padding:.3rem .7rem;font-family:var(--f);font-weight:600"
+                onclick="eliminarInscripcion(${i.id})"><i class="ph ph-trash"></i> Eliminar</button></td>
+        </tr>`;
+    }).join('');
+}
+
+function filtrarInsc() {
+    const q = document.getElementById('inscSearch').value.toLowerCase();
+    const filtered = allInscripciones.filter(i =>
+        i.usuario_nombre.toLowerCase().includes(q) ||
+        i.usuario_email.toLowerCase().includes(q) ||
+        i.curso_titulo.toLowerCase().includes(q)
+    );
+    renderInscripciones(filtered);
+}
+
+async function eliminarInscripcion(id) {
+    if (!confirm('¿Eliminar esta inscripción? El estudiante perderá acceso al curso.')) return;
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/admin/inscripciones/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+        if (res.ok) { showT('Inscripción eliminada'); fetchInscripciones(); loadStats(); }
+        else showT('⚠️ Error al eliminar');
+    } catch(e) { showT('⚠️ Error de conexión'); }
+}
+
+async function openInscModal() {
+    const token = localStorage.getItem('token');
+    document.getElementById('inscModalBg').classList.add('open');
+    // Load students
+    try {
+        const [usersRes, cursosRes] = await Promise.all([
+            fetch('/api/usuarios', { headers: { 'Authorization': 'Bearer ' + token } }),
+            fetch('/api/cursos')
+        ]);
+        const users = await usersRes.json();
+        const cursos = await cursosRes.json();
+        const uSel = document.getElementById('inscUsuarioSel');
+        const cSel = document.getElementById('inscCursoSel');
+        uSel.innerHTML = '<option value="">-- Selecciona estudiante --</option>' +
+            users.filter(u => u.rol === 'estudiante').map(u => `<option value="${u.id}">${u.nombre} (${u.email})</option>`).join('');
+        cSel.innerHTML = '<option value="">-- Selecciona curso --</option>' +
+            cursos.map(c => `<option value="${c.id}">${c.titulo}</option>`).join('');
+    } catch(e) { showT('⚠️ Error al cargar datos'); }
+}
+
+function closeInscModal() { document.getElementById('inscModalBg').classList.remove('open'); }
+
+async function crearInscripcion() {
+    const usuario_id = document.getElementById('inscUsuarioSel').value;
+    const curso_id = document.getElementById('inscCursoSel').value;
+    if (!usuario_id || !curso_id) return showT('⚠️ Selecciona estudiante y curso');
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/admin/inscripciones', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ usuario_id: parseInt(usuario_id), curso_id: parseInt(curso_id) })
+        });
+        if (res.ok) { showT('Estudiante inscrito correctamente'); closeInscModal(); fetchInscripciones(); loadStats(); }
+        else showT('⚠️ Ya estaba inscrito o error al inscribir');
+    } catch(e) { showT('⚠️ Error de conexión'); }
+}
+
+document.getElementById('inscModalBg').addEventListener('click', function(e) { if(e.target===this) closeInscModal(); });
+
 renderUsers();
 renderIntegrations();
 renderWebhooks();
+loadStats();
 
 // Render Dynamic Courses inside Admin
 async function renderAdminCourses() {
