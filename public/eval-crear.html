@@ -97,15 +97,15 @@
         <!-- Meta -->
         <div class="q-meta">
             <h2>Configuración de la Evaluación</h2>
-            <div class="fg"><label class="fl">Título</label><input class="fc" type="text" value="Evaluación Teórica — Pares Avanzados"></div>
-            <div class="fg"><label class="fl">Instrucciones para el estudiante</label><textarea class="fc">Lee cuidadosamente cada pregunta antes de responder. Las preguntas de desarrollo requieren respuestas con fundamento clínico. Tienes 60 minutos para completar la evaluación.</textarea></div>
+            <div class="fg"><label class="fl">Título</label><input class="fc" type="text" id="evalTitulo" placeholder="Ej: Evaluación Teórica — Módulo 2"></div>
+            <div class="fg"><label class="fl">Instrucciones para el estudiante</label><textarea class="fc" id="evalInstrucciones" placeholder="Lee cuidadosamente cada pregunta..."></textarea></div>
             <div class="two-col">
-                <div class="fg"><label class="fl">Curso</label><select class="fc"><option>Diplomado Biomagnetismo Clínico</option><option>Reiki Nivel 1 y 2</option></select></div>
-                <div class="fg"><label class="fl">Tiempo límite</label><input class="fc" type="text" value="60 minutos"></div>
+                <div class="fg"><label class="fl">Curso</label><select class="fc" id="evalCurso"><option value="">Cargando cursos...</option></select></div>
+                <div class="fg"><label class="fl">Tiempo límite (minutos)</label><input class="fc" type="number" id="evalTiempo" value="60" min="5"></div>
             </div>
             <div class="two-col">
-                <div class="fg"><label class="fl">Fecha de apertura</label><input class="fc" type="datetime-local"></div>
-                <div class="fg"><label class="fl">Fecha de cierre</label><input class="fc" type="datetime-local"></div>
+                <div class="fg"><label class="fl">Fecha de apertura</label><input class="fc" type="datetime-local" id="evalApertura"></div>
+                <div class="fg"><label class="fl">Fecha de cierre</label><input class="fc" type="datetime-local" id="evalCierre"></div>
             </div>
         </div>
 
@@ -186,8 +186,91 @@
 <div class="toast" id="toast"><i class="ph ph-check-circle"></i><span id="tM">Guardado</span></div>
 
 <script>
-let qCount = 3;
+const token = localStorage.getItem('token');
+if (!token) location.href = 'login.html';
 
+let qCount = 0;
+
+// --- Init: cargar cursos reales ---
+window.addEventListener('load', async () => {
+    try {
+        const res = await fetch('/api/cursos', { headers: { 'Authorization': 'Bearer ' + token } });
+        const cursos = await res.json();
+        const sel = document.getElementById('evalCurso');
+        sel.innerHTML = '<option value="">— Seleccionar curso —</option>';
+        cursos.forEach(c => {
+            sel.innerHTML += `<option value="${c.id}">${c.titulo}</option>`;
+        });
+        // Pre-seleccionar si viene ?curso_id= en la URL
+        const cid = new URLSearchParams(location.search).get('curso_id');
+        if (cid) sel.value = cid;
+    } catch (e) { console.error(e); }
+
+    // Vaciar el container de preguntas de ejemplo y arrancar limpio
+    document.getElementById('questionsContainer').innerHTML = '';
+    updateSummary();
+});
+
+// --- Serializar preguntas desde el DOM ---
+function serializePreguntas() {
+    const cards = document.querySelectorAll('.q-card');
+    const preguntas = [];
+    cards.forEach(card => {
+        const texto = card.querySelector('.q-text-input')?.value.trim() || '';
+        const puntaje = parseFloat(card.querySelector('.score-input')?.value || 1);
+        if (card.classList.contains('dev-type')) {
+            preguntas.push({ tipo: 'desarrollo', texto, puntaje });
+        } else if (card.classList.contains('rub-type')) {
+            preguntas.push({ tipo: 'rubrica', texto, puntaje });
+        } else {
+            const optInputs = card.querySelectorAll('.opt-input');
+            const radios = card.querySelectorAll('.opt-radio');
+            const opciones = Array.from(optInputs).map(i => i.value.trim()).filter(Boolean);
+            let respuesta_correcta = null;
+            radios.forEach((r, i) => { if (r.checked) respuesta_correcta = i; });
+            preguntas.push({ tipo: 'multiple', texto, puntaje, opciones, respuesta_correcta });
+        }
+    });
+    return preguntas;
+}
+
+// --- Guardar / Publicar ---
+async function saveEval(publish) {
+    const titulo = document.getElementById('evalTitulo').value.trim();
+    const curso_id = parseInt(document.getElementById('evalCurso').value);
+    if (!titulo) return showToast('⚠️ Agrega un título a la evaluación');
+    if (!curso_id) return showToast('⚠️ Selecciona un curso');
+
+    const preguntas = serializePreguntas();
+    if (preguntas.length === 0) return showToast('⚠️ Agrega al menos una pregunta');
+
+    const payload = {
+        curso_id,
+        titulo,
+        instrucciones: document.getElementById('evalInstrucciones').value.trim(),
+        tiempo_minutos: parseInt(document.getElementById('evalTiempo').value) || 60,
+        fecha_apertura: document.getElementById('evalApertura').value || null,
+        fecha_cierre: document.getElementById('evalCierre').value || null,
+        publicada: publish,
+        preguntas
+    };
+
+    try {
+        const res = await fetch('/api/evaluaciones', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) return showToast('⚠️ ' + (data.error || 'Error al guardar'));
+        showToast(publish ? '✅ Evaluación publicada — los estudiantes ya pueden verla' : '✅ Borrador guardado');
+        if (publish) setTimeout(() => history.back(), 2000);
+    } catch (e) {
+        showToast('⚠️ Error de conexión');
+    }
+}
+
+// --- Constructores de preguntas ---
 function addOption(listId, name) {
     const li = document.createElement('li');
     li.className = 'option-row';
@@ -199,14 +282,17 @@ function addMC() {
     qCount++;
     const div = document.createElement('div');
     div.className = 'q-card'; div.id = `q-${qCount}`;
-    div.innerHTML = `<div class="q-num">Pregunta ${qCount} — Opción Múltiple <div class="q-actions"><button class="q-act"><i class="ph ph-copy"></i></button><button class="q-act" onclick="removeQ('q-${qCount}')"><i class="ph ph-trash"></i></button></div></div>
+    div.innerHTML = `
+    <div class="q-num">Pregunta ${document.querySelectorAll('.q-card').length + 1} — Opción Múltiple
+        <div class="q-actions"><button class="q-act" onclick="removeQ('q-${qCount}')"><i class="ph ph-trash"></i></button></div>
+    </div>
     <input class="q-text-input" type="text" placeholder="Escribe la pregunta aquí...">
     <ul class="options-list" id="opts-${qCount}">
         <li class="option-row"><input type="radio" name="q${qCount}" class="opt-radio"><input class="opt-input" type="text" placeholder="Opción A"><button class="opt-del" onclick="this.parentNode.remove()"><i class="ph ph-x"></i></button></li>
         <li class="option-row"><input type="radio" name="q${qCount}" class="opt-radio"><input class="opt-input" type="text" placeholder="Opción B"><button class="opt-del" onclick="this.parentNode.remove()"><i class="ph ph-x"></i></button></li>
     </ul>
     <button class="add-opt" onclick="addOption('opts-${qCount}','q${qCount}')"><i class="ph ph-plus"></i> Agregar opción</button>
-    <div class="q-score"><i class="ph ph-star" style="color:var(--ac)"></i> Puntaje: <input class="score-input" type="number" value="1" min="0"> pts</div>`;
+    <div class="q-score"><i class="ph ph-star" style="color:var(--ac)"></i> Puntaje: <input class="score-input" type="number" value="1" min="0"> pts · <span style="color:var(--p);font-size:.78rem">Marca el radio de la respuesta correcta</span></div>`;
     document.getElementById('questionsContainer').appendChild(div);
     updateSummary();
 }
@@ -215,10 +301,13 @@ function addDev() {
     qCount++;
     const div = document.createElement('div');
     div.className = 'q-card dev-type'; div.id = `q-${qCount}`;
-    div.innerHTML = `<div class="q-num" style="color:var(--ac)">Pregunta ${qCount} — Desarrollo Escrito <div class="q-actions"><button class="q-act"><i class="ph ph-copy"></i></button><button class="q-act" onclick="removeQ('q-${qCount}')"><i class="ph ph-trash"></i></button></div></div>
+    div.innerHTML = `
+    <div class="q-num" style="color:var(--ac)">Pregunta ${document.querySelectorAll('.q-card').length + 1} — Desarrollo Escrito
+        <div class="q-actions"><button class="q-act" onclick="removeQ('q-${qCount}')"><i class="ph ph-trash"></i></button></div>
+    </div>
     <input class="q-text-input" type="text" placeholder="Escribe la pregunta de desarrollo...">
-    <textarea class="dev-area" placeholder="[Espacio de respuesta del estudiante]" disabled></textarea>
-    <div class="q-score"><i class="ph ph-star" style="color:var(--ac)"></i> Puntaje máximo: <input class="score-input" type="number" value="3" min="0"> pts</div>`;
+    <textarea class="dev-area" placeholder="[El estudiante escribirá su respuesta aquí]" disabled></textarea>
+    <div class="q-score"><i class="ph ph-star" style="color:var(--ac)"></i> Puntaje máximo: <input class="score-input" type="number" value="3" min="0"> pts · <span style="opacity:.7">El profesor califica manualmente</span></div>`;
     document.getElementById('questionsContainer').appendChild(div);
     updateSummary();
 }
@@ -227,24 +316,26 @@ function addRub() {
     qCount++;
     const div = document.createElement('div');
     div.className = 'q-card rub-type'; div.id = `q-${qCount}`;
-    div.innerHTML = `<div class="q-num" style="color:var(--inf)">Pregunta ${qCount} — Rúbrica <div class="q-actions"><button class="q-act"><i class="ph ph-copy"></i></button><button class="q-act" onclick="removeQ('q-${qCount}')"><i class="ph ph-trash"></i></button></div></div>
-    <input class="q-text-input" type="text" placeholder="Criterio a evaluar (ej: Técnica de aplicación del imán)...">
+    div.innerHTML = `
+    <div class="q-num" style="color:var(--inf)">Pregunta ${document.querySelectorAll('.q-card').length + 1} — Rúbrica
+        <div class="q-actions"><button class="q-act" onclick="removeQ('q-${qCount}')"><i class="ph ph-trash"></i></button></div>
+    </div>
+    <input class="q-text-input" type="text" placeholder="Criterio a evaluar...">
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-top:.5rem">
         <div style="text-align:center;padding:.5rem;background:rgba(239,68,68,.06);border-radius:8px;font-size:.8rem"><strong style="color:var(--err)">Insuficiente</strong><br><span style="color:var(--l)">0-1 pts</span></div>
-        <div style="text-align:center;padding:.5rem;background:rgba(245,158,11,.06);border-radius:8px;font-size:.8rem"><strong style="color:var(--xp,#F59E0B)">Satisfactorio</strong><br><span style="color:var(--l)">2-3 pts</span></div>
+        <div style="text-align:center;padding:.5rem;background:rgba(245,158,11,.06);border-radius:8px;font-size:.8rem"><strong style="color:#F59E0B">Satisfactorio</strong><br><span style="color:var(--l)">2-3 pts</span></div>
         <div style="text-align:center;padding:.5rem;background:rgba(104,122,97,.06);border-radius:8px;font-size:.8rem"><strong style="color:var(--p)">Excelente</strong><br><span style="color:var(--l)">4-5 pts</span></div>
     </div>
-    <div class="q-score"><i class="ph ph-star" style="color:var(--ac)"></i> Puntaje máximo: <input class="score-input" type="number" value="5" min="0"> pts · <span style="opacity:.7">El profesor evalúa presencialmente</span></div>`;
+    <div class="q-score"><i class="ph ph-star" style="color:var(--ac)"></i> Puntaje máximo: <input class="score-input" type="number" value="5" min="0"> pts</div>`;
     document.getElementById('questionsContainer').appendChild(div);
     updateSummary();
 }
 
 function removeQ(id) {
     const el = document.getElementById(id);
-    if(document.querySelectorAll('.q-card').length <= 1) return;
+    if (document.querySelectorAll('.q-card').length <= 1) return;
     el.style.opacity = '0'; el.style.transform = 'translateX(-10px)'; el.style.transition = 'all .25s';
-    setTimeout(() => el.remove(), 250);
-    updateSummary();
+    setTimeout(() => { el.remove(); updateSummary(); }, 250);
 }
 
 function updateSummary() {
@@ -254,12 +345,11 @@ function updateSummary() {
     document.getElementById('totalDev').textContent = document.querySelectorAll('.dev-type').length;
 }
 
-function saveEval(publish) {
+function showToast(msg) {
     const t = document.getElementById('toast');
-    document.getElementById('tM').textContent = publish ? '✅ Evaluación publicada — los estudiantes ya pueden verla' : 'Borrador guardado correctamente';
+    document.getElementById('tM').textContent = msg;
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 3500);
-    if(publish) setTimeout(()=>window.location.href='profesor.html', 3600);
 }
 </script>
 </body>
