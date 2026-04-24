@@ -188,6 +188,24 @@ async function initDB() {
             )
         `);
 
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS clases_vivo (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                titulo VARCHAR(255) NOT NULL,
+                descripcion TEXT,
+                fecha_inicio DATETIME NOT NULL,
+                duracion_min INT DEFAULT 60,
+                meet_url VARCHAR(500),
+                youtube_id VARCHAR(50),
+                estado ENUM('programada','en_vivo','finalizada') DEFAULT 'programada',
+                curso_id INT DEFAULT NULL,
+                creado_por INT NOT NULL,
+                creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (curso_id) REFERENCES cursos(id) ON DELETE SET NULL,
+                FOREIGN KEY (creado_por) REFERENCES usuarios(id) ON DELETE CASCADE
+            )
+        `);
+
         console.log('Tables checked/created: evaluaciones, preguntas, intentos, respuestas.');
 
         const alterCols = [
@@ -926,6 +944,68 @@ app.put('/api/usuarios/password', verifyToken, async (req, res) => {
         await pool.query('UPDATE usuarios SET password = ? WHERE id = ?', [hash, req.usuario.id]);
         res.json({ ok: true });
     } catch (e) { console.error(e); res.status(500).json({ error: 'Error al cambiar contraseña' }); }
+});
+
+// ── Clases en Vivo ──────────────────────────────────────────────────────────
+
+// Listar clases (estudiantes: próximas + grabaciones; todos los logueados)
+app.get('/api/clases-vivo', verifyToken, async (req, res) => {
+    try {
+        const [rows] = await pool.query(`
+            SELECT cv.*, u.nombre as profesor_nombre,
+                   c.titulo as curso_titulo
+            FROM clases_vivo cv
+            JOIN usuarios u ON cv.creado_por = u.id
+            LEFT JOIN cursos c ON cv.curso_id = c.id
+            ORDER BY cv.fecha_inicio DESC
+        `);
+        res.json(rows);
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Error al obtener clases' }); }
+});
+
+// Crear clase (prof o admin)
+app.post('/api/clases-vivo', verifyToken, async (req, res) => {
+    if (!['admin','profesor'].includes(req.usuario.rol)) return res.status(403).json({ error: 'Sin permiso' });
+    const { titulo, descripcion, fecha_inicio, duracion_min, meet_url, curso_id } = req.body;
+    if (!validStr(titulo, 3, 255)) return res.status(400).json({ error: 'Título requerido' });
+    if (!fecha_inicio) return res.status(400).json({ error: 'Fecha requerida' });
+    try {
+        const [r] = await pool.query(
+            `INSERT INTO clases_vivo (titulo, descripcion, fecha_inicio, duracion_min, meet_url, curso_id, creado_por)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [titulo.trim(), descripcion||null, fecha_inicio, duracion_min||60, meet_url||null, curso_id||null, req.usuario.id]
+        );
+        res.status(201).json({ id: r.insertId });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Error al crear clase' }); }
+});
+
+// Actualizar clase — también para agregar youtube_id tras la clase
+app.put('/api/clases-vivo/:id', verifyToken, async (req, res) => {
+    if (!['admin','profesor'].includes(req.usuario.rol)) return res.status(403).json({ error: 'Sin permiso' });
+    const { titulo, descripcion, fecha_inicio, duracion_min, meet_url, youtube_id, estado, curso_id } = req.body;
+    try {
+        const [[cl]] = await pool.query('SELECT * FROM clases_vivo WHERE id = ?', [req.params.id]);
+        if (!cl) return res.status(404).json({ error: 'Clase no encontrada' });
+        if (req.usuario.rol !== 'admin' && cl.creado_por !== req.usuario.id)
+            return res.status(403).json({ error: 'Solo puedes editar tus clases' });
+        await pool.query(
+            `UPDATE clases_vivo SET titulo=?, descripcion=?, fecha_inicio=?, duracion_min=?,
+             meet_url=?, youtube_id=?, estado=?, curso_id=? WHERE id=?`,
+            [titulo||cl.titulo, descripcion??cl.descripcion, fecha_inicio||cl.fecha_inicio,
+             duracion_min||cl.duracion_min, meet_url??cl.meet_url, youtube_id??cl.youtube_id,
+             estado||cl.estado, curso_id??cl.curso_id, req.params.id]
+        );
+        res.json({ ok: true });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Error al actualizar clase' }); }
+});
+
+// Eliminar clase (admin)
+app.delete('/api/clases-vivo/:id', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Solo admin' });
+    try {
+        await pool.query('DELETE FROM clases_vivo WHERE id = ?', [req.params.id]);
+        res.json({ ok: true });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Error al eliminar' }); }
 });
 
 // Any Uncaught API routes return 404
