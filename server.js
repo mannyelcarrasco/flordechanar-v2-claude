@@ -9,6 +9,12 @@ const multer = require('multer');
 const fs = require('fs');
 require('dotenv').config();
 
+// Fail-fast: exigir JWT_SECRET en producción
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+    console.error('FATAL: JWT_SECRET no configurado. Define la variable de entorno antes de arrancar en producción.');
+    process.exit(1);
+}
+
 const app = express();
 app.set('trust proxy', 1);
 app.use(express.json());
@@ -125,6 +131,65 @@ async function initDB() {
             )
         `);
 
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS evaluaciones (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                curso_id INT NOT NULL,
+                titulo VARCHAR(300) NOT NULL,
+                instrucciones TEXT,
+                tiempo_minutos INT DEFAULT 60,
+                fecha_apertura DATETIME DEFAULT NULL,
+                fecha_cierre DATETIME DEFAULT NULL,
+                publicada BOOLEAN DEFAULT FALSE,
+                creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (curso_id) REFERENCES cursos(id) ON DELETE CASCADE
+            )
+        `);
+
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS preguntas (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                evaluacion_id INT NOT NULL,
+                tipo ENUM('multiple','desarrollo','rubrica') DEFAULT 'multiple',
+                texto TEXT NOT NULL,
+                opciones JSON DEFAULT NULL,
+                respuesta_correcta INT DEFAULT NULL,
+                puntaje DECIMAL(5,2) DEFAULT 1,
+                orden INT DEFAULT 0,
+                FOREIGN KEY (evaluacion_id) REFERENCES evaluaciones(id) ON DELETE CASCADE
+            )
+        `);
+
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS intentos (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                evaluacion_id INT NOT NULL,
+                usuario_id INT NOT NULL,
+                iniciado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                entregado_en TIMESTAMP NULL,
+                puntaje_obtenido DECIMAL(5,2) DEFAULT 0,
+                puntaje_total DECIMAL(5,2) DEFAULT 0,
+                UNIQUE KEY (evaluacion_id, usuario_id),
+                FOREIGN KEY (evaluacion_id) REFERENCES evaluaciones(id) ON DELETE CASCADE,
+                FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+            )
+        `);
+
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS respuestas (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                intento_id INT NOT NULL,
+                pregunta_id INT NOT NULL,
+                opcion_seleccionada INT DEFAULT NULL,
+                texto_respuesta TEXT,
+                puntaje_asignado DECIMAL(5,2) DEFAULT NULL,
+                FOREIGN KEY (intento_id) REFERENCES intentos(id) ON DELETE CASCADE,
+                FOREIGN KEY (pregunta_id) REFERENCES preguntas(id) ON DELETE CASCADE
+            )
+        `);
+
+        console.log('Tables checked/created: evaluaciones, preguntas, intentos, respuestas.');
+
         const alterCols = [
             `ALTER TABLE lecciones ADD COLUMN IF NOT EXISTS tipo ENUM('video','texto','archivo','link') DEFAULT 'video'`,
             `ALTER TABLE lecciones ADD COLUMN IF NOT EXISTS duracion VARCHAR(50)`,
@@ -182,11 +247,16 @@ app.post('/api/upload', verifyToken, (req, res) => {
     });
 });
 
+// --- Helpers de validación ---
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+function validEmail(e) { return typeof e === 'string' && EMAIL_RE.test(e.trim()); }
+function validStr(s, min = 1, max = 300) { return typeof s === 'string' && s.trim().length >= min && s.trim().length <= max; }
+
 // --- Auth Routes ---
 app.post('/api/auth/login', loginLimiter, async (req, res) => {
     try {
         const { email, password } = req.body;
-        if (!email || !password) return res.status(400).json({ error: 'Email y contraseña requeridos' });
+        if (!validEmail(email) || !validStr(password, 4)) return res.status(400).json({ error: 'Email y contraseña requeridos' });
 
         if (!pool) return res.status(500).json({ error: 'Database not connected' });
 
@@ -261,6 +331,10 @@ app.post('/api/usuarios/crear', verifyToken, async (req, res) => {
     if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Permission denied' });
     try {
         const { nombre, email, password, rol } = req.body;
+        if (!validStr(nombre, 2, 150)) return res.status(400).json({ error: 'Nombre inválido' });
+        if (!validEmail(email)) return res.status(400).json({ error: 'Email inválido' });
+        const rolesPermitidos = ['estudiante', 'profesor', 'admin'];
+        if (rol && !rolesPermitidos.includes(rol)) return res.status(400).json({ error: 'Rol inválido' });
         const pass = password || 'flordechanar123';
         const salt = await bcrypt.genSalt(10);
         const hash = await bcrypt.hash(pass, salt);
@@ -289,6 +363,9 @@ app.post('/api/cursos', verifyToken, async (req, res) => {
     if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
     try {
         const { titulo, descripcion, precio, portada_url, estado, profesor_id } = req.body;
+        if (!validStr(titulo, 3, 300)) return res.status(400).json({ error: 'Título del curso requerido (3-300 caracteres)' });
+        const estadosPermitidos = ['borrador', 'publicado', 'archivado'];
+        if (estado && !estadosPermitidos.includes(estado)) return res.status(400).json({ error: 'Estado inválido' });
         const profAsignado = profesor_id || req.usuario.id;
         const result = await pool.query(
             'INSERT INTO cursos (titulo, descripcion, precio, portada_url, estado, profesor_id) VALUES (?, ?, ?, ?, ?, ?)',
@@ -508,6 +585,154 @@ app.delete('/api/lecciones/:id', verifyToken, async (req, res) => {
         console.error(e);
         res.status(500).json({ error: 'Error al eliminar lección' });
     }
+});
+
+// --- Evaluaciones ---
+
+// Listar evaluaciones de un curso
+app.get('/api/cursos/:id/evaluaciones', verifyToken, async (req, res) => {
+    try {
+        const [evals] = await pool.query(
+            'SELECT * FROM evaluaciones WHERE curso_id = ? ORDER BY creado_en DESC',
+            [req.params.id]
+        );
+        res.json(evals);
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Error al obtener evaluaciones' }); }
+});
+
+// Crear evaluación con sus preguntas
+app.post('/api/evaluaciones', verifyToken, async (req, res) => {
+    if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
+    try {
+        const { curso_id, titulo, instrucciones, tiempo_minutos, fecha_apertura, fecha_cierre, publicada, preguntas } = req.body;
+        if (!validStr(titulo, 3, 300)) return res.status(400).json({ error: 'Título requerido' });
+        if (!curso_id) return res.status(400).json({ error: 'curso_id requerido' });
+
+        const [result] = await pool.query(
+            'INSERT INTO evaluaciones (curso_id, titulo, instrucciones, tiempo_minutos, fecha_apertura, fecha_cierre, publicada) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [curso_id, titulo.trim(), instrucciones || null, tiempo_minutos || 60, fecha_apertura || null, fecha_cierre || null, publicada ? 1 : 0]
+        );
+        const evalId = result.insertId;
+
+        if (Array.isArray(preguntas) && preguntas.length > 0) {
+            for (let i = 0; i < preguntas.length; i++) {
+                const p = preguntas[i];
+                await pool.query(
+                    'INSERT INTO preguntas (evaluacion_id, tipo, texto, opciones, respuesta_correcta, puntaje, orden) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                    [evalId, p.tipo || 'multiple', p.texto, p.opciones ? JSON.stringify(p.opciones) : null, p.respuesta_correcta ?? null, p.puntaje || 1, i]
+                );
+            }
+        }
+
+        res.json({ success: true, id: evalId });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Error al crear evaluación' }); }
+});
+
+// Obtener evaluación completa con preguntas
+app.get('/api/evaluaciones/:id', verifyToken, async (req, res) => {
+    try {
+        const [[ev]] = await pool.query('SELECT * FROM evaluaciones WHERE id = ?', [req.params.id]);
+        if (!ev) return res.status(404).json({ error: 'Evaluación no encontrada' });
+
+        // Ocultar respuestas correctas a estudiantes
+        const [pregs] = await pool.query('SELECT * FROM preguntas WHERE evaluacion_id = ? ORDER BY orden ASC', [req.params.id]);
+        if (req.usuario.rol === 'estudiante') {
+            pregs.forEach(p => { delete p.respuesta_correcta; });
+        }
+        pregs.forEach(p => { if (p.opciones) p.opciones = JSON.parse(p.opciones); });
+
+        ev.preguntas = pregs;
+        res.json(ev);
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Error al obtener evaluación' }); }
+});
+
+// Iniciar intento (o recuperar existente si ya inició)
+app.post('/api/evaluaciones/:id/iniciar', verifyToken, async (req, res) => {
+    try {
+        const [[ev]] = await pool.query('SELECT * FROM evaluaciones WHERE id = ?', [req.params.id]);
+        if (!ev) return res.status(404).json({ error: 'Evaluación no encontrada' });
+        if (!ev.publicada) return res.status(403).json({ error: 'Evaluación no publicada' });
+
+        const [[existing]] = await pool.query(
+            'SELECT * FROM intentos WHERE evaluacion_id = ? AND usuario_id = ?',
+            [req.params.id, req.usuario.id]
+        );
+
+        if (existing) {
+            if (existing.entregado_en) return res.status(409).json({ error: 'Ya entregaste esta evaluación', intento_id: existing.id });
+            return res.json({ intento_id: existing.id, ya_iniciado: true });
+        }
+
+        const [result] = await pool.query(
+            'INSERT INTO intentos (evaluacion_id, usuario_id) VALUES (?, ?)',
+            [req.params.id, req.usuario.id]
+        );
+        res.json({ intento_id: result.insertId, ya_iniciado: false });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Error al iniciar evaluación' }); }
+});
+
+// Entregar respuestas y calcular puntaje automático
+app.post('/api/intentos/:id/entregar', verifyToken, async (req, res) => {
+    try {
+        const [[intento]] = await pool.query('SELECT * FROM intentos WHERE id = ? AND usuario_id = ?', [req.params.id, req.usuario.id]);
+        if (!intento) return res.status(404).json({ error: 'Intento no encontrado' });
+        if (intento.entregado_en) return res.status(409).json({ error: 'Ya entregado' });
+
+        const { respuestas } = req.body; // [{ pregunta_id, opcion_seleccionada, texto_respuesta }]
+        const [pregs] = await pool.query('SELECT * FROM preguntas WHERE evaluacion_id = ?', [intento.evaluacion_id]);
+
+        let puntajeObtenido = 0;
+        let puntajeTotal = 0;
+
+        for (const p of pregs) {
+            puntajeTotal += parseFloat(p.puntaje);
+            const resp = (respuestas || []).find(r => r.pregunta_id === p.id);
+            if (!resp) {
+                await pool.query('INSERT INTO respuestas (intento_id, pregunta_id) VALUES (?, ?)', [intento.id, p.id]);
+                continue;
+            }
+
+            let puntajeAsignado = null;
+            // Auto-corrección solo para múltiple choice
+            if (p.tipo === 'multiple' && p.respuesta_correcta !== null) {
+                puntajeAsignado = resp.opcion_seleccionada === p.respuesta_correcta ? parseFloat(p.puntaje) : 0;
+                puntajeObtenido += puntajeAsignado;
+            }
+
+            await pool.query(
+                'INSERT INTO respuestas (intento_id, pregunta_id, opcion_seleccionada, texto_respuesta, puntaje_asignado) VALUES (?, ?, ?, ?, ?)',
+                [intento.id, p.id, resp.opcion_seleccionada ?? null, resp.texto_respuesta || null, puntajeAsignado]
+            );
+        }
+
+        await pool.query(
+            'UPDATE intentos SET entregado_en = NOW(), puntaje_obtenido = ?, puntaje_total = ? WHERE id = ?',
+            [puntajeObtenido, puntajeTotal, intento.id]
+        );
+
+        res.json({ success: true, puntaje_obtenido: puntajeObtenido, puntaje_total: puntajeTotal });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Error al entregar evaluación' }); }
+});
+
+// Ver resultado de un intento
+app.get('/api/intentos/:id/resultado', verifyToken, async (req, res) => {
+    try {
+        const [[intento]] = await pool.query('SELECT * FROM intentos WHERE id = ? AND usuario_id = ?', [req.params.id, req.usuario.id]);
+        if (!intento) return res.status(404).json({ error: 'Intento no encontrado' });
+        if (!intento.entregado_en) return res.status(400).json({ error: 'La evaluación aún no fue entregada' });
+
+        const [respuestas] = await pool.query(`
+            SELECT r.*, p.texto as pregunta_texto, p.tipo, p.puntaje as puntaje_max, p.respuesta_correcta, p.opciones
+            FROM respuestas r
+            JOIN preguntas p ON r.pregunta_id = p.id
+            WHERE r.intento_id = ?
+            ORDER BY p.orden ASC
+        `, [req.params.id]);
+
+        respuestas.forEach(r => { if (r.opciones) r.opciones = JSON.parse(r.opciones); });
+
+        res.json({ ...intento, respuestas });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Error al obtener resultado' }); }
 });
 
 // Any Uncaught API routes return 404
