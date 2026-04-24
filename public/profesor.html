@@ -201,22 +201,9 @@
         </div>
         <div class="tw">
             <table>
-                <thead><tr><th>Evaluación</th><th>Curso</th><th>Tipo</th><th>Fecha límite</th><th>Enviadas</th><th>Por revisar</th><th></th></tr></thead>
-                <tbody>
-                    <tr>
-                        <td><div class="tn">Evaluación Teórica — Pares Básicos</div><div class="ts">10 preguntas + desarrollo</div></td>
-                        <td class="ts">Biomagnetismo</td><td><span class="bp bpA">Escrita</span></td>
-                        <td class="ts">28 Mar 2026</td><td style="font-weight:600">38/42</td>
-                        <td style="color:var(--danger);font-weight:600">21</td>
-                        <td><a href="eval-revisar.html" class="btn btn-p btn-sm">Revisar</a></td>
-                    </tr>
-                    <tr>
-                        <td><div class="tn">Práctica Observada — Sesión Clínica</div><div class="ts">Rúbrica práctica</div></td>
-                        <td class="ts">Biomagnetismo</td><td><span class="bp bpD">Rúbrica</span></td>
-                        <td class="ts">31 Mar 2026</td><td style="font-weight:600">14/42</td>
-                        <td style="color:var(--danger);font-weight:600">14</td>
-                        <td><a href="eval-revisar.html" class="btn btn-o btn-sm">Revisar</a></td>
-                    </tr>
+                <thead><tr><th>Evaluación</th><th>Curso</th><th>Fecha límite</th><th>Por revisar</th><th></th></tr></thead>
+                <tbody id="evalBody">
+                    <tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--light)">Cargando evaluaciones...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -325,6 +312,7 @@ window.onload = async () => {
     if(urlParams.get('tab') === 'cursos') sw(null, 'tc');
     await fetchDictados();
     await loadUploadSelects();
+    await fetchEvaluaciones();
 };
 
 async function loadUploadSelects() {
@@ -451,6 +439,79 @@ async function fetchDictados() {
 
     } catch(e) {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem; color:red;">Error al cargar tus cursos dictados</td></tr>';
+    }
+}
+
+async function fetchEvaluaciones() {
+    const tbody = document.getElementById('evalBody');
+    try {
+        const token = localStorage.getItem('token');
+        const cursosRes = await fetch('/api/cursos/dictados', { headers: { 'Authorization': 'Bearer ' + token } });
+        if (!cursosRes.ok) throw new Error();
+        const cursos = await cursosRes.json();
+
+        if (cursos.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--light)">Sin cursos asignados.</td></tr>';
+            return;
+        }
+
+        const cursosMap = Object.fromEntries(cursos.map(c => [c.id, c.titulo]));
+        const evalsArrays = await Promise.all(
+            cursos.map(c =>
+                fetch(`/api/cursos/${c.id}/evaluaciones`, { headers: { 'Authorization': 'Bearer ' + token } })
+                    .then(r => r.ok ? r.json() : [])
+                    .catch(() => [])
+            )
+        );
+
+        const evals = evalsArrays.flat();
+
+        if (evals.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--light)">Aún no hay evaluaciones creadas.</td></tr>';
+            // Update badge
+            document.querySelector('.sb-badge').textContent = '0';
+            return;
+        }
+
+        // Fetch pending counts in parallel
+        const pendCounts = await Promise.all(
+            evals.map(ev =>
+                fetch(`/api/evaluaciones/${ev.id}/intentos`, { headers: { 'Authorization': 'Bearer ' + token } })
+                    .then(r => r.ok ? r.json() : [])
+                    .then(intentos => intentos.filter(i => i.pendiente_revision > 0).length)
+                    .catch(() => 0)
+            )
+        );
+
+        const totalPend = pendCounts.reduce((a, b) => a + b, 0);
+        document.querySelector('.sb-badge').textContent = totalPend;
+
+        tbody.innerHTML = '';
+        evals.forEach((ev, idx) => {
+            const pend = pendCounts[idx];
+            const cierre = ev.fecha_cierre ? new Date(ev.fecha_cierre).toLocaleDateString('es-CL', { day:'numeric', month:'short', year:'numeric' }) : '–';
+            tbody.innerHTML += `
+                <tr>
+                    <td>
+                        <div class="tn">${ev.titulo}</div>
+                        <div class="ts">${ev.publicada ? '● Publicada' : 'Borrador'}</div>
+                    </td>
+                    <td class="ts">${cursosMap[ev.curso_id] || '–'}</td>
+                    <td class="ts">${cierre}</td>
+                    <td>${pend > 0
+                        ? `<span style="color:var(--danger);font-weight:600">${pend}</span>`
+                        : `<span style="color:var(--primary);font-weight:600">0</span>`
+                    }</td>
+                    <td>
+                        <a href="eval-revisar.html?eval_id=${ev.id}" class="btn ${pend > 0 ? 'btn-p' : 'btn-o'} btn-sm">
+                            <i class="ph ph-${pend > 0 ? 'pencil' : 'eye'}"></i> ${pend > 0 ? 'Calificar' : 'Ver'}
+                        </a>
+                    </td>
+                </tr>
+            `;
+        });
+    } catch(e) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;color:red;">Error al cargar evaluaciones.</td></tr>';
     }
 }
 </script>

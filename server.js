@@ -735,6 +735,83 @@ app.get('/api/intentos/:id/resultado', verifyToken, async (req, res) => {
     } catch (e) { console.error(e); res.status(500).json({ error: 'Error al obtener resultado' }); }
 });
 
+// Listar intentos entregados de una evaluación (profesor/admin)
+app.get('/api/evaluaciones/:id/intentos', verifyToken, async (req, res) => {
+    if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
+    try {
+        const [intentos] = await pool.query(`
+            SELECT i.id, i.usuario_id, i.iniciado_en, i.entregado_en, i.puntaje_obtenido, i.puntaje_total,
+                   u.nombre as estudiante_nombre, u.email as estudiante_email,
+                   (SELECT COUNT(*) FROM respuestas r
+                    JOIN preguntas p ON r.pregunta_id = p.id
+                    WHERE r.intento_id = i.id AND p.tipo != 'multiple' AND r.puntaje_asignado IS NULL) as pendiente_revision
+            FROM intentos i
+            JOIN usuarios u ON i.usuario_id = u.id
+            WHERE i.evaluacion_id = ? AND i.entregado_en IS NOT NULL
+            ORDER BY i.entregado_en DESC
+        `, [req.params.id]);
+        res.json(intentos);
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Error al obtener intentos' }); }
+});
+
+// Ver intento completo con respuestas (profesor/admin)
+app.get('/api/intentos/:id/revisar', verifyToken, async (req, res) => {
+    if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
+    try {
+        const [[intento]] = await pool.query(`
+            SELECT i.*, u.nombre as estudiante_nombre, u.email as estudiante_email, e.titulo as eval_titulo
+            FROM intentos i
+            JOIN usuarios u ON i.usuario_id = u.id
+            JOIN evaluaciones e ON i.evaluacion_id = e.id
+            WHERE i.id = ?
+        `, [req.params.id]);
+        if (!intento) return res.status(404).json({ error: 'Intento no encontrado' });
+
+        const [respuestas] = await pool.query(`
+            SELECT r.id, r.pregunta_id, r.opcion_seleccionada, r.texto_respuesta, r.puntaje_asignado,
+                   p.texto as pregunta_texto, p.tipo, p.puntaje as puntaje_max,
+                   p.respuesta_correcta, p.opciones, p.orden
+            FROM respuestas r
+            JOIN preguntas p ON r.pregunta_id = p.id
+            WHERE r.intento_id = ?
+            ORDER BY p.orden ASC
+        `, [req.params.id]);
+
+        respuestas.forEach(r => { if (r.opciones) r.opciones = JSON.parse(r.opciones); });
+        res.json({ ...intento, respuestas });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Error al revisar intento' }); }
+});
+
+// Calificar preguntas de desarrollo/rúbrica (profesor/admin)
+app.put('/api/intentos/:id/calificar', verifyToken, async (req, res) => {
+    if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
+    try {
+        const [[intento]] = await pool.query('SELECT * FROM intentos WHERE id = ?', [req.params.id]);
+        if (!intento) return res.status(404).json({ error: 'Intento no encontrado' });
+
+        const { calificaciones } = req.body;
+        if (!Array.isArray(calificaciones) || calificaciones.length === 0)
+            return res.status(400).json({ error: 'calificaciones requerido' });
+
+        for (const c of calificaciones) {
+            const pts = parseFloat(c.puntaje_asignado);
+            if (isNaN(pts) || pts < 0) continue;
+            await pool.query(
+                'UPDATE respuestas SET puntaje_asignado = ? WHERE id = ? AND intento_id = ?',
+                [pts, c.respuesta_id, req.params.id]
+            );
+        }
+
+        const [[sum]] = await pool.query(
+            'SELECT COALESCE(SUM(puntaje_asignado),0) as total FROM respuestas WHERE intento_id = ?',
+            [req.params.id]
+        );
+        await pool.query('UPDATE intentos SET puntaje_obtenido = ? WHERE id = ?', [sum.total, req.params.id]);
+
+        res.json({ ok: true, puntaje_obtenido: sum.total });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Error al calificar' }); }
+});
+
 // Any Uncaught API routes return 404
 app.use('/api', (req, res) => {
     res.status(404).json({ error: 'Endpoint no encontrado' });

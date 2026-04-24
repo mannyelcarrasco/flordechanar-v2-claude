@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revisar Evaluación | Flor de Chañar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root {
+            --bg:#F9F6F0;--bg-alt:#F2EDE4;--primary:#687A61;--primary-d:#52634C;
+            --secondary:#2C3531;--accent:#D4A373;--white:#fff;--text:#333;--light:#666;
+            --xp:#F59E0B;--danger:#EF4444;--info:#3B82F6;--success:#10B981;
+            --font:'Inter',sans-serif;--serif:'Playfair Display',serif;
+            --sw:250px;--r:12px;--rf:9999px;--tr:all .25s ease;
+        }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex;min-height:100vh}
+        a{text-decoration:none;color:inherit}
+        h2,h3,h4{font-family:var(--serif);color:var(--secondary)}
+
+        .sb{width:var(--sw);background:var(--secondary);min-height:100vh;position:fixed;display:flex;flex-direction:column;padding:1.25rem 0}
+        .sb-logo{padding:0 1.2rem 1.25rem;font-family:var(--serif);font-size:1.05rem;font-weight:700;color:#fff;display:flex;align-items:center;gap:.5rem;border-bottom:1px solid rgba(255,255,255,.08)}
+        .sb-role{margin:.85rem 1.2rem;background:rgba(104,122,97,.2);color:rgba(255,255,255,.8);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:.25rem .7rem;border-radius:var(--rf);display:flex;align-items:center;gap:.3rem}
+        .sb-nav{list-style:none;padding:0 .65rem}
+        .sb-nav li a{display:flex;align-items:center;gap:.6rem;padding:.6rem .8rem;border-radius:var(--r);color:rgba(255,255,255,.6);font-size:.86rem;font-weight:500;transition:var(--tr)}
+        .sb-nav li a:hover{background:rgba(255,255,255,.07);color:#fff}
+        .sb-nav li a.active{background:var(--primary);color:#fff}
+        .sb-user{margin-top:auto;padding:1.1rem;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:.65rem}
+        .sb-av{width:34px;height:34px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:.8rem}
+        .sb-un{font-size:.83rem;font-weight:600;color:#fff}
+        .sb-ur{font-size:.7rem;color:rgba(255,255,255,.45)}
+
+        .main{margin-left:var(--sw);flex:1;padding:1.75rem 2.25rem;max-width:calc(100% - var(--sw))}
+        .pg-hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;gap:1rem}
+        .pg-hd h2{font-size:1.4rem}
+        .pg-hd p{color:var(--light);font-size:.88rem;margin-top:.2rem}
+
+        .btn{display:inline-flex;align-items:center;gap:.4rem;padding:.6rem 1.25rem;border-radius:var(--rf);font-size:.85rem;font-weight:600;cursor:pointer;border:none;transition:var(--tr);font-family:var(--font)}
+        .btn-p{background:var(--primary);color:#fff}.btn-p:hover{background:var(--primary-d);transform:translateY(-1px)}
+        .btn-o{background:transparent;border:1.5px solid #D1D5DB;color:var(--secondary)}.btn-o:hover{border-color:var(--primary);color:var(--primary)}
+        .btn-sm{padding:.38rem .8rem;font-size:.78rem}
+        .btn-s{background:rgba(16,185,129,.1);color:#059669;border:1.5px solid rgba(16,185,129,.3)}.btn-s:hover{background:rgba(16,185,129,.2)}
+
+        .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem}
+        .sc{background:#fff;border-radius:var(--r);padding:1.1rem;box-shadow:0 2px 10px rgba(0,0,0,.04);display:flex;align-items:center;gap:.85rem}
+        .si{width:38px;height:38px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+        .si.g{background:rgba(104,122,97,.12);color:var(--primary)}.si.a{background:rgba(245,158,11,.12);color:var(--xp)}.si.b{background:rgba(59,130,246,.12);color:var(--info)}.si.s{background:rgba(16,185,129,.12);color:var(--success)}
+        .sn{font-size:1.4rem;font-weight:700;color:var(--secondary);line-height:1}.sl{font-size:.73rem;color:var(--light);margin-top:2px}
+
+        .tw{background:#fff;border-radius:var(--r);box-shadow:0 2px 10px rgba(0,0,0,.04);overflow:hidden}
+        table{width:100%;border-collapse:collapse}
+        thead{background:var(--bg-alt)}
+        th{padding:.75rem .9rem;text-align:left;font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--light)}
+        td{padding:.8rem .9rem;font-size:.86rem;border-top:1px solid #F1F5F9;vertical-align:middle}
+        tr:hover td{background:#FAFAF8}
+        .tn{font-weight:600;color:var(--secondary)}.ts{font-size:.75rem;color:var(--light)}
+
+        .bp{display:inline-flex;align-items:center;gap:.2rem;padding:.2rem .55rem;border-radius:var(--rf);font-size:.7rem;font-weight:700}
+        .bpG{background:rgba(104,122,97,.1);color:var(--primary-d)}
+        .bpP{background:rgba(245,158,11,.12);color:#B45309}
+        .bpC{background:rgba(16,185,129,.12);color:#059669}
+        .bpR{background:rgba(239,68,68,.1);color:var(--danger)}
+
+        .nota-badge{display:inline-flex;align-items:center;justify-content:center;min-width:36px;padding:.2rem .45rem;border-radius:6px;font-size:.85rem;font-weight:700}
+        .nEx{background:rgba(104,122,97,.1);color:var(--primary-d)}
+        .nG{background:rgba(59,130,246,.1);color:var(--info)}
+        .nA{background:rgba(245,158,11,.1);color:var(--xp)}
+        .nF{background:rgba(239,68,68,.1);color:var(--danger)}
+        .nN{background:#F1F5F9;color:#94A3B8}
+
+        /* Overlay drawer */
+        .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:none;align-items:flex-start;justify-content:flex-end}
+        .overlay.open{display:flex}
+        .drawer{width:560px;max-width:95vw;height:100vh;background:#fff;overflow-y:auto;display:flex;flex-direction:column;box-shadow:-8px 0 30px rgba(0,0,0,.15)}
+        .dh{padding:1.25rem 1.4rem;border-bottom:1px solid #E5E7EB;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:10}
+        .dh h3{font-size:1rem}
+        .dh .close{cursor:pointer;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--bg-alt);color:var(--light);transition:var(--tr)}
+        .dh .close:hover{background:#E5E7EB}
+        .db{padding:1.4rem;flex:1}
+        .df{padding:1.25rem 1.4rem;border-top:1px solid #E5E7EB;position:sticky;bottom:0;background:#fff;display:flex;gap:.65rem;justify-content:flex-end}
+
+        .q-block{background:var(--bg);border-radius:var(--r);padding:1rem;margin-bottom:.9rem}
+        .q-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--light);margin-bottom:.4rem;display:flex;justify-content:space-between;align-items:center}
+        .q-text{font-size:.9rem;font-weight:600;color:var(--secondary);margin-bottom:.65rem}
+        .q-answer{background:#fff;border-radius:8px;padding:.65rem .8rem;font-size:.85rem;border:1px solid #E5E7EB;margin-bottom:.5rem}
+        .q-answer.correct{border-color:rgba(104,122,97,.4);background:rgba(104,122,97,.05)}
+        .q-answer.wrong{border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.04)}
+        .q-answer.text{white-space:pre-wrap;color:var(--text);min-height:60px}
+        .opt-row{display:flex;align-items:center;gap:.5rem;padding:.3rem .5rem;border-radius:6px;font-size:.84rem;margin-bottom:.25rem}
+        .opt-row.sel{background:rgba(59,130,246,.08);color:var(--info);font-weight:600}
+        .opt-row.sel.right{background:rgba(104,122,97,.1);color:var(--primary-d)}
+        .opt-row.sel.wrong{background:rgba(239,68,68,.07);color:var(--danger)}
+
+        .score-row{display:flex;align-items:center;gap:.65rem;margin-top:.6rem}
+        .score-row label{font-size:.8rem;font-weight:600;color:var(--secondary);white-space:nowrap}
+        .score-input{width:72px;padding:.3rem .5rem;border:1.5px solid #E5E7EB;border-radius:8px;font-size:.88rem;text-align:center;font-family:var(--font);outline:none;transition:var(--tr)}
+        .score-input:focus{border-color:var(--primary)}
+        .score-max{font-size:.78rem;color:var(--light)}
+
+        .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--secondary);color:#fff;padding:.9rem 1.4rem;border-radius:var(--r);display:none;align-items:center;gap:.7rem;z-index:9999;font-size:.87rem;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+        .toast i{color:var(--primary);font-size:1.25rem}
+        @keyframes sU{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+        .toast.show{display:flex;animation:sU .3s ease}
+
+        .empty{text-align:center;padding:3rem 1rem;color:var(--light)}
+        .empty i{font-size:2.5rem;display:block;margin-bottom:.75rem;color:#D1D5DB}
+    </style>
+</head>
+<body>
+<aside class="sb">
+    <div class="sb-logo"><img src="logo.png" style="height:28px;border-radius:50%;margin-right:8px;object-fit:cover;"> Flor de Chañar</div>
+    <div class="sb-role"><i class="ph ph-chalkboard-teacher"></i> Modo Profesor</div>
+    <ul class="sb-nav" style="margin-top:.5rem">
+        <li><a href="profesor.html"><i class="ph ph-house"></i> Mi Panel</a></li>
+        <li><a href="eval-crear.html"><i class="ph ph-plus-circle"></i> Nueva Evaluación</a></li>
+        <li><a href="#" class="active"><i class="ph ph-clipboard-text"></i> Revisar</a></li>
+    </ul>
+    <ul class="sb-nav" style="margin-top:auto">
+        <li><a href="login.html"><i class="ph ph-sign-out"></i> Salir</a></li>
+    </ul>
+    <div class="sb-user">
+        <div class="sb-av" id="sbAv">-</div>
+        <div><div class="sb-un" id="sbNombre">...</div><div class="sb-ur">Profesor</div></div>
+    </div>
+</aside>
+
+<main class="main">
+    <div class="pg-hd">
+        <div>
+            <h2 id="evalTitulo">Cargando...</h2>
+            <p id="evalMeta" style="margin-top:.25rem"></p>
+        </div>
+        <div style="display:flex;gap:.65rem">
+            <a href="profesor.html" class="btn btn-o btn-sm"><i class="ph ph-arrow-left"></i> Volver</a>
+        </div>
+    </div>
+
+    <div class="stats">
+        <div class="sc"><div class="si g"><i class="ph ph-users"></i></div><div><div class="sn" id="stTotal">–</div><div class="sl">Enviadas</div></div></div>
+        <div class="sc"><div class="si a"><i class="ph ph-clock"></i></div><div><div class="sn" id="stPend">–</div><div class="sl">Por revisar</div></div></div>
+        <div class="sc"><div class="si s"><i class="ph ph-check-circle"></i></div><div><div class="sn" id="stComp">–</div><div class="sl">Completas</div></div></div>
+        <div class="sc"><div class="si b"><i class="ph ph-chart-bar"></i></div><div><div class="sn" id="stProm">–</div><div class="sl">Promedio</div></div></div>
+    </div>
+
+    <div class="tw">
+        <table>
+            <thead>
+                <tr>
+                    <th>Estudiante</th>
+                    <th>Entregado</th>
+                    <th>Puntaje</th>
+                    <th>Nota</th>
+                    <th>Estado</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="tbody">
+                <tr><td colspan="6" class="empty"><i class="ph ph-spinner"></i> Cargando...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<!-- Drawer revisar intento -->
+<div class="overlay" id="overlay" onclick="closeDrawer(event)">
+    <div class="drawer" id="drawer">
+        <div class="dh">
+            <div>
+                <h3 id="drawerNombre">Revisando respuestas</h3>
+                <div class="ts" id="drawerSub" style="margin-top:.2rem"></div>
+            </div>
+            <div class="close" onclick="closeDrawer(null,true)"><i class="ph ph-x"></i></div>
+        </div>
+        <div class="db" id="drawerBody"></div>
+        <div class="df" id="drawerFooter" style="display:none">
+            <button class="btn btn-o btn-sm" onclick="closeDrawer(null,true)">Cancelar</button>
+            <button class="btn btn-p btn-sm" id="saveBtn" onclick="guardarCalificacion()"><i class="ph ph-floppy-disk"></i> Guardar Calificación</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"><i class="ph ph-check-circle" id="tI"></i><span id="tM"></span></div>
+
+<script>
+let evalId = null;
+let currentIntentoId = null;
+let intentos = [];
+
+window.onload = async () => {
+    const p = new URLSearchParams(location.search);
+    evalId = p.get('eval_id');
+    if (!evalId) { location.href = 'profesor.html'; return; }
+
+    const token = localStorage.getItem('token');
+    if (!token) { location.href = 'login.html'; return; }
+
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        document.getElementById('sbNombre').textContent = payload.nombre || 'Profesor';
+        document.getElementById('sbAv').textContent = (payload.nombre || 'P')[0].toUpperCase();
+        if (payload.rol === 'estudiante') { location.href = 'dashboard.html'; return; }
+    } catch(e) { location.href = 'login.html'; return; }
+
+    await cargarEval();
+    await cargarIntentos();
+};
+
+async function cargarEval() {
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/evaluaciones/' + evalId, { headers: { 'Authorization': 'Bearer ' + token } });
+        if (!res.ok) return;
+        const ev = await res.json();
+        document.getElementById('evalTitulo').textContent = ev.titulo;
+        document.getElementById('evalMeta').textContent =
+            `${ev.preguntas?.length ?? '–'} preguntas · ${ev.publicada ? 'Publicada' : 'Borrador'}`;
+        document.title = 'Revisar: ' + ev.titulo + ' | Flor de Chañar';
+    } catch(e) {}
+}
+
+async function cargarIntentos() {
+    const tbody = document.getElementById('tbody');
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/evaluaciones/' + evalId + '/intentos', { headers: { 'Authorization': 'Bearer ' + token } });
+        if (!res.ok) throw new Error();
+        intentos = await res.json();
+
+        if (intentos.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><i class="ph ph-tray"></i>Ningún estudiante ha enviado esta evaluación aún.</div></td></tr>`;
+            ['stTotal','stPend','stComp','stProm'].forEach(id => document.getElementById(id).textContent = '0');
+            return;
+        }
+
+        const pendCount = intentos.filter(i => i.pendiente_revision > 0).length;
+        const compCount = intentos.filter(i => i.pendiente_revision == 0).length;
+        const notas = intentos
+            .filter(i => i.puntaje_total > 0)
+            .map(i => calcNota(i.puntaje_obtenido, i.puntaje_total));
+        const prom = notas.length ? (notas.reduce((a,b)=>a+b,0)/notas.length).toFixed(1) : '–';
+
+        document.getElementById('stTotal').textContent = intentos.length;
+        document.getElementById('stPend').textContent = pendCount;
+        document.getElementById('stComp').textContent = compCount;
+        document.getElementById('stProm').textContent = prom;
+
+        tbody.innerHTML = '';
+        intentos.forEach(i => {
+            const nota = i.puntaje_total > 0 ? calcNota(i.puntaje_obtenido, i.puntaje_total) : null;
+            const notaClass = notaCls(nota);
+            const hasPending = i.pendiente_revision > 0;
+            tbody.innerHTML += `
+                <tr>
+                    <td>
+                        <div class="tn">${i.estudiante_nombre}</div>
+                        <div class="ts">${i.estudiante_email}</div>
+                    </td>
+                    <td class="ts">${formatDate(i.entregado_en)}</td>
+                    <td><span style="font-weight:600">${i.puntaje_obtenido ?? 0}</span><span class="ts"> / ${i.puntaje_total ?? '?'}</span></td>
+                    <td>
+                        ${nota !== null
+                            ? `<span class="nota-badge ${notaClass}">${nota.toFixed(1)}</span>`
+                            : `<span class="nota-badge nN">–</span>`}
+                    </td>
+                    <td>
+                        ${hasPending
+                            ? `<span class="bp bpP"><i class="ph ph-clock"></i> ${i.pendiente_revision} por revisar</span>`
+                            : `<span class="bp bpC"><i class="ph ph-check"></i> Completa</span>`}
+                    </td>
+                    <td>
+                        <button class="btn btn-${hasPending?'p':'o'} btn-sm" onclick="abrirIntento(${i.id})">
+                            <i class="ph ph-${hasPending?'pencil':'eye'}"></i> ${hasPending?'Calificar':'Ver'}
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+    } catch(e) {
+        tbody.innerHTML = `<tr><td colspan="6" class="empty">Error al cargar los intentos.</td></tr>`;
+    }
+}
+
+async function abrirIntento(intentoId) {
+    currentIntentoId = intentoId;
+    document.getElementById('drawerBody').innerHTML = '<div class="empty"><i class="ph ph-spinner"></i> Cargando...</div>';
+    document.getElementById('drawerFooter').style.display = 'none';
+    document.getElementById('overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/intentos/' + intentoId + '/revisar', { headers: { 'Authorization': 'Bearer ' + token } });
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+
+        document.getElementById('drawerNombre').textContent = data.estudiante_nombre;
+        document.getElementById('drawerSub').textContent =
+            `Entregado ${formatDate(data.entregado_en)} · ${data.puntaje_obtenido ?? 0}/${data.puntaje_total ?? '?'} pts`;
+
+        const tieneManual = data.respuestas.some(r => r.tipo !== 'multiple');
+        renderRespuestas(data.respuestas);
+
+        if (tieneManual) document.getElementById('drawerFooter').style.display = 'flex';
+    } catch(e) {
+        document.getElementById('drawerBody').innerHTML = '<div class="empty">Error al cargar el intento.</div>';
+    }
+}
+
+function renderRespuestas(respuestas) {
+    const body = document.getElementById('drawerBody');
+    body.innerHTML = '';
+
+    respuestas.forEach((r, idx) => {
+        const div = document.createElement('div');
+        div.className = 'q-block';
+
+        let tipoLabel = r.tipo === 'multiple' ? 'Opción Múltiple' : r.tipo === 'desarrollo' ? 'Desarrollo' : 'Rúbrica';
+        let statusIcon = '';
+        if (r.tipo !== 'multiple') {
+            statusIcon = r.puntaje_asignado !== null
+                ? `<span style="color:var(--success);font-size:.7rem"><i class="ph ph-check-circle"></i> Calificado</span>`
+                : `<span style="color:var(--xp);font-size:.7rem"><i class="ph ph-clock"></i> Pendiente</span>`;
+        }
+
+        let answerHtml = '';
+        if (r.tipo === 'multiple' && r.opciones) {
+            const opts = Array.isArray(r.opciones) ? r.opciones : [];
+            answerHtml = opts.map((opt, i) => {
+                const isSelected = r.opcion_seleccionada === i;
+                const isCorrect = r.respuesta_correcta === i;
+                let cls = '';
+                if (isSelected && isCorrect) cls = 'sel right';
+                else if (isSelected && !isCorrect) cls = 'sel wrong';
+                else if (isCorrect) cls = '';
+                const icon = isSelected && isCorrect ? '<i class="ph ph-check-circle" style="color:var(--primary)"></i>'
+                           : isSelected && !isCorrect ? '<i class="ph ph-x-circle" style="color:var(--danger)"></i>'
+                           : isCorrect ? '<i class="ph ph-check" style="color:var(--primary);opacity:.5"></i>'
+                           : '<i class="ph ph-circle" style="opacity:.25"></i>';
+                return `<div class="opt-row ${cls}">${icon} ${opt}</div>`;
+            }).join('');
+
+            const auto = r.puntaje_asignado !== null ? r.puntaje_asignado : '–';
+            answerHtml += `<div style="font-size:.78rem;color:var(--light);margin-top:.4rem">Puntaje auto: <strong>${auto}/${r.puntaje_max}</strong></div>`;
+        } else {
+            const texto = r.texto_respuesta || '<em style="color:var(--light)">Sin respuesta</em>';
+            answerHtml = `<div class="q-answer text">${texto}</div>
+                <div class="score-row">
+                    <label for="sc_${r.id}">Puntaje asignado:</label>
+                    <input class="score-input" type="number" id="sc_${r.id}"
+                           data-respuesta-id="${r.id}" data-max="${r.puntaje_max}"
+                           min="0" max="${r.puntaje_max}" step="0.5"
+                           value="${r.puntaje_asignado ?? ''}" placeholder="0">
+                    <span class="score-max">/ ${r.puntaje_max} pts</span>
+                </div>`;
+        }
+
+        div.innerHTML = `
+            <div class="q-label">
+                <span>P${idx + 1} · ${tipoLabel}</span>
+                ${statusIcon}
+            </div>
+            <div class="q-text">${r.pregunta_texto}</div>
+            ${answerHtml}
+        `;
+        body.appendChild(div);
+    });
+}
+
+async function guardarCalificacion() {
+    const inputs = document.querySelectorAll('#drawerBody .score-input');
+    const calificaciones = [];
+    let valid = true;
+
+    inputs.forEach(inp => {
+        const val = parseFloat(inp.value);
+        const max = parseFloat(inp.dataset.max);
+        if (inp.value === '') { showToast('Debes asignar puntaje a todas las respuestas de desarrollo', 'ph-warning'); valid = false; return; }
+        if (isNaN(val) || val < 0 || val > max) { showToast(`Puntaje fuera de rango (0–${max})`, 'ph-warning'); valid = false; return; }
+        calificaciones.push({ respuesta_id: parseInt(inp.dataset.respuestaId), puntaje_asignado: val });
+    });
+
+    if (!valid || calificaciones.length === 0) return;
+
+    try {
+        const token = localStorage.getItem('token');
+        document.getElementById('saveBtn').disabled = true;
+        const res = await fetch('/api/intentos/' + currentIntentoId + '/calificar', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ calificaciones })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        showToast('Calificación guardada', 'ph-check-circle');
+        closeDrawer(null, true);
+        await cargarIntentos();
+    } catch(e) {
+        showToast('Error al guardar: ' + e.message, 'ph-warning');
+    } finally {
+        document.getElementById('saveBtn').disabled = false;
+    }
+}
+
+function closeDrawer(e, force) {
+    if (e && e.target !== document.getElementById('overlay') && !force) return;
+    document.getElementById('overlay').classList.remove('open');
+    document.body.style.overflow = '';
+    currentIntentoId = null;
+}
+
+function calcNota(obtenido, total) {
+    if (!total || total === 0) return null;
+    return Math.round(((obtenido / total) * 6 + 1) * 10) / 10;
+}
+
+function notaCls(nota) {
+    if (nota === null) return 'nN';
+    if (nota >= 6.5) return 'nEx';
+    if (nota >= 5.5) return 'nG';
+    if (nota >= 4.0) return 'nA';
+    return 'nF';
+}
+
+function formatDate(dt) {
+    if (!dt) return '–';
+    return new Date(dt).toLocaleDateString('es-CL', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+}
+
+function showToast(msg, icon) {
+    const t = document.getElementById('toast');
+    document.getElementById('tM').textContent = msg;
+    document.getElementById('tI').className = 'ph ' + (icon || 'ph-check-circle');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3500);
+}
+</script>
+</body>
+</html>
