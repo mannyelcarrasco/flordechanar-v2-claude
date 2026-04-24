@@ -126,9 +126,10 @@ async function initDB() {
         `);
 
         const alterCols = [
-            "ALTER TABLE lecciones ADD COLUMN IF NOT EXISTS tipo ENUM('video','texto','archivo','link') DEFAULT 'video'",
-            "ALTER TABLE lecciones ADD COLUMN IF NOT EXISTS duracion VARCHAR(50)",
-            "ALTER TABLE lecciones ADD COLUMN IF NOT EXISTS visibilidad ENUM('privada','muestra') DEFAULT 'privada'"
+            `ALTER TABLE lecciones ADD COLUMN IF NOT EXISTS tipo ENUM('video','texto','archivo','link') DEFAULT 'video'`,
+            `ALTER TABLE lecciones ADD COLUMN IF NOT EXISTS duracion VARCHAR(50)`,
+            `ALTER TABLE lecciones ADD COLUMN IF NOT EXISTS visibilidad ENUM('privada','muestra') DEFAULT 'privada'`,
+            `ALTER TABLE lecciones ADD COLUMN IF NOT EXISTS orden INT DEFAULT 0`
         ];
         for(const sql of alterCols) { try { await pool.query(sql); } catch(e) {} }
         console.log('Tables checked/created: usuarios, cursos, inscripciones, modulos, lecciones, progreso_lecciones.');
