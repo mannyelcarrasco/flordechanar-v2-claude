@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Aula | Flor de Chañar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root {
+            --color-bg: #F9F6F0; --color-bg-alt: #F2EDE4;
+            --color-primary: #687A61; --color-primary-dark: #52634C;
+            --color-secondary: #2C3531; --color-accent: #D4A373;
+            --color-white: #FFFFFF; --color-text-main: #333333; --color-text-light: #666666;
+            --color-xp: #F59E0B; --color-live: #EF4444;
+            --font-serif: 'Playfair Display', serif; --font-sans: 'Inter', sans-serif;
+            --radius-md: 12px; --radius-lg: 20px; --radius-full: 9999px;
+            --transition: all 0.3s ease;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--font-sans); background: var(--color-bg); color: var(--color-text-main); -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; color: inherit; }
+        h1,h2,h3,h4 { font-family: var(--font-serif); color: var(--color-secondary); }
+
+        /* Top Bar */
+        .topbar {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+            background: var(--color-secondary); height: 60px;
+            display: flex; align-items: center; justify-content: space-between; padding: 0 1.5rem;
+        }
+        .tb-left { display: flex; align-items: center; gap: 1rem; }
+        .tb-back { color: rgba(255,255,255,0.7); display: flex; align-items: center; gap: 0.3rem; font-size: 0.88rem; transition: var(--transition); }
+        .tb-back:hover { color: white; }
+        .tb-title { color: white; font-family: var(--font-serif); font-size: 1rem; }
+        .tb-right { display: flex; align-items: center; gap: 1rem; }
+        .tb-progress { display: flex; align-items: center; gap: 0.75rem; color: white; font-size: 0.85rem; }
+        .tb-bar { width: 120px; height: 6px; background: rgba(255,255,255,0.2); border-radius: var(--radius-full); }
+        .tb-fill { height: 100%; width: 0%; background: var(--color-xp); border-radius: var(--radius-full); transition: width 0.8s ease; }
+
+        /* Layout */
+        .course-layout { display: grid; grid-template-columns: 280px 1fr; height: 100vh; padding-top: 60px; }
+
+        /* Left: Lesson List */
+        .lesson-sidebar {
+            background: var(--color-white); border-right: 1px solid #E2E8F0;
+            overflow-y: auto; padding: 1.5rem 0;
+        }
+        .ls-header { padding: 0 1.25rem 1rem; border-bottom: 1px solid #E2E8F0; margin-bottom: 0.5rem; }
+        .ls-header h3 { font-size: 0.95rem; font-family: var(--font-sans); font-weight: 600; color: var(--color-secondary); }
+        .ls-header p { font-size: 0.8rem; color: var(--color-text-light); margin-top: 0.3rem; }
+
+        .module-block { margin-bottom: 0.5rem; }
+        .module-title {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.75rem 1.25rem; font-size: 0.82rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.5px; color: var(--color-primary-dark);
+            cursor: pointer; background: rgba(104,122,97,0.05);
+        }
+        .lesson-item {
+            display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 1.25rem;
+            font-size: 0.88rem; color: var(--color-text-main); cursor: pointer;
+            transition: var(--transition); border-left: 3px solid transparent;
+        }
+        .lesson-item:hover { background: var(--color-bg); }
+        .lesson-item.active { background: rgba(104,122,97,0.08); border-left-color: var(--color-primary); color: var(--color-primary-dark); font-weight: 600; }
+        .lesson-item.done { color: var(--color-text-light); }
+        .lesson-icon { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; flex-shrink: 0; }
+        .lesson-icon.done-ic { background: rgba(104,122,97,0.15); color: var(--color-primary); }
+        .lesson-icon.active-ic { background: var(--color-primary); color: white; }
+        .lesson-icon.pending-ic { background: #E2E8F0; color: #94a3b8; }
+        .lesson-duration { margin-left: auto; font-size: 0.75rem; color: #94a3b8; flex-shrink: 0; }
+
+        /* Center: Video & Content */
+        .main-lesson { overflow-y: auto; background: var(--color-bg); }
+
+        /* Video Player */
+        .video-wrapper {
+            background: #000; position: relative; width: 100%; aspect-ratio: 16/9;
+        }
+        .video-wrapper iframe { width: 100%; height: 100%; border: none; display: block; }
+        .video-placeholder {
+            width: 100%; height: 100%; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 1rem; color: rgba(255,255,255,0.5);
+        }
+        .video-placeholder i { font-size: 4rem; }
+        .video-placeholder p { font-size: 0.9rem; }
+
+        .lesson-content { padding: 2rem; }
+        .lc-meta { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.2rem; font-size: 0.85rem; color: var(--color-text-light); flex-wrap: wrap; }
+        .lc-meta .badge { background: rgba(104,122,97,0.1); color: var(--color-primary-dark); padding: 0.2rem 0.6rem; border-radius: 4px; font-weight: 600; }
+        .lesson-content h1 { font-size: 1.8rem; margin-bottom: 1.5rem; }
+        .lesson-content p.desc { color: var(--color-text-light); line-height: 1.75; margin-bottom: 1.25rem; }
+
+        /* Navigation buttons */
+        .lesson-nav { display: flex; justify-content: space-between; align-items: center; padding: 2rem; border-top: 1px solid #E2E8F0; margin-top: 1rem; gap: 1rem; }
+        .btn-nav { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: var(--radius-full); font-size: 0.92rem; font-weight: 600; transition: var(--transition); border: 1.5px solid #E2E8F0; background: white; cursor: pointer; color: var(--color-secondary); }
+        .btn-nav:hover:not(:disabled) { border-color: var(--color-primary); color: var(--color-primary); }
+        .btn-nav:disabled { opacity: 0.4; cursor: default; }
+        .btn-complete { background: var(--color-primary); color: white; border-color: var(--color-primary); }
+        .btn-complete:hover:not(:disabled) { background: var(--color-primary-dark); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(104,122,97,0.25); }
+        .btn-complete.done { background: var(--color-accent); border-color: var(--color-accent); }
+
+        /* Loading states */
+        .loading-state { display: flex; align-items: center; justify-content: center; height: 200px; color: var(--color-text-light); gap: 0.5rem; }
+        .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
+        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+
+        /* XP Toast */
+        @keyframes toastPop { 0%{transform:translateY(20px);opacity:0} 20%{transform:translateY(0);opacity:1} 80%{transform:translateY(0);opacity:1} 100%{transform:translateY(-20px);opacity:0} }
+        .xp-notification { position: fixed; bottom: 2rem; right: 2rem; background: var(--color-secondary); color: white; padding: 1rem 1.5rem; border-radius: var(--radius-md); display: flex; align-items: center; gap: 0.75rem; font-weight: 600; z-index: 9999; }
+        .xp-notification i { color: var(--color-xp); font-size: 1.3rem; }
+        .xp-notification.hidden { display: none; }
+
+        @media (max-width: 768px) { .lesson-sidebar { display: none; } .course-layout { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="topbar">
+    <div class="tb-left">
+        <a href="dashboard.html" class="tb-back"><i class="ph ph-arrow-left"></i> Mi Aula</a>
+        <span style="color:rgba(255,255,255,0.2);">|</span>
+        <span class="tb-title" id="tbTitle">Cargando...</span>
+    </div>
+    <div class="tb-right">
+        <div class="tb-progress">
+            <span>Progreso:</span>
+            <div class="tb-bar"><div class="tb-fill" id="tbFill"></div></div>
+            <span id="tbPct">0%</span>
+        </div>
+    </div>
+</div>
+
+<!-- Layout -->
+<div class="course-layout">
+
+    <!-- Left: Lesson Sidebar -->
+    <div class="lesson-sidebar">
+        <div class="ls-header">
+            <h3>Contenido del Curso</h3>
+            <p id="sidebarProgress">Cargando...</p>
+        </div>
+        <div id="curriculumList">
+            <div class="loading-state"><i class="ph ph-spinner"></i> Cargando...</div>
+        </div>
+    </div>
+
+    <!-- Center: Main Lesson -->
+    <div class="main-lesson" id="mainLesson">
+        <!-- Video Player -->
+        <div class="video-wrapper" id="videoWrapper">
+            <div class="video-placeholder">
+                <i class="ph ph-video"></i>
+                <p>Selecciona una lección para comenzar</p>
+            </div>
+        </div>
+
+        <!-- Lesson Content -->
+        <div class="lesson-content">
+            <div class="lc-meta" id="lcMeta"></div>
+            <h1 id="lcTitle">Selecciona una lección</h1>
+            <p class="desc" id="lcDesc"></p>
+        </div>
+
+        <!-- Navigation -->
+        <div class="lesson-nav">
+            <button class="btn-nav" id="btnPrev" onclick="navLesson(-1)" disabled>
+                <i class="ph ph-arrow-left"></i> Anterior
+            </button>
+            <button class="btn-nav btn-complete" id="btnComplete" onclick="completarLeccion()">
+                Marcar Completada <i class="ph ph-check-circle"></i>
+            </button>
+            <button class="btn-nav" id="btnNext" onclick="navLesson(1)" disabled>
+                Siguiente <i class="ph ph-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- XP Toast -->
+<div class="xp-notification hidden" id="xpToast">
+    <i class="ph ph-star-four"></i>
+    <div>¡Lección completada! <br><span style="font-size:0.8rem;font-weight:400;color:rgba(255,255,255,0.7);">Sigue avanzando 🌿</span></div>
+</div>
+
+<script>
+    const params = new URLSearchParams(location.search);
+    const cursoId = params.get('id');
+    const token = localStorage.getItem('token');
+
+    if (!token) { location.href = 'login.html'; }
+    if (!cursoId) { location.href = 'dashboard.html'; }
+
+    let allLecciones = [];  // flat list of all lessons in order
+    let currentLeccionId = null;
+    let completadas = new Set();
+
+    function extractVideoEmbed(url) {
+        if (!url) return null;
+        // YouTube
+        let yt = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/);
+        if (yt) return `https://www.youtube.com/embed/${yt[1]}?rel=0&modestbranding=1`;
+        // Vimeo
+        let vi = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+        if (vi) return `https://player.vimeo.com/video/${vi[1]}?title=0&byline=0`;
+        return null;
+    }
+
+    async function cargarCurso() {
+        try {
+            const [cursoRes, curriculumRes] = await Promise.all([
+                fetch(`/api/cursos/${cursoId}`, { headers: { 'Authorization': 'Bearer ' + token } }),
+                fetch(`/api/cursos/${cursoId}/curriculum`)
+            ]);
+
+            if (!cursoRes.ok) { location.href = 'dashboard.html'; return; }
+
+            const curso = await cursoRes.json();
+            const modulos = await curriculumRes.json();
+
+            document.title = curso.titulo + ' | Flor de Chañar';
+            document.getElementById('tbTitle').textContent = curso.titulo;
+
+            // Flatten all lessons
+            allLecciones = [];
+            modulos.forEach(m => (m.lecciones || []).forEach(l => allLecciones.push({ ...l, moduloTitulo: m.titulo })));
+
+            await cargarProgreso();
+            renderCurriculum(modulos);
+
+            // Auto-select: first incomplete lesson or first lesson
+            const firstIncomplete = allLecciones.find(l => !completadas.has(l.id));
+            const target = params.get('leccion') ? parseInt(params.get('leccion')) : (firstIncomplete ? firstIncomplete.id : (allLecciones[0] ? allLecciones[0].id : null));
+            if (target) cargarLeccion(target);
+
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    async function cargarProgreso() {
+        try {
+            const res = await fetch(`/api/cursos/${cursoId}/progreso`, { headers: { 'Authorization': 'Bearer ' + token } });
+            const data = await res.json();
+            completadas = new Set(data.leccionesCompletadas || []);
+            actualizarBarraProgreso(data.porcentaje, data.completadas, data.total);
+        } catch (e) { console.error(e); }
+    }
+
+    function actualizarBarraProgreso(pct, comp, total) {
+        document.getElementById('tbFill').style.width = pct + '%';
+        document.getElementById('tbPct').textContent = pct + '%';
+        document.getElementById('sidebarProgress').textContent = `${comp} de ${total} lecciones completadas`;
+    }
+
+    function renderCurriculum(modulos) {
+        const container = document.getElementById('curriculumList');
+        container.innerHTML = '';
+        modulos.forEach(m => {
+            const block = document.createElement('div');
+            block.className = 'module-block';
+            const allDone = (m.lecciones || []).every(l => completadas.has(l.id));
+            block.innerHTML = `<div class="module-title">${m.titulo} ${allDone ? '<span style="color:var(--color-primary);">✓</span>' : ''}</div>`;
+
+            (m.lecciones || []).forEach(l => {
+                const isDone = completadas.has(l.id);
+                const isActive = l.id === currentLeccionId;
+                const item = document.createElement('div');
+                item.className = `lesson-item${isDone ? ' done' : ''}${isActive ? ' active' : ''}`;
+                item.dataset.id = l.id;
+                item.innerHTML = `
+                    <div class="lesson-icon ${isDone ? 'done-ic' : isActive ? 'active-ic' : 'pending-ic'}">
+                        <i class="ph ph-${isDone ? 'check' : isActive ? 'play' : 'lock'}"></i>
+                    </div>
+                    <span>${l.titulo}</span>
+                    ${l.duracion ? `<span class="lesson-duration">${l.duracion}</span>` : ''}
+                `;
+                item.addEventListener('click', () => cargarLeccion(l.id));
+                block.appendChild(item);
+            });
+
+            container.appendChild(block);
+        });
+    }
+
+    function cargarLeccion(leccionId) {
+        currentLeccionId = leccionId;
+        const leccion = allLecciones.find(l => l.id === leccionId);
+        if (!leccion) return;
+
+        // Update URL without reload
+        const newUrl = new URL(location.href);
+        newUrl.searchParams.set('leccion', leccionId);
+        history.replaceState(null, '', newUrl);
+
+        // Video
+        const wrapper = document.getElementById('videoWrapper');
+        const embedUrl = extractVideoEmbed(leccion.video_url);
+        if (embedUrl) {
+            wrapper.innerHTML = `<iframe src="${embedUrl}" allowfullscreen allow="autoplay; encrypted-media"></iframe>`;
+        } else {
+            wrapper.innerHTML = `<div class="video-placeholder"><i class="ph ph-video"></i><p>${leccion.video_url ? 'Formato de video no compatible' : 'Sin video para esta lección'}</p></div>`;
+        }
+
+        // Content
+        const idx = allLecciones.findIndex(l => l.id === leccionId);
+        const modNum = Math.floor(idx / 1) + 1;
+        document.getElementById('lcMeta').innerHTML = `
+            <span class="badge">${leccion.moduloTitulo}</span>
+            ${leccion.duracion ? `<span><i class="ph ph-clock"></i> ${leccion.duracion}</span>` : ''}
+            ${completadas.has(leccionId) ? `<span style="color:var(--color-primary);"><i class="ph ph-check-circle"></i> Completada</span>` : ''}
+        `;
+        document.getElementById('lcTitle').textContent = leccion.titulo;
+        document.getElementById('lcDesc').textContent = leccion.descripcion || '';
+
+        // Complete button state
+        const btnComplete = document.getElementById('btnComplete');
+        if (completadas.has(leccionId)) {
+            btnComplete.innerHTML = '✅ Completada';
+            btnComplete.classList.add('done');
+            btnComplete.disabled = true;
+        } else {
+            btnComplete.innerHTML = 'Marcar Completada <i class="ph ph-check-circle"></i>';
+            btnComplete.classList.remove('done');
+            btnComplete.disabled = false;
+        }
+
+        // Nav buttons
+        document.getElementById('btnPrev').disabled = idx === 0;
+        document.getElementById('btnNext').disabled = idx === allLecciones.length - 1;
+
+        // Re-render sidebar to update active state
+        document.querySelectorAll('.lesson-item').forEach(el => {
+            const isThis = parseInt(el.dataset.id) === leccionId;
+            const isDone = completadas.has(parseInt(el.dataset.id));
+            el.classList.toggle('active', isThis);
+            el.classList.toggle('done', isDone && !isThis);
+            const icon = el.querySelector('.lesson-icon');
+            if (isThis) {
+                icon.className = 'lesson-icon active-ic';
+                icon.innerHTML = '<i class="ph ph-play"></i>';
+            } else if (isDone) {
+                icon.className = 'lesson-icon done-ic';
+                icon.innerHTML = '<i class="ph ph-check"></i>';
+            } else {
+                icon.className = 'lesson-icon pending-ic';
+                icon.innerHTML = '<i class="ph ph-lock"></i>';
+            }
+        });
+    }
+
+    function navLesson(dir) {
+        const idx = allLecciones.findIndex(l => l.id === currentLeccionId);
+        const next = allLecciones[idx + dir];
+        if (next) cargarLeccion(next.id);
+    }
+
+    async function completarLeccion() {
+        if (!currentLeccionId) return;
+        try {
+            const res = await fetch(`/api/lecciones/${currentLeccionId}/completar`, {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (!res.ok) throw new Error();
+
+            completadas.add(currentLeccionId);
+
+            // Update complete button
+            const btn = document.getElementById('btnComplete');
+            btn.innerHTML = '✅ Completada';
+            btn.classList.add('done');
+            btn.disabled = true;
+
+            // Update meta
+            document.getElementById('lcMeta').innerHTML += `<span style="color:var(--color-primary);"><i class="ph ph-check-circle"></i> Completada</span>`;
+
+            // Update sidebar icon
+            document.querySelectorAll(`.lesson-item[data-id="${currentLeccionId}"]`).forEach(el => {
+                el.classList.add('done');
+                const icon = el.querySelector('.lesson-icon');
+                icon.className = 'lesson-icon done-ic';
+                icon.innerHTML = '<i class="ph ph-check"></i>';
+            });
+
+            await cargarProgreso();
+
+            // Show toast
+            const toast = document.getElementById('xpToast');
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3500);
+
+            // Auto-advance to next lesson after 1.5s
+            const idx = allLecciones.findIndex(l => l.id === currentLeccionId);
+            if (idx < allLecciones.length - 1) {
+                setTimeout(() => navLesson(1), 1500);
+            }
+
+        } catch (e) {
+            console.error(e);
+            alert('Error al registrar el progreso. Intenta de nuevo.');
+        }
+    }
+
+    cargarCurso();
+</script>
+</body>
+</html>

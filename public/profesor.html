@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel del Profesor | Flor de Chañar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root {
+            --bg:#F9F6F0;--bg-alt:#F2EDE4;--primary:#687A61;--primary-d:#52634C;
+            --secondary:#2C3531;--accent:#D4A373;--white:#fff;--text:#333;--light:#666;
+            --xp:#F59E0B;--danger:#EF4444;--info:#3B82F6;
+            --font:'Inter',sans-serif;--serif:'Playfair Display',serif;
+            --sw:250px;--r:12px;--rf:9999px;--tr:all .25s ease;
+        }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex;min-height:100vh;-webkit-font-smoothing:antialiased}
+        a{text-decoration:none;color:inherit}
+        h2,h3,h4{font-family:var(--serif);color:var(--secondary)}
+
+        /* Sidebar */
+        .sb{width:var(--sw);background:var(--secondary);min-height:100vh;position:fixed;display:flex;flex-direction:column;padding:1.25rem 0}
+        .sb-logo{padding:0 1.2rem 1.25rem;font-family:var(--serif);font-size:1.05rem;font-weight:700;color:#fff;display:flex;align-items:center;gap:.5rem;border-bottom:1px solid rgba(255,255,255,.08)}
+        .sb-logo i{color:var(--primary)}
+        .sb-role{margin:.85rem 1.2rem;background:rgba(104,122,97,.2);color:rgba(255,255,255,.8);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:.25rem .7rem;border-radius:var(--rf);display:flex;align-items:center;gap:.3rem}
+        .sb-sect{padding:.85rem 1.2rem .25rem;font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,.3)}
+        .sb-nav{list-style:none;padding:0 .65rem}
+        .sb-nav li a{display:flex;align-items:center;gap:.6rem;padding:.6rem .8rem;border-radius:var(--r);color:rgba(255,255,255,.6);font-size:.86rem;font-weight:500;transition:var(--tr)}
+        .sb-nav li a:hover{background:rgba(255,255,255,.07);color:#fff}
+        .sb-nav li a.active{background:var(--primary);color:#fff}
+        .sb-badge{margin-left:auto;background:var(--accent);color:#fff;font-size:.62rem;font-weight:700;padding:.15rem .4rem;border-radius:var(--rf)}
+        .sb-user{margin-top:auto;padding:1.1rem;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:.65rem}
+        .sb-av{width:34px;height:34px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:.8rem}
+        .sb-un{font-size:.83rem;font-weight:600;color:#fff}
+        .sb-ur{font-size:.7rem;color:rgba(255,255,255,.45)}
+
+        /* Main */
+        .main{margin-left:var(--sw);flex:1;padding:1.75rem 2.25rem;max-width:calc(100% - var(--sw))}
+        .pg-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.75rem}
+        .pg-hd h2{font-size:1.5rem}
+        .pg-hd p{color:var(--light);font-size:.88rem;margin-top:.2rem}
+
+        /* Buttons */
+        .btn{display:inline-flex;align-items:center;gap:.4rem;padding:.6rem 1.25rem;border-radius:var(--rf);font-size:.85rem;font-weight:600;cursor:pointer;border:none;transition:var(--tr);font-family:var(--font)}
+        .btn-p{background:var(--primary);color:#fff}.btn-p:hover{background:var(--primary-d);transform:translateY(-1px)}
+        .btn-o{background:transparent;border:1.5px solid #D1D5DB;color:var(--secondary)}.btn-o:hover{border-color:var(--primary);color:var(--primary)}
+        .btn-sm{padding:.38rem .8rem;font-size:.78rem}
+
+        /* Stats */
+        .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1.1rem;margin-bottom:1.75rem}
+        .sc{background:#fff;border-radius:var(--r);padding:1.2rem;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+        .si{width:40px;height:40px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:1.15rem;margin-bottom:.65rem}
+        .si.g{background:rgba(104,122,97,.12);color:var(--primary)}.si.a{background:rgba(245,158,11,.12);color:var(--xp)}.si.b{background:rgba(59,130,246,.12);color:var(--info)}.si.r{background:rgba(239,68,68,.12);color:var(--danger)}
+        .sn{font-size:1.6rem;font-weight:700;color:var(--secondary)}.sl{font-size:.76rem;color:var(--light);margin-top:2px}
+
+        /* Tabs */
+        .tabs{display:flex;border-bottom:2px solid #E5E7EB;margin-bottom:1.4rem}
+        .tab{padding:.65rem 1.2rem;font-size:.88rem;font-weight:500;color:var(--light);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:var(--tr);background:none;border-top:none;border-left:none;border-right:none;font-family:var(--font)}
+        .tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+        .tp{display:none}.tp.active{display:block}
+
+        /* Table */
+        .tw{background:#fff;border-radius:var(--r);box-shadow:0 2px 10px rgba(0,0,0,.04);overflow:hidden}
+        table{width:100%;border-collapse:collapse}
+        thead{background:var(--bg-alt)}
+        th{padding:.8rem .9rem;text-align:left;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--light)}
+        td{padding:.85rem .9rem;font-size:.86rem;border-top:1px solid #F1F5F9;vertical-align:middle}
+        tr:hover td{background:#FAFAF8}
+        .tn{font-weight:600;color:var(--secondary)}.ts{font-size:.75rem;color:var(--light)}
+
+        /* Progress */
+        .pp{display:flex;align-items:center;gap:.5rem}
+        .pb{flex:1;height:6px;background:#E5E7EB;border-radius:var(--rf)}
+        .pf{height:100%;border-radius:var(--rf);background:var(--primary)}
+        .pct{font-size:.73rem;font-weight:600;color:var(--primary);white-space:nowrap}
+
+        /* Grade input */
+        .gi{width:58px;padding:.28rem .45rem;border:1.5px solid #E5E7EB;border-radius:6px;font-size:.83rem;text-align:center;font-family:var(--font);outline:none}
+        .gi:focus{border-color:var(--primary)}
+        .gb{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:26px;padding:0 .45rem;border-radius:6px;font-size:.8rem;font-weight:700}
+        .gEx{background:rgba(104,122,97,.1);color:var(--primary-d)}.gG{background:rgba(59,130,246,.1);color:var(--info)}.gA{background:rgba(245,158,11,.1);color:var(--xp)}.gF{background:rgba(239,68,68,.1);color:var(--danger)}.gN{background:#F1F5F9;color:#94A3B8}
+
+        /* Badges */
+        .bp{display:inline-flex;align-items:center;gap:.25rem;padding:.18rem .55rem;border-radius:var(--rf);font-size:.7rem;font-weight:700}
+        .bpA{background:rgba(104,122,97,.1);color:var(--primary-d)}.bpD{background:#F1F5F9;color:#64748B}.bpL{background:rgba(239,68,68,.1);color:var(--danger)}
+
+        /* Forms */
+        .fg{margin-bottom:.9rem}
+        .fl{display:block;font-size:.8rem;font-weight:600;margin-bottom:.3rem;color:var(--secondary)}
+        .fc{width:100%;padding:.6rem .8rem;border:1.5px solid #E5E7EB;border-radius:8px;font-size:.86rem;font-family:var(--font);color:var(--secondary);outline:none;transition:var(--tr)}
+        .fc:focus{border-color:var(--primary)}
+        textarea.fc{resize:vertical;min-height:80px}
+
+        /* Upload */
+        .us{display:grid;grid-template-columns:1fr 1fr;gap:1.75rem}
+        .uc{background:#fff;border-radius:var(--r);padding:1.4rem;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+        .uc h3{font-size:1.05rem;margin-bottom:1.1rem;display:flex;align-items:center;gap:.5rem}
+        .dz{border:2px dashed #D1D5DB;border-radius:var(--r);padding:2rem 1rem;text-align:center;cursor:pointer;transition:var(--tr)}
+        .dz:hover{border-color:var(--primary);background:rgba(104,122,97,.03)}
+        .dz i{font-size:2rem;color:var(--light);margin-bottom:.6rem;display:block}
+        .dz p{font-size:.84rem;color:var(--light)}.dz span{color:var(--primary);font-weight:600}
+        .fl-list{margin-top:.75rem;display:flex;flex-direction:column;gap:.4rem}
+        .fr{display:flex;align-items:center;gap:.65rem;padding:.55rem .7rem;background:var(--bg-alt);border-radius:8px;font-size:.82rem}
+        .fr i{color:var(--primary)}.fr .fn{flex:1;font-weight:500}.fr .fs{color:var(--light);font-size:.72rem}
+        .fd{color:var(--danger);cursor:pointer}
+
+        /* Toast */
+        .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--secondary);color:#fff;padding:.9rem 1.4rem;border-radius:var(--r);display:none;align-items:center;gap:.7rem;z-index:9999;font-size:.87rem;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+        .toast i{color:var(--primary);font-size:1.25rem}
+        @keyframes sU{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+        .toast.show{display:flex;animation:sU .3s ease}
+
+        @media(max-width:768px){.stats{grid-template-columns:1fr 1fr}.us{grid-template-columns:1fr}}
+    </style>
+</head>
+<body>
+<aside class="sb">
+    <div class="sb-logo"><img src="logo.png" style="height:28px;border-radius:50%;margin-right:8px;object-fit:cover;"> Flor de Chañar</div>
+    <div class="sb-role"><i class="ph ph-chalkboard-teacher"></i> Modo Profesor</div>
+    <div class="sb-sect">Mi Espacio</div>
+    <ul class="sb-nav">
+        <li><a href="#" class="active" onclick="sw(event,'tc')"><i class="ph ph-house"></i> Resumen</a></li>
+        <li><a href="#" onclick="sw(event,'tc')"><i class="ph ph-books"></i> Mis Cursos</a></li>
+        <li><a href="#" onclick="sw(event,'tu')"><i class="ph ph-upload-simple"></i> Subir Contenido</a></li>
+    </ul>
+    <div class="sb-sect">Evaluaciones</div>
+    <ul class="sb-nav">
+        <li><a href="#" onclick="sw(event,'tn')"><i class="ph ph-clipboard-text"></i> Libro de Notas</a></li>
+        <li><a href="#" onclick="sw(event,'te')"><i class="ph ph-exam"></i> Evaluaciones <span class="sb-badge">2</span></a></li>
+    </ul>
+    <ul class="sb-nav" style="margin-top:1rem">
+        <li><a href="admin.html"><i class="ph ph-shield-check"></i> Panel Admin</a></li>
+        <li><a href="login.html"><i class="ph ph-sign-out"></i> Salir</a></li>
+    </ul>
+    <div class="sb-user">
+        <div class="sb-av">E</div>
+        <div><div class="sb-un">Elena Soto</div><div class="sb-ur">Profesora · Biomagnetismo</div></div>
+    </div>
+</aside>
+
+<main class="main">
+    <div class="pg-hd">
+        <div><h2>Panel del Profesor</h2><p>Bienvenida, Elena. Tienes 2 evaluaciones pendientes de revisar.</p></div>
+        <button class="btn btn-p" onclick="sw(null,'tu')"><i class="ph ph-plus"></i> Subir Contenido</button>
+    </div>
+
+    <div class="stats">
+        <div class="sc"><div class="si g"><i class="ph ph-books"></i></div><div class="sn">3</div><div class="sl">Cursos asignados</div></div>
+        <div class="sc"><div class="si a"><i class="ph ph-users"></i></div><div class="sn">87</div><div class="sl">Estudiantes activos</div></div>
+        <div class="sc"><div class="si b"><i class="ph ph-exam"></i></div><div class="sn">2</div><div class="sl">Evaluaciones por revisar</div></div>
+        <div class="sc"><div class="si r"><i class="ph ph-chart-bar"></i></div><div class="sn">5.8</div><div class="sl">Promedio general</div></div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" onclick="st(event,'tc')">Mis Cursos</button>
+        <button class="tab" onclick="st(event,'tn')">Libro de Notas</button>
+        <button class="tab" onclick="st(event,'te')">Evaluaciones</button>
+        <button class="tab" onclick="st(event,'tu')">Subir Contenido</button>
+    </div>
+
+    <!-- TAB Cursos -->
+    <div id="tc" class="tp active">
+        <div class="tw">
+            <table>
+                <thead><tr><th>Curso</th><th>Estado</th><th>Alumnos</th><th>Promedio</th><th>Próx. Clase</th><th>Acciones</th></tr></thead>
+                <tbody id="profesorCoursesBody">
+                    <tr><td colspan="6" style="text-align:center; padding: 2rem;">Cargando tus cursos asignados...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB Notas -->
+    <div id="tn" class="tp">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+            <div style="display:flex;gap:.65rem;align-items:center">
+                <select class="fc" style="width:auto;padding:.45rem .8rem"><option>Diplomado Biomagnetismo</option><option>Reiki Nivel 1 y 2</option></select>
+                <select class="fc" style="width:auto;padding:.45rem .8rem"><option>Todas las evaluaciones</option><option>Evaluación Teórica 1</option><option>Práctica Observada</option></select>
+            </div>
+            <button class="btn btn-p btn-sm" onclick="saveG()"><i class="ph ph-floppy-disk"></i> Guardar</button>
+        </div>
+        <div class="tw">
+            <table>
+                <thead>
+                    <tr><th>Estudiante</th><th>Ev. Teórica 1 (1–7)</th><th>Práctica (1–7)</th><th>Ev. Teórica 2 (1–7)</th><th>Promedio</th><th>Estado</th><th>Avance</th></tr>
+                </thead>
+                <tbody id="gBody"></tbody>
+            </table>
+        </div>
+        <p style="font-size:.75rem;color:var(--light);margin-top:.6rem"><i class="ph ph-info"></i> Edita cualquier celda de nota directamente. El promedio se recalcula al guardar.</p>
+    </div>
+
+    <!-- TAB Evaluaciones -->
+    <div id="te" class="tp">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.1rem">
+            <h3 style="font-size:1.05rem">Evaluaciones Asignadas</h3>
+            <a href="eval-crear.html" class="btn btn-p btn-sm"><i class="ph ph-plus"></i> Nueva Evaluación</a>
+        </div>
+        <div class="tw">
+            <table>
+                <thead><tr><th>Evaluación</th><th>Curso</th><th>Tipo</th><th>Fecha límite</th><th>Enviadas</th><th>Por revisar</th><th></th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td><div class="tn">Evaluación Teórica — Pares Básicos</div><div class="ts">10 preguntas + desarrollo</div></td>
+                        <td class="ts">Biomagnetismo</td><td><span class="bp bpA">Escrita</span></td>
+                        <td class="ts">28 Mar 2026</td><td style="font-weight:600">38/42</td>
+                        <td style="color:var(--danger);font-weight:600">21</td>
+                        <td><a href="eval-revisar.html" class="btn btn-p btn-sm">Revisar</a></td>
+                    </tr>
+                    <tr>
+                        <td><div class="tn">Práctica Observada — Sesión Clínica</div><div class="ts">Rúbrica práctica</div></td>
+                        <td class="ts">Biomagnetismo</td><td><span class="bp bpD">Rúbrica</span></td>
+                        <td class="ts">31 Mar 2026</td><td style="font-weight:600">14/42</td>
+                        <td style="color:var(--danger);font-weight:600">14</td>
+                        <td><a href="eval-revisar.html" class="btn btn-o btn-sm">Revisar</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB Upload -->
+    <div id="tu" class="tp">
+        <div class="us">
+            <div class="uc">
+                <h3><i class="ph ph-video-camera" style="color:var(--primary)"></i> Subir Nueva Lección</h3>
+                <div class="fg"><label class="fl">Curso</label>
+                    <select class="fc" id="uploadCursoSel" onchange="loadModulosForUpload(this.value)">
+                        <option value="">Cargando tus cursos...</option>
+                    </select>
+                </div>
+                <div class="fg"><label class="fl">Módulo</label>
+                    <select class="fc" id="uploadModuloSel">
+                        <option value="">Selecciona primero un curso</option>
+                    </select>
+                </div>
+                <div class="fg"><label class="fl">Título de la Lección</label><input type="text" class="fc" id="uploadLecTitulo" placeholder="Ej: Pares del Sistema Hepático"></div>
+                <div class="fg"><label class="fl">Descripción</label><textarea class="fc" id="uploadLecDesc" placeholder="Qué aprende el estudiante en esta lección..."></textarea></div>
+                <div class="fg"><label class="fl">Enlace de Video (YouTube / Vimeo)</label><input type="url" class="fc" id="uploadLecVideo" placeholder="https://youtube.com/watch?v=..."></div>
+                <button class="btn btn-p" style="width:100%" onclick="subirLeccion()"><i class="ph ph-upload-simple"></i> Guardar Lección</button>
+            </div>
+            <div>
+                <div class="uc" style="margin-bottom:1.4rem">
+                    <h3><i class="ph ph-file-arrow-up" style="color:var(--accent)"></i> Materiales Descargables</h3>
+                    <div class="fg"><label class="fl">Asociar a curso</label><select class="fc"><option>Diplomado Biomagnetismo</option><option>Reiki Nivel 1 y 2</option></select></div>
+                    <div class="dz" style="margin-bottom:.75rem" onclick="document.getElementById('mIn').click()"><i class="ph ph-paperclip" style="font-size:1.4rem"></i><p>PDF, Word, Excel, PPT <span>· seleccionar</span></p></div>
+                    <input type="file" id="mIn" style="display:none" multiple onchange="addFiles(this,'mList')">
+                    <div class="fl-list" id="mList">
+                        <div class="fr"><i class="ph ph-file-pdf"></i><span class="fn">Mapa_Pares_Biomag.pdf</span><span class="fs">2.4 MB</span><i class="ph ph-trash fd" onclick="this.parentNode.remove()"></i></div>
+                        <div class="fr"><i class="ph ph-file-xls"></i><span class="fn">Protocolo_Sesión.xlsx</span><span class="fs">340 KB</span><i class="ph ph-trash fd" onclick="this.parentNode.remove()"></i></div>
+                    </div>
+                    <button class="btn btn-o" style="width:100%;margin-top:.85rem;justify-content:center" onclick="showT('Materiales cargados','ph-paperclip')"><i class="ph ph-upload-simple"></i> Subir Materiales</button>
+                </div>
+                <div class="uc">
+                    <h3><i class="ph ph-exam" style="color:var(--info)"></i> Crear Evaluación</h3>
+                    <div class="fg"><label class="fl">Título</label><input type="text" class="fc" placeholder="Ej: Evaluación Teórica 3"></div>
+                    <div class="fg"><label class="fl">Tipo</label><select class="fc"><option>Opción Múltiple</option><option>Desarrollo Escrito</option><option>Mixta</option><option>Rúbrica Práctica</option></select></div>
+                    <div class="fg"><label class="fl">Fecha límite</label><input type="date" class="fc"></div>
+                    <a href="eval-crear.html" class="btn btn-o" style="width:100%;justify-content:center"><i class="ph ph-pencil"></i> Ir al Editor de Evaluación</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div class="toast" id="toast"><i class="ph ph-check-circle" id="tI"></i><span id="tM"></span></div>
+
+<script>
+const students=[
+    {name:'Catalina Reyes',init:'CR',g:[6.5,null,6.0],p:78},
+    {name:'Javiera Morales',init:'JM',g:[7.0,6.8,6.5],p:95},
+    {name:'Andrea Torres',init:'AT',g:[5.5,4.8,null],p:60},
+    {name:'Paula Fernández',init:'PF',g:[6.0,6.2,6.4],p:88},
+    {name:'María González',init:'MG',g:[null,null,null],p:57},
+    {name:'Rocío Saavedra',init:'RS',g:[4.5,3.9,null],p:45},
+    {name:'Karla Ibáñez',init:'KI',g:[7.0,7.0,7.0],p:100},
+];
+
+function gClass(v){if(v===null)return 'gN';if(v>=6.5)return 'gEx';if(v>=5.5)return 'gG';if(v>=4.0)return 'gA';return 'gF'}
+function avg(g){const v=g.filter(x=>x!==null);return v.length?(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1):null}
+
+function renderG(){
+    const b=document.getElementById('gBody');b.innerHTML='';
+    students.forEach((s,i)=>{
+        const a=avg(s.g);
+        const sCls=a===null?'bpD':parseFloat(a)>=4?'bpA':'bpL';
+        const sTx=a===null?'Sin notas':parseFloat(a)>=4?'Aprobado':'Reprobado';
+        b.innerHTML+=`<tr>
+            <td><div style="display:flex;align-items:center;gap:.6rem"><div style="width:30px;height:30px;border-radius:50%;background:var(--primary);opacity:.8;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.72rem;color:#fff">${s.init}</div><div class="tn">${s.name}</div></div></td>
+            <td><input class="gi" type="number" min="1" max="7" step="0.1" value="${s.g[0]??''}" placeholder="—" onchange="students[${i}].g[0]=this.value?parseFloat(this.value):null"></td>
+            <td><input class="gi" type="number" min="1" max="7" step="0.1" value="${s.g[1]??''}" placeholder="—" onchange="students[${i}].g[1]=this.value?parseFloat(this.value):null"></td>
+            <td><input class="gi" type="number" min="1" max="7" step="0.1" value="${s.g[2]??''}" placeholder="—" onchange="students[${i}].g[2]=this.value?parseFloat(this.value):null"></td>
+            <td><span class="gb ${gClass(a?parseFloat(a):null)}">${a??'—'}</span></td>
+            <td><span class="bp ${sCls}">${sTx}</span></td>
+            <td><div class="pp"><div class="pb"><div class="pf" style="width:${s.p}%"></div></div><span class="pct">${s.p}%</span></div></td>
+        </tr>`;
+    });
+}
+
+function saveG(){renderG();showT('Notas guardadas correctamente','ph-floppy-disk')}
+
+function st(e,id){
+    if(e){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));e.target.classList.add('active')}
+    document.querySelectorAll('.tp').forEach(p=>p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+function sw(e,id){
+    if(e)e.preventDefault();
+    document.querySelectorAll('.tp').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.sb-nav a').forEach(a=>a.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelectorAll(`[onclick="sw(event,'${id}')"]`).forEach(el=>el.classList.add('active'));
+}
+function showT(msg,icon){const t=document.getElementById('toast');document.getElementById('tM').textContent=msg;document.getElementById('tI').className='ph '+icon;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
+function addFiles(input,listId){const l=document.getElementById(listId);l.style.display='flex';l.style.flexDirection='column';[...input.files].forEach(f=>{const d=document.createElement('div');d.className='fr';d.innerHTML=`<i class="ph ph-file"></i><span class="fn">${f.name}</span><span class="fs">${(f.size/1024/1024).toFixed(1)} MB</span><i class="ph ph-trash fd" onclick="this.parentNode.remove()"></i>`;l.appendChild(d)})}
+
+renderG();
+
+window.onload = async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if(urlParams.get('tab') === 'cursos') sw(null, 'tc');
+    await fetchDictados();
+    await loadUploadSelects();
+};
+
+async function loadUploadSelects() {
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/cursos/dictados', { headers: { 'Authorization': 'Bearer ' + token } });
+        if(!res.ok) return;
+        const cursos = await res.json();
+        const sel = document.getElementById('uploadCursoSel');
+        sel.innerHTML = '<option value="">-- Selecciona un curso --</option>';
+        cursos.forEach(c => {
+            sel.innerHTML += `<option value="${c.id}">${c.titulo}</option>`;
+        });
+    } catch(e) { console.error('Error cargando cursos para upload', e); }
+}
+
+async function loadModulosForUpload(cursoId) {
+    const modSel = document.getElementById('uploadModuloSel');
+    if (!cursoId) { modSel.innerHTML = '<option value="">Selecciona primero un curso</option>'; return; }
+    modSel.innerHTML = '<option>Cargando módulos...</option>';
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/cursos/${cursoId}/curriculum`, { headers: {'Authorization': 'Bearer '+token} });
+        const modulos = await res.json();
+        modSel.innerHTML = '<option value="">-- Selecciona un módulo --</option>';
+        if(modulos.length === 0) {
+            modSel.innerHTML = '<option value="">Sin módulos aún (créalos en el curso)</option>';
+            return;
+        }
+        modulos.forEach(m => {
+            modSel.innerHTML += `<option value="${m.id}">${m.titulo}</option>`;
+        });
+    } catch(e) { modSel.innerHTML = '<option value="">Error al cargar</option>'; }
+}
+
+async function subirLeccion() {
+    const moduloId = document.getElementById('uploadModuloSel').value;
+    const titulo = document.getElementById('uploadLecTitulo').value.trim();
+    const descripcion = document.getElementById('uploadLecDesc').value.trim();
+    const video_url = document.getElementById('uploadLecVideo').value.trim();
+
+    if(!moduloId || !titulo) {
+        showT('Selecciona un módulo y escribe un título', 'ph-warning');
+        return;
+    }
+
+    try {
+        const token = localStorage.getItem('token');
+        // Crear lección
+        const res = await fetch('/api/lecciones', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+            body: JSON.stringify({ modulo_id: moduloId, titulo })
+        });
+        const data = await res.json();
+        if(res.ok && data.id) {
+            // Guardar descripcion y video
+            await fetch('/api/lecciones/' + data.id, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+                body: JSON.stringify({ titulo, descripcion, video_url })
+            });
+            showT('✅ Lección guardada correctamente', 'ph-check-circle');
+            // Limpiar formulario
+            document.getElementById('uploadLecTitulo').value = '';
+            document.getElementById('uploadLecDesc').value = '';
+            document.getElementById('uploadLecVideo').value = '';
+        } else {
+            showT('⚠️ Error al guardar la lección', 'ph-warning');
+        }
+    } catch(e) {
+        showT('⚠️ Error de conexión', 'ph-warning');
+    }
+}
+
+async function fetchDictados() {
+    const tbody = document.getElementById('profesorCoursesBody');
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/cursos/dictados', { headers: { 'Authorization': 'Bearer ' + token } });
+        if(!res.ok) throw new Error();
+        
+        const cursos = await res.json();
+        
+        if (cursos.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem;">Aún no tienes cursos asignados como responsable.</td></tr>';
+            
+            // Actualizar Stats a 0
+            document.querySelectorAll('.sn').forEach((el, index) => {
+                if(index === 0) el.textContent = '0';
+                if(index === 1) el.textContent = '0';
+            });
+            return;
+        }
+
+        tbody.innerHTML = '';
+        let totalAlumnos = 0;
+        
+        cursos.forEach(c => {
+            totalAlumnos += c.alumnos || 0;
+            const estadoCls = c.estado === 'publicado' ? 'bpA' : 'bpD';
+            const estadoTxt = c.estado === 'publicado' ? '● Activo' : 'Borrador';
+            
+            tbody.innerHTML += `
+                <tr>
+                    <td><div class="tn">${c.titulo}</div><div class="ts">Acceso asignado</div></td>
+                    <td><span class="bp ${estadoCls}">${estadoTxt}</span></td>
+                    <td>${c.alumnos || 0}</td>
+                    <td><span class="ts">Sin datos</span></td>
+                    <td class="ts">Sin programar</td>
+                    <td><div style="display:flex;gap:.4rem">
+                        <button class="btn btn-o btn-sm" onclick="showT('Próximamente','ph-info')">Ver notas</button>
+                        <a href="curso-crear.html?id=${c.id}" class="btn btn-p btn-sm"><i class="ph ph-pencil"></i> Editar curso</a>
+                    </div></td>
+                </tr>
+            `;
+        });
+        
+        // Actualizar Stats dinámicamente
+        document.querySelectorAll('.sn').forEach((el, index) => {
+            if(index === 0) el.textContent = cursos.length;
+            if(index === 1) el.textContent = totalAlumnos;
+        });
+
+    } catch(e) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem; color:red;">Error al cargar tus cursos dictados</td></tr>';
+    }
+}
+</script>
+</body>
+</html>

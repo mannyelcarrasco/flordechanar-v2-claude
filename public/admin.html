@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administrador | Flor de Chañar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root{--bg:#F9F6F0;--bg2:#F2EDE4;--p:#687A61;--pd:#52634C;--s:#2C3531;--ac:#D4A373;--w:#fff;--t:#333;--l:#666;--xp:#F59E0B;--err:#EF4444;--inf:#3B82F6;--f:'Inter',sans-serif;--fs:'Playfair Display',serif;--sw:250px;--r:12px;--rf:9999px;--tr:all .25s ease}
+        *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--f);background:var(--bg);color:var(--t);display:flex;min-height:100vh;-webkit-font-smoothing:antialiased}a{text-decoration:none;color:inherit}h2,h3{font-family:var(--fs);color:var(--s)}
+
+        .sb{width:var(--sw);background:var(--s);min-height:100vh;position:fixed;display:flex;flex-direction:column;padding:1.25rem 0}
+        .sb-logo{padding:0 1.2rem 1.1rem;font-family:var(--fs);font-size:1.05rem;font-weight:700;color:#fff;display:flex;align-items:center;gap:.5rem;border-bottom:1px solid rgba(255,255,255,.08)}.sb-logo i{color:var(--p)}
+        .sb-role{margin:.75rem 1.2rem;background:rgba(239,68,68,.2);color:rgba(255,255,255,.9);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:.25rem .7rem;border-radius:var(--rf);display:flex;align-items:center;gap:.3rem}
+        .sb-s{padding:.75rem 1.2rem .2rem;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,.3)}
+        .sb-n{list-style:none;padding:0 .65rem}
+        .sb-n li a{display:flex;align-items:center;gap:.6rem;padding:.58rem .8rem;border-radius:var(--r);color:rgba(255,255,255,.6);font-size:.85rem;font-weight:500;transition:var(--tr)}
+        .sb-n li a:hover{background:rgba(255,255,255,.07);color:#fff}.sb-n li a.active{background:var(--err);color:#fff}
+        .sb-b{margin-left:auto;background:var(--ac);color:#fff;font-size:.61rem;font-weight:700;padding:.13rem .38rem;border-radius:var(--rf)}
+        .sb-u{margin-top:auto;padding:1.1rem;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:.65rem}
+        .sb-av{width:34px;height:34px;border-radius:50%;background:var(--err);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:.8rem}
+        .sb-un{font-size:.82rem;font-weight:600;color:#fff}.sb-ur{font-size:.7rem;color:rgba(255,255,255,.4)}
+
+        .main{margin-left:var(--sw);flex:1;padding:1.75rem 2.25rem;max-width:calc(100% - var(--sw))}
+        .ph{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.75rem}
+        .ph h2{font-size:1.5rem}.ph p{color:var(--l);font-size:.87rem;margin-top:.2rem}
+
+        .btn{display:inline-flex;align-items:center;gap:.4rem;padding:.58rem 1.2rem;border-radius:var(--rf);font-size:.84rem;font-weight:600;cursor:pointer;border:none;transition:var(--tr);font-family:var(--f)}
+        .bp{background:var(--p);color:#fff}.bp:hover{background:var(--pd);transform:translateY(-1px)}
+        .bo{background:transparent;border:1.5px solid #D1D5DB;color:var(--s)}.bo:hover{border-color:var(--p);color:var(--p)}
+        .bd{background:var(--err);color:#fff}.bd:hover{background:#DC2626}
+        .btn-sm{padding:.35rem .78rem;font-size:.77rem}
+
+        .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1.1rem;margin-bottom:1.75rem}
+        .sc{background:var(--w);border-radius:var(--r);padding:1.2rem;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+        .si{width:40px;height:40px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:1.1rem;margin-bottom:.6rem}
+        .sig{background:rgba(104,122,97,.12);color:var(--p)}.sia{background:rgba(245,158,11,.12);color:var(--xp)}.sib{background:rgba(59,130,246,.12);color:var(--inf)}.sir{background:rgba(239,68,68,.12);color:var(--err)}
+        .sn{font-size:1.55rem;font-weight:700;color:var(--s)}.sl{font-size:.74rem;color:var(--l);margin-top:2px}
+
+        .tabs{display:flex;border-bottom:2px solid #E5E7EB;margin-bottom:1.4rem}
+        .tab{padding:.62rem 1.15rem;font-size:.87rem;font-weight:500;color:var(--l);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:var(--tr);background:none;border-top:none;border-left:none;border-right:none;font-family:var(--f)}
+        .tab.active{color:var(--p);border-bottom-color:var(--p);font-weight:600}
+        .tp{display:none}.tp.active{display:block}
+
+        .tw{background:var(--w);border-radius:var(--r);box-shadow:0 2px 10px rgba(0,0,0,.04);overflow:hidden}
+        table{width:100%;border-collapse:collapse}thead{background:var(--bg2)}
+        th{padding:.78rem .9rem;text-align:left;font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--l)}
+        td{padding:.82rem .9rem;font-size:.85rem;border-top:1px solid #F1F5F9;vertical-align:middle}
+        tr:hover td{background:#FAFAF8}
+        .tn{font-weight:600;color:var(--s)}.ts{font-size:.74rem;color:var(--l)}
+
+        .bp2{display:inline-flex;align-items:center;gap:.2rem;padding:.17rem .52rem;border-radius:var(--rf);font-size:.69rem;font-weight:700}
+        .bA{background:rgba(104,122,97,.1);color:var(--pd)}.bD{background:#F1F5F9;color:#64748B}.bP{background:rgba(59,130,246,.1);color:var(--inf)}.bR{background:rgba(239,68,68,.1);color:var(--err)}
+
+        /* Role Selector */
+        .role-select{padding:.3rem .6rem;border:1.5px solid #E5E7EB;border-radius:6px;font-family:var(--f);font-size:.8rem;color:var(--s);background:var(--w);cursor:pointer;outline:none}
+        .role-select:focus{border-color:var(--p)}
+
+        /* Modal */
+        .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+        .modal-bg.open{display:flex}
+        .modal{background:var(--w);border-radius:var(--r);padding:2rem;width:90%;max-width:480px;animation:mIn .25s ease}
+        @keyframes mIn{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:none}}
+        .modal h3{font-size:1.2rem;margin-bottom:1.25rem}
+        .fg{margin-bottom:.85rem}.fl{display:block;font-size:.79rem;font-weight:600;margin-bottom:.28rem;color:var(--s)}
+        .fc{width:100%;padding:.6rem .8rem;border:1.5px solid #E5E7EB;border-radius:8px;font-size:.85rem;font-family:var(--f);color:var(--s);outline:none;transition:var(--tr)}.fc:focus{border-color:var(--p)}
+        .modal-actions{display:flex;gap:.75rem;margin-top:1.5rem;justify-content:flex-end}
+
+        /* Course Access Matrix */
+        .matrix{background:var(--w);border-radius:var(--r);box-shadow:0 2px 10px rgba(0,0,0,.04);overflow-x:auto}
+        .matrix table th:first-child{min-width:180px}
+        .chk{width:18px;height:18px;accent-color:var(--p);cursor:pointer}
+
+        /* Toast */
+        .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--s);color:#fff;padding:.9rem 1.35rem;border-radius:var(--r);display:none;align-items:center;gap:.7rem;z-index:9999;font-size:.86rem;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+        .toast i{color:var(--p);font-size:1.2rem}
+        @keyframes sU{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+        .toast.show{display:flex;animation:sU .3s ease}
+
+        /* Integration cards */
+        .int-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+        .int-card{border:1.5px solid #E5E7EB;border-radius:var(--r);padding:1.1rem;display:flex;align-items:flex-start;gap:.85rem;transition:var(--tr)}
+        .int-card:hover{border-color:#D1D5DB;background:#FAFAF8}
+        .int-card.connected{border-color:var(--p);background:rgba(104,122,97,.03)}
+        .int-ico{width:40px;height:40px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:1.3rem;background:var(--bg2);flex-shrink:0}
+        .int-body{flex:1;min-width:0}
+        .int-name{font-size:.88rem;font-weight:700;color:var(--s)}
+        .int-desc{font-size:.74rem;color:var(--l);margin:.15rem 0 .6rem;line-height:1.35}
+        .int-actions{display:flex;gap:.4rem;align-items:center}
+        .int-status{font-size:.68rem;font-weight:700;padding:.15rem .45rem;border-radius:4px;white-space:nowrap}
+        .int-status.ok{background:rgba(104,122,97,.1);color:var(--pd)}
+        .int-status.off{background:#F1F5F9;color:#94A3B8}
+        .wh-section{margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid #F1F5F9}
+        @media(max-width:768px){.stats{grid-template-columns:1fr 1fr}.int-grid{grid-template-columns:1fr}}
+    </style>
+    <script>
+        window.onload = () => {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('tab') === 'cursos') {
+                // defer to after main script loads
+                window.addEventListener('DOMContentLoaded', () => {});
+            }
+        };
+    </script>
+</head>
+<body>
+
+<aside class="sb">
+    <div class="sb-logo"><img src="logo.png" style="height:28px;border-radius:50%;margin-right:8px;object-fit:cover;"> Flor de Chañar</div>
+    <div class="sb-role"><i class="ph ph-shield-check"></i> Administrador</div>
+    <div class="sb-s">Plataforma</div>
+    <ul class="sb-n">
+        <li><a href="#" class="active" onclick="st(event,'tu')"><i class="ph ph-house"></i> Dashboard</a></li>
+        <li><a href="#" onclick="st(event,'tu')"><i class="ph ph-users-three"></i> Usuarios <span class="sb-b">12</span></a></li>
+        <li><a href="#" onclick="st(event,'tc')"><i class="ph ph-books"></i> Cursos</a></li>
+        <li><a href="#" onclick="st(event,'ta')"><i class="ph ph-lock-key"></i> Accesos</a></li>
+    </ul>
+    <div class="sb-s">Reportes</div>
+    <ul class="sb-n">
+        <li><a href="#" onclick="st(event,'tr')"><i class="ph ph-chart-bar"></i> Reportes</a></li>
+        <li><a href="#" onclick="st(event,'ts')"><i class="ph ph-gear"></i> Ajustes</a></li>
+    </ul>
+    <ul class="sb-n" style="margin-top:1rem">
+        <li><a href="profesor.html"><i class="ph ph-chalkboard-teacher"></i> Vista Profesor</a></li>
+        <li><a href="dashboard.html"><i class="ph ph-student"></i> Vista Estudiante</a></li>
+        <li><a href="login.html"><i class="ph ph-sign-out"></i> Salir</a></li>
+    </ul>
+    <div class="sb-u">
+        <div class="sb-av">A</div>
+        <div><div class="sb-un">Admin · EyCT</div><div class="sb-ur">Acceso total · Sistema</div></div>
+    </div>
+</aside>
+
+<main class="main">
+    <div class="ph">
+        <div><h2>Panel de Administración</h2><p>Gestión de usuarios, roles, accesos y reportes de la plataforma.</p></div>
+        <button class="btn bp" id="headerActionBtn" onclick="openModal()"><i class="ph ph-plus" id="headerActionIcon"></i> <span id="headerActionLabel">Nuevo Usuario</span></button>
+    </div>
+
+    <div class="stats">
+        <div class="sc"><div class="si sig"><i class="ph ph-student"></i></div><div class="sn">524</div><div class="sl">Estudiantes registrados</div></div>
+        <div class="sc"><div class="si sia"><i class="ph ph-chalkboard-teacher"></i></div><div class="sn">8</div><div class="sl">Profesores activos</div></div>
+        <div class="sc"><div class="si sib"><i class="ph ph-books"></i></div><div class="sn">12</div><div class="sl">Cursos publicados</div></div>
+        <div class="sc"><div class="si sir"><i class="ph ph-warning"></i></div><div class="sn">3</div><div class="sl">Accesos pendientes</div></div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" onclick="st(event,'tu')">Usuarios</button>
+        <button class="tab" onclick="st(event,'tc')">Cursos</button>
+        <button class="tab" onclick="st(event,'ta')">Acceso Profesores</button>
+        <button class="tab" onclick="st(event,'tr')">Reportes</button>
+        <button class="tab" onclick="st(event,'ts')">Ajustes</button>
+    </div>
+
+    <!-- TAB Usuarios -->
+    <div id="tu" class="tp active">
+        <div style="display:flex;gap:.75rem;margin-bottom:1rem;align-items:center">
+            <input type="text" placeholder="🔍  Buscar usuario..." style="flex:1;padding:.55rem .9rem;border:1.5px solid #E5E7EB;border-radius:var(--rf);font-family:var(--f);font-size:.86rem;outline:none">
+            <select style="padding:.55rem .9rem;border:1.5px solid #E5E7EB;border-radius:var(--rf);font-family:var(--f);font-size:.86rem;background:var(--w);outline:none;cursor:pointer">
+                <option>Todos los roles</option><option>Estudiante</option><option>Profesor</option><option>Admin</option>
+            </select>
+        </div>
+        <div class="tw">
+            <table id="usersTable">
+                <thead><tr><th>Usuario</th><th>Rol</th><th>Cursos inscritos</th><th>Último acceso</th><th>Estado</th><th>Acciones</th></tr></thead>
+                <tbody id="usersBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB Cursos -->
+    <div id="tc" class="tp">
+        <div class="tw">
+            <table>
+                <thead><tr><th>Curso</th><th>Profesor</th><th>Estudiantes</th><th>Estado</th><th>Fecha creación</th><th>Acciones</th></tr></thead>
+                <tbody id="adminCoursesBody">
+                    <tr><td colspan="6" style="text-align:center; padding: 2rem;">Cargando cursos desde la base de datos...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB Acceso Profesores -->
+    <div id="ta" class="tp">
+        <p style="font-size:.86rem;color:var(--l);margin-bottom:1.1rem">Define qué cursos puede ver, editar y evaluar cada profesor. Los cambios se guardan automáticamente.</p>
+        <div class="matrix">
+            <table>
+                <thead id="accessTableHead">
+                    <tr>
+                        <th>Profesor</th>
+                        <th style="text-align:center">Puede Evaluar</th>
+                        <th style="text-align:center">Puede Editar</th>
+                        <th style="text-align:center">Clases en Vivo</th>
+                    </tr>
+                </thead>
+                <tbody id="accessTableBody">
+                    <tr><td colspan="8" style="text-align:center; padding: 2rem;">Cargando matriz de acceso...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB Reportes -->
+    <div id="tr" class="tp">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+            <div class="tw" style="padding:1.5rem">
+                <h3 style="font-size:1.05rem;margin-bottom:1.1rem"><i class="ph ph-chart-line-up" style="color:var(--p)"></i> Inscripciones (Este mes)</h3>
+                <div style="display:flex;flex-direction:column;gap:.75rem">
+                    <div><div style="display:flex;justify-content:space-between;font-size:.83rem;margin-bottom:.3rem"><span>Biomagnetismo</span><strong>42</strong></div><div style="height:8px;background:#E5E7EB;border-radius:var(--rf)"><div style="height:100%;width:85%;background:var(--p);border-radius:var(--rf)"></div></div></div>
+                    <div><div style="display:flex;justify-content:space-between;font-size:.83rem;margin-bottom:.3rem"><span>Reiki</span><strong>31</strong></div><div style="height:8px;background:#E5E7EB;border-radius:var(--rf)"><div style="height:100%;width:62%;background:var(--ac);border-radius:var(--rf)"></div></div></div>
+                    <div><div style="display:flex;justify-content:space-between;font-size:.83rem;margin-bottom:.3rem"><span>Masoterapia</span><strong>18</strong></div><div style="height:8px;background:#E5E7EB;border-radius:var(--rf)"><div style="height:100%;width:36%;background:var(--inf);border-radius:var(--rf)"></div></div></div>
+                </div>
+            </div>
+            <div class="tw" style="padding:1.5rem">
+                <h3 style="font-size:1.05rem;margin-bottom:1.1rem"><i class="ph ph-exam" style="color:var(--xp)"></i> Resumen de Notas</h3>
+                <div style="display:flex;flex-direction:column;gap:.65rem;font-size:.86rem">
+                    <div style="display:flex;justify-content:space-between;align-items:center"><span>Promedio general plataforma</span><strong style="font-size:1.2rem;color:var(--p)">5.8</strong></div>
+                    <div style="display:flex;justify-content:space-between"><span>Alumnos aprobados</span><span style="color:var(--p);font-weight:600">89%</span></div>
+                    <div style="display:flex;justify-content:space-between"><span>Alumnos reprobados</span><span style="color:var(--err);font-weight:600">11%</span></div>
+                    <div style="display:flex;justify-content:space-between"><span>Evaluaciones completadas</span><span style="font-weight:600">312</span></div>
+                    <div style="display:flex;justify-content:space-between"><span>Tasa de finalización</span><span style="color:var(--p);font-weight:600">74%</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB Ajustes -->
+    <div id="ts" class="tp">
+        <div style="max-width:680px">
+            <div class="tw" style="padding:1.5rem;margin-bottom:1.5rem">
+                <h3 style="font-size:1.05rem;margin-bottom:1.2rem">Configuración General</h3>
+                <div class="fg"><label class="fl">Nombre de la Plataforma</label><input class="fc" id="cfg-nombre" type="text" value="Escuela EyCT Flor de Chañar"></div>
+                <div class="fg"><label class="fl">Correo de Soporte</label><input class="fc" id="cfg-email" type="email" value="soporte@flordechanar.cl"></div>
+                <div class="fg"><label class="fl">Idioma por defecto</label><select class="fc" id="cfg-idioma"><option>Español (Chile)</option></select></div>
+                <div class="fg"><label class="fl">Escala de Notas</label><select class="fc" id="cfg-escala"><option>1.0 – 7.0 (Chilena)</option><option>0 – 100 (Porcentual)</option></select></div>
+                <button class="btn bp" onclick="saveSettings()"><i class="ph ph-floppy-disk"></i> Guardar Cambios</button>
+            </div>
+
+            <!-- INTEGRATIONS: fully redesigned -->
+            <div class="tw" style="padding:1.5rem">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.1rem">
+                    <h3 style="font-size:1.05rem">Integraciones</h3>
+                    <button class="btn bo btn-sm" onclick="openIntModal('custom')"><i class="ph ph-plus"></i> Agregar por API / Webhook</button>
+                </div>
+                <p style="font-size:.8rem;color:var(--l);margin-bottom:1.1rem">Conecta herramientas externas mediante su API Key o Webhook. Las integraciones marcadas en verde están activas.</p>
+
+                <div class="int-grid" id="intGrid">
+                    <!-- populated by JS -->
+                </div>
+
+                <!-- Custom Webhook section -->
+                <div class="wh-section">
+                    <h4 style="font-family:var(--f);font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--l);margin-bottom:.75rem"><i class="ph ph-webhooks-logo"></i> Webhooks Personalizados</h4>
+                    <div id="webhookList" style="display:flex;flex-direction:column;gap:.5rem;margin-bottom:.75rem"></div>
+                    <button class="btn bo btn-sm" onclick="openWHModal()"><i class="ph ph-plus"></i> Nuevo Webhook</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Modal: Nuevo Usuario -->
+<div class="modal-bg" id="modalBg">
+    <div class="modal">
+        <h3>Agregar Nuevo Usuario</h3>
+        <div class="fg"><label class="fl">Nombre completo</label><input class="fc" type="text" placeholder="Nombre y apellido"></div>
+        <div class="fg"><label class="fl">Correo electrónico</label><input class="fc" type="email" placeholder="correo@ejemplo.cl"></div>
+        <div class="fg"><label class="fl">Rol</label>
+            <select class="fc">
+                <option>Estudiante</option>
+                <option>Profesor</option>
+                <option>Administrador</option>
+            </select>
+        </div>
+        <div class="fg"><label class="fl">Cursos asignados (si es Profesor)</label>
+            <select class="fc" multiple style="height:90px">
+                <option>Diplomado Biomagnetismo Clínico</option>
+                <option>Iniciación al Reiki</option>
+                <option>Terapia Floral Avanzada</option>
+                <option>Masoterapia Integral</option>
+            </select>
+        </div>
+        <div class="modal-actions">
+            <button class="btn bo" onclick="closeModal()">Cancelar</button>
+            <button class="btn bp" onclick="addUser()"><i class="ph ph-user-plus"></i> Crear Usuario</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Integración -->
+<div class="modal-bg" id="intModalBg">
+    <div class="modal" style="max-width:520px">
+        <h3 id="intModalTitle">Configurar Integración</h3>
+        <p id="intModalDesc" style="font-size:.83rem;color:var(--l);margin-bottom:1.1rem"></p>
+        <div class="fg"><label class="fl">Nombre / Identificador</label><input class="fc" id="intFieldName" type="text" placeholder="Ej: Calendly Agendamiento"></div>
+        <div class="fg"><label class="fl">API Key o Token de acceso</label><input class="fc" id="intFieldKey" type="text" placeholder="sk-... ó Bearer token"></div>
+        <div class="fg"><label class="fl">URL del endpoint (si aplica)</label><input class="fc" id="intFieldUrl" type="url" placeholder="https://api.servicio.com/v1/"></div>
+        <div class="fg"><label class="fl">Eventos a disparar (opcional)</label>
+            <div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.35rem" id="intEvents">
+                <label style="display:flex;align-items:center;gap:.3rem;font-size:.8rem;cursor:pointer"><input type="checkbox" style="accent-color:var(--p)"> Nueva inscripción</label>
+                <label style="display:flex;align-items:center;gap:.3rem;font-size:.8rem;cursor:pointer"><input type="checkbox" style="accent-color:var(--p)"> Pago completado</label>
+                <label style="display:flex;align-items:center;gap:.3rem;font-size:.8rem;cursor:pointer"><input type="checkbox" style="accent-color:var(--p)"> Evaluación enviada</label>
+                <label style="display:flex;align-items:center;gap:.3rem;font-size:.8rem;cursor:pointer"><input type="checkbox" style="accent-color:var(--p)"> Lección completada</label>
+            </div>
+        </div>
+        <div class="fg">
+            <label class="fl">Probar conexión</label>
+            <button class="btn bo btn-sm" onclick="testConn()"><i class="ph ph-plug"></i> Enviar ping de prueba</button>
+            <div id="testResult" style="font-size:.78rem;margin-top:.4rem;color:var(--l)"></div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn bo" onclick="closeIntModal()">Cancelar</button>
+            <button class="btn bp" onclick="saveInt()"><i class="ph ph-floppy-disk"></i> Guardar y Conectar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Webhook -->
+<div class="modal-bg" id="whModalBg">
+    <div class="modal" style="max-width:500px">
+        <h3>Nuevo Webhook Personalizado</h3>
+        <div class="fg"><label class="fl">Nombre del webhook</label><input class="fc" id="whName" type="text" placeholder="Ej: Notificación a n8n"></div>
+        <div class="fg"><label class="fl">URL de destino</label><input class="fc" id="whUrl" type="url" placeholder="https://n8n.tudominio.com/webhook/..."></div>
+        <div class="fg"><label class="fl">Método</label><select class="fc" id="whMethod"><option>POST</option><option>GET</option><option>PUT</option></select></div>
+        <div class="fg"><label class="fl">Eventos que lo disparan</label>
+            <div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.35rem">
+                <label style="display:flex;align-items:center;gap:.3rem;font-size:.8rem;cursor:pointer"><input type="checkbox" style="accent-color:var(--p)"> Nueva inscripción</label>
+                <label style="display:flex;align-items:center;gap:.3rem;font-size:.8rem;cursor:pointer"><input type="checkbox" style="accent-color:var(--p)"> Pago completado</label>
+                <label style="display:flex;align-items:center;gap:.3rem;font-size:.8rem;cursor:pointer"><input type="checkbox" style="accent-color:var(--p)"> Evaluación enviada</label>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn bo" onclick="closeWHModal()">Cancelar</button>
+            <button class="btn bp" onclick="saveWH()"><i class="ph ph-webhooks-logo"></i> Agregar Webhook</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"><i class="ph ph-check-circle" id="tI"></i><span id="tM">Guardado</span></div>
+
+<script>
+// Users backend integration
+async function renderUsers(){
+    const b = document.getElementById('usersBody');
+    b.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem;">Cargando usuarios...</td></tr>';
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/usuarios', { headers: { 'Authorization': 'Bearer ' + token } });
+        const users = await res.json();
+        
+        b.innerHTML = '';
+        if(users.length === 0) {
+            b.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem;">No hay usuarios.</td></tr>';
+            return;
+        }
+
+        users.forEach(u => {
+            const roleCap = u.rol.charAt(0).toUpperCase() + u.rol.slice(1);
+            const init = u.nombre.charAt(0).toUpperCase();
+            // Assign colors dynamically or based on role
+            let bgCol = 'var(--p)';
+            if(u.rol === 'profesor') bgCol = 'var(--inf)';
+            if(u.rol === 'admin') bgCol = 'var(--err)';
+
+            b.innerHTML += `<tr>
+                <td><div style="display:flex;align-items:center;gap:.65rem"><div style="width:30px;height:30px;border-radius:50%;background:${bgCol};opacity:.85;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.72rem;color:#fff">${init}</div><div><div class="tn">${u.nombre}</div><div class="ts">${u.email}</div></div></div></td>
+                <td>${roleCap}</td>
+                <td>${u.cursos_inscritos || 0}</td>
+                <td class="ts">Registrado</td>
+                <td><span class="bp2 ${u.activo ? 'bA' : 'bD'}">${u.activo ? 'Activo' : 'Inactivo'}</span></td>
+                <td><div style="display:flex;gap:.4rem"><button class="btn bo btn-sm" onclick="showT('Perfil de ${u.nombre} abierto')">Ver</button><button class="btn bd btn-sm" onclick="showT('Próximamente')">${u.activo ? 'Suspender' : 'Activar'}</button></div></td>
+            </tr>`;
+        });
+    } catch(e) {
+        b.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem; color:red;">Error al cargar usuarios</td></tr>';
+    }
+}
+
+// Tab switching — única función st() en la página
+let activeTab = 'tu'; // pestaña activa por defecto: Usuarios
+
+function st(e, id) {
+    if (e) e.preventDefault();
+    activeTab = id;
+
+    // Panel content
+    document.querySelectorAll('.tp').forEach(t => t.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+
+    // Tab buttons & sidebar links
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.sb-n a').forEach(a => a.classList.remove('active'));
+    document.querySelectorAll(`[onclick="st(event,'${id}')"]`).forEach(el => el.classList.add('active'));
+
+    // Header button: solo visible en Usuarios y Cursos
+    const btn = document.getElementById('headerActionBtn');
+    const label = document.getElementById('headerActionLabel');
+    if (id === 'tc') {
+        btn.style.display = 'inline-flex';
+        btn.setAttribute('onclick', "window.location.href='curso-crear.html'");
+        label.textContent = 'Crear Curso';
+    } else if (id === 'tu') {
+        btn.style.display = 'inline-flex';
+        btn.setAttribute('onclick', 'openModal()');
+        label.textContent = 'Nuevo Usuario';
+    } else {
+        // Accesos, Reportes, Ajustes — ocultar botón
+        btn.style.display = 'none';
+    }
+}
+
+// Guardar y cargar ajustes con localStorage
+function saveSettings() {
+    const cfg = {
+        nombre: document.getElementById('cfg-nombre').value,
+        email:  document.getElementById('cfg-email').value,
+        idioma: document.getElementById('cfg-idioma').value,
+        escala: document.getElementById('cfg-escala').value
+    };
+    localStorage.setItem('admin_cfg', JSON.stringify(cfg));
+    showT('✅ Configuración guardada correctamente');
+}
+
+function loadSettings() {
+    const saved = localStorage.getItem('admin_cfg');
+    if (!saved) return;
+    const cfg = JSON.parse(saved);
+    if (cfg.nombre) document.getElementById('cfg-nombre').value = cfg.nombre;
+    if (cfg.email)  document.getElementById('cfg-email').value  = cfg.email;
+    if (cfg.escala) document.getElementById('cfg-escala').value = cfg.escala;
+}
+
+// Integrations data — all start disconnected
+const integrations = [
+    {id:'calendly',name:'Calendly',icon:'📅',desc:'Agendamiento de sesiones y citas',type:'API Key',connected:false},
+    {id:'gcal',name:'Google Calendar',icon:'🗓️',desc:'Sincronizar eventos y clases en vivo',type:'OAuth2',connected:false},
+    {id:'zoom',name:'Zoom',icon:'📹',desc:'Clases en vivo y videoconferencias',type:'API Key + Secret',connected:false},
+    {id:'surecart',name:'SureCart',icon:'💳',desc:'Pagos, suscripciones y matrículas',type:'API Key',connected:false},
+    {id:'mailchimp',name:'Mailchimp',icon:'📧',desc:'Email marketing y campañas automáticas',type:'API Key',connected:false},
+    {id:'n8n',name:'n8n',icon:'⚡',desc:'Automatizaciones y flujos de trabajo',type:'Webhook URL',connected:false},
+    {id:'whatsapp',name:'WhatsApp Business',icon:'💬',desc:'Notificaciones a estudiantes vía WhatsApp',type:'API Token',connected:false},
+    {id:'stripe',name:'Stripe',icon:'💰',desc:'Pasarela de pagos internacional',type:'API Key',connected:false},
+];
+let currentIntId = null;
+
+
+
+// --- Integrations ---
+function renderIntegrations(){
+    const g = document.getElementById('intGrid');
+    g.innerHTML = integrations.map((int,i)=>`
+    <div class="int-card ${int.connected?'connected':''}" id="intCard-${int.id}">
+        <div class="int-ico">${int.icon}</div>
+        <div class="int-body">
+            <div class="int-name">${int.name}</div>
+            <div class="int-desc">${int.desc} &middot; <em style="font-size:.7rem">${int.type}</em></div>
+            <div class="int-actions">
+                <span class="int-status ${int.connected?'ok':'off'}">${int.connected?'✔️ Conectado':'Sin conectar'}</span>
+                ${int.connected
+                    ? `<button class="btn bo btn-sm" onclick="openIntModal('${int.id}',true)" style="font-size:.75rem;padding:.28rem .65rem"><i class="ph ph-pencil"></i> Editar</button>
+                       <button class="btn btn-sm" style="background:rgba(239,68,68,.1);color:var(--err);font-size:.75rem;padding:.28rem .65rem;border:none;cursor:pointer;border-radius:var(--rf);font-family:var(--f);font-weight:600" onclick="disconnectInt('${int.id}')"><i class="ph ph-plug"></i> Desconectar</button>`
+                    : `<button class="btn bp btn-sm" onclick="openIntModal('${int.id}',false)" style="font-size:.75rem;padding:.28rem .65rem"><i class="ph ph-plug"></i> Conectar</button>`
+                }
+            </div>
+        </div>
+    </div>`).join('');
+}
+
+function openIntModal(id, isEdit){
+    currentIntId = id;
+    const int = integrations.find(i=>i.id===id);
+    const name = int ? int.name : 'Integración personalizada';
+    document.getElementById('intModalTitle').textContent = (isEdit ? 'Editar' : 'Conectar') + ' — ' + name;
+    document.getElementById('intModalDesc').textContent = int ? `${int.desc}. Ingresa tu ${int.type} para establecer la conexión.` : 'Configura una nueva integración personalizada vía API Key o URL.';
+    document.getElementById('intFieldName').value = int ? int.name : '';
+    document.getElementById('intFieldKey').value = '';
+    document.getElementById('intFieldUrl').value = '';
+    document.getElementById('testResult').textContent = '';
+    document.getElementById('intModalBg').classList.add('open');
+}
+function closeIntModal(){document.getElementById('intModalBg').classList.remove('open');currentIntId=null;}
+
+function testConn(){
+    const key = document.getElementById('intFieldKey').value;
+    const url = document.getElementById('intFieldUrl').value;
+    const res = document.getElementById('testResult');
+    if(!key && !url){res.textContent='⚠️ Ingresa una API Key o URL para probar.';res.style.color='var(--err)';return;}
+    res.textContent = 'Probando conexión...';
+    res.style.color = 'var(--l)';
+    setTimeout(()=>{res.textContent='✅ Conexión exitosa — el servicio respondió correctamente.';res.style.color='var(--p)';},1200);
+}
+
+function saveInt(){
+    const key = document.getElementById('intFieldKey').value;
+    if(!key){showT('⚠️ Ingresa una API Key o Token antes de guardar');return;}
+    if(currentIntId){
+        const int = integrations.find(i=>i.id===currentIntId);
+        if(int) int.connected = true;
+    }
+    renderIntegrations();
+    closeIntModal();
+    showT('✅ Integración guardada y conectada correctamente');
+}
+
+function disconnectInt(id){
+    const int = integrations.find(i=>i.id===id);
+    if(int){int.connected=false;renderIntegrations();showT('Integración desconectada');}
+}
+
+// Webhooks
+const webhooks = [];
+function renderWebhooks(){
+    const l = document.getElementById('webhookList');
+    l.innerHTML = webhooks.length ? webhooks.map((w,i)=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem .85rem;background:var(--bg2);border-radius:var(--r);font-size:.83rem">
+        <div><strong>${w.name}</strong><div style="font-size:.72rem;color:var(--l);margin-top:.1rem">${w.url} &middot; ${w.method}</div></div>
+        <div style="display:flex;gap:.4rem">
+            <button class="btn bo btn-sm" onclick="openWHModal(${i})" style="font-size:.73rem"><i class="ph ph-pencil"></i></button>
+            <button class="btn btn-sm" style="background:rgba(239,68,68,.08);color:var(--err);border:none;cursor:pointer;border-radius:var(--rf);padding:.28rem .6rem;font-family:var(--f)" onclick="webhooks.splice(${i},1);renderWebhooks()"><i class="ph ph-trash"></i></button>
+        </div>
+    </div>`).join('') : '<p style="font-size:.8rem;color:var(--l)">No hay webhooks configurados.</p>';
+}
+function openWHModal(){document.getElementById('whModalBg').classList.add('open')}
+function closeWHModal(){document.getElementById('whModalBg').classList.remove('open')}
+function saveWH(){
+    const name = document.getElementById('whName').value;
+    const url = document.getElementById('whUrl').value;
+    const method = document.getElementById('whMethod').value;
+    if(!name||!url){showT('⚠️ Nombre y URL son requeridos');return;}
+    webhooks.push({name,url,method});
+    renderWebhooks();
+    closeWHModal();
+    showT('Webhook agregado correctamente');
+}
+
+// --- User modal ---
+function openModal(){document.getElementById('modalBg').classList.add('open');}
+function closeModal(){document.getElementById('modalBg').classList.remove('open');}
+async function addUser(){ 
+    const nombre = document.querySelector('#modalBg input[type="text"]').value;
+    const email = document.querySelector('#modalBg input[type="email"]').value;
+    const rolSel = document.querySelector('#modalBg select').value.toLowerCase();
+    
+    if(!nombre || !email) return showT('⚠️ Nombre y correo requeridos');
+
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/usuarios/crear', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ nombre, email, password: 'password123', rol: rolSel })
+        });
+        if(res.ok) {
+            showT('Usuario creado correctamente');
+            closeModal();
+            renderUsers();
+            if(rolSel === 'profesor') renderAccessMatrix();
+        } else {
+            showT('⚠️ Hubo un error al crear el usuario');
+        }
+    } catch(e) {
+        showT('⚠️ Error de conexión');
+    }
+}
+
+function showT(msg){const t=document.getElementById('toast');document.getElementById('tM').textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
+
+document.getElementById('modalBg').addEventListener('click',function(e){if(e.target===this)closeModal()});
+document.getElementById('intModalBg').addEventListener('click',function(e){if(e.target===this)closeIntModal()});
+document.getElementById('whModalBg').addEventListener('click',function(e){if(e.target===this)closeWHModal()});
+
+renderUsers();
+renderIntegrations();
+renderWebhooks();
+
+// Render Dynamic Courses inside Admin
+async function renderAdminCourses() {
+    const tbody = document.getElementById('adminCoursesBody');
+    try {
+        const res = await fetch('/api/cursos');
+        const cursos = await res.json();
+        
+        if (cursos.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem;">No hay cursos creados.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = '';
+        cursos.forEach(c => {
+            const priceFmt = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(c.precio);
+            tbody.innerHTML += `
+                <tr>
+                    <td><div class="tn">${c.titulo}</div><div class="ts">${priceFmt}</div></td>
+                    <td>${c.profesor || 'Admin'}</td>
+                    <td>0</td>
+                    <td><span class="bp2 bA">Publicado</span></td>
+                    <td class="ts">Reciente</td>
+                    <td><div style="display:flex;gap:.4rem">
+                        <a href="curso-crear.html?id=${c.id}" class="btn bo btn-sm">Editar</a>
+                        <button class="btn bo btn-sm" style="border-color: #EF4444; color: #EF4444;" onclick="eliminarCursoDesdeAdmin(${c.id}, '${c.titulo}')"><i class="ph ph-trash"></i></button>
+                    </div></td>
+                </tr>
+            `;
+        });
+    } catch(e) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem; color:red;">Error al cargar cursos</td></tr>';
+    }
+}
+
+async function eliminarCursoDesdeAdmin(id, titulo) {
+    if(!confirm('¿Estás seguro que deseas eliminar el curso: "' + titulo + '"? Esta acción no se puede deshacer.')) return;
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/cursos/' + id, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if(res.ok) {
+            showT('Curso eliminado');
+            renderAdminCourses();
+            renderAccessMatrix();
+        } else {
+            showT('⚠️ No se pudo eliminar el curso');
+        }
+    } catch(e) {
+        showT('⚠️ Error de red al eliminar el curso');
+    }
+}
+renderAdminCourses();
+
+// Render Matrix de Accesos Profesores
+async function renderAccessMatrix() {
+    try {
+        const token = localStorage.getItem('token');
+        const resProf = await fetch('/api/usuarios/profesores', { headers: {'Authorization': 'Bearer ' + token} });
+        const profesores = await resProf.json();
+        
+        const resCur = await fetch('/api/cursos');
+        const cursos = await resCur.json();
+
+        // Build Head
+        let theadHTML = `<tr><th>Profesor</th>`;
+        cursos.forEach(c => {
+            let truncTitle = c.titulo.length > 20 ? c.titulo.substring(0,18)+'...' : c.titulo;
+            theadHTML += `<th style="text-align:center" title="${c.titulo}">${truncTitle}</th>`;
+        });
+        theadHTML += `<th style="text-align:center">Puede Evaluar</th><th style="text-align:center">Puede Editar</th><th style="text-align:center">Clases en Vivo</th></tr>`;
+        document.getElementById('accessTableHead').innerHTML = theadHTML;
+
+        // Build Body
+        let tbodyHTML = '';
+        profesores.forEach(p => {
+            const colors = ['#D4A373', '#687A61', '#8B6BAE'];
+            const bg = colors[p.id % colors.length];
+            const init = p.nombre.charAt(0).toUpperCase();
+
+            tbodyHTML += `<tr>
+                <td><div style="display:flex;align-items:center;gap:.6rem"><div style="width:28px;height:28px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.72rem;color:#fff">${init}</div><div class="tn">${p.nombre}</div></div></td>`;
+            
+            cursos.forEach(c => {
+                const isAssigned = (c.profesor_id === p.id);
+                tbodyHTML += `<td style="text-align:center"><input type="checkbox" class="chk" ${isAssigned ? 'checked' : ''} onchange="showT('Los accesos se otorgan al momento de Editar/Crear el curso.')"></td>`;
+            });
+            // Fixed base columns
+            tbodyHTML += `<td style="text-align:center"><input type="checkbox" class="chk" checked onchange="showT('Accesos actualizados')"></td>
+                          <td style="text-align:center"><input type="checkbox" class="chk" onchange="showT('Accesos actualizados')"></td>
+                          <td style="text-align:center"><input type="checkbox" class="chk" checked onchange="showT('Accesos actualizados')"></td></tr>`;
+        });
+        
+        document.getElementById('accessTableBody').innerHTML = tbodyHTML;
+    } catch(e) {
+        console.error(e);
+    }
+}
+renderAccessMatrix();
+
+// Init default tab if provided in URL
+const urlParams = new URLSearchParams(window.location.search);
+if(urlParams.get('tab') === 'cursos') {
+    // Update header action button logic for Cursos
+    const hdrLbl=document.getElementById('headerActionLabel');
+    const hdrIc=document.getElementById('headerActionIcon');
+    const hdrBtn=document.getElementById('headerActionBtn');
+    hdrLbl.textContent='Crear Nuevo Curso';
+    hdrIc.className='ph ph-plus';
+    hdrBtn.onclick=function(){window.location.href='curso-crear.html'};
+}
+
+// Cargar ajustes guardados
+loadSettings();
+</script>
+</body>
+</html>
