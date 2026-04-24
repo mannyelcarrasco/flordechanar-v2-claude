@@ -11,6 +11,8 @@ services:
       DB_PASS: flordechanar123
       DB_PORT: 3306
       JWT_SECRET: ${JWT_SECRET:-cambia_este_secreto}
+    volumes:
+      - uploads_data:/app/public/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -36,3 +38,4 @@ services:
 
 volumes:
   db_data:
+  uploads_data:
