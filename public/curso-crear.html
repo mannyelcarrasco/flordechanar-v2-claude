@@ -231,7 +231,7 @@
                     <i class="ph ph-image"></i>
                     <p>Arrastra una imagen o <span>selecciona un archivo</span><br><small>JPG, PNG · Recomendado 1280×720 px</small></p>
                 </div>
-                <input type="file" id="coverInput" style="display:none" accept="image/*" onchange="previewCover(this)">
+                <input type="file" id="coverInput" style="display:none" accept=".jpg,.jpeg,.png,.webp" onchange="uploadCover(this)">
             </div>
         </div>
 
@@ -434,7 +434,7 @@
                 <p style="margin:.5rem 0 0; font-size:.85rem">Arrastra o <span style="color:var(--p); font-weight:600">selecciona un archivo</span></p>
                 <small style="color:var(--l)">PDF, DOCX, XLSX, PPTX · máx 50 MB</small>
             </div>
-            <input type="file" id="lecFileInput" style="display:none" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" onchange="handleFileSelect(this)">
+            <input type="file" id="lecFileInput" style="display:none" accept=".pdf" onchange="handleFileSelect(this)">
             <div id="lecFileInfo" style="display:none; margin-top:.6rem; padding:.5rem .8rem; background:#F0FDF4; border:1px solid #86EFAC; border-radius:8px; font-size:.83rem; display:none; align-items:center; gap:.5rem">
                 <i class="ph ph-file-pdf" style="color:#16A34A"></i>
                 <span id="lecFileName"></span>
@@ -653,15 +653,34 @@ function selectLessonType(type) {
     currentLessonState.tipo = type;
 }
 
-function handleFileSelect(input) {
+async function handleFileSelect(input) {
     const file = input.files[0];
-    if(!file) return;
-    document.getElementById('lecFileName').textContent = file.name;
-    const info = document.getElementById('lecFileInfo');
-    info.style.display = 'flex';
-    // De momento solo guardamos el nombre como referencia
-    document.getElementById('lecFileUrl').value = file.name;
-    showToast('Archivo seleccionado: ' + file.name);
+    if (!file) return;
+
+    document.getElementById('lecFileName').textContent = file.name + ' — subiendo...';
+    document.getElementById('lecFileInfo').style.display = 'flex';
+    document.getElementById('lecFileUrl').value = '';
+    showToast('Subiendo PDF...');
+
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/upload', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token },
+            body: formData
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error al subir');
+        document.getElementById('lecFileUrl').value = data.url;
+        document.getElementById('lecFileName').textContent = file.name;
+        showToast('✅ PDF subido correctamente');
+    } catch (e) {
+        document.getElementById('lecFileInfo').style.display = 'none';
+        input.value = '';
+        showToast('⚠️ ' + e.message);
+    }
 }
 
 function clearFile() {
@@ -673,11 +692,14 @@ function clearFile() {
 async function saveLesson() {
     const titulo = document.getElementById('lecTitle').value.trim();
     const desc = document.getElementById('lecDesc').value.trim();
-    const video = document.getElementById('lecVideo').value.trim();
+    const tipo = currentLessonState.tipo || 'video';
+    const video = tipo === 'archivo'
+        ? document.getElementById('lecFileUrl').value.trim()
+        : document.getElementById('lecVideo').value.trim();
     const duracion = document.getElementById('lecDuracion').value.trim();
     const visibilidad = document.getElementById('lecVisibilidad').value;
-    const tipo = currentLessonState.tipo || 'video';
-    if(!titulo) return showToast('⚠️ El título de lección es obligatorio');
+    if (!titulo) return showToast('⚠️ El título de lección es obligatorio');
+    if (tipo === 'archivo' && !video) return showToast('⚠️ Debes subir un PDF antes de guardar');
 
     const token = localStorage.getItem('token');
     try {
@@ -717,15 +739,37 @@ async function deleteLesson(id) {
     } catch(e) {}
 }
 
-function previewCover(input) {
-    if(!input.files[0]) return;
-    const url = URL.createObjectURL(input.files[0]);
+async function uploadCover(input) {
+    if (!input.files[0]) return;
+    const file = input.files[0];
+
+    // Show local preview immediately
     const prev = document.getElementById('coverPreview');
-    prev.src = url; prev.style.display = 'block';
+    prev.src = URL.createObjectURL(file);
+    prev.style.display = 'block';
     document.getElementById('coverDrop').style.display = 'none';
     document.getElementById('previewThumb').style.display = 'none';
-    updateChecklist();
-    showToast('Imagen de portada cargada');
+
+    showToast('Subiendo imagen...');
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/upload', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token },
+            body: formData
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error al subir');
+        currentCoverUrl = data.url;
+        prev.src = data.url;
+        updateChecklist();
+        showToast('✅ Portada subida correctamente');
+    } catch (e) {
+        showToast('⚠️ ' + e.message);
+        currentCoverUrl = null;
+    }
 }
 
 function togglePrice() {
