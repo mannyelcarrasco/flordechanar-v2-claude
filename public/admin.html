@@ -377,28 +377,33 @@
 
 <!-- Modal: Integración -->
 <div class="modal-bg" id="intModalBg">
-    <div class="modal" style="max-width:520px">
+    <div class="modal" style="max-width:520px;max-height:88vh;overflow-y:auto">
         <h3 id="intModalTitle">Configurar Integración</h3>
-        <p id="intModalDesc" style="font-size:.83rem;color:var(--l);margin-bottom:1.1rem"></p>
-        <div class="fg"><label class="fl">Nombre / Identificador</label><input class="fc" id="intFieldName" type="text" placeholder="Ej: Calendly Agendamiento"></div>
-        <div class="fg"><label class="fl">API Key o Token de acceso</label><input class="fc" id="intFieldKey" type="text" placeholder="sk-... ó Bearer token"></div>
-        <div class="fg"><label class="fl">URL del endpoint (si aplica)</label><input class="fc" id="intFieldUrl" type="url" placeholder="https://api.servicio.com/v1/"></div>
-        <div class="fg"><label class="fl">Eventos a disparar (opcional)</label>
-            <div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.35rem" id="intEvents">
-                <label style="display:flex;align-items:center;gap:.3rem;font-size:.8rem;cursor:pointer"><input type="checkbox" style="accent-color:var(--p)"> Nueva inscripción</label>
-                <label style="display:flex;align-items:center;gap:.3rem;font-size:.8rem;cursor:pointer"><input type="checkbox" style="accent-color:var(--p)"> Pago completado</label>
-                <label style="display:flex;align-items:center;gap:.3rem;font-size:.8rem;cursor:pointer"><input type="checkbox" style="accent-color:var(--p)"> Evaluación enviada</label>
-                <label style="display:flex;align-items:center;gap:.3rem;font-size:.8rem;cursor:pointer"><input type="checkbox" style="accent-color:var(--p)"> Lección completada</label>
+        <!-- Cuerpo personalizado (Google Meet, etc.) -->
+        <div id="intCustomBody" style="display:none"></div>
+        <!-- Campos estándar API Key -->
+        <div id="intStdFields">
+            <p id="intModalDesc" style="font-size:.83rem;color:var(--l);margin-bottom:1.1rem"></p>
+            <div class="fg"><label class="fl">Nombre / Identificador</label><input class="fc" id="intFieldName" type="text" placeholder="Ej: Calendly Agendamiento"></div>
+            <div class="fg"><label class="fl">API Key o Token de acceso</label><input class="fc" id="intFieldKey" type="text" placeholder="sk-... ó Bearer token"></div>
+            <div class="fg"><label class="fl">URL del endpoint (si aplica)</label><input class="fc" id="intFieldUrl" type="url" placeholder="https://api.servicio.com/v1/"></div>
+            <div class="fg"><label class="fl">Eventos a disparar (opcional)</label>
+                <div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.35rem" id="intEvents">
+                    <label style="display:flex;align-items:center;gap:.3rem;font-size:.8rem;cursor:pointer"><input type="checkbox" style="accent-color:var(--p)"> Nueva inscripción</label>
+                    <label style="display:flex;align-items:center;gap:.3rem;font-size:.8rem;cursor:pointer"><input type="checkbox" style="accent-color:var(--p)"> Pago completado</label>
+                    <label style="display:flex;align-items:center;gap:.3rem;font-size:.8rem;cursor:pointer"><input type="checkbox" style="accent-color:var(--p)"> Evaluación enviada</label>
+                    <label style="display:flex;align-items:center;gap:.3rem;font-size:.8rem;cursor:pointer"><input type="checkbox" style="accent-color:var(--p)"> Lección completada</label>
+                </div>
             </div>
-        </div>
-        <div class="fg">
-            <label class="fl">Probar conexión</label>
-            <button class="btn bo btn-sm" onclick="testConn()"><i class="ph ph-plug"></i> Enviar ping de prueba</button>
-            <div id="testResult" style="font-size:.78rem;margin-top:.4rem;color:var(--l)"></div>
+            <div class="fg">
+                <label class="fl">Probar conexión</label>
+                <button class="btn bo btn-sm" onclick="testConn()"><i class="ph ph-plug"></i> Enviar ping de prueba</button>
+                <div id="testResult" style="font-size:.78rem;margin-top:.4rem;color:var(--l)"></div>
+            </div>
         </div>
         <div class="modal-actions">
             <button class="btn bo" onclick="closeIntModal()">Cancelar</button>
-            <button class="btn bp" onclick="saveInt()"><i class="ph ph-floppy-disk"></i> Guardar y Conectar</button>
+            <button class="btn bp" onclick="saveInt()"><i class="ph ph-floppy-disk"></i> <span id="intSaveLabel">Guardar y Conectar</span></button>
         </div>
     </div>
 </div>
@@ -574,11 +579,69 @@ function openIntModal(id, isEdit){
     const int = integrations.find(i=>i.id===id);
     const name = int ? int.name : 'Integración personalizada';
     document.getElementById('intModalTitle').textContent = (isEdit ? 'Editar' : 'Conectar') + ' — ' + name;
-    document.getElementById('intModalDesc').textContent = int ? `${int.desc}. Ingresa tu ${int.type} para establecer la conexión.` : 'Configura una nueva integración personalizada vía API Key o URL.';
-    document.getElementById('intFieldName').value = int ? int.name : '';
-    document.getElementById('intFieldKey').value = '';
-    document.getElementById('intFieldUrl').value = '';
-    document.getElementById('testResult').textContent = '';
+
+    const stdFields = document.getElementById('intStdFields');
+    const customBody = document.getElementById('intCustomBody');
+
+    if (id === 'gmeet') {
+        stdFields.style.display = 'none';
+        customBody.style.display = 'block';
+        const savedUrl = localStorage.getItem('gmeet_url') || '';
+        customBody.innerHTML = `
+            <div style="background:rgba(104,122,97,.08);border:1.5px solid rgba(104,122,97,.25);border-radius:10px;padding:1rem 1.1rem;margin-bottom:1.1rem">
+                <div style="font-size:.8rem;font-weight:700;color:var(--pd);margin-bottom:.35rem"><i class="ph ph-info"></i> Google Meet no requiere API Key</div>
+                <div style="font-size:.78rem;color:var(--l);line-height:1.5">Funciona con links directos de reunión. No necesitas configurar nada especial, solo sigue los pasos de abajo.</div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:.85rem;margin-bottom:1.1rem">
+                <div style="display:flex;gap:.85rem;align-items:flex-start">
+                    <div style="width:26px;height:26px;border-radius:50%;background:var(--p);color:#fff;font-size:.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:.05rem">1</div>
+                    <div>
+                        <div style="font-size:.85rem;font-weight:600;color:var(--s)">Crear tu reunión en Google Meet</div>
+                        <div style="font-size:.78rem;color:var(--l);margin-top:.2rem;line-height:1.45">Ve a <strong>meet.google.com</strong> → "Nueva reunión" → Copia el link.<br>Puedes crear <strong>una sala permanente</strong> y reutilizarla en todas las clases.</div>
+                    </div>
+                </div>
+                <div style="display:flex;gap:.85rem;align-items:flex-start">
+                    <div style="width:26px;height:26px;border-radius:50%;background:var(--p);color:#fff;font-size:.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:.05rem">2</div>
+                    <div>
+                        <div style="font-size:.85rem;font-weight:600;color:var(--s)">Pegar el link al crear cada Clase en Vivo</div>
+                        <div style="font-size:.78rem;color:var(--l);margin-top:.2rem;line-height:1.45">En este panel → tab <strong>Clases en Vivo</strong> → Nueva Clase → campo <em>"Link de Google Meet"</em>.</div>
+                    </div>
+                </div>
+                <div style="display:flex;gap:.85rem;align-items:flex-start">
+                    <div style="width:26px;height:26px;border-radius:50%;background:var(--p);color:#fff;font-size:.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:.05rem">3</div>
+                    <div>
+                        <div style="font-size:.85rem;font-weight:600;color:var(--s)">Las alumnas se unen con un clic</div>
+                        <div style="font-size:.78rem;color:var(--l);margin-top:.2rem;line-height:1.45">En la página <strong>Clases en Vivo</strong> verán el botón "Unirse a la clase" que abre Meet en una nueva pestaña.</div>
+                    </div>
+                </div>
+                <div style="display:flex;gap:.85rem;align-items:flex-start">
+                    <div style="width:26px;height:26px;border-radius:50%;background:#F59E0B;color:#fff;font-size:.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:.05rem">4</div>
+                    <div>
+                        <div style="font-size:.85rem;font-weight:600;color:var(--s)">Grabaciones → YouTube</div>
+                        <div style="font-size:.78rem;color:var(--l);margin-top:.2rem;line-height:1.45">Google Meet graba en <strong>Google Drive</strong> (requiere Google Workspace). Descarga el MP4 → súbelo a YouTube como <em>No listado</em> → pega el YouTube ID en la clase para que aparezca en la plataforma con watermark.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fg">
+                <label class="fl" style="display:flex;align-items:center;gap:.4rem"><i class="ph ph-link" style="color:var(--p)"></i> URL de sala permanente (opcional)</label>
+                <input class="fc" id="gmeetUrlInput" type="url" placeholder="https://meet.google.com/xxx-xxxx-xxx" value="${savedUrl}">
+                <div style="font-size:.72rem;color:var(--l);margin-top:.3rem">Guárdala aquí para recordarla fácilmente. Se usará como sugerencia al crear clases.</div>
+            </div>
+        `;
+    } else {
+        stdFields.style.display = 'block';
+        customBody.style.display = 'none';
+        document.getElementById('intModalDesc').textContent = int
+            ? `${int.desc}. Ingresa tu ${int.type} para establecer la conexión.`
+            : 'Configura una nueva integración personalizada vía API Key o URL.';
+        document.getElementById('intFieldName').value = int ? int.name : '';
+        document.getElementById('intFieldKey').value = '';
+        document.getElementById('intFieldUrl').value = '';
+        document.getElementById('testResult').textContent = '';
+    }
+    document.getElementById('intSaveLabel').textContent = id === 'gmeet' ? 'Marcar como configurado' : 'Guardar y Conectar';
     document.getElementById('intModalBg').classList.add('open');
 }
 function closeIntModal(){document.getElementById('intModalBg').classList.remove('open');currentIntId=null;}
@@ -594,6 +657,16 @@ function testConn(){
 }
 
 function saveInt(){
+    if(currentIntId === 'gmeet'){
+        const url = document.getElementById('gmeetUrlInput')?.value.trim() || '';
+        if(url) localStorage.setItem('gmeet_url', url);
+        const int = integrations.find(i=>i.id==='gmeet');
+        if(int) int.connected = true;
+        renderIntegrations();
+        closeIntModal();
+        showT('✅ Google Meet configurado correctamente');
+        return;
+    }
     const key = document.getElementById('intFieldKey').value;
     if(!key){showT('⚠️ Ingresa una API Key o Token antes de guardar');return;}
     if(currentIntId){
