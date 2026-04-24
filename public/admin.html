@@ -317,7 +317,13 @@
             <div class="fg"><label class="fl">Fecha y hora</label><input class="fc" id="claseFecha" type="datetime-local"></div>
             <div class="fg"><label class="fl">Duración (min)</label><input class="fc" id="claseDuracion" type="number" value="60" min="15" max="480"></div>
         </div>
-        <div class="fg"><label class="fl">Link de Google Meet</label><input class="fc" id="claseMeet" type="url" placeholder="https://meet.google.com/xxx-xxxx-xxx"></div>
+        <div class="fg">
+            <label class="fl"><i class="ph ph-video-camera" style="color:var(--p)"></i> Sala de Google Meet</label>
+            <select class="fc" id="claseMeetSel" onchange="onMeetSelChange()" style="margin-bottom:.4rem">
+                <option value="">— Sin sala —</option>
+            </select>
+            <input class="fc" id="claseMeet" type="url" placeholder="https://meet.google.com/xxx-xxxx-xxx" style="display:none;margin-top:.4rem">
+        </div>
         <div class="fg"><label class="fl">YouTube ID (tras la clase)</label><input class="fc" id="claseYT" type="text" placeholder="Ej: dQw4w9WgXcQ"></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
             <div class="fg"><label class="fl">Estado</label>
@@ -586,50 +592,39 @@ function openIntModal(id, isEdit){
     if (id === 'gmeet') {
         stdFields.style.display = 'none';
         customBody.style.display = 'block';
-        const savedUrl = localStorage.getItem('gmeet_url') || '';
         customBody.innerHTML = `
             <div style="background:rgba(104,122,97,.08);border:1.5px solid rgba(104,122,97,.25);border-radius:10px;padding:1rem 1.1rem;margin-bottom:1.1rem">
                 <div style="font-size:.8rem;font-weight:700;color:var(--pd);margin-bottom:.35rem"><i class="ph ph-info"></i> Google Meet no requiere API Key</div>
-                <div style="font-size:.78rem;color:var(--l);line-height:1.5">Funciona con links directos de reunión. No necesitas configurar nada especial, solo sigue los pasos de abajo.</div>
+                <div style="font-size:.78rem;color:var(--l);line-height:1.5">Funciona con links directos de reunión. Agrega todas las salas de tus profesoras — al crear una clase podrán elegirla desde un selector.</div>
             </div>
 
-            <div style="display:flex;flex-direction:column;gap:.85rem;margin-bottom:1.1rem">
+            <div style="display:flex;flex-direction:column;gap:.85rem;margin-bottom:1.25rem;padding-bottom:1.25rem;border-bottom:1px solid #F1F5F9">
                 <div style="display:flex;gap:.85rem;align-items:flex-start">
-                    <div style="width:26px;height:26px;border-radius:50%;background:var(--p);color:#fff;font-size:.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:.05rem">1</div>
-                    <div>
-                        <div style="font-size:.85rem;font-weight:600;color:var(--s)">Crear tu reunión en Google Meet</div>
-                        <div style="font-size:.78rem;color:var(--l);margin-top:.2rem;line-height:1.45">Ve a <strong>meet.google.com</strong> → "Nueva reunión" → Copia el link.<br>Puedes crear <strong>una sala permanente</strong> y reutilizarla en todas las clases.</div>
-                    </div>
+                    <div style="width:22px;height:22px;border-radius:50%;background:var(--p);color:#fff;font-size:.68rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
+                    <div style="font-size:.78rem;color:var(--l);line-height:1.45">Ve a <strong>meet.google.com</strong> → "Nueva reunión" → Copia el link de sala.</div>
                 </div>
                 <div style="display:flex;gap:.85rem;align-items:flex-start">
-                    <div style="width:26px;height:26px;border-radius:50%;background:var(--p);color:#fff;font-size:.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:.05rem">2</div>
-                    <div>
-                        <div style="font-size:.85rem;font-weight:600;color:var(--s)">Pegar el link al crear cada Clase en Vivo</div>
-                        <div style="font-size:.78rem;color:var(--l);margin-top:.2rem;line-height:1.45">En este panel → tab <strong>Clases en Vivo</strong> → Nueva Clase → campo <em>"Link de Google Meet"</em>.</div>
-                    </div>
+                    <div style="width:22px;height:22px;border-radius:50%;background:var(--p);color:#fff;font-size:.68rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
+                    <div style="font-size:.78rem;color:var(--l);line-height:1.45">Agrégala abajo con un nombre descriptivo (ej: <em>"Sala Elena"</em>, <em>"Sala Biomagnetismo"</em>).</div>
                 </div>
                 <div style="display:flex;gap:.85rem;align-items:flex-start">
-                    <div style="width:26px;height:26px;border-radius:50%;background:var(--p);color:#fff;font-size:.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:.05rem">3</div>
-                    <div>
-                        <div style="font-size:.85rem;font-weight:600;color:var(--s)">Las alumnas se unen con un clic</div>
-                        <div style="font-size:.78rem;color:var(--l);margin-top:.2rem;line-height:1.45">En la página <strong>Clases en Vivo</strong> verán el botón "Unirse a la clase" que abre Meet en una nueva pestaña.</div>
-                    </div>
+                    <div style="width:22px;height:22px;border-radius:50%;background:var(--p);color:#fff;font-size:.68rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div>
+                    <div style="font-size:.78rem;color:var(--l);line-height:1.45">Al crear una <strong>Clase en Vivo</strong>, el campo Meet mostrará un selector con todas las salas guardadas.</div>
                 </div>
                 <div style="display:flex;gap:.85rem;align-items:flex-start">
-                    <div style="width:26px;height:26px;border-radius:50%;background:#F59E0B;color:#fff;font-size:.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:.05rem">4</div>
-                    <div>
-                        <div style="font-size:.85rem;font-weight:600;color:var(--s)">Grabaciones → YouTube</div>
-                        <div style="font-size:.78rem;color:var(--l);margin-top:.2rem;line-height:1.45">Google Meet graba en <strong>Google Drive</strong> (requiere Google Workspace). Descarga el MP4 → súbelo a YouTube como <em>No listado</em> → pega el YouTube ID en la clase para que aparezca en la plataforma con watermark.</div>
-                    </div>
+                    <div style="width:22px;height:22px;border-radius:50%;background:#F59E0B;color:#fff;font-size:.68rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">4</div>
+                    <div style="font-size:.78rem;color:var(--l);line-height:1.45">Tras la clase, descarga el MP4 desde <strong>Google Drive</strong> → súbelo a YouTube (No listado) → pega el YouTube ID en la clase.</div>
                 </div>
             </div>
 
-            <div class="fg">
-                <label class="fl" style="display:flex;align-items:center;gap:.4rem"><i class="ph ph-link" style="color:var(--p)"></i> URL de sala permanente (opcional)</label>
-                <input class="fc" id="gmeetUrlInput" type="url" placeholder="https://meet.google.com/xxx-xxxx-xxx" value="${savedUrl}">
-                <div style="font-size:.72rem;color:var(--l);margin-top:.3rem">Guárdala aquí para recordarla fácilmente. Se usará como sugerencia al crear clases.</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem">
+                <label class="fl" style="margin:0"><i class="ph ph-video-camera" style="color:var(--p)"></i> Salas configuradas</label>
+                <button class="btn bp btn-sm" onclick="addGmeetRoom()"><i class="ph ph-plus"></i> Agregar sala</button>
             </div>
+            <div id="gmeetRoomsList" style="display:flex;flex-direction:column;gap:.5rem;margin-bottom:.5rem"></div>
+            <div style="font-size:.72rem;color:var(--l)">Puedes agregar tantas salas como necesites. Cada profesora puede tener la suya.</div>
         `;
+        renderGmeetRooms();
     } else {
         stdFields.style.display = 'block';
         customBody.style.display = 'none';
@@ -656,15 +651,58 @@ function testConn(){
     setTimeout(()=>{res.textContent='✅ Conexión exitosa — el servicio respondió correctamente.';res.style.color='var(--p)';},1200);
 }
 
+// ── Google Meet Rooms ────────────────────────────────────────────────────────
+function getGmeetRooms() {
+    try { return JSON.parse(localStorage.getItem('gmeet_rooms') || '[]'); } catch(e) { return []; }
+}
+function saveGmeetRooms(rooms) {
+    localStorage.setItem('gmeet_rooms', JSON.stringify(rooms));
+}
+
+function renderGmeetRooms() {
+    const el = document.getElementById('gmeetRoomsList');
+    if (!el) return;
+    const rooms = getGmeetRooms();
+    if (!rooms.length) {
+        el.innerHTML = '<div style="font-size:.8rem;color:var(--l);padding:.5rem 0">Sin salas configuradas. Haz clic en "Agregar sala".</div>';
+        return;
+    }
+    el.innerHTML = rooms.map((r, i) => `
+        <div style="display:grid;grid-template-columns:1fr 1.6fr auto;gap:.5rem;align-items:center">
+            <input class="fc" style="font-size:.82rem;padding:.45rem .7rem" placeholder="Nombre (ej: Sala Elena)"
+                value="${r.nombre}" oninput="updateGmeetRoom(${i},'nombre',this.value)">
+            <input class="fc" style="font-size:.82rem;padding:.45rem .7rem" placeholder="https://meet.google.com/..."
+                value="${r.url}" oninput="updateGmeetRoom(${i},'url',this.value)">
+            <button onclick="removeGmeetRoom(${i})" style="background:rgba(239,68,68,.1);color:var(--err);border:none;cursor:pointer;border-radius:var(--r);padding:.42rem .6rem;font-size:.85rem;display:flex;align-items:center">
+                <i class="ph ph-trash"></i>
+            </button>
+        </div>`).join('');
+}
+
+function addGmeetRoom() {
+    const rooms = getGmeetRooms();
+    rooms.push({ nombre: '', url: '' });
+    saveGmeetRooms(rooms);
+    renderGmeetRooms();
+}
+function removeGmeetRoom(i) {
+    const rooms = getGmeetRooms();
+    rooms.splice(i, 1);
+    saveGmeetRooms(rooms);
+    renderGmeetRooms();
+}
+function updateGmeetRoom(i, field, val) {
+    const rooms = getGmeetRooms();
+    if (rooms[i]) { rooms[i][field] = val; saveGmeetRooms(rooms); }
+}
+
 function saveInt(){
     if(currentIntId === 'gmeet'){
-        const url = document.getElementById('gmeetUrlInput')?.value.trim() || '';
-        if(url) localStorage.setItem('gmeet_url', url);
         const int = integrations.find(i=>i.id==='gmeet');
-        if(int) int.connected = true;
+        if(int) int.connected = getGmeetRooms().length > 0;
         renderIntegrations();
         closeIntModal();
-        showT('✅ Google Meet configurado correctamente');
+        showT('✅ Salas de Google Meet guardadas');
         return;
     }
     const key = document.getElementById('intFieldKey').value;
@@ -937,7 +975,7 @@ async function openClaseModal(id) {
         document.getElementById('claseDesc').value = c.descripcion || '';
         document.getElementById('claseFecha').value = c.fecha_inicio ? c.fecha_inicio.slice(0,16) : '';
         document.getElementById('claseDuracion').value = c.duracion_min;
-        document.getElementById('claseMeet').value = c.meet_url || '';
+        populateMeetSelector(c.meet_url || '');
         document.getElementById('claseYT').value = c.youtube_id || '';
         document.getElementById('claseEstado').value = c.estado;
         document.getElementById('claseCurso').value = c.curso_id || '';
@@ -948,7 +986,7 @@ async function openClaseModal(id) {
         document.getElementById('claseDesc').value = '';
         document.getElementById('claseFecha').value = '';
         document.getElementById('claseDuracion').value = 60;
-        document.getElementById('claseMeet').value = '';
+        populateMeetSelector('');
         document.getElementById('claseYT').value = '';
         document.getElementById('claseEstado').value = 'programada';
         document.getElementById('claseCurso').value = '';
@@ -965,7 +1003,11 @@ async function guardarClase() {
         descripcion: document.getElementById('claseDesc').value.trim() || null,
         fecha_inicio: document.getElementById('claseFecha').value,
         duracion_min: parseInt(document.getElementById('claseDuracion').value) || 60,
-        meet_url: document.getElementById('claseMeet').value.trim() || null,
+        meet_url: (() => {
+            const sel = document.getElementById('claseMeetSel').value;
+            if (sel === '__custom__') return document.getElementById('claseMeet').value.trim() || null;
+            return sel || null;
+        })(),
         youtube_id: document.getElementById('claseYT').value.trim() || null,
         estado: document.getElementById('claseEstado').value,
         curso_id: document.getElementById('claseCurso').value || null
@@ -985,6 +1027,36 @@ async function guardarClase() {
         closeClaseModal();
         fetchClases();
     } catch(e) { showT('⚠️ Error de conexión'); }
+}
+
+function onMeetSelChange() {
+    const sel = document.getElementById('claseMeetSel');
+    const inp = document.getElementById('claseMeet');
+    if (sel.value === '__custom__') {
+        inp.style.display = 'block';
+        inp.focus();
+    } else {
+        inp.style.display = 'none';
+        inp.value = '';
+    }
+}
+
+function populateMeetSelector(currentUrl) {
+    const sel = document.getElementById('claseMeetSel');
+    const rooms = getGmeetRooms();
+    sel.innerHTML = '<option value="">— Sin sala —</option>' +
+        rooms.map(r => `<option value="${r.url}" ${currentUrl === r.url ? 'selected' : ''}>${r.nombre || r.url}</option>`).join('') +
+        '<option value="__custom__">✏️ URL personalizada...</option>';
+
+    // Si la URL actual no está en las salas guardadas, mostrar el input
+    const inp = document.getElementById('claseMeet');
+    if (currentUrl && !rooms.find(r => r.url === currentUrl)) {
+        sel.value = '__custom__';
+        inp.style.display = 'block';
+        inp.value = currentUrl;
+    } else {
+        inp.style.display = 'none';
+    }
 }
 
 function editClase(id) { openClaseModal(id); }
