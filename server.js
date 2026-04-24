@@ -864,6 +864,70 @@ app.delete('/api/admin/inscripciones/:id', verifyToken, async (req, res) => {
     } catch (e) { console.error(e); res.status(500).json({ error: 'Error al eliminar inscripción' }); }
 });
 
+// Materiales descargables del estudiante (lecciones tipo arquivo)
+app.get('/api/mis-materiales', verifyToken, async (req, res) => {
+    try {
+        const [rows] = await pool.query(`
+            SELECT l.id, l.titulo, l.descripcion, l.video_url as url, l.tipo,
+                   c.id as curso_id, c.titulo as curso_titulo,
+                   m.titulo as modulo_titulo
+            FROM lecciones l
+            JOIN modulos m ON l.modulo_id = m.id
+            JOIN cursos c ON m.curso_id = c.id
+            JOIN inscripciones i ON c.id = i.curso_id
+            WHERE i.usuario_id = ? AND l.tipo = 'arquivo'
+            ORDER BY c.titulo, m.titulo, l.orden
+        `, [req.usuario.id]);
+        res.json(rows);
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Error al obtener materiales' }); }
+});
+
+// Ranking de estudiantes por lecciones completadas
+app.get('/api/ranking', verifyToken, async (req, res) => {
+    try {
+        const [rows] = await pool.query(`
+            SELECT u.id, u.nombre,
+                   COUNT(DISTINCT pl.leccion_id) as lecciones_completadas,
+                   COUNT(DISTINCT i.curso_id) as cursos_inscritos
+            FROM usuarios u
+            LEFT JOIN progreso_lecciones pl ON u.id = pl.usuario_id
+            LEFT JOIN inscripciones i ON u.id = i.usuario_id
+            WHERE u.rol = 'estudiante' AND u.activo = 1
+            GROUP BY u.id, u.nombre
+            ORDER BY lecciones_completadas DESC, cursos_inscritos DESC
+            LIMIT 20
+        `);
+        res.json({ ranking: rows, mi_id: req.usuario.id });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Error al obtener ranking' }); }
+});
+
+// Actualizar perfil (nombre y email)
+app.put('/api/usuarios/perfil', verifyToken, async (req, res) => {
+    const { nombre, email } = req.body;
+    if (!validStr(nombre, 2, 100)) return res.status(400).json({ error: 'Nombre inválido' });
+    if (!validEmail(email)) return res.status(400).json({ error: 'Email inválido' });
+    try {
+        const [[dup]] = await pool.query('SELECT id FROM usuarios WHERE email = ? AND id != ?', [email.trim(), req.usuario.id]);
+        if (dup) return res.status(409).json({ error: 'Ese correo ya está en uso por otra cuenta' });
+        await pool.query('UPDATE usuarios SET nombre = ?, email = ? WHERE id = ?', [nombre.trim(), email.trim(), req.usuario.id]);
+        res.json({ ok: true });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Error al actualizar perfil' }); }
+});
+
+// Cambiar contraseña
+app.put('/api/usuarios/password', verifyToken, async (req, res) => {
+    const { password_actual, password_nuevo } = req.body;
+    if (!validStr(password_nuevo, 6, 100)) return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 6 caracteres' });
+    try {
+        const [[u]] = await pool.query('SELECT password FROM usuarios WHERE id = ?', [req.usuario.id]);
+        const ok = await bcrypt.compare(password_actual || '', u.password);
+        if (!ok) return res.status(401).json({ error: 'Contraseña actual incorrecta' });
+        const hash = await bcrypt.hash(password_nuevo, 10);
+        await pool.query('UPDATE usuarios SET password = ? WHERE id = ?', [hash, req.usuario.id]);
+        res.json({ ok: true });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Error al cambiar contraseña' }); }
+});
+
 // Any Uncaught API routes return 404
 app.use('/api', (req, res) => {
     res.status(404).json({ error: 'Endpoint no encontrado' });

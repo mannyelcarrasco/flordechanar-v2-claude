@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración | Flor de Chañar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root { --sidebar-width:260px; }
+        .sidebar { width:var(--sidebar-width); background:var(--secondary); min-height:100vh; position:fixed; display:flex; flex-direction:column; padding:1.5rem 0; }
+        .sidebar-logo { display:flex; align-items:center; gap:.7rem; padding:0 1.5rem 2rem; font-family:var(--serif); font-size:1.1rem; font-weight:700; color:#fff; border-bottom:1px solid rgba(255,255,255,.08); }
+        .sidebar-section { padding:1.5rem 1rem .5rem; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:rgba(255,255,255,.35); }
+        .sidebar-nav { list-style:none; padding:0 .75rem; margin-top:.5rem; }
+        .sidebar-nav li { margin-bottom:.25rem; }
+        .sidebar-nav a { display:flex; align-items:center; gap:.75rem; padding:.72rem .85rem; border-radius:var(--r); color:rgba(255,255,255,.65); font-size:.9rem; font-weight:500; transition:var(--tr); }
+        .sidebar-nav a:hover { background:rgba(255,255,255,.07); color:#fff; }
+        .sidebar-nav a.active { background:var(--primary); color:#fff; }
+        .sidebar-user { margin-top:auto; padding:1.5rem; border-top:1px solid rgba(255,255,255,.08); display:flex; align-items:center; gap:.75rem; }
+        .user-avatar { width:36px; height:36px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; font-size:.9rem; flex-shrink:0; }
+        .user-name { font-size:.88rem; font-weight:600; color:#fff; }
+        .user-role { font-size:.75rem; color:rgba(255,255,255,.5); }
+        .main-content { margin-left:var(--sidebar-width); flex:1; padding:2rem 2.5rem; }
+
+        .page-header { margin-bottom:2rem; }
+        .page-header h1 { font-family:var(--serif); font-size:1.7rem; color:var(--secondary); }
+        .page-header p { color:var(--light); font-size:.9rem; margin-top:.3rem; }
+
+        .config-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; max-width:860px; }
+        .config-card { background:#fff; border-radius:var(--r); padding:1.75rem; box-shadow:0 2px 12px rgba(0,0,0,.05); }
+        .config-card h2 { font-family:var(--serif); font-size:1.1rem; color:var(--secondary); margin-bottom:1.25rem; display:flex; align-items:center; gap:.5rem; }
+        .config-card h2 i { color:var(--primary); }
+
+        .avatar-section { display:flex; align-items:center; gap:1.25rem; margin-bottom:1.5rem; padding-bottom:1.25rem; border-bottom:1px solid #F1F5F9; }
+        .avatar-lg { width:72px; height:72px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-size:1.8rem; font-weight:700; color:#fff; flex-shrink:0; }
+        .avatar-info { font-size:.83rem; color:var(--light); }
+        .avatar-info strong { display:block; font-size:1rem; color:var(--secondary); margin-bottom:.15rem; }
+
+        .btn-save { display:inline-flex; align-items:center; gap:.4rem; padding:.6rem 1.25rem; border-radius:var(--rf); font-size:.85rem; font-weight:600; cursor:pointer; border:none; transition:var(--tr); font-family:var(--font); background:var(--primary); color:#fff; width:100%; justify-content:center; margin-top:.5rem; }
+        .btn-save:hover { background:var(--primary-d); }
+        .btn-save:disabled { opacity:.6; cursor:default; }
+
+        .field-hint { font-size:.74rem; color:var(--light); margin-top:.3rem; }
+        .danger-zone { background:#FFF5F5; border:1.5px solid rgba(239,68,68,.2); border-radius:var(--r); padding:1.5rem; margin-top:1.5rem; max-width:860px; }
+        .danger-zone h3 { font-family:var(--serif); font-size:1rem; color:var(--danger); margin-bottom:.75rem; }
+        .btn-danger { display:inline-flex; align-items:center; gap:.4rem; padding:.55rem 1.1rem; border-radius:var(--rf); font-size:.83rem; font-weight:600; cursor:pointer; border:1.5px solid var(--danger); background:transparent; color:var(--danger); transition:var(--tr); font-family:var(--font); }
+        .btn-danger:hover { background:var(--danger); color:#fff; }
+    </style>
+</head>
+<body>
+<aside class="sidebar">
+    <div class="sidebar-logo"><img src="logo.png" style="height:26px;border-radius:50%;object-fit:cover;"> Flor de Chañar</div>
+    <div class="sidebar-section">Principal</div>
+    <ul class="sidebar-nav">
+        <li><a href="dashboard.html"><i class="ph ph-house"></i> Mi Aula</a></li>
+        <li><a href="escuela.html"><i class="ph ph-books"></i> Catálogo</a></li>
+        <li><a href="clase-vivo.html"><i class="ph ph-video-camera"></i> Clases en Vivo</a></li>
+        <li><a href="materiales.html"><i class="ph ph-download-simple"></i> Mis Materiales</a></li>
+    </ul>
+    <div class="sidebar-section">Comunidad</div>
+    <ul class="sidebar-nav">
+        <li><a href="foro.html"><i class="ph ph-chats-circle"></i> Foro</a></li>
+        <li><a href="ranking.html"><i class="ph ph-trophy"></i> Ranking</a></li>
+    </ul>
+    <div class="sidebar-section">Cuenta</div>
+    <ul class="sidebar-nav">
+        <li><a href="configuracion.html" class="active"><i class="ph ph-gear"></i> Configuración</a></li>
+        <li><a href="login.html"><i class="ph ph-sign-out"></i> Cerrar Sesión</a></li>
+    </ul>
+    <div class="sidebar-user">
+        <div class="user-avatar" id="sbAv">M</div>
+        <div><div class="user-name" id="sbNombre">Cargando...</div><div class="user-role">Estudiante</div></div>
+    </div>
+</aside>
+
+<main class="main-content">
+    <div class="page-header">
+        <h1><i class="ph ph-gear" style="color:var(--primary)"></i> Configuración</h1>
+        <p>Administra tu perfil y seguridad de cuenta</p>
+    </div>
+
+    <div class="config-grid">
+        <!-- Perfil -->
+        <div class="config-card">
+            <h2><i class="ph ph-user-circle"></i> Información Personal</h2>
+            <div class="avatar-section">
+                <div class="avatar-lg" id="avatarLg">M</div>
+                <div class="avatar-info">
+                    <strong id="avatarNombre">Cargando...</strong>
+                    <span id="avatarEmail">—</span>
+                </div>
+            </div>
+            <div class="fg">
+                <label class="fl">Nombre completo</label>
+                <input type="text" class="fc" id="perfNombre" placeholder="Tu nombre">
+            </div>
+            <div class="fg">
+                <label class="fl">Correo electrónico</label>
+                <input type="email" class="fc" id="perfEmail" placeholder="correo@ejemplo.cl">
+                <div class="field-hint">Se usa para iniciar sesión.</div>
+            </div>
+            <button class="btn-save" id="btnPerfil" onclick="guardarPerfil()">
+                <i class="ph ph-floppy-disk"></i> Guardar cambios
+            </button>
+        </div>
+
+        <!-- Seguridad -->
+        <div class="config-card">
+            <h2><i class="ph ph-lock-key"></i> Cambiar Contraseña</h2>
+            <div class="fg">
+                <label class="fl">Contraseña actual</label>
+                <input type="password" class="fc" id="passActual" placeholder="••••••••">
+            </div>
+            <div class="fg">
+                <label class="fl">Nueva contraseña</label>
+                <input type="password" class="fc" id="passNueva" placeholder="Mínimo 6 caracteres">
+            </div>
+            <div class="fg">
+                <label class="fl">Confirmar nueva contraseña</label>
+                <input type="password" class="fc" id="passConfirm" placeholder="Repite la nueva contraseña">
+            </div>
+            <button class="btn-save" id="btnPass" onclick="cambiarPassword()">
+                <i class="ph ph-shield-check"></i> Actualizar contraseña
+            </button>
+        </div>
+    </div>
+
+    <div class="danger-zone">
+        <h3><i class="ph ph-warning"></i> Zona de peligro</h3>
+        <p style="font-size:.85rem;color:var(--light);margin-bottom:1rem">Estas acciones son irreversibles. Procede con cuidado.</p>
+        <button class="btn-danger" onclick="cerrarSesion()"><i class="ph ph-sign-out"></i> Cerrar sesión en todos los dispositivos</button>
+    </div>
+</main>
+
+<div class="toast" id="toast"><i class="ph ph-check-circle" id="tI"></i><span id="tM"></span></div>
+<script src="shared.js"></script>
+<script>
+window.onload = () => {
+    const token = getToken();
+    if (!token) return;
+    const p = decodeToken();
+    if (!p) { location.href = 'login.html'; return; }
+
+    document.getElementById('sbNombre').textContent = p.nombre || '';
+    document.getElementById('sbAv').textContent = (p.nombre || 'M')[0].toUpperCase();
+    document.getElementById('avatarLg').textContent = (p.nombre || 'M')[0].toUpperCase();
+    document.getElementById('avatarNombre').textContent = p.nombre || '';
+    document.getElementById('avatarEmail').textContent = p.email || '';
+    document.getElementById('perfNombre').value = p.nombre || '';
+    document.getElementById('perfEmail').value = p.email || '';
+};
+
+async function guardarPerfil() {
+    const nombre = document.getElementById('perfNombre').value.trim();
+    const email = document.getElementById('perfEmail').value.trim();
+    if (!nombre || !email) return showToast('Completa todos los campos', 'ph-warning');
+
+    const btn = document.getElementById('btnPerfil');
+    btn.disabled = true;
+    try {
+        const res = await fetch('/api/usuarios/perfil', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+            body: JSON.stringify({ nombre, email })
+        });
+        const d = await res.json();
+        if (!res.ok) return showToast(d.error || 'Error al guardar', 'ph-warning');
+        showToast('Perfil actualizado correctamente', 'ph-check-circle');
+        document.getElementById('avatarNombre').textContent = nombre;
+        document.getElementById('avatarEmail').textContent = email;
+        document.getElementById('avatarLg').textContent = nombre[0].toUpperCase();
+        document.getElementById('sbAv').textContent = nombre[0].toUpperCase();
+        document.getElementById('sbNombre').textContent = nombre;
+        localStorage.setItem('nombre', nombre);
+    } catch(e) {
+        showToast('Error de conexión', 'ph-warning');
+    } finally { btn.disabled = false; }
+}
+
+async function cambiarPassword() {
+    const actual = document.getElementById('passActual').value;
+    const nueva = document.getElementById('passNueva').value;
+    const confirm = document.getElementById('passConfirm').value;
+    if (!actual || !nueva) return showToast('Completa todos los campos', 'ph-warning');
+    if (nueva !== confirm) return showToast('Las contraseñas no coinciden', 'ph-warning');
+    if (nueva.length < 6) return showToast('Mínimo 6 caracteres', 'ph-warning');
+
+    const btn = document.getElementById('btnPass');
+    btn.disabled = true;
+    try {
+        const res = await fetch('/api/usuarios/password', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+            body: JSON.stringify({ password_actual: actual, password_nuevo: nueva })
+        });
+        const d = await res.json();
+        if (!res.ok) return showToast(d.error || 'Error al cambiar', 'ph-warning');
+        showToast('Contraseña actualizada', 'ph-check-circle');
+        ['passActual','passNueva','passConfirm'].forEach(id => document.getElementById(id).value = '');
+    } catch(e) {
+        showToast('Error de conexión', 'ph-warning');
+    } finally { btn.disabled = false; }
+}
+
+function cerrarSesion() {
+    if (!confirm('¿Cerrar sesión en todos los dispositivos?')) return;
+    localStorage.clear();
+    location.href = 'login.html';
+}
+</script>
+</body>
+</html>

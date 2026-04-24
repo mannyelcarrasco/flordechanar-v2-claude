@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ranking | Flor de Chañar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root { --sidebar-width:260px; }
+        .sidebar { width:var(--sidebar-width); background:var(--secondary); min-height:100vh; position:fixed; display:flex; flex-direction:column; padding:1.5rem 0; }
+        .sidebar-logo { display:flex; align-items:center; gap:.7rem; padding:0 1.5rem 2rem; font-family:var(--serif); font-size:1.1rem; font-weight:700; color:#fff; border-bottom:1px solid rgba(255,255,255,.08); }
+        .sidebar-section { padding:1.5rem 1rem .5rem; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:rgba(255,255,255,.35); }
+        .sidebar-nav { list-style:none; padding:0 .75rem; margin-top:.5rem; }
+        .sidebar-nav li { margin-bottom:.25rem; }
+        .sidebar-nav a { display:flex; align-items:center; gap:.75rem; padding:.72rem .85rem; border-radius:var(--r); color:rgba(255,255,255,.65); font-size:.9rem; font-weight:500; transition:var(--tr); }
+        .sidebar-nav a:hover { background:rgba(255,255,255,.07); color:#fff; }
+        .sidebar-nav a.active { background:var(--primary); color:#fff; }
+        .sidebar-user { margin-top:auto; padding:1.5rem; border-top:1px solid rgba(255,255,255,.08); display:flex; align-items:center; gap:.75rem; }
+        .user-avatar { width:36px; height:36px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; font-size:.9rem; flex-shrink:0; }
+        .user-name { font-size:.88rem; font-weight:600; color:#fff; }
+        .user-role { font-size:.75rem; color:rgba(255,255,255,.5); }
+        .main-content { margin-left:var(--sidebar-width); flex:1; padding:2rem 2.5rem; }
+
+        .page-header { margin-bottom:2rem; }
+        .page-header h1 { font-family:var(--serif); font-size:1.7rem; color:var(--secondary); }
+        .page-header p { color:var(--light); font-size:.9rem; margin-top:.3rem; }
+
+        .podium { display:flex; align-items:flex-end; justify-content:center; gap:1rem; margin-bottom:2.5rem; }
+        .podium-item { display:flex; flex-direction:column; align-items:center; gap:.5rem; }
+        .podium-avatar { border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; font-size:1.1rem; border:3px solid transparent; }
+        .podium-avatar.p1 { width:72px; height:72px; background:var(--primary); border-color:#F59E0B; }
+        .podium-avatar.p2 { width:58px; height:58px; background:#64748B; border-color:#94A3B8; }
+        .podium-avatar.p3 { width:52px; height:52px; background:#92400E; border-color:#D97706; }
+        .podium-name { font-size:.82rem; font-weight:600; color:var(--secondary); text-align:center; max-width:90px; }
+        .podium-score { font-size:.75rem; color:var(--light); }
+        .podium-base { border-radius:10px 10px 0 0; display:flex; align-items:center; justify-content:center; font-size:1.5rem; font-weight:700; color:rgba(255,255,255,.9); }
+        .podium-base.p1 { width:90px; height:80px; background:linear-gradient(to bottom, #F59E0B, #D97706); }
+        .podium-base.p2 { width:80px; height:60px; background:linear-gradient(to bottom, #94A3B8, #64748B); }
+        .podium-base.p3 { width:72px; height:44px; background:linear-gradient(to bottom, #D97706, #92400E); }
+
+        .ranking-list { background:#fff; border-radius:var(--r); box-shadow:0 2px 12px rgba(0,0,0,.05); overflow:hidden; max-width:700px; }
+        .ranking-row { display:flex; align-items:center; gap:1rem; padding:1rem 1.25rem; border-bottom:1px solid #F1F5F9; transition:var(--tr); }
+        .ranking-row:last-child { border-bottom:none; }
+        .ranking-row:hover { background:#FAFAF8; }
+        .ranking-row.is-me { background:rgba(104,122,97,.06); border-left:3px solid var(--primary); }
+        .rank-num { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.82rem; font-weight:700; flex-shrink:0; }
+        .rank-num.gold { background:#FEF3C7; color:#D97706; }
+        .rank-num.silver { background:#F1F5F9; color:#475569; }
+        .rank-num.bronze { background:#FEF2F2; color:#B91C1C; }
+        .rank-num.normal { background:var(--bg-alt); color:var(--light); }
+        .rank-num.me { background:var(--primary); color:#fff; }
+        .rank-avatar { width:38px; height:38px; border-radius:50%; background:var(--bg-alt); display:flex; align-items:center; justify-content:center; font-weight:600; font-size:.9rem; color:var(--primary-d); flex-shrink:0; }
+        .rank-name { flex:1; font-size:.9rem; font-weight:500; color:var(--secondary); }
+        .rank-name small { display:block; font-size:.74rem; color:var(--light); font-weight:400; }
+        .rank-stat { text-align:right; }
+        .rank-lessons { font-size:.95rem; font-weight:700; color:var(--secondary); }
+        .rank-courses { font-size:.74rem; color:var(--light); }
+
+        .empty-state { text-align:center; padding:4rem 2rem; color:var(--light); }
+        .empty-state i { font-size:3rem; display:block; margin-bottom:1rem; color:#D1D5DB; }
+    </style>
+</head>
+<body>
+<aside class="sidebar">
+    <div class="sidebar-logo"><img src="logo.png" style="height:26px;border-radius:50%;object-fit:cover;"> Flor de Chañar</div>
+    <div class="sidebar-section">Principal</div>
+    <ul class="sidebar-nav">
+        <li><a href="dashboard.html"><i class="ph ph-house"></i> Mi Aula</a></li>
+        <li><a href="escuela.html"><i class="ph ph-books"></i> Catálogo</a></li>
+        <li><a href="clase-vivo.html"><i class="ph ph-video-camera"></i> Clases en Vivo</a></li>
+        <li><a href="materiales.html"><i class="ph ph-download-simple"></i> Mis Materiales</a></li>
+    </ul>
+    <div class="sidebar-section">Comunidad</div>
+    <ul class="sidebar-nav">
+        <li><a href="foro.html"><i class="ph ph-chats-circle"></i> Foro</a></li>
+        <li><a href="ranking.html" class="active"><i class="ph ph-trophy"></i> Ranking</a></li>
+    </ul>
+    <div class="sidebar-section">Cuenta</div>
+    <ul class="sidebar-nav">
+        <li><a href="configuracion.html"><i class="ph ph-gear"></i> Configuración</a></li>
+        <li><a href="login.html"><i class="ph ph-sign-out"></i> Cerrar Sesión</a></li>
+    </ul>
+    <div class="sidebar-user">
+        <div class="user-avatar" id="sbAv">M</div>
+        <div><div class="user-name" id="sbNombre">Cargando...</div><div class="user-role">Estudiante</div></div>
+    </div>
+</aside>
+
+<main class="main-content">
+    <div class="page-header">
+        <h1><i class="ph ph-trophy" style="color:var(--xp)"></i> Ranking del Mes</h1>
+        <p>Las estudiantes con más lecciones completadas este período</p>
+    </div>
+
+    <div class="podium" id="podium" style="display:none">
+        <!-- rendered by JS -->
+    </div>
+
+    <div class="ranking-list" id="rankingList">
+        <div class="empty-state"><i class="ph ph-spinner"></i> Cargando ranking...</div>
+    </div>
+</main>
+
+<script src="shared.js"></script>
+<script>
+window.onload = async () => {
+    const token = getToken();
+    if (!token) return;
+    const p = decodeToken();
+    if (p) {
+        document.getElementById('sbNombre').textContent = p.nombre || '';
+        document.getElementById('sbAv').textContent = (p.nombre || 'M')[0].toUpperCase();
+    }
+    await cargarRanking();
+};
+
+async function cargarRanking() {
+    try {
+        const token = getToken();
+        const res = await fetch('/api/ranking', { headers: { 'Authorization': 'Bearer ' + token } });
+        if (!res.ok) throw new Error();
+        const { ranking, mi_id } = await res.json();
+
+        if (ranking.length === 0) {
+            document.getElementById('rankingList').innerHTML =
+                '<div class="empty-state"><i class="ph ph-users-three"></i><p>Aún no hay datos de progreso.</p></div>';
+            return;
+        }
+
+        // Podium (top 3)
+        const podiumEl = document.getElementById('podium');
+        const top3 = ranking.slice(0, 3);
+        if (top3.length >= 2) {
+            podiumEl.style.display = 'flex';
+            const order = top3.length >= 3 ? [top3[1], top3[0], top3[2]] : [top3[0], top3[1]];
+            const classes = top3.length >= 3 ? ['p2','p1','p3'] : ['p1','p2'];
+            const medals = ['🥈','🥇','🥉'];
+            const nums = ['2','1','3'];
+            podiumEl.innerHTML = order.map((u, i) => `
+                <div class="podium-item">
+                    <div class="podium-avatar ${classes[i]}">${(u.nombre||'?')[0].toUpperCase()}</div>
+                    <div class="podium-name">${u.nombre.split(' ')[0]}</div>
+                    <div class="podium-score">${u.lecciones_completadas} lecciones</div>
+                    <div class="podium-base ${classes[i]}">${medals[i]}</div>
+                </div>
+            `).join('');
+        }
+
+        // Full list
+        const rankNumClass = (i) => i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : 'normal';
+        document.getElementById('rankingList').innerHTML = ranking.map((u, i) => {
+            const isMe = u.id === mi_id;
+            return `
+            <div class="ranking-row ${isMe ? 'is-me' : ''}">
+                <div class="rank-num ${isMe ? 'me' : rankNumClass(i)}">${isMe ? 'Tú' : i + 1}</div>
+                <div class="rank-avatar">${(u.nombre||'?')[0].toUpperCase()}</div>
+                <div class="rank-name">
+                    ${u.nombre}${isMe ? ' <strong style="color:var(--primary)">(Tú)</strong>' : ''}
+                    <small>${u.cursos_inscritos} curso${u.cursos_inscritos !== 1 ? 's' : ''} inscrito${u.cursos_inscritos !== 1 ? 's' : ''}</small>
+                </div>
+                <div class="rank-stat">
+                    <div class="rank-lessons">${u.lecciones_completadas} <span style="font-size:.75rem;font-weight:400;color:var(--light)">lecciones</span></div>
+                </div>
+            </div>`;
+        }).join('');
+
+    } catch(e) {
+        document.getElementById('rankingList').innerHTML =
+            '<div class="empty-state"><i class="ph ph-warning"></i><p>Error al cargar el ranking.</p></div>';
+    }
+}
+</script>
+</body>
+</html>

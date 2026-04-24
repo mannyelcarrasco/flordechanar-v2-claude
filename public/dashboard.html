@@ -179,20 +179,20 @@
     <ul class="sidebar-nav">
         <li><a href="dashboard.html" class="active"><i class="ph ph-house"></i> Mi Aula</a></li>
         <li><a href="escuela.html"><i class="ph ph-books"></i> Catálogo <span class="badge-side">Nuevo</span></a></li>
-        <li><a href="#" onclick="showTab(event,'live')"><i class="ph ph-video-camera"></i> Clases en Vivo</a></li>
-        <li><a href="#"><i class="ph ph-download-simple"></i> Mis Materiales</a></li>
+        <li><a href="clase-vivo.html"><i class="ph ph-video-camera"></i> Clases en Vivo</a></li>
+        <li><a href="materiales.html"><i class="ph ph-download-simple"></i> Mis Materiales</a></li>
     </ul>
 
     <div class="sidebar-section">Comunidad</div>
     <ul class="sidebar-nav">
-        <li><a href="#"><i class="ph ph-chats-circle"></i> Foro <span class="badge-side">3</span></a></li>
-        <li><a href="#"><i class="ph ph-trophy"></i> Ranking</a></li>
-        <li><a href="#"><i class="ph ph-certificate"></i> Mis Logros</a></li>
+        <li><a href="foro.html"><i class="ph ph-chats-circle"></i> Foro <span class="badge-side">3</span></a></li>
+        <li><a href="ranking.html"><i class="ph ph-trophy"></i> Ranking</a></li>
+        <li><a href="#logros" onclick="scrollToLogros(event)"><i class="ph ph-certificate"></i> Mis Logros</a></li>
     </ul>
 
     <div class="sidebar-section">Cuenta</div>
     <ul class="sidebar-nav">
-        <li><a href="#"><i class="ph ph-gear"></i> Configuración</a></li>
+        <li><a href="configuracion.html"><i class="ph ph-gear"></i> Configuración</a></li>
         <li><a href="login.html"><i class="ph ph-sign-out"></i> Cerrar Sesión</a></li>
     </ul>
 
@@ -317,7 +317,7 @@
             </div>
 
             <!-- Badges -->
-            <div class="sidebar-card">
+            <div class="sidebar-card" id="logros">
                 <h3><i class="ph ph-medal" style="color:var(--color-accent);"></i> Mis Logros</h3>
                 <div class="badges-grid">
                     <div class="badge-box earned" title="Primer paso"><div>🌱</div><div class="badge-label">Inicio</div></div>
@@ -344,6 +344,11 @@
 
 <script src="shared.js"></script>
 <script>
+    function scrollToLogros(e) {
+        e.preventDefault();
+        document.getElementById('logros').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
     // Animate XP bar on load
     window.addEventListener('load', async () => {
         setTimeout(() => {

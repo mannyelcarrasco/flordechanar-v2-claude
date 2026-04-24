@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Foro | Flor de Chañar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root { --sidebar-width:260px; }
+        .sidebar { width:var(--sidebar-width); background:var(--secondary); min-height:100vh; position:fixed; display:flex; flex-direction:column; padding:1.5rem 0; }
+        .sidebar-logo { display:flex; align-items:center; gap:.7rem; padding:0 1.5rem 2rem; font-family:var(--serif); font-size:1.1rem; font-weight:700; color:#fff; border-bottom:1px solid rgba(255,255,255,.08); }
+        .sidebar-section { padding:1.5rem 1rem .5rem; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:rgba(255,255,255,.35); }
+        .sidebar-nav { list-style:none; padding:0 .75rem; margin-top:.5rem; }
+        .sidebar-nav li { margin-bottom:.25rem; }
+        .sidebar-nav a { display:flex; align-items:center; gap:.75rem; padding:.72rem .85rem; border-radius:var(--r); color:rgba(255,255,255,.65); font-size:.9rem; font-weight:500; transition:var(--tr); }
+        .sidebar-nav a:hover { background:rgba(255,255,255,.07); color:#fff; }
+        .sidebar-nav a.active { background:var(--primary); color:#fff; }
+        .sidebar-nav .badge-side { margin-left:auto; background:var(--accent); color:#fff; font-size:.7rem; font-weight:700; padding:.2rem .5rem; border-radius:var(--rf); }
+        .sidebar-user { margin-top:auto; padding:1.5rem; border-top:1px solid rgba(255,255,255,.08); display:flex; align-items:center; gap:.75rem; }
+        .user-avatar { width:36px; height:36px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; font-size:.9rem; flex-shrink:0; }
+        .user-name { font-size:.88rem; font-weight:600; color:#fff; }
+        .user-role { font-size:.75rem; color:rgba(255,255,255,.5); }
+        .main-content { margin-left:var(--sidebar-width); flex:1; padding:2rem 2.5rem; }
+
+        .page-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.75rem; }
+        .page-header h1 { font-family:var(--serif); font-size:1.7rem; color:var(--secondary); }
+        .page-header p { color:var(--light); font-size:.9rem; margin-top:.3rem; }
+
+        .foro-layout { display:grid; grid-template-columns:1fr 260px; gap:1.5rem; }
+
+        /* Posts */
+        .post-compose { background:#fff; border-radius:var(--r); padding:1.25rem; box-shadow:0 2px 12px rgba(0,0,0,.04); margin-bottom:1.25rem; }
+        .compose-row { display:flex; gap:.85rem; align-items:flex-start; }
+        .compose-av { width:36px; height:36px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; font-size:.85rem; flex-shrink:0; }
+        .compose-input { flex:1; border:1.5px solid #E5E7EB; border-radius:10px; padding:.7rem 1rem; font-family:var(--font); font-size:.88rem; resize:none; outline:none; transition:var(--tr); min-height:70px; }
+        .compose-input:focus { border-color:var(--primary); }
+        .compose-actions { display:flex; justify-content:space-between; align-items:center; margin-top:.75rem; padding-top:.75rem; border-top:1px solid #F1F5F9; }
+        .compose-tags { display:flex; gap:.5rem; }
+        .tag-btn { padding:.25rem .65rem; border-radius:var(--rf); border:1.5px solid #E5E7EB; background:transparent; font-size:.75rem; font-weight:600; cursor:pointer; font-family:var(--font); color:var(--light); transition:var(--tr); }
+        .tag-btn:hover, .tag-btn.sel { border-color:var(--primary); color:var(--primary); background:rgba(104,122,97,.07); }
+        .btn-post { padding:.5rem 1.1rem; border-radius:var(--rf); background:var(--primary); color:#fff; border:none; font-size:.84rem; font-weight:600; cursor:pointer; font-family:var(--font); transition:var(--tr); display:flex; align-items:center; gap:.35rem; }
+        .btn-post:hover { background:var(--primary-d); }
+        .btn-post:disabled { opacity:.5; cursor:default; }
+
+        .post-card { background:#fff; border-radius:var(--r); padding:1.25rem; box-shadow:0 2px 10px rgba(0,0,0,.04); margin-bottom:1rem; transition:var(--tr); }
+        .post-card:hover { box-shadow:0 4px 18px rgba(0,0,0,.07); }
+        .post-header { display:flex; align-items:center; gap:.75rem; margin-bottom:.85rem; }
+        .post-av { width:36px; height:36px; border-radius:50%; background:var(--bg-alt); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.85rem; color:var(--primary-d); flex-shrink:0; }
+        .post-meta { flex:1; }
+        .post-author { font-size:.88rem; font-weight:600; color:var(--secondary); }
+        .post-time { font-size:.74rem; color:var(--light); }
+        .post-tag { display:inline-flex; align-items:center; gap:.2rem; padding:.15rem .5rem; border-radius:var(--rf); font-size:.68rem; font-weight:700; margin-left:.5rem; }
+        .tag-duda { background:rgba(59,130,246,.1); color:var(--info); }
+        .tag-exp { background:rgba(104,122,97,.1); color:var(--primary-d); }
+        .tag-anuncio { background:rgba(239,68,68,.1); color:var(--danger); }
+        .tag-recurso { background:rgba(245,158,11,.1); color:var(--xp); }
+        .post-body { font-size:.9rem; color:var(--text); line-height:1.6; margin-bottom:1rem; }
+        .post-footer { display:flex; align-items:center; gap:1rem; }
+        .post-action { display:flex; align-items:center; gap:.3rem; font-size:.8rem; color:var(--light); cursor:pointer; transition:var(--tr); background:none; border:none; font-family:var(--font); padding:.2rem .4rem; border-radius:6px; }
+        .post-action:hover { color:var(--primary); background:rgba(104,122,97,.07); }
+        .post-action.liked { color:var(--danger); }
+        .post-action i { font-size:1rem; }
+
+        /* Sidebar cards */
+        .side-card { background:#fff; border-radius:var(--r); padding:1.25rem; box-shadow:0 2px 10px rgba(0,0,0,.04); margin-bottom:1.25rem; }
+        .side-card h3 { font-family:var(--serif); font-size:1rem; color:var(--secondary); margin-bottom:1rem; display:flex; align-items:center; gap:.45rem; }
+        .side-card h3 i { color:var(--primary); }
+        .topic-item { display:flex; align-items:center; justify-content:space-between; padding:.45rem 0; border-bottom:1px solid #F9F9F9; font-size:.84rem; cursor:pointer; transition:var(--tr); }
+        .topic-item:last-child { border-bottom:none; }
+        .topic-item:hover { color:var(--primary); }
+        .topic-count { font-size:.72rem; font-weight:700; color:var(--light); background:var(--bg-alt); padding:.15rem .45rem; border-radius:var(--rf); }
+        .active-user { display:flex; align-items:center; gap:.6rem; padding:.4rem 0; }
+        .active-av { width:28px; height:28px; border-radius:50%; background:var(--bg-alt); display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:700; color:var(--primary-d); }
+        .active-name { font-size:.83rem; color:var(--secondary); flex:1; }
+        .active-posts { font-size:.72rem; color:var(--light); }
+
+        @media(max-width:900px) { .foro-layout { grid-template-columns:1fr; } }
+    </style>
+</head>
+<body>
+<aside class="sidebar">
+    <div class="sidebar-logo"><img src="logo.png" style="height:26px;border-radius:50%;object-fit:cover;"> Flor de Chañar</div>
+    <div class="sidebar-section">Principal</div>
+    <ul class="sidebar-nav">
+        <li><a href="dashboard.html"><i class="ph ph-house"></i> Mi Aula</a></li>
+        <li><a href="escuela.html"><i class="ph ph-books"></i> Catálogo</a></li>
+        <li><a href="clase-vivo.html"><i class="ph ph-video-camera"></i> Clases en Vivo</a></li>
+        <li><a href="materiales.html"><i class="ph ph-download-simple"></i> Mis Materiales</a></li>
+    </ul>
+    <div class="sidebar-section">Comunidad</div>
+    <ul class="sidebar-nav">
+        <li><a href="foro.html" class="active"><i class="ph ph-chats-circle"></i> Foro <span class="badge-side" id="badgePosts">–</span></a></li>
+        <li><a href="ranking.html"><i class="ph ph-trophy"></i> Ranking</a></li>
+    </ul>
+    <div class="sidebar-section">Cuenta</div>
+    <ul class="sidebar-nav">
+        <li><a href="configuracion.html"><i class="ph ph-gear"></i> Configuración</a></li>
+        <li><a href="login.html"><i class="ph ph-sign-out"></i> Cerrar Sesión</a></li>
+    </ul>
+    <div class="sidebar-user">
+        <div class="user-avatar" id="sbAv">M</div>
+        <div><div class="user-name" id="sbNombre">Cargando...</div><div class="user-role">Estudiante</div></div>
+    </div>
+</aside>
+
+<main class="main-content">
+    <div class="page-header">
+        <div>
+            <h1><i class="ph ph-chats-circle" style="color:var(--primary)"></i> Foro de la Comunidad</h1>
+            <p>Comparte dudas, experiencias y recursos con tus compañeras</p>
+        </div>
+    </div>
+
+    <div class="foro-layout">
+        <div>
+            <!-- Compose -->
+            <div class="post-compose">
+                <div class="compose-row">
+                    <div class="compose-av" id="composeAv">M</div>
+                    <textarea class="compose-input" id="postContent" placeholder="¿Tienes una duda, experiencia o recurso para compartir?" maxlength="1000"></textarea>
+                </div>
+                <div class="compose-actions">
+                    <div class="compose-tags">
+                        <button class="tag-btn sel" data-tag="duda" onclick="selTag(this)">💬 Duda</button>
+                        <button class="tag-btn" data-tag="experiencia" onclick="selTag(this)">✨ Experiencia</button>
+                        <button class="tag-btn" data-tag="recurso" onclick="selTag(this)">📎 Recurso</button>
+                    </div>
+                    <button class="btn-post" id="btnPost" onclick="publicar()"><i class="ph ph-paper-plane-tilt"></i> Publicar</button>
+                </div>
+            </div>
+
+            <!-- Posts -->
+            <div id="postsList"></div>
+        </div>
+
+        <!-- Right sidebar -->
+        <div>
+            <div class="side-card">
+                <h3><i class="ph ph-hash"></i> Temas populares</h3>
+                <div class="topic-item"><span>Biomagnetismo</span><span class="topic-count">24</span></div>
+                <div class="topic-item"><span>Reiki</span><span class="topic-count">18</span></div>
+                <div class="topic-item"><span>Terapia Floral</span><span class="topic-count">12</span></div>
+                <div class="topic-item"><span>Masoterapia</span><span class="topic-count">9</span></div>
+                <div class="topic-item"><span>Casos Clínicos</span><span class="topic-count">7</span></div>
+            </div>
+            <div class="side-card">
+                <h3><i class="ph ph-fire"></i> Más activas esta semana</h3>
+                <div id="activeUsers">
+                    <div class="active-user"><div class="active-av">C</div><div class="active-name">Catalina R.</div><div class="active-posts">8 posts</div></div>
+                    <div class="active-user"><div class="active-av">J</div><div class="active-name">Javiera M.</div><div class="active-posts">6 posts</div></div>
+                    <div class="active-user"><div class="active-av">A</div><div class="active-name">Andrea T.</div><div class="active-posts">5 posts</div></div>
+                </div>
+            </div>
+            <div class="side-card" style="background:rgba(104,122,97,.06);border:1.5px dashed rgba(104,122,97,.25)">
+                <h3><i class="ph ph-sparkle"></i> Normas del Foro</h3>
+                <ul style="font-size:.82rem;color:var(--light);padding-left:1rem;line-height:1.8">
+                    <li>Respeta a todas las compañeras</li>
+                    <li>Evita el diagnóstico médico</li>
+                    <li>Cita las fuentes cuando compartas</li>
+                    <li>Mantén la confidencialidad de casos</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div class="toast" id="toast"><i class="ph ph-check-circle" id="tI"></i><span id="tM"></span></div>
+<script src="shared.js"></script>
+<script>
+// Posts stored in localStorage (client-side only — sin backend de foro por ahora)
+let posts = JSON.parse(localStorage.getItem('foro_posts') || '[]');
+let selectedTag = 'duda';
+let miNombre = '';
+
+window.onload = () => {
+    const token = getToken();
+    if (!token) return;
+    const p = decodeToken();
+    if (p) {
+        miNombre = p.nombre || 'Estudiante';
+        document.getElementById('sbNombre').textContent = miNombre;
+        const av = miNombre[0].toUpperCase();
+        document.getElementById('sbAv').textContent = av;
+        document.getElementById('composeAv').textContent = av;
+    }
+    renderPosts();
+};
+
+function selTag(btn) {
+    document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+    selectedTag = btn.dataset.tag;
+}
+
+function publicar() {
+    const txt = document.getElementById('postContent').value.trim();
+    if (!txt) return showToast('Escribe algo antes de publicar', 'ph-warning');
+    const post = {
+        id: Date.now(),
+        autor: miNombre,
+        contenido: txt,
+        tag: selectedTag,
+        likes: 0,
+        likedByMe: false,
+        ts: new Date().toISOString()
+    };
+    posts.unshift(post);
+    localStorage.setItem('foro_posts', JSON.stringify(posts.slice(0, 100)));
+    document.getElementById('postContent').value = '';
+    renderPosts();
+    showToast('Publicado en el foro', 'ph-chats-circle');
+}
+
+function toggleLike(id) {
+    const p = posts.find(p => p.id === id);
+    if (!p) return;
+    p.likedByMe = !p.likedByMe;
+    p.likes += p.likedByMe ? 1 : -1;
+    localStorage.setItem('foro_posts', JSON.stringify(posts));
+    renderPosts();
+}
+
+const tagInfo = {
+    duda:        { label:'Duda',       cls:'tag-duda',    icon:'ph-question' },
+    experiencia: { label:'Experiencia',cls:'tag-exp',     icon:'ph-sparkle' },
+    recurso:     { label:'Recurso',    cls:'tag-recurso', icon:'ph-paperclip' },
+    anuncio:     { label:'Anuncio',    cls:'tag-anuncio', icon:'ph-megaphone' }
+};
+
+function fmtTs(iso) {
+    const d = new Date(iso), now = new Date();
+    const diff = (now - d) / 1000;
+    if (diff < 60) return 'Ahora mismo';
+    if (diff < 3600) return `Hace ${Math.floor(diff/60)} min`;
+    if (diff < 86400) return `Hace ${Math.floor(diff/3600)} h`;
+    return d.toLocaleDateString('es-CL', { day:'numeric', month:'short' });
+}
+
+function renderPosts() {
+    const container = document.getElementById('postsList');
+    document.getElementById('badgePosts').textContent = posts.length || '–';
+
+    const sample = posts.length === 0 ? getSamplePosts() : posts;
+
+    container.innerHTML = sample.map(p => {
+        const t = tagInfo[p.tag] || tagInfo.duda;
+        return `
+        <div class="post-card">
+            <div class="post-header">
+                <div class="post-av">${(p.autor||'?')[0].toUpperCase()}</div>
+                <div class="post-meta">
+                    <span class="post-author">${p.autor}</span>
+                    <span class="post-tag ${t.cls}"><i class="ph ${t.icon}"></i> ${t.label}</span>
+                    <div class="post-time">${fmtTs(p.ts)}</div>
+                </div>
+            </div>
+            <div class="post-body">${p.contenido}</div>
+            <div class="post-footer">
+                <button class="post-action ${p.likedByMe?'liked':''}" onclick="toggleLike(${p.id})">
+                    <i class="ph ${p.likedByMe?'ph-heart-fill':'ph-heart'}"></i> ${p.likes} Me gusta
+                </button>
+                <button class="post-action"><i class="ph ph-chat-circle"></i> Responder</button>
+                <button class="post-action"><i class="ph ph-share-network"></i> Compartir</button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function getSamplePosts() {
+    return [
+        { id:1, autor:'Catalina Reyes', contenido:'¿Alguien tiene bibliografía sobre el par Hígado-Hígado? Estoy preparando la práctica del módulo 3 y no encuentro buenas fuentes en español.', tag:'duda', likes:5, likedByMe:false, ts: new Date(Date.now()-3600000).toISOString() },
+        { id:2, autor:'Javiera Morales', contenido:'Quiero compartir mi experiencia con una paciente con fibromialgia. Trabajé el protocolo de los pares emocionales y en la segunda sesión reportó 60% de mejoría en el dolor. ¡Es increíble lo que puede lograr el biomagnetismo!', tag:'experiencia', likes:12, likedByMe:false, ts: new Date(Date.now()-7200000).toISOString() },
+        { id:3, autor:'Elena Soto', contenido:'📢 Recordatorio: la clase en vivo de este jueves 19:00 h es sobre Pares Avanzados del Sistema Endocrino. Trae tus preguntas preparadas. ¡Las espero!', tag:'anuncio', likes:8, likedByMe:false, ts: new Date(Date.now()-86400000).toISOString() },
+        { id:4, autor:'Andrea Torres', contenido:'Les comparto este artículo de revisión sobre magnetismo y biología celular. Está en inglés pero vale la pena el esfuerzo: muy bien fundamentado científicamente.', tag:'recurso', likes:3, likedByMe:false, ts: new Date(Date.now()-172800000).toISOString() },
+    ];
+}
+</script>
+</body>
+</html>
