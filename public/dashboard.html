@@ -266,7 +266,7 @@
             <p id="liveMeta"></p>
         </div>
         <div>
-            <a href="clase-vivo.html" class="btn-live"><i class="ph ph-video-camera"></i> Unirse Ahora</a>
+            <a id="btnUnirse" href="clase-vivo.html" class="btn-live"><i class="ph ph-video-camera"></i> Unirse Ahora</a>
         </div>
     </div>
 
@@ -444,6 +444,17 @@
                     document.getElementById('liveTitulo').textContent = enVivo.titulo;
                     document.getElementById('liveMeta').innerHTML =
                         `Con <strong style="color:white">${enVivo.profesor_nombre}</strong> · ${tiempoStr}`;
+                    const btnUnirse = document.getElementById('btnUnirse');
+                    if (enVivo.meet_url && enVivo.meet_url.startsWith('http')) {
+                        btnUnirse.href = enVivo.meet_url;
+                        btnUnirse.target = '_blank';
+                        btnUnirse.rel = 'noopener';
+                        btnUnirse.innerHTML = '<i class="ph ph-video-camera"></i> Abrir Google Meet';
+                    } else {
+                        btnUnirse.href = 'clase-vivo.html';
+                        btnUnirse.removeAttribute('target');
+                        btnUnirse.innerHTML = '<i class="ph ph-video-camera"></i> Ver clase en vivo';
+                    }
                     document.getElementById('liveBannerDash').style.display = 'flex';
                 }
             }

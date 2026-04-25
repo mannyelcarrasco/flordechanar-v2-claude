@@ -71,6 +71,22 @@
 
         .empty-state { text-align:center; padding:3.5rem 2rem; color:var(--light); background:#fff; border-radius:var(--r); }
         .empty-state i { font-size:3rem; display:block; margin-bottom:1rem; color:#D1D5DB; }
+
+        /* Admin bar */
+        .admin-bar { background:#fff; border:1px solid #E2E8F0; border-radius:var(--r); padding:.75rem 1.25rem; margin-bottom:1.5rem; display:flex; align-items:center; gap:1rem; flex-wrap:wrap; }
+        .admin-bar span { font-size:.8rem; color:var(--light); flex:1; }
+        .btn-admin-sm { display:inline-flex; align-items:center; gap:.4rem; padding:.45rem 1rem; border-radius:var(--rf); font-size:.8rem; font-weight:600; border:none; cursor:pointer; transition:var(--tr); font-family:var(--font); }
+        .btn-config-meet { display:inline-flex; align-items:center; gap:.35rem; padding:.3rem .75rem; border-radius:var(--rf); font-size:.75rem; font-weight:600; background:rgba(104,122,97,.1); color:var(--primary); border:1px solid rgba(104,122,97,.25); cursor:pointer; transition:var(--tr); font-family:var(--font); }
+        .btn-config-meet:hover { background:rgba(104,122,97,.2); }
+        .btn-config-meet.sin-sala { background:rgba(239,68,68,.07); color:#EF4444; border-color:rgba(239,68,68,.2); }
+
+        /* Mini modal sala */
+        .mini-modal-bg { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000; display:none; align-items:center; justify-content:center; }
+        .mini-modal-bg.open { display:flex; }
+        .mini-modal { background:#fff; border-radius:var(--r); padding:1.5rem; max-width:420px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,.2); }
+        .mini-modal h4 { font-family:var(--serif); font-size:1.1rem; color:var(--secondary); margin-bottom:1rem; }
+        .mini-modal select, .mini-modal input { width:100%; padding:.6rem .85rem; border:1px solid #E2E8F0; border-radius:8px; font-size:.88rem; font-family:var(--font); margin-bottom:.75rem; }
+        .mini-modal-actions { display:flex; gap:.5rem; justify-content:flex-end; margin-top:.5rem; }
     </style>
 </head>
 <body>
@@ -105,6 +121,12 @@
         <p>Transmisiones en directo y grabaciones de clases anteriores</p>
     </div>
 
+    <div id="adminBar" style="display:none" class="admin-bar">
+        <i class="ph ph-shield-check" style="color:var(--primary)"></i>
+        <span>Vista de administrador — puedes configurar las salas Meet directamente desde aquí</span>
+        <a href="admin.html#tv" class="btn-admin-sm" style="background:var(--primary);color:#fff"><i class="ph ph-gear"></i> Gestionar clases</a>
+    </div>
+
     <div id="liveBanner" style="display:none"></div>
 
     <div class="section-title"><i class="ph ph-calendar-blank" style="color:var(--primary)"></i> Próximas Clases</div>
@@ -118,10 +140,28 @@
     </div>
 </main>
 
+<!-- Mini modal: configurar sala Meet -->
+<div class="mini-modal-bg" id="meetModalBg">
+    <div class="mini-modal">
+        <h4><i class="ph ph-video-camera" style="color:#EF4444"></i> Configurar sala Meet</h4>
+        <input type="hidden" id="meetModalClaseId">
+        <label style="font-size:.82rem;color:var(--light);display:block;margin-bottom:.35rem">Sala guardada</label>
+        <select id="meetRoomSel" onchange="onMeetRoomSelChange()">
+            <option value="">— Sin sala —</option>
+        </select>
+        <input id="meetCustomUrl" type="url" placeholder="https://meet.google.com/xxx-xxxx-xxx" style="display:none">
+        <div class="mini-modal-actions">
+            <button onclick="closeMeetModal()" style="padding:.5rem 1rem;border-radius:8px;border:1px solid #E2E8F0;background:#fff;cursor:pointer;font-family:var(--font)">Cancelar</button>
+            <button onclick="guardarSalaMeet()" style="padding:.5rem 1.25rem;border-radius:8px;border:none;background:var(--primary);color:#fff;font-weight:600;cursor:pointer;font-family:var(--font)"><i class="ph ph-floppy-disk"></i> Guardar</button>
+        </div>
+    </div>
+</div>
+
 <script src="shared.js"></script>
 <script>
 let usuarioNombre = '';
 let usuarioEmail = '';
+let esAdmin = false;
 
 window.onload = async () => {
     const token = getToken();
@@ -132,6 +172,8 @@ window.onload = async () => {
         document.getElementById('sbAv').textContent = (p.nombre || 'M')[0].toUpperCase();
         usuarioNombre = p.nombre || '';
         usuarioEmail = p.email || '';
+        esAdmin = p.rol === 'admin' || p.rol === 'profesor';
+        if (esAdmin) document.getElementById('adminBar').style.display = 'flex';
     }
     await cargarClases();
 };
@@ -163,6 +205,15 @@ async function cargarClases() {
     }
 }
 
+function configBtn(clase) {
+    if (!esAdmin) return '';
+    const hasMeet = clase.meet_url && clase.meet_url.startsWith('http');
+    return `<button onclick="openMeetModal(${clase.id},'${(clase.meet_url||'').replace(/'/g,"\\'")}','${clase.titulo.replace(/'/g,"\\'")}')"
+        class="btn-config-meet ${hasMeet ? '' : 'sin-sala'}">
+        <i class="ph ph-${hasMeet ? 'pencil' : 'plus'}"></i> ${hasMeet ? 'Sala Meet' : 'Agregar sala'}
+    </button>`;
+}
+
 function renderLiveBanner(clase) {
     const el = document.getElementById('liveBanner');
     if (!clase) { el.style.display = 'none'; return; }
@@ -182,8 +233,9 @@ function renderLiveBanner(clase) {
                 <span><i class="ph ph-clock"></i> ${fmtDate(clase.fecha_inicio,{hour:'2-digit',minute:'2-digit'})}</span>
                 ${clase.curso_titulo ? `<span class="badge-curso"><i class="ph ph-books"></i> ${clase.curso_titulo}</span>` : ''}
             </div>
+            ${configBtn(clase)}
         </div>
-        ${clase.meet_url
+        ${clase.meet_url && clase.meet_url.startsWith('http')
             ? `<a href="${clase.meet_url}" target="_blank" rel="noopener" class="btn-join">
                    <i class="ph ph-video-camera"></i> Unirse a la clase
                </a>`
@@ -223,8 +275,9 @@ function renderProximas(lista) {
                     <span><i class="ph ph-user"></i> ${c.profesor_nombre}</span>
                     ${c.curso_titulo ? `<span class="badge-curso">${c.curso_titulo}</span>` : ''}
                 </div>
+                ${configBtn(c)}
             </div>
-            ${c.meet_url
+            ${c.meet_url && c.meet_url.startsWith('http')
                 ? `<a href="${c.meet_url}" target="_blank" rel="noopener" class="upcoming-countdown">
                        <i class="ph ph-arrow-square-out"></i> ${countdown}
                    </a>`
@@ -269,6 +322,54 @@ function renderGrabaciones(lista) {
             </div>
         </div>`;
     }).join('');
+}
+
+// ── Mini-modal sala Meet ─────────────────────────────────────────────────────
+function getGmeetRooms() {
+    try { return JSON.parse(localStorage.getItem('gmeet_rooms') || '[]'); } catch { return []; }
+}
+
+function openMeetModal(claseId, currentUrl, titulo) {
+    document.getElementById('meetModalClaseId').value = claseId;
+    const sel = document.getElementById('meetRoomSel');
+    const rooms = getGmeetRooms();
+    sel.innerHTML = '<option value="">— Sin sala —</option>' +
+        rooms.map(r => `<option value="${r.url}" ${r.url === currentUrl ? 'selected' : ''}>${r.nombre}</option>`).join('') +
+        '<option value="__custom__">✏️ URL personalizada...</option>';
+    const customInput = document.getElementById('meetCustomUrl');
+    customInput.style.display = 'none';
+    customInput.value = currentUrl && !rooms.find(r => r.url === currentUrl) ? currentUrl : '';
+    if (currentUrl && !rooms.find(r => r.url === currentUrl) && currentUrl.startsWith('http')) {
+        sel.value = '__custom__';
+        customInput.style.display = 'block';
+        customInput.value = currentUrl;
+    }
+    document.getElementById('meetModalBg').classList.add('open');
+}
+
+function closeMeetModal() { document.getElementById('meetModalBg').classList.remove('open'); }
+
+function onMeetRoomSelChange() {
+    const v = document.getElementById('meetRoomSel').value;
+    document.getElementById('meetCustomUrl').style.display = v === '__custom__' ? 'block' : 'none';
+}
+
+async function guardarSalaMeet() {
+    const claseId = document.getElementById('meetModalClaseId').value;
+    const sel = document.getElementById('meetRoomSel').value;
+    const meet_url = sel === '__custom__'
+        ? document.getElementById('meetCustomUrl').value.trim() || null
+        : sel || null;
+    try {
+        const res = await fetch(`/api/clases-vivo/${claseId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+            body: JSON.stringify({ meet_url })
+        });
+        if (!res.ok) throw new Error();
+        closeMeetModal();
+        await cargarClases();
+    } catch(e) { alert('Error al guardar la sala. Intenta de nuevo.'); }
 }
 </script>
 </body>

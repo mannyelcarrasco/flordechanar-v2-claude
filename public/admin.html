@@ -334,8 +334,12 @@
                 </select>
             </div>
             <div class="fg"><label class="fl">Curso asociado (opcional)</label>
-                <select class="fc" id="claseCurso"><option value="">— General —</option></select>
+                <select class="fc" id="claseCurso" onchange="onClaseCursoChange()"><option value="">— General —</option></select>
             </div>
+        </div>
+        <div class="fg" id="claseModuloWrap" style="display:none">
+            <label class="fl"><i class="ph ph-book-open" style="color:var(--p)"></i> Módulo del curso <span style="font-size:.8rem;color:var(--l)">(aparecerá en el currículum)</span></label>
+            <select class="fc" id="claseModulo"><option value="">— Sin módulo específico —</option></select>
         </div>
         <div class="modal-actions">
             <button class="btn bo" onclick="closeClaseModal()">Cancelar</button>
@@ -955,6 +959,21 @@ function filtrarClases() {
     ));
 }
 
+async function onClaseCursoChange() {
+    const cursoId = document.getElementById('claseCurso').value;
+    const wrap = document.getElementById('claseModuloWrap');
+    const sel = document.getElementById('claseModulo');
+    if (!cursoId) { wrap.style.display = 'none'; sel.innerHTML = '<option value="">— Sin módulo específico —</option>'; return; }
+    wrap.style.display = 'block';
+    sel.innerHTML = '<option value="">Cargando...</option>';
+    try {
+        const res = await fetch(`/api/cursos/${cursoId}/curriculum`);
+        const modulos = await res.json();
+        sel.innerHTML = '<option value="">— Sin módulo específico —</option>' +
+            modulos.map(m => `<option value="${m.id}">${m.titulo}</option>`).join('');
+    } catch(e) { sel.innerHTML = '<option value="">— Error al cargar —</option>'; }
+}
+
 async function openClaseModal(id) {
     const token = localStorage.getItem('token');
     // Cargar cursos en el select
@@ -965,6 +984,9 @@ async function openClaseModal(id) {
         sel.innerHTML = '<option value="">— General —</option>' +
             cursos.map(c => `<option value="${c.id}">${c.titulo}</option>`).join('');
     } catch(e) {}
+
+    document.getElementById('claseModuloWrap').style.display = 'none';
+    document.getElementById('claseModulo').innerHTML = '<option value="">— Sin módulo específico —</option>';
 
     if (id) {
         const c = allClases.find(x => x.id === id);
@@ -979,6 +1001,7 @@ async function openClaseModal(id) {
         document.getElementById('claseYT').value = c.youtube_id || '';
         document.getElementById('claseEstado').value = c.estado;
         document.getElementById('claseCurso').value = c.curso_id || '';
+        if (c.curso_id) await onClaseCursoChange();
     } else {
         document.getElementById('claseModalTitle').textContent = 'Nueva Clase en Vivo';
         document.getElementById('claseModalId').value = '';
@@ -1010,7 +1033,8 @@ async function guardarClase() {
         })(),
         youtube_id: document.getElementById('claseYT').value.trim() || null,
         estado: document.getElementById('claseEstado').value,
-        curso_id: document.getElementById('claseCurso').value || null
+        curso_id: document.getElementById('claseCurso').value || null,
+        modulo_id: document.getElementById('claseModulo').value || null
     };
     if (!body.titulo) return showT('⚠️ El título es requerido');
     if (!body.fecha_inicio) return showT('⚠️ La fecha es requerida');
@@ -1023,7 +1047,7 @@ async function guardarClase() {
             body: JSON.stringify(body)
         });
         if (!res.ok) { const d = await res.json(); return showT('⚠️ ' + (d.error || 'Error')); }
-        showT(id ? 'Clase actualizada' : 'Clase creada correctamente');
+        showT(id ? 'Clase actualizada' : 'Clase creada — aparecerá en el currículum del curso');
         closeClaseModal();
         fetchClases();
     } catch(e) { showT('⚠️ Error de conexión'); }

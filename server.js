@@ -964,10 +964,27 @@ app.get('/api/clases-vivo', verifyToken, async (req, res) => {
     } catch (e) { console.error(e); res.status(500).json({ error: 'Error al obtener clases' }); }
 });
 
+// Helper: link a clase_vivo to a curriculum module (creates lesson if not already linked)
+async function linkClaseToModulo(claseId, moduloId, titulo) {
+    const ref = `clase_vivo:${claseId}`;
+    const [[existing]] = await pool.query(
+        'SELECT id FROM lecciones WHERE modulo_id = ? AND video_url = ?', [moduloId, ref]
+    );
+    if (existing) return; // already linked
+    const [[{ maxOrden }]] = await pool.query(
+        'SELECT COALESCE(MAX(orden),0) as maxOrden FROM lecciones WHERE modulo_id = ?', [moduloId]
+    );
+    await pool.query(
+        `INSERT INTO lecciones (modulo_id, titulo, descripcion, video_url, tipo, orden)
+         VALUES (?, ?, '', ?, 'clase_vivo', ?)`,
+        [moduloId, titulo, ref, maxOrden + 1]
+    );
+}
+
 // Crear clase (prof o admin)
 app.post('/api/clases-vivo', verifyToken, async (req, res) => {
     if (!['admin','profesor'].includes(req.usuario.rol)) return res.status(403).json({ error: 'Sin permiso' });
-    const { titulo, descripcion, fecha_inicio, duracion_min, meet_url, curso_id } = req.body;
+    const { titulo, descripcion, fecha_inicio, duracion_min, meet_url, curso_id, modulo_id } = req.body;
     if (!validStr(titulo, 3, 255)) return res.status(400).json({ error: 'Título requerido' });
     if (!fecha_inicio) return res.status(400).json({ error: 'Fecha requerida' });
     try {
@@ -976,26 +993,38 @@ app.post('/api/clases-vivo', verifyToken, async (req, res) => {
              VALUES (?, ?, ?, ?, ?, ?, ?)`,
             [titulo.trim(), descripcion||null, fecha_inicio, duracion_min||60, meet_url||null, curso_id||null, req.usuario.id]
         );
-        res.status(201).json({ id: r.insertId });
+        const claseId = r.insertId;
+        // Auto-add to curriculum if module selected
+        if (modulo_id) {
+            await linkClaseToModulo(claseId, modulo_id, titulo.trim());
+        }
+        res.status(201).json({ id: claseId });
     } catch (e) { console.error(e); res.status(500).json({ error: 'Error al crear clase' }); }
 });
 
 // Actualizar clase — también para agregar youtube_id tras la clase
 app.put('/api/clases-vivo/:id', verifyToken, async (req, res) => {
     if (!['admin','profesor'].includes(req.usuario.rol)) return res.status(403).json({ error: 'Sin permiso' });
-    const { titulo, descripcion, fecha_inicio, duracion_min, meet_url, youtube_id, estado, curso_id } = req.body;
+    const { titulo, descripcion, fecha_inicio, duracion_min, meet_url, youtube_id, estado, curso_id, modulo_id } = req.body;
     try {
         const [[cl]] = await pool.query('SELECT * FROM clases_vivo WHERE id = ?', [req.params.id]);
         if (!cl) return res.status(404).json({ error: 'Clase no encontrada' });
         if (req.usuario.rol !== 'admin' && cl.creado_por !== req.usuario.id)
             return res.status(403).json({ error: 'Solo puedes editar tus clases' });
+        const newTitulo = titulo || cl.titulo;
         await pool.query(
             `UPDATE clases_vivo SET titulo=?, descripcion=?, fecha_inicio=?, duracion_min=?,
              meet_url=?, youtube_id=?, estado=?, curso_id=? WHERE id=?`,
-            [titulo||cl.titulo, descripcion??cl.descripcion, fecha_inicio||cl.fecha_inicio,
+            [newTitulo, descripcion??cl.descripcion, fecha_inicio||cl.fecha_inicio,
              duracion_min||cl.duracion_min, meet_url??cl.meet_url, youtube_id??cl.youtube_id,
              estado||cl.estado, curso_id??cl.curso_id, req.params.id]
         );
+        // Also update lesson title in curriculum and link to new module if provided
+        const ref = `clase_vivo:${req.params.id}`;
+        await pool.query('UPDATE lecciones SET titulo=? WHERE video_url=?', [newTitulo, ref]);
+        if (modulo_id) {
+            await linkClaseToModulo(req.params.id, modulo_id, newTitulo);
+        }
         res.json({ ok: true });
     } catch (e) { console.error(e); res.status(500).json({ error: 'Error al actualizar clase' }); }
 });
