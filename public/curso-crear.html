@@ -136,7 +136,7 @@
         .lesson-drawer-footer{padding:1rem 1.5rem;border-top:1.5px solid #E5E7EB;display:flex;justify-content:flex-end;gap:.7rem;flex-shrink:0}
 
         /* Tipo de lección */
-        .lesson-type-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;margin-top:.35rem}
+        .lesson-type-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem;margin-top:.35rem}
         .ltype-btn{display:flex;flex-direction:column;align-items:center;gap:.35rem;padding:.7rem .5rem;border:2px solid #E5E7EB;border-radius:var(--r);background:var(--w);cursor:pointer;font-size:.78rem;font-weight:600;color:var(--l);transition:var(--tr);font-family:var(--f)}
         .ltype-btn i{font-size:1.3rem}
         .ltype-btn:hover{border-color:var(--p);color:var(--p);background:rgba(104,122,97,.06)}
@@ -405,7 +405,19 @@
                 <button class="ltype-btn" id="ltype-link" onclick="selectLessonType('link')">
                     <i class="ph ph-link"></i><span>Link externo</span>
                 </button>
+                <button class="ltype-btn" id="ltype-clase_vivo" onclick="selectLessonType('clase_vivo')">
+                    <i class="ph ph-video-camera" style="color:#EF4444"></i><span>Clase en Vivo</span>
+                </button>
             </div>
+        </div>
+
+        <!-- Selector clase en vivo -->
+        <div class="fg" id="claseVivoField" style="display:none">
+            <label class="fl"><i class="ph ph-record" style="color:#EF4444"></i> Clase programada o en vivo</label>
+            <select class="fc" id="lecClaseVivo">
+                <option value="">Cargando clases...</option>
+            </select>
+            <div class="hint">Vincula esta lección a una clase del calendario. Las alumnas verán el link de Meet o la grabación según el estado.</div>
         </div>
 
         <!-- Título -->
@@ -620,10 +632,16 @@ function openLessonModal(modId, lecId = null) {
         if(lec) {
             titleInp.value = lec.titulo || '';
             descInp.value = lec.descripcion || '';
-            vidInp.value = lec.video_url || '';
             durInp.value = lec.duracion || '';
             visInp.value = lec.visibilidad || 'privada';
-            selectLessonType(lec.tipo || 'video');
+            const tipo = lec.tipo || 'video';
+            selectLessonType(tipo);
+            if (tipo === 'clase_vivo') {
+                const claseId = (lec.video_url || '').replace('clase_vivo:', '');
+                cargarClasesParaSelector(claseId);
+            } else {
+                vidInp.value = lec.video_url || '';
+            }
             document.getElementById('drawerTitle').textContent = 'Editar Lección';
         }
     } else {
@@ -647,12 +665,33 @@ function closeLessonModal() {
 }
 
 function selectLessonType(type) {
-    ['video','texto','archivo','link'].forEach(t => {
+    ['video','texto','archivo','link','clase_vivo'].forEach(t => {
         document.getElementById('ltype-'+t).classList.toggle('active', t === type);
     });
     document.getElementById('videoField').style.display = (type === 'video' || type === 'link') ? 'block' : 'none';
     document.getElementById('archivoField').style.display = type === 'archivo' ? 'block' : 'none';
+    document.getElementById('claseVivoField').style.display = type === 'clase_vivo' ? 'block' : 'none';
+    if (type === 'clase_vivo') cargarClasesParaSelector();
     currentLessonState.tipo = type;
+}
+
+async function cargarClasesParaSelector(valorActual) {
+    const sel = document.getElementById('lecClaseVivo');
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/clases-vivo', { headers: { 'Authorization': 'Bearer ' + token } });
+        if (!res.ok) throw new Error();
+        const clases = await res.json();
+        const estadoLabel = { programada:'📅', en_vivo:'🔴', finalizada:'✅' };
+        sel.innerHTML = '<option value="">— Seleccionar clase —</option>' +
+            clases.map(c => {
+                const fecha = new Date(c.fecha_inicio.replace(' ','T')).toLocaleDateString('es-CL', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+                const label = `${estadoLabel[c.estado]||''} ${c.titulo} · ${fecha}`;
+                return `<option value="${c.id}" ${valorActual == c.id ? 'selected' : ''}>${label}</option>`;
+            }).join('');
+    } catch(e) {
+        sel.innerHTML = '<option value="">Error al cargar clases</option>';
+    }
 }
 
 async function handleFileSelect(input) {
@@ -695,13 +734,15 @@ async function saveLesson() {
     const titulo = document.getElementById('lecTitle').value.trim();
     const desc = document.getElementById('lecDesc').value.trim();
     const tipo = currentLessonState.tipo || 'video';
-    const video = tipo === 'archivo'
-        ? document.getElementById('lecFileUrl').value.trim()
-        : document.getElementById('lecVideo').value.trim();
+    let video;
+    if (tipo === 'archivo') video = document.getElementById('lecFileUrl').value.trim();
+    else if (tipo === 'clase_vivo') video = 'clase_vivo:' + (document.getElementById('lecClaseVivo').value || '');
+    else video = document.getElementById('lecVideo').value.trim();
     const duracion = document.getElementById('lecDuracion').value.trim();
     const visibilidad = document.getElementById('lecVisibilidad').value;
     if (!titulo) return showToast('⚠️ El título de lección es obligatorio');
     if (tipo === 'archivo' && !video) return showToast('⚠️ Debes subir un PDF antes de guardar');
+    if (tipo === 'clase_vivo' && video === 'clase_vivo:') return showToast('⚠️ Selecciona una clase en vivo');
 
     const token = localStorage.getItem('token');
     try {
