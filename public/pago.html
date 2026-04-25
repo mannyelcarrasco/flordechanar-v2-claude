@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checkout — Flor de Chañar</title>
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Segoe UI',sans-serif;background:#F8FAFC;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem}
+    .logo{display:flex;align-items:center;gap:.6rem;margin-bottom:2rem;color:#3B6B4A;font-size:1.15rem;font-weight:700;text-decoration:none}
+    .logo img{height:36px;border-radius:50%}
+    .card{background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.08);width:100%;max-width:480px;overflow:hidden}
+    .card-hd{background:linear-gradient(135deg,#3B6B4A,#5A8A68);color:#fff;padding:1.8rem 2rem}
+    .card-hd h1{font-size:1.3rem;font-weight:700;margin-bottom:.25rem}
+    .card-hd p{font-size:.88rem;opacity:.85}
+    .card-bd{padding:2rem}
+    .item{display:flex;justify-content:space-between;align-items:center;padding:.85rem 1rem;border-radius:10px;background:#F1F5F9;margin-bottom:1rem}
+    .item-label{font-size:.85rem;color:#64748B}
+    .item-val{font-weight:700;color:#1E293B;font-size:.95rem}
+    .divider{border:none;border-top:1.5px solid #E2E8F0;margin:1.2rem 0}
+    .total-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem}
+    .total-label{font-weight:600;color:#374151;font-size:1rem}
+    .total-val{font-size:1.5rem;font-weight:800;color:#3B6B4A}
+    .badge-tipo{display:inline-block;padding:.2rem .7rem;border-radius:20px;font-size:.75rem;font-weight:600;background:#DCFCE7;color:#16A34A}
+    .badge-tipo.suscripcion{background:#EFF6FF;color:#2563EB}
+    .badge-tipo.matricula{background:#FEF3C7;color:#D97706}
+    .btn-flow{width:100%;padding:1rem;background:#3B6B4A;color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.65rem;transition:background .2s}
+    .btn-flow:hover{background:#2D5438}
+    .btn-flow:disabled{background:#94A3B8;cursor:not-allowed}
+    .btn-back{width:100%;padding:.75rem;background:none;color:#64748B;border:1.5px solid #E2E8F0;border-radius:12px;font-size:.9rem;cursor:pointer;margin-top:.65rem;transition:all .2s}
+    .btn-back:hover{border-color:#94A3B8;color:#374151}
+    .flow-info{text-align:center;font-size:.78rem;color:#94A3B8;margin-top:1.2rem;display:flex;align-items:center;justify-content:center;gap:.4rem}
+    .plan-grid{display:grid;gap:.75rem;margin-bottom:1.2rem}
+    .plan-card{border:2px solid #E2E8F0;border-radius:12px;padding:1rem 1.2rem;cursor:pointer;transition:all .2s;position:relative}
+    .plan-card:hover{border-color:#3B6B4A}
+    .plan-card.selected{border-color:#3B6B4A;background:#F0FDF4}
+    .plan-card input{position:absolute;opacity:0;pointer-events:none}
+    .plan-name{font-weight:700;color:#1E293B;font-size:.95rem}
+    .plan-desc{font-size:.8rem;color:#64748B;margin-top:.2rem}
+    .plan-price{font-size:1.2rem;font-weight:800;color:#3B6B4A;margin-top:.5rem}
+    .plan-period{font-size:.78rem;color:#94A3B8}
+    .badge-desc{background:#FEF3C7;color:#B45309;font-size:.7rem;font-weight:700;padding:.15rem .5rem;border-radius:20px;display:inline-block;margin-top:.3rem}
+    .spinner{display:inline-block;width:18px;height:18px;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .error-box{background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:1rem;color:#DC2626;font-size:.87rem;margin-bottom:1rem}
+    .loading-box{text-align:center;padding:3rem 1rem;color:#64748B}
+</style>
+</head>
+<body>
+
+<a href="index.html" class="logo">
+    <img src="logo.png" alt="Logo" onerror="this.style.display='none'">
+    Flor de Chañar
+</a>
+
+<div class="card">
+    <div class="card-hd">
+        <h1 id="cardTitle">Checkout seguro</h1>
+        <p id="cardSubtitle">Serás redirigido a Flow para completar tu pago</p>
+    </div>
+    <div class="card-bd" id="cardBody">
+        <div class="loading-box"><i class="ph ph-circle-notch" style="font-size:2rem;animation:spin .7s linear infinite"></i><br><br>Cargando...</div>
+    </div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+const params = new URLSearchParams(location.search);
+const tipo   = params.get('tipo');   // matricula | curso | suscripcion
+const id     = params.get('id');     // curso_id or plan_id
+const token  = localStorage.getItem('token');
+
+const fmt = n => new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP'}).format(n);
+
+if (!token) { location.href = 'login.html'; }
+
+async function init() {
+    const body = document.getElementById('cardBody');
+    const title = document.getElementById('cardTitle');
+    const sub   = document.getElementById('cardSubtitle');
+
+    if (tipo === 'matricula') {
+        title.textContent = 'Pago de Matrícula';
+        sub.textContent   = 'Acceso completo a la escuela Flor de Chañar';
+        body.innerHTML = buildMatriculaView();
+
+    } else if (tipo === 'curso' && id) {
+        title.textContent = 'Comprar Curso';
+        sub.textContent   = 'Pago único — acceso de por vida';
+        body.innerHTML = '<div class="loading-box"><i class="ph ph-circle-notch" style="font-size:2rem;animation:spin .7s linear infinite"></i></div>';
+        try {
+            const res = await fetch(`/api/cursos/${id}/acceso`, { headers:{ Authorization:'Bearer '+token } });
+            const acc = await res.json();
+            if (acc.acceso) {
+                body.innerHTML = `<div class="error-box">✅ Ya tienes acceso a este curso.</div><button class="btn-back" onclick="location.href='dashboard.html'">Ir al dashboard</button>`;
+                return;
+            }
+            const resCurso = await fetch(`/api/cursos/${id}`, { headers:{ Authorization:'Bearer '+token } });
+            const curso = await resCurso.json();
+            body.innerHTML = buildCursoView(curso);
+        } catch(e) {
+            body.innerHTML = `<div class="error-box">Error al cargar el curso.</div>`;
+        }
+
+    } else if (tipo === 'suscripcion') {
+        title.textContent = 'Elegir Plan';
+        sub.textContent   = 'Acceso completo a todos los cursos';
+        body.innerHTML = '<div class="loading-box"><i class="ph ph-circle-notch" style="font-size:2rem;animation:spin .7s linear infinite"></i></div>';
+        try {
+            const res   = await fetch('/api/planes');
+            const planes = await res.json();
+            // Check existing subscription
+            const resSub = await fetch('/api/suscripciones/mi-estado', { headers:{ Authorization:'Bearer '+token } });
+            const subActiva = await resSub.json();
+            body.innerHTML = buildSuscripcionView(planes, subActiva, id);
+        } catch(e) {
+            body.innerHTML = `<div class="error-box">Error al cargar los planes.</div>`;
+        }
+
+    } else {
+        body.innerHTML = `<div class="error-box">Parámetros inválidos.</div><button class="btn-back" onclick="history.back()">Volver</button>`;
+    }
+}
+
+function buildMatriculaView() {
+    return `
+        <div class="item">
+            <span class="item-label"><i class="ph ph-graduation-cap"></i> Concepto</span>
+            <span class="item-val">Matrícula Escuela <span class="badge-tipo matricula">Único pago</span></span>
+        </div>
+        <div class="item">
+            <span class="item-label"><i class="ph ph-check-circle"></i> Incluye</span>
+            <span class="item-val" style="text-align:right;font-size:.83rem;max-width:60%">Acceso de por vida, certificados, materiales</span>
+        </div>
+        <hr class="divider">
+        <div class="total-row">
+            <span class="total-label">Total a pagar</span>
+            <span class="total-val" id="matriculaTotal">Cargando...</span>
+        </div>
+        <div id="errBox"></div>
+        <button class="btn-flow" id="btnPagar" onclick="pagarMatricula()">
+            <i class="ph ph-lock"></i> Pagar con Flow
+        </button>
+        <button class="btn-back" onclick="history.back()">Volver</button>
+        <p class="flow-info"><i class="ph ph-shield-check"></i> Pago seguro procesado por Flow · Encriptado 256-bit</p>
+    `;
+}
+
+function buildCursoView(curso) {
+    const price = fmt(curso.precio || 0);
+    return `
+        <div class="item">
+            <span class="item-label"><i class="ph ph-book-open"></i> Curso</span>
+            <span class="item-val">${curso.titulo}</span>
+        </div>
+        <div class="item">
+            <span class="item-label"><i class="ph ph-infinity"></i> Tipo de acceso</span>
+            <span class="item-val"><span class="badge-tipo">Pago único</span></span>
+        </div>
+        <hr class="divider">
+        <div class="total-row">
+            <span class="total-label">Total a pagar</span>
+            <span class="total-val">${price}</span>
+        </div>
+        <div id="errBox"></div>
+        <button class="btn-flow" id="btnPagar" onclick="pagarCurso(${curso.id})">
+            <i class="ph ph-lock"></i> Pagar con Flow
+        </button>
+        <button class="btn-back" onclick="history.back()">Volver</button>
+        <p class="flow-info"><i class="ph ph-shield-check"></i> Pago seguro procesado por Flow · Encriptado 256-bit</p>
+    `;
+}
+
+function buildSuscripcionView(planes, subActiva, planPreselect) {
+    if (subActiva) {
+        return `
+            <div class="item" style="background:#F0FDF4">
+                <span class="item-label">✅ Suscripción activa</span>
+                <span class="item-val" style="color:#16A34A">${subActiva.plan_nombre}</span>
+            </div>
+            <p style="font-size:.85rem;color:#64748B;margin:.75rem 0 1.5rem">Próximo cobro: ${subActiva.proximo_cobro ? new Date(subActiva.proximo_cobro).toLocaleDateString('es-CL') : '—'}</p>
+            <button class="btn-back" style="color:#DC2626;border-color:#FECACA" onclick="cancelarSub()">Cancelar suscripción</button>
+            <button class="btn-back" style="margin-top:.5rem" onclick="location.href='dashboard.html'">Ir al dashboard</button>
+        `;
+    }
+
+    if (!planes.length) {
+        return `<div class="error-box">No hay planes disponibles en este momento.</div><button class="btn-back" onclick="history.back()">Volver</button>`;
+    }
+
+    const planCards = planes.map(p => {
+        const isSelected = String(p.id) === String(planPreselect);
+        const descBadge = p.descuento_pct > 0 ? `<span class="badge-desc">-${p.descuento_pct}% descuento</span>` : '';
+        const periodoLabel = p.periodo === 'anual' ? '/año' : p.periodo === 'unico' ? 'pago único' : '/mes';
+        return `
+            <label class="plan-card${isSelected?' selected':''}" onclick="selectPlan(this,${p.id})">
+                <input type="radio" name="plan" value="${p.id}" ${isSelected?'checked':''}>
+                <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                    <div>
+                        <div class="plan-name">${p.nombre}</div>
+                        <div class="plan-desc">${p.descripcion || ''}</div>
+                        ${descBadge}
+                    </div>
+                    <div style="text-align:right">
+                        <div class="plan-price">${fmt(p.monto)}</div>
+                        <div class="plan-period">${periodoLabel}</div>
+                    </div>
+                </div>
+            </label>`;
+    }).join('');
+
+    return `
+        <div class="plan-grid">${planCards}</div>
+        <div id="errBox"></div>
+        <button class="btn-flow" id="btnPagar" onclick="iniciarSuscripcion()">
+            <i class="ph ph-credit-card"></i> Registrar tarjeta y suscribirme
+        </button>
+        <button class="btn-back" onclick="history.back()">Volver</button>
+        <p class="flow-info"><i class="ph ph-shield-check"></i> Tu tarjeta se guarda de forma segura en Flow · Sin cargos ocultos</p>
+    `;
+}
+
+let selectedPlanId = id;
+function selectPlan(el, planId) {
+    document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedPlanId = planId;
+}
+
+function showErr(msg) {
+    const box = document.getElementById('errBox');
+    if (box) box.innerHTML = `<div class="error-box">${msg}</div>`;
+}
+
+function setLoading(loading) {
+    const btn = document.getElementById('btnPagar');
+    if (!btn) return;
+    btn.disabled = loading;
+    btn.innerHTML = loading
+        ? '<span class="spinner"></span> Procesando...'
+        : (tipo === 'suscripcion'
+            ? '<i class="ph ph-credit-card"></i> Registrar tarjeta y suscribirme'
+            : '<i class="ph ph-lock"></i> Pagar con Flow');
+}
+
+// Load matrícula amount async
+async function loadMatriculaTotal() {
+    try {
+        const res = await fetch('/api/admin/planes', { headers:{ Authorization:'Bearer '+token } });
+        // Fallback: just show the request price from backend on initiation
+    } catch(e) {}
+    const el = document.getElementById('matriculaTotal');
+    if (el) el.textContent = 'Ver al confirmar';
+}
+
+async function pagarMatricula() {
+    setLoading(true);
+    try {
+        const res = await fetch('/api/pagos/matricula/iniciar', {
+            method:'POST', headers:{ Authorization:'Bearer '+token, 'Content-Type':'application/json' }
+        });
+        const data = await res.json();
+        if (!res.ok) { showErr(data.error || 'Error al iniciar pago'); setLoading(false); return; }
+        location.href = data.redirectUrl;
+    } catch(e) { showErr('Error de conexión'); setLoading(false); }
+}
+
+async function pagarCurso(cursoId) {
+    setLoading(true);
+    try {
+        const res = await fetch('/api/pagos/curso/iniciar', {
+            method:'POST', headers:{ Authorization:'Bearer '+token, 'Content-Type':'application/json' },
+            body: JSON.stringify({ curso_id: cursoId })
+        });
+        const data = await res.json();
+        if (!res.ok) { showErr(data.error || 'Error al iniciar pago'); setLoading(false); return; }
+        location.href = data.redirectUrl;
+    } catch(e) { showErr('Error de conexión'); setLoading(false); }
+}
+
+async function iniciarSuscripcion() {
+    if (!selectedPlanId) { showErr('Selecciona un plan primero'); return; }
+    setLoading(true);
+    try {
+        const res = await fetch('/api/suscripciones/iniciar', {
+            method:'POST', headers:{ Authorization:'Bearer '+token, 'Content-Type':'application/json' },
+            body: JSON.stringify({ plan_id: selectedPlanId })
+        });
+        const data = await res.json();
+        if (!res.ok) { showErr(data.error || 'Error al iniciar suscripción'); setLoading(false); return; }
+        location.href = data.redirectUrl;
+    } catch(e) { showErr('Error de conexión'); setLoading(false); }
+}
+
+async function cancelarSub() {
+    if (!confirm('¿Cancelar tu suscripción? Tu acceso se mantiene hasta el fin del período.')) return;
+    const res = await fetch('/api/suscripciones/cancelar', { method:'DELETE', headers:{ Authorization:'Bearer '+token } });
+    const data = await res.json();
+    alert(data.message || data.error);
+    location.reload();
+}
+
+init();
+loadMatriculaTotal();
+</script>
+</body>
+</html>

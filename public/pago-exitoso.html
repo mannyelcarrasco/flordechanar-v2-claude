@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resultado del pago — Flor de Chañar</title>
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Segoe UI',sans-serif;background:#F8FAFC;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem}
+    .logo{display:flex;align-items:center;gap:.6rem;margin-bottom:2rem;color:#3B6B4A;font-size:1.15rem;font-weight:700;text-decoration:none}
+    .logo img{height:36px;border-radius:50%}
+    .card{background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.08);width:100%;max-width:440px;padding:2.5rem;text-align:center}
+    .icon-wrap{width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;font-size:2.5rem}
+    .icon-ok{background:#DCFCE7;color:#16A34A}
+    .icon-err{background:#FEE2E2;color:#DC2626}
+    .icon-wait{background:#FEF3C7;color:#D97706}
+    h2{font-size:1.4rem;font-weight:800;color:#1E293B;margin-bottom:.5rem}
+    .sub{font-size:.9rem;color:#64748B;margin-bottom:2rem;line-height:1.6}
+    .detail{background:#F8FAFC;border-radius:10px;padding:1rem;margin-bottom:1.5rem;text-align:left}
+    .detail-row{display:flex;justify-content:space-between;font-size:.85rem;padding:.3rem 0;border-bottom:1px solid #E2E8F0}
+    .detail-row:last-child{border-bottom:none;font-weight:700}
+    .detail-row span:first-child{color:#64748B}
+    .detail-row span:last-child{color:#1E293B}
+    .btn{display:block;width:100%;padding:.9rem;border-radius:12px;font-size:.95rem;font-weight:700;cursor:pointer;border:none;margin-bottom:.6rem;text-align:center;text-decoration:none}
+    .btn-p{background:#3B6B4A;color:#fff}
+    .btn-p:hover{background:#2D5438}
+    .btn-o{background:none;color:#64748B;border:1.5px solid #E2E8F0}
+    .btn-o:hover{border-color:#94A3B8}
+    .spinner{display:inline-block;width:36px;height:36px;border:4px solid #E2E8F0;border-top-color:#3B6B4A;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1.2rem}
+    @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<a href="index.html" class="logo">
+    <img src="logo.png" alt="Logo" onerror="this.style.display='none'">
+    Flor de Chañar
+</a>
+
+<div class="card" id="card">
+    <div class="spinner"></div>
+    <p style="color:#64748B;font-size:.9rem">Verificando tu pago...</p>
+</div>
+
+<script src="shared.js"></script>
+<script>
+const params = new URLSearchParams(location.search);
+const co     = params.get('co');   // commerce_order
+const token  = localStorage.getItem('token');
+const fmt    = n => new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP'}).format(n);
+
+const tipoLabel = { matricula:'Matrícula', curso:'Curso', suscripcion:'Suscripción' };
+const estadoLabel = { aprobado:'Aprobado ✅', rechazado:'Rechazado ❌', pendiente:'Pendiente ⏳', anulado:'Anulado' };
+
+async function verificar() {
+    const card = document.getElementById('card');
+    if (!co || !token) {
+        renderError('No se encontró información del pago.');
+        return;
+    }
+
+    // Poll up to 10 times (Flow webhook can arrive slightly after redirect)
+    for (let i = 0; i < 10; i++) {
+        try {
+            const res = await fetch(`/api/pagos/estado?commerce_order=${encodeURIComponent(co)}`, {
+                headers: { Authorization: 'Bearer ' + token }
+            });
+            if (res.ok) {
+                const pago = await res.json();
+                if (pago.estado === 'aprobado') { renderOk(pago); return; }
+                if (pago.estado === 'rechazado' || pago.estado === 'anulado') { renderErr(pago); return; }
+            }
+        } catch(e) {}
+        await new Promise(r => setTimeout(r, 2000));
+    }
+
+    // After retries: show pending state
+    renderPending();
+}
+
+function renderOk(pago) {
+    const card = document.getElementById('card');
+    let concepto = tipoLabel[pago.tipo] || pago.tipo;
+    if (pago.tipo === 'curso' && pago.curso_titulo) concepto = pago.curso_titulo;
+
+    card.innerHTML = `
+        <div class="icon-wrap icon-ok"><i class="ph ph-check-circle"></i></div>
+        <h2>¡Pago exitoso!</h2>
+        <p class="sub">Tu pago fue procesado correctamente.<br>${pago.tipo === 'matricula' ? 'Ya estás matriculado/a en Flor de Chañar.' : pago.tipo === 'curso' ? 'Ya tienes acceso al curso.' : 'Tu suscripción está activa.'}</p>
+        <div class="detail">
+            <div class="detail-row"><span>Concepto</span><span>${concepto}</span></div>
+            <div class="detail-row"><span>Método de pago</span><span>${pago.metodo_pago || '—'}</span></div>
+            <div class="detail-row"><span>N° de orden Flow</span><span>${pago.flow_order || '—'}</span></div>
+            <div class="detail-row"><span>Fecha</span><span>${pago.confirmado_en ? new Date(pago.confirmado_en).toLocaleString('es-CL') : '—'}</span></div>
+            <div class="detail-row"><span>Total pagado</span><span>${fmt(pago.monto)}</span></div>
+        </div>
+        <a href="dashboard.html" class="btn btn-p">Ir a mis cursos</a>
+        <a href="escuela.html" class="btn btn-o" style="display:block;padding:.75rem;text-align:center;color:#64748B;text-decoration:none;border:1.5px solid #E2E8F0;border-radius:12px;font-size:.9rem">Explorar más cursos</a>
+    `;
+}
+
+function renderErr(pago) {
+    document.getElementById('card').innerHTML = `
+        <div class="icon-wrap icon-err"><i class="ph ph-x-circle"></i></div>
+        <h2>Pago no completado</h2>
+        <p class="sub">Tu pago fue ${estadoLabel[pago.estado]?.toLowerCase() || 'rechazado'}. No se realizó ningún cargo.<br>Puedes intentarlo nuevamente.</p>
+        <button class="btn btn-p" onclick="history.back()"><i class="ph ph-arrow-left"></i> Volver a intentar</button>
+        <a href="dashboard.html" class="btn btn-o" style="display:block;padding:.75rem;text-align:center;color:#64748B;text-decoration:none;border:1.5px solid #E2E8F0;border-radius:12px;font-size:.9rem;margin-top:.6rem">Ir al dashboard</a>
+    `;
+}
+
+function renderPending() {
+    document.getElementById('card').innerHTML = `
+        <div class="icon-wrap icon-wait"><i class="ph ph-clock"></i></div>
+        <h2>Verificando pago...</h2>
+        <p class="sub">Tu pago está siendo procesado. Si el cargo se realizó, tu acceso se activará en los próximos minutos.<br><br>Puedes revisar el estado en tu historial de pagos.</p>
+        <a href="dashboard.html" class="btn btn-p">Ir al dashboard</a>
+    `;
+}
+
+function renderError(msg) {
+    document.getElementById('card').innerHTML = `
+        <div class="icon-wrap icon-err"><i class="ph ph-warning"></i></div>
+        <h2>Error</h2>
+        <p class="sub">${msg}</p>
+        <a href="dashboard.html" class="btn btn-p">Ir al dashboard</a>
+    `;
+}
+
+verificar();
+</script>
+</body>
+</html>

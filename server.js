@@ -18,6 +18,7 @@ if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
 const app = express();
 app.set('trust proxy', 1);
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
 // Serve static frontend files from 'public' directory
@@ -207,14 +208,77 @@ async function initDB() {
             )
         `);
 
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS planes (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                nombre VARCHAR(150) NOT NULL,
+                descripcion TEXT,
+                periodo ENUM('mensual','anual','unico') DEFAULT 'mensual',
+                monto INT NOT NULL,
+                descuento_pct INT DEFAULT 0,
+                flow_plan_id VARCHAR(100) DEFAULT NULL,
+                activo BOOLEAN DEFAULT TRUE,
+                creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS pagos (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                usuario_id INT NOT NULL,
+                tipo ENUM('matricula','curso','suscripcion') NOT NULL,
+                referencia_id INT DEFAULT NULL,
+                monto INT NOT NULL,
+                estado ENUM('pendiente','aprobado','rechazado','anulado') DEFAULT 'pendiente',
+                commerce_order VARCHAR(120) UNIQUE,
+                flow_token VARCHAR(200),
+                flow_order VARCHAR(100),
+                metodo_pago VARCHAR(50),
+                creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                confirmado_en DATETIME DEFAULT NULL,
+                FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+            )
+        `);
+
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS flow_customers (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                usuario_id INT NOT NULL UNIQUE,
+                flow_customer_id VARCHAR(100) NOT NULL,
+                creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+            )
+        `);
+
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS suscripciones (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                usuario_id INT NOT NULL,
+                plan_id INT NOT NULL,
+                flow_subscription_id VARCHAR(100) DEFAULT NULL,
+                flow_customer_id VARCHAR(100) DEFAULT NULL,
+                estado ENUM('pendiente','activa','cancelada','suspendida') DEFAULT 'pendiente',
+                inicio_en DATETIME DEFAULT NULL,
+                proximo_cobro DATETIME DEFAULT NULL,
+                cancelada_en DATETIME DEFAULT NULL,
+                creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+                FOREIGN KEY (plan_id) REFERENCES planes(id)
+            )
+        `);
+
         console.log('Tables checked/created: evaluaciones, preguntas, intentos, respuestas.');
 
         // Each statement in its own try/catch — "Duplicate column" errors are harmless
         const alterCols = [
             `ALTER TABLE lecciones MODIFY COLUMN tipo VARCHAR(20) DEFAULT 'video'`,
-            `ALTER TABLE lecciones ADD COLUMN duracion VARCHAR(50)`,      // fails silently if exists
+            `ALTER TABLE lecciones ADD COLUMN duracion VARCHAR(50)`,
             `ALTER TABLE lecciones MODIFY COLUMN visibilidad VARCHAR(10) DEFAULT 'privada'`,
-            `ALTER TABLE lecciones ADD COLUMN orden INT DEFAULT 0`        // fails silently if exists
+            `ALTER TABLE lecciones ADD COLUMN orden INT DEFAULT 0`,
+            `ALTER TABLE cursos ADD COLUMN tipo_acceso VARCHAR(20) DEFAULT 'gratis'`,
+            `ALTER TABLE usuarios ADD COLUMN matriculado BOOLEAN DEFAULT FALSE`,
+            `ALTER TABLE usuarios ADD COLUMN matriculado_en DATETIME DEFAULT NULL`,
+            `ALTER TABLE inscripciones ADD COLUMN pago_id INT DEFAULT NULL`
         ];
         for(const sql of alterCols) { try { await pool.query(sql); } catch(e) {} }
 
@@ -483,6 +547,20 @@ app.get('/api/cursos/mis-cursos', verifyToken, async (req, res) => {
 app.post('/api/cursos/inscribir', verifyToken, async (req, res) => {
     try {
         const { curso_id } = req.body;
+        const [cursos] = await pool.query('SELECT tipo_acceso, precio FROM cursos WHERE id = ?', [curso_id]);
+        if (!cursos.length) return res.status(404).json({ error: 'Curso no encontrado' });
+        const { tipo_acceso, precio } = cursos[0];
+        if (tipo_acceso === 'pago_unico' && precio > 0) {
+            const [pagos] = await pool.query(
+                "SELECT id FROM pagos WHERE usuario_id = ? AND tipo = 'curso' AND referencia_id = ? AND estado = 'aprobado'",
+                [req.usuario.id, curso_id]
+            );
+            if (!pagos.length) return res.status(402).json({ error: 'Este curso requiere pago previo', tipo_acceso, precio });
+        }
+        if (tipo_acceso === 'suscripcion') {
+            const [sub] = await pool.query("SELECT id FROM suscripciones WHERE usuario_id = ? AND estado = 'activa'", [req.usuario.id]);
+            if (!sub.length) return res.status(402).json({ error: 'Este curso requiere suscripción activa', tipo_acceso });
+        }
         await pool.query('INSERT IGNORE INTO inscripciones (usuario_id, curso_id) VALUES (?, ?)', [req.usuario.id, curso_id]);
         res.json({ success: true, message: 'Inscrito correctamente' });
     } catch (e) {
@@ -1101,6 +1179,373 @@ app.delete('/api/clases-vivo/:id', verifyToken, async (req, res) => {
         await pool.query('DELETE FROM clases_vivo WHERE id = ?', [req.params.id]);
         res.json({ ok: true });
     } catch (e) { console.error(e); res.status(500).json({ error: 'Error al eliminar' }); }
+});
+
+// =============================================
+// FLOW PAYMENT GATEWAY
+// =============================================
+const crypto = require('crypto');
+const https = require('https');
+
+const FLOW_API_KEY    = process.env.FLOW_API_KEY    || '';
+const FLOW_SECRET_KEY = process.env.FLOW_SECRET_KEY || '';
+const FLOW_SANDBOX    = process.env.FLOW_SANDBOX !== 'false';
+const FLOW_HOST       = FLOW_SANDBOX ? 'sandbox.flow.cl' : 'www.flow.cl';
+const APP_URL         = (process.env.APP_URL || 'http://localhost:3000').replace(/\/$/, '');
+
+function flowSign(params) {
+    const str = Object.keys(params).sort().map(k => `${k}${params[k]}`).join('');
+    return crypto.createHmac('sha256', FLOW_SECRET_KEY).update(str).digest('hex');
+}
+
+function flowRequest(method, endpoint, params) {
+    return new Promise((resolve, reject) => {
+        const p = { ...params, apiKey: FLOW_API_KEY };
+        p.s = flowSign(p);
+        let path, body;
+        if (method === 'GET') {
+            path = `/api/${endpoint}?${new URLSearchParams(p)}`;
+            body = null;
+        } else {
+            path = `/api/${endpoint}`;
+            body = new URLSearchParams(p).toString();
+        }
+        const opts = {
+            hostname: FLOW_HOST, path, method,
+            headers: body ? { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(body) } : {}
+        };
+        const req = https.request(opts, (r) => {
+            let raw = '';
+            r.on('data', d => raw += d);
+            r.on('end', () => {
+                try { resolve({ status: r.statusCode, data: JSON.parse(raw) }); }
+                catch (e) { reject(new Error('Flow response: ' + raw.slice(0, 300))); }
+            });
+        });
+        req.on('error', reject);
+        if (body) req.write(body);
+        req.end();
+    });
+}
+const flowPost = (ep, p) => flowRequest('POST', ep, p);
+const flowGet  = (ep, p) => flowRequest('GET',  ep, p);
+
+// --- Planes (public) ---
+app.get('/api/planes', async (req, res) => {
+    try {
+        const [rows] = await pool.query("SELECT * FROM planes WHERE activo = 1 AND nombre != 'matricula' ORDER BY monto ASC");
+        res.json(rows);
+    } catch (e) { res.status(500).json({ error: 'Error al cargar planes' }); }
+});
+
+// --- Webhook: Confirmación de pago (Flow llama aquí tras pago) ---
+app.post('/api/pagos/confirmar', async (req, res) => {
+    res.sendStatus(200);
+    const { token } = req.body;
+    if (!token) return;
+    try {
+        const { data } = await flowGet('payment/getStatus', { token });
+        if (data.status !== 2) return; // 2 = pagado
+        const [rows] = await pool.query(
+            'SELECT * FROM pagos WHERE commerce_order = ? OR flow_token = ? LIMIT 1',
+            [data.commerceOrder, token]
+        );
+        if (!rows.length) return;
+        const pago = rows[0];
+        if (pago.estado === 'aprobado') return;
+        await pool.query(
+            'UPDATE pagos SET estado=?, flow_order=?, metodo_pago=?, confirmado_en=NOW(), flow_token=? WHERE id=?',
+            ['aprobado', String(data.flowOrder || ''), String(data.paymentData?.media || ''), token, pago.id]
+        );
+        if (pago.tipo === 'matricula') {
+            await pool.query('UPDATE usuarios SET matriculado=TRUE, matriculado_en=NOW() WHERE id=?', [pago.usuario_id]);
+        } else if (pago.tipo === 'curso') {
+            await pool.query(
+                'INSERT IGNORE INTO inscripciones (usuario_id, curso_id, pago_id) VALUES (?,?,?)',
+                [pago.usuario_id, pago.referencia_id, pago.id]
+            );
+        }
+    } catch (e) { console.error('Flow confirm error:', e.message); }
+});
+
+// --- Estado de pago (cliente consulta tras retorno) ---
+app.get('/api/pagos/estado', verifyToken, async (req, res) => {
+    try {
+        const { commerce_order } = req.query;
+        const [rows] = await pool.query(
+            `SELECT p.*, c.titulo AS curso_titulo FROM pagos p
+             LEFT JOIN cursos c ON p.referencia_id = c.id
+             WHERE p.commerce_order = ? AND p.usuario_id = ?`,
+            [commerce_order, req.usuario.id]
+        );
+        if (!rows.length) return res.status(404).json({ error: 'Pago no encontrado' });
+        res.json(rows[0]);
+    } catch (e) { res.status(500).json({ error: 'Error' }); }
+});
+
+// --- Iniciar pago de matrícula ---
+app.post('/api/pagos/matricula/iniciar', verifyToken, async (req, res) => {
+    try {
+        const [cfgRows] = await pool.query("SELECT monto FROM planes WHERE nombre='matricula' AND activo=1 LIMIT 1");
+        const monto = cfgRows.length ? cfgRows[0].monto : 50000;
+        const co = `M${req.usuario.id}_${Date.now()}`;
+        const [ins] = await pool.query(
+            "INSERT INTO pagos (usuario_id, tipo, monto, estado, commerce_order) VALUES (?,?,?,?,?)",
+            [req.usuario.id, 'matricula', monto, 'pendiente', co]
+        );
+        const { data } = await flowPost('payment/create', {
+            commerceOrder: co, subject: 'Matrícula — Flor de Chañar',
+            amount: monto, email: req.usuario.email,
+            urlConfirmation: `${APP_URL}/api/pagos/confirmar`,
+            urlReturn: `${APP_URL}/pago-exitoso.html?co=${co}`,
+            currency: 'CLP', paymentMethod: 9
+        });
+        if (!data.url) throw new Error(JSON.stringify(data));
+        await pool.query('UPDATE pagos SET flow_token=? WHERE id=?', [data.token, ins.insertId]);
+        res.json({ redirectUrl: `${data.url}?token=${data.token}` });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Error al iniciar pago: ' + e.message }); }
+});
+
+// --- Iniciar pago de curso (pago único) ---
+app.post('/api/pagos/curso/iniciar', verifyToken, async (req, res) => {
+    try {
+        const { curso_id } = req.body;
+        const [cursos] = await pool.query('SELECT * FROM cursos WHERE id=?', [curso_id]);
+        if (!cursos.length) return res.status(404).json({ error: 'Curso no encontrado' });
+        const curso = cursos[0];
+        if (!curso.precio || curso.precio <= 0) return res.status(400).json({ error: 'Curso sin precio' });
+        const [dup] = await pool.query(
+            "SELECT id FROM pagos WHERE usuario_id=? AND tipo='curso' AND referencia_id=? AND estado='aprobado'",
+            [req.usuario.id, curso_id]
+        );
+        if (dup.length) return res.status(400).json({ error: 'Ya tienes acceso a este curso' });
+        const co = `C${curso_id}_${req.usuario.id}_${Date.now()}`;
+        const [ins] = await pool.query(
+            "INSERT INTO pagos (usuario_id, tipo, referencia_id, monto, estado, commerce_order) VALUES (?,?,?,?,?,?)",
+            [req.usuario.id, 'curso', curso_id, curso.precio, 'pendiente', co]
+        );
+        const { data } = await flowPost('payment/create', {
+            commerceOrder: co, subject: `Curso: ${curso.titulo}`,
+            amount: curso.precio, email: req.usuario.email,
+            urlConfirmation: `${APP_URL}/api/pagos/confirmar`,
+            urlReturn: `${APP_URL}/pago-exitoso.html?co=${co}`,
+            currency: 'CLP', paymentMethod: 9
+        });
+        if (!data.url) throw new Error(JSON.stringify(data));
+        await pool.query('UPDATE pagos SET flow_token=? WHERE id=?', [data.token, ins.insertId]);
+        res.json({ redirectUrl: `${data.url}?token=${data.token}` });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Error al iniciar pago: ' + e.message }); }
+});
+
+// --- Mis pagos ---
+app.get('/api/pagos/mis-pagos', verifyToken, async (req, res) => {
+    try {
+        const [rows] = await pool.query(
+            `SELECT p.*, c.titulo AS curso_titulo FROM pagos p
+             LEFT JOIN cursos c ON p.referencia_id = c.id
+             WHERE p.usuario_id=? ORDER BY p.creado_en DESC`,
+            [req.usuario.id]
+        );
+        res.json(rows);
+    } catch (e) { res.status(500).json({ error: 'Error' }); }
+});
+
+// --- Estado de suscripción ---
+app.get('/api/suscripciones/mi-estado', verifyToken, async (req, res) => {
+    try {
+        const [rows] = await pool.query(
+            `SELECT s.*, p.nombre AS plan_nombre, p.monto, p.periodo
+             FROM suscripciones s JOIN planes p ON s.plan_id = p.id
+             WHERE s.usuario_id=? AND s.estado='activa' ORDER BY s.creado_en DESC LIMIT 1`,
+            [req.usuario.id]
+        );
+        res.json(rows[0] || null);
+    } catch (e) { res.status(500).json({ error: 'Error' }); }
+});
+
+// --- Iniciar suscripción (crea cliente + registra tarjeta) ---
+app.post('/api/suscripciones/iniciar', verifyToken, async (req, res) => {
+    try {
+        const { plan_id } = req.body;
+        const [planes] = await pool.query("SELECT * FROM planes WHERE id=? AND activo=1 AND nombre!='matricula'", [plan_id]);
+        if (!planes.length) return res.status(404).json({ error: 'Plan no encontrado' });
+        const plan = planes[0];
+
+        // Obtener o crear Flow customer
+        let flowCustomerId;
+        const [fcRows] = await pool.query('SELECT * FROM flow_customers WHERE usuario_id=?', [req.usuario.id]);
+        if (fcRows.length) {
+            flowCustomerId = fcRows[0].flow_customer_id;
+        } else {
+            const { data: custData } = await flowPost('customer/create', {
+                name: req.usuario.nombre, email: req.usuario.email, externalId: String(req.usuario.id)
+            });
+            if (!custData.customerId) throw new Error('Error creando cliente Flow: ' + JSON.stringify(custData));
+            flowCustomerId = custData.customerId;
+            await pool.query('INSERT INTO flow_customers (usuario_id, flow_customer_id) VALUES (?,?)', [req.usuario.id, flowCustomerId]);
+        }
+
+        // Crear plan en Flow si no existe
+        let flowPlanId = plan.flow_plan_id;
+        if (!flowPlanId) {
+            const { data: planData } = await flowPost('plan/create', {
+                planId: `fdc_plan_${plan.id}`, name: plan.nombre,
+                amount: plan.monto, currency: 'CLP',
+                interval: plan.periodo === 'anual' ? 12 : 1,
+                intervalType: 'month', trial: 0
+            });
+            flowPlanId = planData.planId || `fdc_plan_${plan.id}`;
+            await pool.query('UPDATE planes SET flow_plan_id=? WHERE id=?', [flowPlanId, plan.id]);
+        }
+
+        // Guardar suscripción pendiente
+        await pool.query(
+            `INSERT INTO suscripciones (usuario_id, plan_id, flow_customer_id, estado)
+             VALUES (?,?,?,'pendiente')
+             ON DUPLICATE KEY UPDATE flow_customer_id=VALUES(flow_customer_id), estado='pendiente'`,
+            [req.usuario.id, plan.id, flowCustomerId]
+        );
+
+        // Registrar tarjeta
+        const { data: regData } = await flowPost('customer/register', {
+            customerId: flowCustomerId,
+            urlReturn: `${APP_URL}/suscripcion.html?estado=ok&plan=${plan.id}`
+        });
+        if (!regData.url) throw new Error('Error registro tarjeta: ' + JSON.stringify(regData));
+        res.json({ redirectUrl: `${regData.url}?token=${regData.token}` });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Error al iniciar suscripción: ' + e.message }); }
+});
+
+// --- Webhook: confirmación de registro de tarjeta ---
+app.post('/api/suscripciones/confirmar-registro', async (req, res) => {
+    res.sendStatus(200);
+    const { token } = req.body;
+    if (!token) return;
+    try {
+        const { data } = await flowGet('customer/getRegisterStatus', { token });
+        if (data.status !== 1) return;
+        const customerId = data.customerId;
+        const [subRows] = await pool.query(
+            `SELECT s.*, p.flow_plan_id FROM suscripciones s JOIN planes p ON s.plan_id=p.id
+             WHERE s.flow_customer_id=? AND s.estado='pendiente' LIMIT 1`,
+            [customerId]
+        );
+        if (!subRows.length) return;
+        const sub = subRows[0];
+        const { data: subData } = await flowPost('subscription/create', {
+            planId: sub.flow_plan_id, customerId,
+            start: new Date().toISOString().split('T')[0]
+        });
+        await pool.query(
+            "UPDATE suscripciones SET estado='activa', flow_subscription_id=?, inicio_en=NOW(), proximo_cobro=? WHERE id=?",
+            [subData.subscriptionId || '', subData.nextPaymentDate || null, sub.id]
+        );
+    } catch (e) { console.error('Sub confirm error:', e.message); }
+});
+
+// --- Webhook: renovación periódica ---
+app.post('/api/suscripciones/renovacion', async (req, res) => {
+    res.sendStatus(200);
+    const { token } = req.body;
+    if (!token) return;
+    try {
+        const { data } = await flowGet('payment/getStatus', { token });
+        if (data.status !== 2) return;
+        const [rows] = await pool.query(
+            "SELECT * FROM suscripciones WHERE flow_customer_id=? AND estado='activa' LIMIT 1",
+            [data.customerId]
+        );
+        if (!rows.length) return;
+        await pool.query('UPDATE suscripciones SET proximo_cobro=? WHERE id=?', [data.nextPaymentDate || null, rows[0].id]);
+        await pool.query(
+            "INSERT INTO pagos (usuario_id, tipo, monto, estado, commerce_order, flow_token, metodo_pago, confirmado_en) VALUES (?,'suscripcion',?,'aprobado',?,?,?,NOW())",
+            [rows[0].usuario_id, data.amount, data.commerceOrder || '', token, data.paymentData?.media || '']
+        );
+    } catch (e) { console.error('Sub renewal error:', e.message); }
+});
+
+// --- Cancelar suscripción ---
+app.delete('/api/suscripciones/cancelar', verifyToken, async (req, res) => {
+    try {
+        const [rows] = await pool.query("SELECT * FROM suscripciones WHERE usuario_id=? AND estado='activa' LIMIT 1", [req.usuario.id]);
+        if (!rows.length) return res.status(404).json({ error: 'Sin suscripción activa' });
+        const sub = rows[0];
+        if (sub.flow_subscription_id) {
+            await flowPost('subscription/cancel', { subscriptionId: sub.flow_subscription_id }).catch(() => {});
+        }
+        await pool.query("UPDATE suscripciones SET estado='cancelada', cancelada_en=NOW() WHERE id=?", [sub.id]);
+        res.json({ ok: true, message: 'Suscripción cancelada. Tu acceso se mantiene hasta el fin del período.' });
+    } catch (e) { res.status(500).json({ error: 'Error al cancelar' }); }
+});
+
+// --- Acceso a curso ---
+app.get('/api/cursos/:id/acceso', verifyToken, async (req, res) => {
+    try {
+        const cursoId = req.params.id;
+        const userId  = req.usuario.id;
+        const [cursos] = await pool.query('SELECT tipo_acceso, precio FROM cursos WHERE id=?', [cursoId]);
+        if (!cursos.length) return res.status(404).json({ error: 'Curso no encontrado' });
+        const { tipo_acceso, precio } = cursos[0];
+        if (tipo_acceso === 'gratis' || !tipo_acceso) return res.json({ acceso: true, motivo: 'gratis' });
+        const [insc] = await pool.query('SELECT id FROM inscripciones WHERE usuario_id=? AND curso_id=?', [userId, cursoId]);
+        if (insc.length) return res.json({ acceso: true, motivo: 'inscrito' });
+        if (tipo_acceso === 'suscripcion') {
+            const [sub] = await pool.query("SELECT id FROM suscripciones WHERE usuario_id=? AND estado='activa'", [userId]);
+            if (sub.length) return res.json({ acceso: true, motivo: 'suscripcion' });
+        }
+        if (tipo_acceso === 'pago_unico') {
+            const [pago] = await pool.query("SELECT id FROM pagos WHERE usuario_id=? AND tipo='curso' AND referencia_id=? AND estado='aprobado'", [userId, cursoId]);
+            if (pago.length) return res.json({ acceso: true, motivo: 'pago' });
+        }
+        res.json({ acceso: false, motivo: 'sin_acceso', tipo_acceso, precio });
+    } catch (e) { res.status(500).json({ error: 'Error' }); }
+});
+
+// --- Admin: Pagos ---
+app.get('/api/admin/pagos', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Solo admin' });
+    try {
+        const [rows] = await pool.query(
+            `SELECT p.*, u.nombre AS usuario_nombre, u.email AS usuario_email, c.titulo AS curso_titulo
+             FROM pagos p JOIN usuarios u ON p.usuario_id=u.id
+             LEFT JOIN cursos c ON p.referencia_id=c.id
+             ORDER BY p.creado_en DESC LIMIT 300`
+        );
+        res.json(rows);
+    } catch (e) { res.status(500).json({ error: 'Error' }); }
+});
+
+app.get('/api/admin/planes', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Solo admin' });
+    try {
+        const [rows] = await pool.query('SELECT * FROM planes ORDER BY monto ASC');
+        res.json(rows);
+    } catch (e) { res.status(500).json({ error: 'Error' }); }
+});
+
+app.post('/api/admin/planes', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Solo admin' });
+    try {
+        const { nombre, descripcion, periodo, monto, descuento_pct } = req.body;
+        if (!nombre || !monto) return res.status(400).json({ error: 'Nombre y monto requeridos' });
+        const [ins] = await pool.query(
+            'INSERT INTO planes (nombre, descripcion, periodo, monto, descuento_pct) VALUES (?,?,?,?,?)',
+            [nombre, descripcion || '', periodo || 'mensual', monto, descuento_pct || 0]
+        );
+        res.json({ id: ins.insertId, nombre, monto, periodo });
+    } catch (e) { res.status(500).json({ error: 'Error al crear plan' }); }
+});
+
+app.put('/api/admin/planes/:id', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Solo admin' });
+    try {
+        const { nombre, descripcion, monto, descuento_pct, activo } = req.body;
+        await pool.query(
+            'UPDATE planes SET nombre=?, descripcion=?, monto=?, descuento_pct=?, activo=? WHERE id=?',
+            [nombre, descripcion, monto, descuento_pct, activo ? 1 : 0, req.params.id]
+        );
+        res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: 'Error' }); }
 });
 
 // Any Uncaught API routes return 404

@@ -207,10 +207,23 @@
                 }
 
                 grid.innerHTML = '';
+                const fmt = n => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(n);
                 cursos.forEach(curso => {
-                    const priceFormatted = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(curso.precio);
                     const cover = curso.portada_url || 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=600&q=80';
-                    
+                    const tipo = curso.tipo_acceso || 'gratis';
+                    const isGratis = tipo === 'gratis' || !curso.precio;
+                    const priceBadge = isGratis
+                        ? `<span style="background:#DCFCE7;color:#16A34A;padding:.2rem .7rem;border-radius:20px;font-size:.75rem;font-weight:700">Gratis</span>`
+                        : tipo === 'suscripcion'
+                            ? `<span style="background:#EFF6FF;color:#2563EB;padding:.2rem .7rem;border-radius:20px;font-size:.75rem;font-weight:700">Con suscripción</span>`
+                            : `<span style="font-weight:800;color:var(--color-primary);font-size:1rem">${fmt(curso.precio)}</span>`;
+                    const ctaLabel = isGratis ? 'Inscribirme gratis' : tipo === 'suscripcion' ? 'Suscribirme' : `Comprar ${fmt(curso.precio)}`;
+                    const ctaOnclick = isGratis
+                        ? `inscribir(${curso.id})`
+                        : tipo === 'suscripcion'
+                            ? `location.href='pago.html?tipo=suscripcion'`
+                            : `location.href='pago.html?tipo=curso&id=${curso.id}'`;
+
                     grid.innerHTML += `
                         <div class="course-card">
                             <div class="c-image" style="background-image: url('${cover}')"></div>
@@ -222,8 +235,8 @@
                                 <h3>${curso.titulo}</h3>
                                 <p>${curso.descripcion}</p>
                                 <div class="c-footer">
-                                    <div class="c-price">${priceFormatted}</div>
-                                    <a href="javascript:void(0)" onclick="inscribir(${curso.id})" style="color: var(--color-primary); font-weight: 600;">Inscribirme <i class="ph ph-arrow-right"></i></a>
+                                    <div>${priceBadge}</div>
+                                    <a href="javascript:void(0)" onclick="${ctaOnclick}" style="color: var(--color-primary); font-weight: 600;">${ctaLabel} <i class="ph ph-arrow-right"></i></a>
                                 </div>
                             </div>
                         </div>

@@ -155,6 +155,8 @@
         <button class="tab" onclick="st(event,'ta')">Acceso Profesores</button>
         <button class="tab" onclick="st(event,'tv')">Clases en Vivo</button>
         <button class="tab" onclick="st(event,'tr')">Reportes</button>
+        <button class="tab" onclick="st(event,'tpagos')">💳 Pagos</button>
+        <button class="tab" onclick="st(event,'tplanes')">📋 Planes</button>
         <button class="tab" onclick="st(event,'ts')">Ajustes</button>
     </div>
 
@@ -269,6 +271,49 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- TAB Pagos -->
+    <div id="tpagos" class="tp">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+            <div>
+                <h3 style="font-size:1.05rem;margin:0">Historial de Pagos</h3>
+                <p style="font-size:.82rem;color:var(--l);margin:.2rem 0 0">Todas las transacciones procesadas por Flow</p>
+            </div>
+            <div style="display:flex;gap:.5rem">
+                <select id="pagoTipoFilter" onchange="filterPagos()" style="padding:.45rem .75rem;border:1.5px solid #E5E7EB;border-radius:var(--rf);font-family:var(--f);font-size:.84rem;background:var(--w);outline:none">
+                    <option value="">Todos los tipos</option>
+                    <option value="matricula">Matrícula</option>
+                    <option value="curso">Curso</option>
+                    <option value="suscripcion">Suscripción</option>
+                </select>
+                <select id="pagoEstadoFilter" onchange="filterPagos()" style="padding:.45rem .75rem;border:1.5px solid #E5E7EB;border-radius:var(--rf);font-family:var(--f);font-size:.84rem;background:var(--w);outline:none">
+                    <option value="">Todos los estados</option>
+                    <option value="aprobado">Aprobado</option>
+                    <option value="pendiente">Pendiente</option>
+                    <option value="rechazado">Rechazado</option>
+                </select>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:1.2rem" id="pagoStats"></div>
+        <div class="tw">
+            <table id="pagosTable">
+                <thead><tr><th>Fecha</th><th>Usuario</th><th>Concepto</th><th>Monto</th><th>Método</th><th>Estado</th></tr></thead>
+                <tbody id="pagosBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB Planes -->
+    <div id="tplanes" class="tp">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem">
+            <div>
+                <h3 style="font-size:1.05rem;margin:0">Planes y Precios</h3>
+                <p style="font-size:.82rem;color:var(--l);margin:.2rem 0 0">Configura suscripciones, matrícula y cursos de pago único</p>
+            </div>
+            <button class="btn bp" onclick="openPlanModal()"><i class="ph ph-plus"></i> Nuevo Plan</button>
+        </div>
+        <div id="planesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem"></div>
     </div>
 
     <!-- TAB Ajustes -->
@@ -386,6 +431,31 @@
         <div class="modal-actions">
             <button class="btn bo" onclick="closeModal()">Cancelar</button>
             <button class="btn bp" onclick="addUser()"><i class="ph ph-user-plus"></i> Crear Usuario</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Plan -->
+<div class="modal-bg" id="planModalBg">
+    <div class="modal" style="max-width:460px">
+        <h3 id="planModalTitle"><i class="ph ph-credit-card"></i> Nuevo Plan</h3>
+        <input type="hidden" id="planId">
+        <div class="fg"><label class="fl">Nombre del plan <span style="color:#EF4444">*</span></label><input class="fc" id="planNombre" type="text" placeholder="Ej: Mensualidad, Suscripción Anual, Matrícula"></div>
+        <div class="fg"><label class="fl">Descripción</label><textarea class="fc" id="planDesc" style="height:70px;resize:vertical" placeholder="¿Qué incluye este plan?"></textarea></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+            <div class="fg"><label class="fl">Período</label>
+                <select class="fc" id="planPeriodo">
+                    <option value="mensual">Mensual</option>
+                    <option value="anual">Anual</option>
+                    <option value="unico">Pago único (matrícula)</option>
+                </select>
+            </div>
+            <div class="fg"><label class="fl">Monto (CLP) <span style="color:#EF4444">*</span></label><input class="fc" id="planMonto" type="number" min="0" placeholder="Ej: 25000"></div>
+        </div>
+        <div class="fg"><label class="fl">Descuento (%)</label><input class="fc" id="planDescPct" type="number" min="0" max="100" value="0" placeholder="0"></div>
+        <div style="display:flex;gap:.75rem;margin-top:.5rem">
+            <button class="btn bp" style="flex:1" onclick="guardarPlan()"><i class="ph ph-floppy-disk"></i> Guardar</button>
+            <button class="btn bo" onclick="closePlanModal()">Cancelar</button>
         </div>
     </div>
 </div>
@@ -583,6 +653,8 @@ function st(e, id) {
 
     // Lazy-load tabs
     if (id === 'ti') fetchInscripciones();
+    if (id === 'tpagos')  fetchAdminPagos();
+    if (id === 'tplanes') fetchAdminPlanes();
 
     // Header button
     const btn = document.getElementById('headerActionBtn');
@@ -872,6 +944,150 @@ document.getElementById('modalBg').addEventListener('click',function(e){if(e.tar
 document.getElementById('intModalBg').addEventListener('click',function(e){if(e.target===this)closeIntModal()});
 document.getElementById('whModalBg').addEventListener('click',function(e){if(e.target===this)closeWHModal()});
 document.getElementById('editUserModalBg').addEventListener('click',function(e){if(e.target===this)closeEditUser()});
+document.getElementById('planModalBg').addEventListener('click',function(e){if(e.target===this)closePlanModal()});
+
+// =============================================
+// PAGOS
+// =============================================
+const fmtCLP = n => new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP'}).format(n||0);
+let allPagos = [];
+
+async function fetchAdminPagos() {
+    const token = localStorage.getItem('token');
+    try {
+        const res  = await fetch('/api/admin/pagos', { headers:{ Authorization:'Bearer '+token } });
+        allPagos   = await res.json();
+        paintPagos(allPagos);
+        paintPagoStats(allPagos);
+    } catch(e) { document.getElementById('pagosBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;padding:1.5rem">Error al cargar pagos</td></tr>'; }
+}
+
+function filterPagos() {
+    const tipo   = document.getElementById('pagoTipoFilter').value;
+    const estado = document.getElementById('pagoEstadoFilter').value;
+    const filtered = allPagos.filter(p =>
+        (!tipo   || p.tipo   === tipo) &&
+        (!estado || p.estado === estado)
+    );
+    paintPagos(filtered);
+    paintPagoStats(filtered);
+}
+
+function paintPagoStats(pagos) {
+    const aprobados = pagos.filter(p => p.estado === 'aprobado');
+    const total     = aprobados.reduce((s,p) => s + (p.monto||0), 0);
+    const pendientes = pagos.filter(p => p.estado === 'pendiente').length;
+    document.getElementById('pagoStats').innerHTML = `
+        <div class="sc"><div class="si" style="background:#DCFCE7;color:#16A34A"><i class="ph ph-check-circle"></i></div><div><div class="sn">${aprobados.length}</div><div class="sl">Pagos aprobados</div></div></div>
+        <div class="sc"><div class="si" style="background:#E0F2FE;color:#0369A1"><i class="ph ph-currency-circle-dollar"></i></div><div><div class="sn">${fmtCLP(total)}</div><div class="sl">Total recaudado</div></div></div>
+        <div class="sc"><div class="si" style="background:#FEF3C7;color:#D97706"><i class="ph ph-clock"></i></div><div><div class="sn">${pendientes}</div><div class="sl">Pendientes</div></div></div>
+    `;
+}
+
+const estadoPill = { aprobado:'<span style="background:#DCFCE7;color:#16A34A;padding:.2rem .6rem;border-radius:20px;font-size:.72rem;font-weight:600">aprobado</span>', pendiente:'<span style="background:#FEF3C7;color:#D97706;padding:.2rem .6rem;border-radius:20px;font-size:.72rem;font-weight:600">pendiente</span>', rechazado:'<span style="background:#FEE2E2;color:#DC2626;padding:.2rem .6rem;border-radius:20px;font-size:.72rem;font-weight:600">rechazado</span>', anulado:'<span style="background:#F1F5F9;color:#64748B;padding:.2rem .6rem;border-radius:20px;font-size:.72rem;font-weight:600">anulado</span>' };
+const tipoIcon  = { matricula:'<i class="ph ph-graduation-cap"></i>', curso:'<i class="ph ph-book-open"></i>', suscripcion:'<i class="ph ph-arrows-clockwise"></i>' };
+
+function paintPagos(pagos) {
+    const tbody = document.getElementById('pagosBody');
+    if (!pagos.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--l);padding:2rem">Sin transacciones</td></tr>'; return; }
+    tbody.innerHTML = pagos.map(p => {
+        const fecha    = new Date(p.creado_en).toLocaleDateString('es-CL',{day:'numeric',month:'short',year:'numeric'});
+        const concepto = p.tipo === 'curso' && p.curso_titulo ? p.curso_titulo : ({matricula:'Matrícula',curso:'Curso',suscripcion:'Suscripción'}[p.tipo]||p.tipo);
+        return `<tr>
+            <td style="color:var(--l);font-size:.82rem">${fecha}</td>
+            <td><strong>${p.usuario_nombre||'—'}</strong><br><span style="font-size:.76rem;color:var(--l)">${p.usuario_email||''}</span></td>
+            <td>${tipoIcon[p.tipo]||''} ${concepto}</td>
+            <td style="font-weight:700">${fmtCLP(p.monto)}</td>
+            <td style="font-size:.82rem;color:var(--l)">${p.metodo_pago||'—'}</td>
+            <td>${estadoPill[p.estado]||p.estado}</td>
+        </tr>`;
+    }).join('');
+}
+
+// =============================================
+// PLANES
+// =============================================
+let allPlanes = [];
+
+async function fetchAdminPlanes() {
+    const token = localStorage.getItem('token');
+    try {
+        const res = await fetch('/api/admin/planes', { headers:{ Authorization:'Bearer '+token } });
+        allPlanes = await res.json();
+        paintPlanes(allPlanes);
+    } catch(e) { document.getElementById('planesGrid').innerHTML = '<p style="color:red">Error al cargar planes</p>'; }
+}
+
+const periodoLabel = { mensual:'/mes', anual:'/año', unico:'pago único' };
+
+function paintPlanes(planes) {
+    const grid = document.getElementById('planesGrid');
+    if (!planes.length) {
+        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:2.5rem;color:var(--l)"><i class="ph ph-credit-card" style="font-size:2rem;display:block;margin-bottom:.5rem"></i>Aún no hay planes. Crea el primero.</div>`;
+        return;
+    }
+    grid.innerHTML = planes.map(p => `
+        <div style="background:var(--w);border:1.5px solid ${p.activo?'#E2E8F0':'#F1F5F9'};border-radius:14px;padding:1.4rem;opacity:${p.activo?1:.55}">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.6rem">
+                <div>
+                    <div style="font-weight:700;font-size:1rem">${p.nombre}</div>
+                    <div style="font-size:.78rem;color:var(--l)">${p.descripcion||''}</div>
+                </div>
+                <span style="background:${p.activo?'#DCFCE7':'#F1F5F9'};color:${p.activo?'#16A34A':'#94A3B8'};padding:.15rem .6rem;border-radius:20px;font-size:.7rem;font-weight:600">${p.activo?'Activo':'Inactivo'}</span>
+            </div>
+            <div style="font-size:1.5rem;font-weight:800;color:var(--p);margin:.4rem 0 .1rem">${fmtCLP(p.monto)}<span style="font-size:.8rem;color:var(--l);font-weight:400"> ${periodoLabel[p.periodo]||p.periodo}</span></div>
+            ${p.descuento_pct>0?`<div style="background:#FEF3C7;color:#B45309;font-size:.72rem;font-weight:700;padding:.15rem .6rem;border-radius:20px;display:inline-block;margin-bottom:.6rem">-${p.descuento_pct}% descuento</div>`:''}
+            <div style="display:flex;gap:.5rem;margin-top:.9rem">
+                <button class="btn bo btn-sm" onclick="openPlanModal(${p.id})"><i class="ph ph-pencil"></i> Editar</button>
+                <button class="btn bo btn-sm" style="color:${p.activo?'#DC2626':'#16A34A'}" onclick="togglePlan(${p.id},${p.activo?0:1})">${p.activo?'Desactivar':'Activar'}</button>
+            </div>
+        </div>`).join('');
+}
+
+function openPlanModal(id) {
+    const plan = id ? allPlanes.find(p=>p.id===id) : null;
+    document.getElementById('planModalTitle').textContent = plan ? 'Editar Plan' : 'Nuevo Plan';
+    document.getElementById('planId').value      = plan ? plan.id : '';
+    document.getElementById('planNombre').value  = plan ? plan.nombre : '';
+    document.getElementById('planDesc').value    = plan ? (plan.descripcion||'') : '';
+    document.getElementById('planPeriodo').value = plan ? plan.periodo : 'mensual';
+    document.getElementById('planMonto').value   = plan ? plan.monto : '';
+    document.getElementById('planDescPct').value = plan ? (plan.descuento_pct||0) : 0;
+    document.getElementById('planModalBg').classList.add('open');
+}
+function closePlanModal() { document.getElementById('planModalBg').classList.remove('open'); }
+
+async function guardarPlan() {
+    const token  = localStorage.getItem('token');
+    const planId = document.getElementById('planId').value;
+    const body   = {
+        nombre:       document.getElementById('planNombre').value.trim(),
+        descripcion:  document.getElementById('planDesc').value.trim(),
+        periodo:      document.getElementById('planPeriodo').value,
+        monto:        parseInt(document.getElementById('planMonto').value)||0,
+        descuento_pct:parseInt(document.getElementById('planDescPct').value)||0,
+        activo: 1
+    };
+    if (!body.nombre || !body.monto) { showT('Nombre y monto son obligatorios'); return; }
+    const url    = planId ? `/api/admin/planes/${planId}` : '/api/admin/planes';
+    const method = planId ? 'PUT' : 'POST';
+    const res    = await fetch(url, { method, headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+token }, body: JSON.stringify(body) });
+    if (!res.ok) { const d=await res.json(); showT(d.error||'Error'); return; }
+    closePlanModal();
+    showT(planId ? '✅ Plan actualizado' : '✅ Plan creado');
+    fetchAdminPlanes();
+}
+
+async function togglePlan(id, nuevoActivo) {
+    const token = localStorage.getItem('token');
+    const plan  = allPlanes.find(p=>p.id===id);
+    if (!plan) return;
+    await fetch(`/api/admin/planes/${id}`, {
+        method:'PUT', headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+token },
+        body: JSON.stringify({ ...plan, activo: nuevoActivo })
+    });
+    fetchAdminPlanes();
+}
 
 // Init admin name from JWT
 (function() {
