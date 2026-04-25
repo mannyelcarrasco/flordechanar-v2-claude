@@ -145,13 +145,14 @@ async function cargarClases() {
         const clases = await res.json();
         const ahora = new Date();
 
+        const ld = s => new Date(s.replace(' ','T'));
         const enVivo = clases.find(c => c.estado === 'en_vivo' ||
-            (c.estado !== 'finalizada' && new Date(c.fecha_inicio) <= ahora &&
-             ahora - new Date(c.fecha_inicio) < 3 * 3600000));
-        const proximas = clases.filter(c => c.estado === 'programada' && new Date(c.fecha_inicio) > ahora)
-                               .sort((a,b) => new Date(a.fecha_inicio) - new Date(b.fecha_inicio));
+            (c.estado !== 'finalizada' && ld(c.fecha_inicio) <= ahora &&
+             ahora - ld(c.fecha_inicio) < 3 * 3600000));
+        const proximas = clases.filter(c => c.estado === 'programada' && ld(c.fecha_inicio) > ahora)
+                               .sort((a,b) => ld(a.fecha_inicio) - ld(b.fecha_inicio));
         const grabaciones = clases.filter(c => c.youtube_id)
-                                  .sort((a,b) => new Date(b.fecha_inicio) - new Date(a.fecha_inicio));
+                                  .sort((a,b) => ld(b.fecha_inicio) - ld(a.fecha_inicio));
 
         renderLiveBanner(enVivo || null);
         renderProximas(proximas);
@@ -199,7 +200,7 @@ function renderProximas(lista) {
     }
     const ahora = new Date();
     el.innerHTML = lista.map(c => {
-        const fecha = new Date(c.fecha_inicio);
+        const fecha = new Date(c.fecha_inicio.replace(' ','T'));
         const dia = fecha.getDate();
         const mes = fecha.toLocaleDateString('es-CL', { month:'short' });
         const hora = fecha.toLocaleTimeString('es-CL', { hour:'2-digit', minute:'2-digit' });

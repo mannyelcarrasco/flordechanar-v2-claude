@@ -434,11 +434,12 @@
             if (resLive.ok) {
                 const clases = await resLive.json();
                 const ahora = new Date();
+                const ld = s => new Date(s.replace(' ','T'));
                 const enVivo = clases.find(c => c.estado === 'en_vivo' ||
-                    (c.estado !== 'finalizada' && new Date(c.fecha_inicio) <= ahora &&
-                     ahora - new Date(c.fecha_inicio) < 3 * 3600000));
+                    (c.estado !== 'finalizada' && ld(c.fecha_inicio) <= ahora &&
+                     ahora - ld(c.fecha_inicio) < 3 * 3600000));
                 if (enVivo) {
-                    const mins = Math.floor((ahora - new Date(enVivo.fecha_inicio)) / 60000);
+                    const mins = Math.floor((ahora - ld(enVivo.fecha_inicio)) / 60000);
                     const tiempoStr = mins <= 1 ? 'Recién iniciada' : `Iniciada hace ${mins} min`;
                     document.getElementById('liveTitulo').textContent = enVivo.titulo;
                     document.getElementById('liveMeta').innerHTML =

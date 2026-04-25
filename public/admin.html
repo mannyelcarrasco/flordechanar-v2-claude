@@ -930,7 +930,7 @@ function renderClases(lista) {
     const estadoMap = { programada:'bP', en_vivo:'bR', finalizada:'bA' };
     const estadoLabel = { programada:'Programada', en_vivo:'🔴 En Vivo', finalizada:'Finalizada' };
     tbody.innerHTML = lista.map(c => {
-        const fecha = new Date(c.fecha_inicio).toLocaleString('es-CL', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+        const fecha = new Date(c.fecha_inicio.replace(' ','T')).toLocaleString('es-CL', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
         return `<tr>
             <td><div class="tn">${c.titulo}</div><div class="ts">${c.duracion_min} min${c.curso_titulo ? ' · ' + c.curso_titulo : ''}</div></td>
             <td class="ts">${fecha}</td>
