@@ -414,10 +414,18 @@
         <!-- Selector clase en vivo -->
         <div class="fg" id="claseVivoField" style="display:none">
             <label class="fl"><i class="ph ph-record" style="color:#EF4444"></i> Clase programada o en vivo</label>
-            <select class="fc" id="lecClaseVivo">
-                <option value="">Cargando clases...</option>
+            <select class="fc" id="lecClaseVivo" onchange="onClaseVivoChange()">
+                <option value="">— Seleccionar clase —</option>
             </select>
             <div class="hint">Vincula esta lección a una clase del calendario. Las alumnas verán el link de Meet o la grabación según el estado.</div>
+            <div id="claseVivoDetails" style="display:none;margin-top:.75rem;padding:.9rem;background:#F8FAFC;border-radius:8px;border:1px solid #E2E8F0">
+                <div style="font-size:.75rem;font-weight:700;color:var(--p);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.65rem"><i class="ph ph-video-camera"></i> Configurar esta clase</div>
+                <label class="fl" style="font-size:.82rem;margin-bottom:.3rem">Sala Google Meet (URL)</label>
+                <input class="fc" id="lecMeetUrl" type="url" placeholder="https://meet.google.com/xxx-xxxx-xxx" style="margin-bottom:.6rem">
+                <label class="fl" style="font-size:.82rem;margin-bottom:.3rem">YouTube ID (grabación post-clase)</label>
+                <input class="fc" id="lecYoutubeId" type="text" placeholder="Ej: dQw4w9WgXcQ">
+                <div style="font-size:.74rem;color:var(--l);margin-top:.5rem"><i class="ph ph-info"></i> Se sincroniza con la clase al guardar.</div>
+            </div>
         </div>
 
         <!-- Título -->
@@ -647,6 +655,10 @@ function openLessonModal(modId, lecId = null) {
     } else {
         titleInp.value = ''; descInp.value = ''; vidInp.value = '';
         durInp.value = ''; visInp.value = 'privada';
+        _clasesCache = [];
+        document.getElementById('claseVivoDetails').style.display = 'none';
+        document.getElementById('lecMeetUrl').value = '';
+        document.getElementById('lecYoutubeId').value = '';
         selectLessonType('video');
         document.getElementById('drawerTitle').textContent = 'Nueva Lección';
     }
@@ -671,27 +683,41 @@ function selectLessonType(type) {
     document.getElementById('videoField').style.display = (type === 'video' || type === 'link') ? 'block' : 'none';
     document.getElementById('archivoField').style.display = type === 'archivo' ? 'block' : 'none';
     document.getElementById('claseVivoField').style.display = type === 'clase_vivo' ? 'block' : 'none';
-    if (type === 'clase_vivo') cargarClasesParaSelector();
+    if (type === 'clase_vivo' && !_clasesCache.length) cargarClasesParaSelector();
     currentLessonState.tipo = type;
 }
 
+let _clasesCache = [];
+
 async function cargarClasesParaSelector(valorActual) {
     const sel = document.getElementById('lecClaseVivo');
+    sel.innerHTML = '<option value="">Cargando...</option>';
     try {
         const token = localStorage.getItem('token');
         const res = await fetch('/api/clases-vivo', { headers: { 'Authorization': 'Bearer ' + token } });
         if (!res.ok) throw new Error();
-        const clases = await res.json();
+        _clasesCache = await res.json();
         const estadoLabel = { programada:'📅', en_vivo:'🔴', finalizada:'✅' };
         sel.innerHTML = '<option value="">— Seleccionar clase —</option>' +
-            clases.map(c => {
+            _clasesCache.map(c => {
                 const fecha = new Date(c.fecha_inicio.replace(' ','T')).toLocaleDateString('es-CL', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
                 const label = `${estadoLabel[c.estado]||''} ${c.titulo} · ${fecha}`;
-                return `<option value="${c.id}" ${valorActual == c.id ? 'selected' : ''}>${label}</option>`;
+                return `<option value="${c.id}" ${String(valorActual) === String(c.id) ? 'selected' : ''}>${label}</option>`;
             }).join('');
+        if (valorActual) onClaseVivoChange();
     } catch(e) {
         sel.innerHTML = '<option value="">Error al cargar clases</option>';
     }
+}
+
+function onClaseVivoChange() {
+    const claseId = document.getElementById('lecClaseVivo').value;
+    const details = document.getElementById('claseVivoDetails');
+    if (!claseId) { details.style.display = 'none'; return; }
+    const clase = _clasesCache.find(c => String(c.id) === String(claseId));
+    details.style.display = 'block';
+    document.getElementById('lecMeetUrl').value = (clase && clase.meet_url) ? clase.meet_url : '';
+    document.getElementById('lecYoutubeId').value = (clase && clase.youtube_id) ? clase.youtube_id : '';
 }
 
 async function handleFileSelect(input) {
@@ -736,39 +762,58 @@ async function saveLesson() {
     const tipo = currentLessonState.tipo || 'video';
     let video;
     if (tipo === 'archivo') video = document.getElementById('lecFileUrl').value.trim();
-    else if (tipo === 'clase_vivo') video = 'clase_vivo:' + (document.getElementById('lecClaseVivo').value || '');
-    else video = document.getElementById('lecVideo').value.trim();
+    else if (tipo === 'clase_vivo') {
+        const claseId = document.getElementById('lecClaseVivo').value;
+        if (!claseId) return showToast('⚠️ Selecciona una clase en vivo');
+        video = 'clase_vivo:' + claseId;
+    } else video = document.getElementById('lecVideo').value.trim();
     const duracion = document.getElementById('lecDuracion').value.trim();
     const visibilidad = document.getElementById('lecVisibilidad').value;
     if (!titulo) return showToast('⚠️ El título de lección es obligatorio');
     if (tipo === 'archivo' && !video) return showToast('⚠️ Debes subir un PDF antes de guardar');
-    if (tipo === 'clase_vivo' && video === 'clase_vivo:') return showToast('⚠️ Selecciona una clase en vivo');
 
     const token = localStorage.getItem('token');
+    const leccionPayload = { titulo, descripcion: desc || null, video_url: video || null, duracion: duracion || null, visibilidad, tipo };
+
     try {
-        if(currentLessonState.isEdit) {
-            await fetch('/api/lecciones/'+currentLessonState.leccionId, {
+        let ok = false;
+        if (currentLessonState.isEdit) {
+            const r = await fetch('/api/lecciones/' + currentLessonState.leccionId, {
                 method: 'PUT',
-                headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer '+token},
-                body: JSON.stringify({ titulo, descripcion: desc, video_url: video, duracion, visibilidad, tipo })
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify(leccionPayload)
             });
-            showToast('✅ Lección actualizada');
+            ok = r.ok;
+            if (ok) showToast('✅ Lección actualizada');
+            else { const d = await r.json(); showToast('⚠️ ' + (d.error || 'Error al actualizar')); return; }
         } else {
-            const res = await fetch('/api/lecciones', {
+            const r = await fetch('/api/lecciones', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer '+token},
-                body: JSON.stringify({ modulo_id: currentLessonState.moduloId, titulo })
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify({ modulo_id: currentLessonState.moduloId, ...leccionPayload })
             });
-            if(res.ok) {
-                const data = await res.json();
-                await fetch('/api/lecciones/'+data.id, {
+            ok = r.ok;
+            if (ok) showToast('✅ Lección creada');
+            else { const d = await r.json(); showToast('⚠️ ' + (d.error || 'Error al crear')); return; }
+        }
+
+        // Si es clase_vivo, sincronizar meet_url y youtube_id con la clase
+        if (ok && tipo === 'clase_vivo') {
+            const claseId = document.getElementById('lecClaseVivo').value;
+            const meetUrl = document.getElementById('lecMeetUrl').value.trim() || null;
+            const youtubeId = document.getElementById('lecYoutubeId').value.trim() || null;
+            const clase = _clasesCache.find(c => String(c.id) === String(claseId));
+            const meetChanged = meetUrl !== (clase?.meet_url || null);
+            const ytChanged = youtubeId !== (clase?.youtube_id || null);
+            if (meetChanged || ytChanged) {
+                await fetch('/api/clases-vivo/' + claseId, {
                     method: 'PUT',
-                    headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer '+token},
-                    body: JSON.stringify({ titulo, descripcion: desc, video_url: video, duracion, visibilidad, tipo })
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ meet_url: meetUrl, youtube_id: youtubeId })
                 });
-                showToast('✅ Lección creada');
             }
         }
+
         closeLessonModal();
         loadCurriculum();
     } catch(e) { showToast('⚠️ Error al guardar lección'); }

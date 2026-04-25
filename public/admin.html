@@ -940,7 +940,7 @@ function renderClases(lista) {
             <td class="ts">${fecha}</td>
             <td class="ts">${c.profesor_nombre}</td>
             <td><span class="bp2 ${estadoMap[c.estado]||'bD'}">${estadoLabel[c.estado]||c.estado}</span></td>
-            <td>${c.meet_url ? `<a href="${c.meet_url}" target="_blank" style="font-size:.78rem;color:var(--inf)"><i class="ph ph-arrow-square-out"></i> Meet</a>` : '<span style="color:var(--l);font-size:.78rem">—</span>'}</td>
+            <td>${c.meet_url && c.meet_url.startsWith('http') ? `<a href="${c.meet_url}" target="_blank" rel="noopener" style="font-size:.78rem;color:var(--inf)"><i class="ph ph-arrow-square-out"></i> Meet</a>` : (c.meet_url ? `<span style="font-size:.75rem;color:#EF4444" title="URL inválida: ${c.meet_url}"><i class="ph ph-warning"></i> Sin https</span>` : '<span style="color:var(--l);font-size:.78rem">—</span>')}</td>
             <td>${c.youtube_id ? `<span style="font-size:.78rem;color:var(--p);font-weight:600"><i class="ph ph-youtube-logo"></i> ${c.youtube_id}</span>` : '<span style="color:var(--l);font-size:.78rem">Sin grabar</span>'}</td>
             <td><div style="display:flex;gap:.4rem">
                 <button class="btn bo btn-sm" onclick="editClase(${c.id})"><i class="ph ph-pencil"></i></button>

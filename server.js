@@ -112,7 +112,7 @@ async function initDB() {
                 titulo VARCHAR(300) NOT NULL,
                 descripcion TEXT,
                 video_url VARCHAR(500),
-                tipo ENUM('video','texto','archivo','link') DEFAULT 'video',
+                tipo ENUM('video','texto','archivo','link','clase_vivo') DEFAULT 'video',
                 duracion VARCHAR(50),
                 visibilidad ENUM('privada','muestra') DEFAULT 'privada',
                 orden INT DEFAULT 0,
@@ -210,10 +210,12 @@ async function initDB() {
         console.log('Tables checked/created: evaluaciones, preguntas, intentos, respuestas.');
 
         const alterCols = [
-            `ALTER TABLE lecciones ADD COLUMN IF NOT EXISTS tipo ENUM('video','texto','archivo','link') DEFAULT 'video'`,
+            `ALTER TABLE lecciones ADD COLUMN IF NOT EXISTS tipo ENUM('video','texto','archivo','link','clase_vivo') DEFAULT 'video'`,
             `ALTER TABLE lecciones ADD COLUMN IF NOT EXISTS duracion VARCHAR(50)`,
             `ALTER TABLE lecciones ADD COLUMN IF NOT EXISTS visibilidad ENUM('privada','muestra') DEFAULT 'privada'`,
-            `ALTER TABLE lecciones ADD COLUMN IF NOT EXISTS orden INT DEFAULT 0`
+            `ALTER TABLE lecciones ADD COLUMN IF NOT EXISTS orden INT DEFAULT 0`,
+            // Expand ENUM if clase_vivo not already present
+            `ALTER TABLE lecciones MODIFY COLUMN tipo ENUM('video','texto','archivo','link','clase_vivo') DEFAULT 'video'`
         ];
         for(const sql of alterCols) { try { await pool.query(sql); } catch(e) {} }
         console.log('Tables checked/created: usuarios, cursos, inscripciones, modulos, lecciones, progreso_lecciones.');
@@ -573,8 +575,11 @@ app.delete('/api/modulos/:id', verifyToken, async (req, res) => {
 
 app.post('/api/lecciones', verifyToken, async (req, res) => {
     try {
-        const { modulo_id, titulo } = req.body;
-        const [result] = await pool.query('INSERT INTO lecciones (modulo_id, titulo, descripcion, video_url) VALUES (?, ?, "", "")', [modulo_id, titulo]);
+        const { modulo_id, titulo, descripcion, video_url, tipo, duracion, visibilidad } = req.body;
+        const [result] = await pool.query(
+            'INSERT INTO lecciones (modulo_id, titulo, descripcion, video_url, tipo, duracion, visibilidad) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [modulo_id, titulo, descripcion || null, video_url || null, tipo || 'video', duracion || null, visibilidad || 'privada']
+        );
         res.json({ success: true, id: result.insertId });
     } catch (e) {
         console.error(e);
@@ -587,7 +592,7 @@ app.put('/api/lecciones/:id', verifyToken, async (req, res) => {
         const { titulo, descripcion, video_url, tipo, duracion, visibilidad } = req.body;
         await pool.query(
             'UPDATE lecciones SET titulo=?, descripcion=?, video_url=?, tipo=?, duracion=?, visibilidad=? WHERE id=?',
-            [titulo, descripcion, video_url, tipo || 'video', duracion || null, visibilidad || 'privada', req.params.id]
+            [titulo, descripcion || null, video_url || null, tipo || 'video', duracion || null, visibilidad || 'privada', req.params.id]
         );
         res.json({ success: true });
     } catch (e) {
