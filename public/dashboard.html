@@ -257,16 +257,15 @@
         </div>
     </div>
 
-    <!-- Live Class Banner -->
-    <div class="live-banner">
+    <!-- Live Class Banner (dinámico) -->
+    <div class="live-banner" id="liveBannerDash" style="display:none">
         <div class="live-dot"></div>
         <div class="live-info">
             <div class="label"><i class="ph ph-record"></i> EN VIVO AHORA</div>
-            <h3>Biomagnetismo Clínico — Módulo 4: Pares Avanzados</h3>
-            <p>Con la Terapeuta <strong style="color:white;">Elena Soto</strong> · Iniciada hace 12 min</p>
+            <h3 id="liveTitulo"></h3>
+            <p id="liveMeta"></p>
         </div>
         <div>
-            <div class="live-meta" style="margin-bottom:0.5rem; text-align:right;">👥 24 estudiantes conectados</div>
             <a href="clase-vivo.html" class="btn-live"><i class="ph ph-video-camera"></i> Unirse Ahora</a>
         </div>
     </div>
@@ -428,6 +427,26 @@
             console.error(e);
             list.innerHTML = '<p style="color:red; font-size:0.9rem;">Error al cargar tus cursos.</p>';
         }
+
+        // Cargar banner clase en vivo
+        try {
+            const resLive = await fetch('/api/clases-vivo', { headers: { 'Authorization': 'Bearer ' + token } });
+            if (resLive.ok) {
+                const clases = await resLive.json();
+                const ahora = new Date();
+                const enVivo = clases.find(c => c.estado === 'en_vivo' ||
+                    (c.estado !== 'finalizada' && new Date(c.fecha_inicio) <= ahora &&
+                     ahora - new Date(c.fecha_inicio) < 3 * 3600000));
+                if (enVivo) {
+                    const mins = Math.floor((ahora - new Date(enVivo.fecha_inicio)) / 60000);
+                    const tiempoStr = mins <= 1 ? 'Recién iniciada' : `Iniciada hace ${mins} min`;
+                    document.getElementById('liveTitulo').textContent = enVivo.titulo;
+                    document.getElementById('liveMeta').innerHTML =
+                        `Con <strong style="color:white">${enVivo.profesor_nombre}</strong> · ${tiempoStr}`;
+                    document.getElementById('liveBannerDash').style.display = 'flex';
+                }
+            }
+        } catch(e) { console.error('live banner error', e); }
 
     });
 </script>
