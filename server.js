@@ -298,6 +298,37 @@ async function initDB() {
             );
         } catch(e) {}
 
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS foro_posts (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                usuario_id INT NOT NULL,
+                contenido TEXT NOT NULL,
+                tag VARCHAR(30) DEFAULT 'duda',
+                creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+            )
+        `);
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS foro_respuestas (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                post_id INT NOT NULL,
+                usuario_id INT NOT NULL,
+                contenido TEXT NOT NULL,
+                creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (post_id) REFERENCES foro_posts(id) ON DELETE CASCADE,
+                FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+            )
+        `);
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS foro_likes (
+                usuario_id INT NOT NULL,
+                post_id INT NOT NULL,
+                PRIMARY KEY (usuario_id, post_id),
+                FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+                FOREIGN KEY (post_id) REFERENCES foro_posts(id) ON DELETE CASCADE
+            )
+        `);
+
         console.log('Tables checked/created: usuarios, cursos, inscripciones, modulos, lecciones, progreso_lecciones.');
 
         const [rows] = await pool.query('SELECT * FROM usuarios WHERE rol = "admin"');
@@ -354,6 +385,31 @@ function validEmail(e) { return typeof e === 'string' && EMAIL_RE.test(e.trim())
 function validStr(s, min = 1, max = 300) { return typeof s === 'string' && s.trim().length >= min && s.trim().length <= max; }
 
 // --- Auth Routes ---
+app.post('/api/auth/register', loginLimiter, async (req, res) => {
+    try {
+        const { nombre, email, password } = req.body;
+        if (!nombre?.trim() || !email?.trim() || !password) return res.status(400).json({ error: 'Todos los campos son requeridos' });
+        if (password.length < 6) return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
+        if (!validEmail(email)) return res.status(400).json({ error: 'Email inválido' });
+        const [existing] = await pool.query('SELECT id FROM usuarios WHERE email = ?', [email.toLowerCase().trim()]);
+        if (existing.length) return res.status(409).json({ error: 'Ya existe una cuenta con ese correo' });
+        const hash = await bcrypt.hash(password, 10);
+        const [result] = await pool.query(
+            "INSERT INTO usuarios (nombre, email, password, rol) VALUES (?, ?, ?, 'estudiante')",
+            [nombre.trim(), email.toLowerCase().trim(), hash]
+        );
+        const token = jwt.sign(
+            { id: result.insertId, nombre: nombre.trim(), email: email.toLowerCase().trim(), rol: 'estudiante' },
+            process.env.JWT_SECRET || 'fallback_secret_flordechanar',
+            { expiresIn: '7d' }
+        );
+        res.json({ token, rol: 'estudiante', nombre: nombre.trim() });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error al crear la cuenta' });
+    }
+});
+
 app.post('/api/auth/login', loginLimiter, async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -1179,6 +1235,72 @@ app.delete('/api/clases-vivo/:id', verifyToken, async (req, res) => {
         await pool.query('DELETE FROM clases_vivo WHERE id = ?', [req.params.id]);
         res.json({ ok: true });
     } catch (e) { console.error(e); res.status(500).json({ error: 'Error al eliminar' }); }
+});
+
+// =============================================
+// FORO
+// =============================================
+app.get('/api/foro', verifyToken, async (req, res) => {
+    try {
+        const [posts] = await pool.query(
+            `SELECT fp.id, fp.contenido, fp.tag, fp.creado_en,
+                    u.nombre AS autor,
+                    (SELECT COUNT(*) FROM foro_respuestas fr WHERE fr.post_id = fp.id) AS respuestas,
+                    (SELECT COUNT(*) FROM foro_likes fl WHERE fl.post_id = fp.id) AS likes,
+                    (SELECT COUNT(*) > 0 FROM foro_likes fl WHERE fl.post_id = fp.id AND fl.usuario_id = ?) AS liked_by_me
+             FROM foro_posts fp
+             JOIN usuarios u ON fp.usuario_id = u.id
+             ORDER BY fp.creado_en DESC LIMIT 60`,
+            [req.usuario.id]
+        );
+        res.json(posts);
+    } catch (e) { res.status(500).json({ error: 'Error al cargar foro' }); }
+});
+
+app.post('/api/foro', verifyToken, async (req, res) => {
+    try {
+        const { contenido, tag } = req.body;
+        if (!contenido?.trim()) return res.status(400).json({ error: 'El contenido es requerido' });
+        const [ins] = await pool.query(
+            'INSERT INTO foro_posts (usuario_id, contenido, tag) VALUES (?, ?, ?)',
+            [req.usuario.id, contenido.trim(), tag || 'duda']
+        );
+        res.json({ id: ins.insertId });
+    } catch (e) { res.status(500).json({ error: 'Error al publicar' }); }
+});
+
+app.post('/api/foro/:id/like', verifyToken, async (req, res) => {
+    try {
+        const [ex] = await pool.query('SELECT 1 FROM foro_likes WHERE post_id=? AND usuario_id=?', [req.params.id, req.usuario.id]);
+        if (ex.length) {
+            await pool.query('DELETE FROM foro_likes WHERE post_id=? AND usuario_id=?', [req.params.id, req.usuario.id]);
+            res.json({ liked: false });
+        } else {
+            await pool.query('INSERT INTO foro_likes (post_id, usuario_id) VALUES (?,?)', [req.params.id, req.usuario.id]);
+            res.json({ liked: true });
+        }
+    } catch (e) { res.status(500).json({ error: 'Error' }); }
+});
+
+app.post('/api/foro/:id/respuestas', verifyToken, async (req, res) => {
+    try {
+        const { contenido } = req.body;
+        if (!contenido?.trim()) return res.status(400).json({ error: 'El contenido es requerido' });
+        await pool.query('INSERT INTO foro_respuestas (post_id, usuario_id, contenido) VALUES (?,?,?)', [req.params.id, req.usuario.id, contenido.trim()]);
+        res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: 'Error' }); }
+});
+
+app.get('/api/foro/:id/respuestas', verifyToken, async (req, res) => {
+    try {
+        const [rows] = await pool.query(
+            `SELECT fr.*, u.nombre AS autor FROM foro_respuestas fr
+             JOIN usuarios u ON fr.usuario_id = u.id
+             WHERE fr.post_id = ? ORDER BY fr.creado_en ASC`,
+            [req.params.id]
+        );
+        res.json(rows);
+    } catch (e) { res.status(500).json({ error: 'Error' }); }
 });
 
 // =============================================

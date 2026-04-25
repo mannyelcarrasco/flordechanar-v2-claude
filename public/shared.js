@@ -55,3 +55,61 @@ function calcNota(obtenido, total) {
     if (!total || total === 0) return null;
     return Math.round(((obtenido / total) * 6 + 1) * 10) / 10;
 }
+
+// ── Nav móvil automática ──────────────────────────────────
+// Se inyecta en todas las páginas que tienen sidebar (.sb o .sidebar)
+document.addEventListener('DOMContentLoaded', () => {
+    const sb = document.querySelector('.sb, aside.sidebar');
+    if (!sb) return;
+
+    // ── Header móvil ────────────────────────────────────
+    const mhd = document.createElement('div');
+    mhd.className = 'mhd';
+    mhd.innerHTML = `
+        <button class="mhd-btn" id="mhdMenu" aria-label="Abrir menú">
+            <i class="ph ph-list"></i>
+        </button>
+        <span class="mhd-title">Flor de Chañar</span>
+        <a href="configuracion.html" class="mhd-btn" aria-label="Configuración">
+            <i class="ph ph-user-circle"></i>
+        </a>`;
+    document.body.prepend(mhd);
+
+    // ── Overlay ─────────────────────────────────────────
+    const overlay = document.createElement('div');
+    overlay.className = 'sb-overlay';
+    document.body.appendChild(overlay);
+
+    const openSb  = () => { sb.classList.add('mob-open');    overlay.classList.add('mob-open'); };
+    const closeSb = () => { sb.classList.remove('mob-open'); overlay.classList.remove('mob-open'); };
+
+    document.getElementById('mhdMenu').addEventListener('click', openSb);
+    overlay.addEventListener('click', closeSb);
+    sb.querySelectorAll('a[href]').forEach(a => a.addEventListener('click', closeSb));
+
+    // ── Bottom nav (solo páginas de estudiante) ──────────
+    const page = location.pathname.split('/').pop() || 'dashboard.html';
+    const studentPages = ['dashboard','escuela','clase-vivo','materiales','foro','ranking','evaluacion','curso','configuracion','suscripcion','pago'];
+    const isStudentPage = studentPages.some(p => page.startsWith(p));
+    const isAdminPage   = ['admin','profesor','curso-crear','eval-crear','eval-revisar'].some(p => page.startsWith(p));
+
+    if (isStudentPage && !isAdminPage) {
+        const bnav = document.createElement('nav');
+        bnav.className = 'mob-bnav';
+        const items = [
+            { href:'dashboard.html',  icon:'ph-house',         label:'Mi Aula' },
+            { href:'escuela.html',    icon:'ph-books',          label:'Catálogo' },
+            { href:'clase-vivo.html', icon:'ph-video-camera',   label:'Clases' },
+            { href:'foro.html',       icon:'ph-chats-circle',   label:'Foro' },
+            { href:'configuracion.html', icon:'ph-user-circle', label:'Cuenta' },
+        ];
+        bnav.innerHTML = items.map(item => {
+            const active = page === item.href;
+            return `<a href="${item.href}" class="${active ? 'active' : ''}">
+                <i class="ph ${item.icon}"></i>
+                <span>${item.label}</span>
+            </a>`;
+        }).join('');
+        document.body.appendChild(bnav);
+    }
+});

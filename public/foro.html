@@ -25,6 +25,12 @@
         .user-name { font-size:.88rem; font-weight:600; color:#fff; }
         .user-role { font-size:.75rem; color:rgba(255,255,255,.5); }
         .main-content { margin-left:var(--sidebar-width); flex:1; padding:2rem 2.5rem; }
+        @media(max-width:768px) {
+            .main-content { margin-left:0; padding:1rem; padding-top:calc(56px + 1rem); padding-bottom:calc(64px + 1rem); }
+            .foro-layout { grid-template-columns:1fr; }
+            .post-compose { padding:1rem; }
+            .compose-tags { flex-wrap:wrap; gap:.35rem; }
+        }
 
         .page-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.75rem; }
         .page-header h1 { font-family:var(--serif); font-size:1.7rem; color:var(--secondary); }
@@ -171,23 +177,37 @@
 <div class="toast" id="toast"><i class="ph ph-check-circle" id="tI"></i><span id="tM"></span></div>
 <script src="shared.js"></script>
 <script>
-// Posts stored in localStorage (client-side only — sin backend de foro por ahora)
-let posts = JSON.parse(localStorage.getItem('foro_posts') || '[]');
+const token = getToken();
 let selectedTag = 'duda';
 let miNombre = '';
+let miAv = 'E';
 
-window.onload = () => {
-    const token = getToken();
+const tagInfo = {
+    duda:        { label:'Duda',        cls:'tag-duda',    icon:'ph-question' },
+    experiencia: { label:'Experiencia', cls:'tag-exp',     icon:'ph-sparkle' },
+    recurso:     { label:'Recurso',     cls:'tag-recurso', icon:'ph-paperclip' },
+    anuncio:     { label:'Anuncio',     cls:'tag-anuncio', icon:'ph-megaphone' }
+};
+
+function fmtTs(iso) {
+    const d = new Date(iso), now = new Date(), diff = (now - d) / 1000;
+    if (diff < 60)    return 'Ahora mismo';
+    if (diff < 3600)  return `Hace ${Math.floor(diff/60)} min`;
+    if (diff < 86400) return `Hace ${Math.floor(diff/3600)} h`;
+    return d.toLocaleDateString('es-CL', { day:'numeric', month:'short' });
+}
+
+window.onload = async () => {
     if (!token) return;
     const p = decodeToken();
     if (p) {
         miNombre = p.nombre || 'Estudiante';
+        miAv = miNombre[0].toUpperCase();
         document.getElementById('sbNombre').textContent = miNombre;
-        const av = miNombre[0].toUpperCase();
-        document.getElementById('sbAv').textContent = av;
-        document.getElementById('composeAv').textContent = av;
+        document.getElementById('sbAv').textContent = miAv;
+        document.getElementById('composeAv').textContent = miAv;
     }
-    renderPosts();
+    await cargarPosts();
 };
 
 function selTag(btn) {
@@ -196,57 +216,94 @@ function selTag(btn) {
     selectedTag = btn.dataset.tag;
 }
 
-function publicar() {
+async function cargarPosts() {
+    try {
+        const res   = await fetch('/api/foro', { headers: { Authorization: 'Bearer ' + token } });
+        const posts = await res.json();
+        document.getElementById('badgePosts').textContent = posts.length || '0';
+        renderPosts(posts);
+    } catch(e) {
+        document.getElementById('postsList').innerHTML = '<p style="color:var(--light);text-align:center;padding:2rem">Error al cargar el foro</p>';
+    }
+}
+
+async function publicar() {
     const txt = document.getElementById('postContent').value.trim();
     if (!txt) return showToast('Escribe algo antes de publicar', 'ph-warning');
-    const post = {
-        id: Date.now(),
-        autor: miNombre,
-        contenido: txt,
-        tag: selectedTag,
-        likes: 0,
-        likedByMe: false,
-        ts: new Date().toISOString()
-    };
-    posts.unshift(post);
-    localStorage.setItem('foro_posts', JSON.stringify(posts.slice(0, 100)));
-    document.getElementById('postContent').value = '';
-    renderPosts();
-    showToast('Publicado en el foro', 'ph-chats-circle');
+    const btn = document.getElementById('btnPost');
+    btn.disabled = true;
+    try {
+        const res = await fetch('/api/foro', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+            body: JSON.stringify({ contenido: txt, tag: selectedTag })
+        });
+        if (!res.ok) throw new Error();
+        document.getElementById('postContent').value = '';
+        showToast('Publicado en el foro', 'ph-chats-circle');
+        await cargarPosts();
+    } catch(e) {
+        showToast('Error al publicar', 'ph-warning');
+    } finally {
+        btn.disabled = false;
+    }
 }
 
-function toggleLike(id) {
-    const p = posts.find(p => p.id === id);
-    if (!p) return;
-    p.likedByMe = !p.likedByMe;
-    p.likes += p.likedByMe ? 1 : -1;
-    localStorage.setItem('foro_posts', JSON.stringify(posts));
-    renderPosts();
+async function toggleLike(postId, btn) {
+    try {
+        const res  = await fetch(`/api/foro/${postId}/like`, { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
+        const data = await res.json();
+        const card = btn.closest('.post-card');
+        const likeBtn = card.querySelector('.post-action.like-btn');
+        const liked = data.liked;
+        const count = parseInt(likeBtn.dataset.likes || 0) + (liked ? 1 : -1);
+        likeBtn.dataset.likes = count;
+        likeBtn.innerHTML = `<i class="ph ${liked ? 'ph-heart-fill' : 'ph-heart'}"></i> ${count} Me gusta`;
+        likeBtn.classList.toggle('liked', liked);
+    } catch(e) {}
 }
 
-const tagInfo = {
-    duda:        { label:'Duda',       cls:'tag-duda',    icon:'ph-question' },
-    experiencia: { label:'Experiencia',cls:'tag-exp',     icon:'ph-sparkle' },
-    recurso:     { label:'Recurso',    cls:'tag-recurso', icon:'ph-paperclip' },
-    anuncio:     { label:'Anuncio',    cls:'tag-anuncio', icon:'ph-megaphone' }
-};
-
-function fmtTs(iso) {
-    const d = new Date(iso), now = new Date();
-    const diff = (now - d) / 1000;
-    if (diff < 60) return 'Ahora mismo';
-    if (diff < 3600) return `Hace ${Math.floor(diff/60)} min`;
-    if (diff < 86400) return `Hace ${Math.floor(diff/3600)} h`;
-    return d.toLocaleDateString('es-CL', { day:'numeric', month:'short' });
+let replyingTo = null;
+function mostrarRespuesta(postId) {
+    const existing = document.getElementById(`reply-form-${postId}`);
+    if (existing) { existing.remove(); replyingTo = null; return; }
+    if (replyingTo) document.getElementById(`reply-form-${replyingTo}`)?.remove();
+    replyingTo = postId;
+    const div = document.createElement('div');
+    div.id = `reply-form-${postId}`;
+    div.style = 'margin-top:.75rem;padding:.75rem;background:#F8FAFC;border-radius:10px;border:1px solid #E2E8F0';
+    div.innerHTML = `
+        <div style="display:flex;gap:.6rem;align-items:flex-start">
+            <div class="post-av" style="width:28px;height:28px;font-size:.75rem;flex-shrink:0">${miAv}</div>
+            <textarea style="flex:1;border:1.5px solid #E5E7EB;border-radius:8px;padding:.5rem .75rem;font-family:var(--font);font-size:.84rem;resize:none;outline:none;min-height:60px" id="reply-txt-${postId}" placeholder="Escribe tu respuesta..."></textarea>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:.5rem;margin-top:.5rem">
+            <button class="btn-post" style="font-size:.8rem;padding:.4rem .85rem" onclick="enviarRespuesta(${postId})"><i class="ph ph-paper-plane-tilt"></i> Responder</button>
+        </div>`;
+    document.getElementById(`post-footer-${postId}`).after(div);
 }
 
-function renderPosts() {
+async function enviarRespuesta(postId) {
+    const txt = document.getElementById(`reply-txt-${postId}`).value.trim();
+    if (!txt) return;
+    await fetch(`/api/foro/${postId}/respuestas`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ contenido: txt })
+    });
+    document.getElementById(`reply-form-${postId}`)?.remove();
+    replyingTo = null;
+    showToast('Respuesta enviada', 'ph-chat-circle');
+    await cargarPosts();
+}
+
+function renderPosts(posts) {
     const container = document.getElementById('postsList');
-    document.getElementById('badgePosts').textContent = posts.length || '–';
-
-    const sample = posts.length === 0 ? getSamplePosts() : posts;
-
-    container.innerHTML = sample.map(p => {
+    if (!posts.length) {
+        container.innerHTML = `<div style="text-align:center;padding:3rem;color:var(--light)"><i class="ph ph-chats-circle" style="font-size:2.5rem;display:block;margin-bottom:.75rem;color:var(--primary)"></i><p>Aún no hay publicaciones. ¡Sé la primera en compartir!</p></div>`;
+        return;
+    }
+    container.innerHTML = posts.map(p => {
         const t = tagInfo[p.tag] || tagInfo.duda;
         return `
         <div class="post-card">
@@ -255,28 +312,20 @@ function renderPosts() {
                 <div class="post-meta">
                     <span class="post-author">${p.autor}</span>
                     <span class="post-tag ${t.cls}"><i class="ph ${t.icon}"></i> ${t.label}</span>
-                    <div class="post-time">${fmtTs(p.ts)}</div>
+                    <div class="post-time">${fmtTs(p.creado_en)}</div>
                 </div>
             </div>
             <div class="post-body">${p.contenido}</div>
-            <div class="post-footer">
-                <button class="post-action ${p.likedByMe?'liked':''}" onclick="toggleLike(${p.id})">
-                    <i class="ph ${p.likedByMe?'ph-heart-fill':'ph-heart'}"></i> ${p.likes} Me gusta
+            <div class="post-footer" id="post-footer-${p.id}">
+                <button class="post-action like-btn ${p.liked_by_me ? 'liked' : ''}" data-likes="${p.likes}" onclick="toggleLike(${p.id}, this)">
+                    <i class="ph ${p.liked_by_me ? 'ph-heart-fill' : 'ph-heart'}"></i> ${p.likes} Me gusta
                 </button>
-                <button class="post-action"><i class="ph ph-chat-circle"></i> Responder</button>
-                <button class="post-action"><i class="ph ph-share-network"></i> Compartir</button>
+                <button class="post-action" onclick="mostrarRespuesta(${p.id})">
+                    <i class="ph ph-chat-circle"></i> ${p.respuestas > 0 ? p.respuestas + ' respuesta' + (p.respuestas > 1 ? 's' : '') : 'Responder'}
+                </button>
             </div>
         </div>`;
     }).join('');
-}
-
-function getSamplePosts() {
-    return [
-        { id:1, autor:'Catalina Reyes', contenido:'¿Alguien tiene bibliografía sobre el par Hígado-Hígado? Estoy preparando la práctica del módulo 3 y no encuentro buenas fuentes en español.', tag:'duda', likes:5, likedByMe:false, ts: new Date(Date.now()-3600000).toISOString() },
-        { id:2, autor:'Javiera Morales', contenido:'Quiero compartir mi experiencia con una paciente con fibromialgia. Trabajé el protocolo de los pares emocionales y en la segunda sesión reportó 60% de mejoría en el dolor. ¡Es increíble lo que puede lograr el biomagnetismo!', tag:'experiencia', likes:12, likedByMe:false, ts: new Date(Date.now()-7200000).toISOString() },
-        { id:3, autor:'Elena Soto', contenido:'📢 Recordatorio: la clase en vivo de este jueves 19:00 h es sobre Pares Avanzados del Sistema Endocrino. Trae tus preguntas preparadas. ¡Las espero!', tag:'anuncio', likes:8, likedByMe:false, ts: new Date(Date.now()-86400000).toISOString() },
-        { id:4, autor:'Andrea Torres', contenido:'Les comparto este artículo de revisión sobre magnetismo y biología celular. Está en inglés pero vale la pena el esfuerzo: muy bien fundamentado científicamente.', tag:'recurso', likes:3, likedByMe:false, ts: new Date(Date.now()-172800000).toISOString() },
-    ];
 }
 </script>
 </body>

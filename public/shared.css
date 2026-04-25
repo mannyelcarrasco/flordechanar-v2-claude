@@ -182,9 +182,101 @@ tr:hover td { background:#FAFAF8; }
 @keyframes sU { from { opacity:0; transform:translateY(20px) } to { opacity:1; transform:none } }
 .toast.show { display:flex; animation:sU .3s ease; }
 
+/* ── Mobile header (inyectado por shared.js) ─────────── */
+.mhd {
+    display:none;
+    position:fixed; top:0; left:0; right:0; height:56px;
+    background:var(--secondary); z-index:200;
+    align-items:center; padding:0 1rem; gap:.75rem;
+    box-shadow:0 2px 8px rgba(0,0,0,.25);
+}
+.mhd-title {
+    color:#fff; font-family:var(--serif); font-size:1rem;
+    font-weight:700; flex:1; white-space:nowrap;
+    overflow:hidden; text-overflow:ellipsis;
+}
+.mhd-btn {
+    background:none; border:none; color:rgba(255,255,255,.85);
+    font-size:1.5rem; cursor:pointer; padding:.2rem;
+    display:flex; align-items:center; line-height:1; border-radius:6px;
+}
+.mhd-btn:hover { color:#fff; background:rgba(255,255,255,.1); }
+
+/* Overlay oscuro detrás del sidebar abierto */
+.sb-overlay {
+    display:none; position:fixed; inset:0;
+    background:rgba(0,0,0,.5); z-index:149;
+}
+.sb-overlay.mob-open { display:block; }
+
+/* ── Bottom nav (inyectada por shared.js) ─────────────── */
+.mob-bnav { display:none; }
+
 /* ── Responsive ──────────────────────────────────────── */
 @media (max-width:768px) {
-    .sb { display:none; }
-    .main { margin-left:0; max-width:100%; padding:1rem; }
-    .stats { grid-template-columns:1fr 1fr; }
+    /* Mostrar header móvil */
+    .mhd { display:flex; }
+
+    /* Sidebar: drawer deslizable desde la izquierda */
+    .sb {
+        transform:translateX(-100%);
+        transition:transform .28s cubic-bezier(.4,0,.2,1);
+        z-index:150; top:0; min-height:100vh;
+        display:flex;          /* siempre en DOM, solo oculto */
+    }
+    .sb.mob-open { transform:translateX(0); }
+
+    /* Contenido principal */
+    .main {
+        margin-left:0; max-width:100%;
+        padding:1rem;
+        padding-top:calc(56px + 1rem);
+        padding-bottom:calc(64px + 1rem + env(safe-area-inset-bottom, 0px));
+        min-height:100vh;
+    }
+
+    /* Stats: 2 columnas */
+    .stats { grid-template-columns:1fr 1fr; gap:.6rem; }
+    .sc { padding:.9rem .75rem; }
+    .sn { font-size:1.3rem; }
+
+    /* Tablas: scroll horizontal */
+    .tw { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    table { min-width:500px; }
+
+    /* Tabs: scroll horizontal sin wrap */
+    .tabs { overflow-x:auto; -webkit-overflow-scrolling:touch; flex-wrap:nowrap; }
+    .tab  { flex-shrink:0; }
+
+    /* Modales: full-width, se abren desde abajo */
+    .modal-bg { align-items:flex-end; padding:0; }
+    .modal {
+        max-width:100% !important; width:100%;
+        border-radius:20px 20px 0 0;
+        max-height:90vh; overflow-y:auto;
+    }
+
+    /* Botones más grandes para touch */
+    .btn { min-height:42px; }
+    .fc  { min-height:44px; font-size:.92rem; }
+
+    /* Bottom nav */
+    .mob-bnav {
+        display:flex; position:fixed;
+        bottom:0; left:0; right:0;
+        background:var(--secondary); z-index:200;
+        border-top:1px solid rgba(255,255,255,.1);
+        padding:.35rem 0;
+        padding-bottom:calc(.35rem + env(safe-area-inset-bottom, 0px));
+    }
+    .mob-bnav a {
+        flex:1; display:flex; flex-direction:column;
+        align-items:center; gap:.12rem;
+        color:rgba(255,255,255,.4); font-size:.62rem;
+        text-decoration:none; padding:.28rem 0;
+        transition:color .15s; -webkit-tap-highlight-color:transparent;
+    }
+    .mob-bnav a.active, .mob-bnav a:hover { color:#fff; }
+    .mob-bnav a i { font-size:1.3rem; }
+    .mob-bnav a span { white-space:nowrap; }
 }
