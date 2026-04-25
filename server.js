@@ -112,9 +112,9 @@ async function initDB() {
                 titulo VARCHAR(300) NOT NULL,
                 descripcion TEXT,
                 video_url VARCHAR(500),
-                tipo ENUM('video','texto','archivo','link','clase_vivo') DEFAULT 'video',
+                tipo VARCHAR(20) DEFAULT 'video',
                 duracion VARCHAR(50),
-                visibilidad ENUM('privada','muestra') DEFAULT 'privada',
+                visibilidad VARCHAR(10) DEFAULT 'privada',
                 orden INT DEFAULT 0,
                 FOREIGN KEY (modulo_id) REFERENCES modulos(id) ON DELETE CASCADE
             )
@@ -210,14 +210,30 @@ async function initDB() {
         console.log('Tables checked/created: evaluaciones, preguntas, intentos, respuestas.');
 
         const alterCols = [
-            `ALTER TABLE lecciones ADD COLUMN IF NOT EXISTS tipo ENUM('video','texto','archivo','link','clase_vivo') DEFAULT 'video'`,
+            // Use VARCHAR for tipo — more flexible than ENUM, no migration issues
+            `ALTER TABLE lecciones MODIFY COLUMN tipo VARCHAR(20) DEFAULT 'video'`,
             `ALTER TABLE lecciones ADD COLUMN IF NOT EXISTS duracion VARCHAR(50)`,
-            `ALTER TABLE lecciones ADD COLUMN IF NOT EXISTS visibilidad ENUM('privada','muestra') DEFAULT 'privada'`,
-            `ALTER TABLE lecciones ADD COLUMN IF NOT EXISTS orden INT DEFAULT 0`,
-            // Expand ENUM if clase_vivo not already present
-            `ALTER TABLE lecciones MODIFY COLUMN tipo ENUM('video','texto','archivo','link','clase_vivo') DEFAULT 'video'`
+            `ALTER TABLE lecciones MODIFY COLUMN visibilidad VARCHAR(10) DEFAULT 'privada'`,
+            `ALTER TABLE lecciones ADD COLUMN IF NOT EXISTS orden INT DEFAULT 0`
         ];
         for(const sql of alterCols) { try { await pool.query(sql); } catch(e) {} }
+
+        // Migrate: fix lessons whose video_url starts with 'clase_vivo:' but tipo is wrong
+        try {
+            await pool.query(
+                `UPDATE lecciones SET tipo='clase_vivo' WHERE video_url LIKE 'clase_vivo:%' AND tipo != 'clase_vivo'`
+            );
+        } catch(e) {}
+
+        // Migrate: fix meet_url that's missing https:// prefix
+        try {
+            await pool.query(
+                `UPDATE clases_vivo SET meet_url = CONCAT('https://', meet_url)
+                 WHERE meet_url IS NOT NULL AND meet_url != ''
+                 AND meet_url NOT LIKE 'http://%' AND meet_url NOT LIKE 'https://%'`
+            );
+        } catch(e) {}
+
         console.log('Tables checked/created: usuarios, cursos, inscripciones, modulos, lecciones, progreso_lecciones.');
 
         const [rows] = await pool.query('SELECT * FROM usuarios WHERE rol = "admin"');
@@ -986,6 +1002,15 @@ async function linkClaseToModulo(claseId, moduloId, titulo) {
     );
 }
 
+// Normalize meet URL — ensure https:// prefix
+function normalizeMeetUrl(url) {
+    if (!url) return null;
+    const u = url.trim();
+    if (!u) return null;
+    if (u.startsWith('http://') || u.startsWith('https://')) return u;
+    return 'https://' + u;
+}
+
 // Crear clase (prof o admin)
 app.post('/api/clases-vivo', verifyToken, async (req, res) => {
     if (!['admin','profesor'].includes(req.usuario.rol)) return res.status(403).json({ error: 'Sin permiso' });
@@ -996,7 +1021,7 @@ app.post('/api/clases-vivo', verifyToken, async (req, res) => {
         const [r] = await pool.query(
             `INSERT INTO clases_vivo (titulo, descripcion, fecha_inicio, duracion_min, meet_url, curso_id, creado_por)
              VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [titulo.trim(), descripcion||null, fecha_inicio, duracion_min||60, meet_url||null, curso_id||null, req.usuario.id]
+            [titulo.trim(), descripcion||null, fecha_inicio, duracion_min||60, normalizeMeetUrl(meet_url), curso_id||null, req.usuario.id]
         );
         const claseId = r.insertId;
         // Auto-add to curriculum if module selected
@@ -1021,7 +1046,7 @@ app.put('/api/clases-vivo/:id', verifyToken, async (req, res) => {
             `UPDATE clases_vivo SET titulo=?, descripcion=?, fecha_inicio=?, duracion_min=?,
              meet_url=?, youtube_id=?, estado=?, curso_id=? WHERE id=?`,
             [newTitulo, descripcion??cl.descripcion, fecha_inicio||cl.fecha_inicio,
-             duracion_min||cl.duracion_min, meet_url??cl.meet_url, youtube_id??cl.youtube_id,
+             duracion_min||cl.duracion_min, meet_url!==undefined ? normalizeMeetUrl(meet_url) : cl.meet_url, youtube_id??cl.youtube_id,
              estado||cl.estado, curso_id??cl.curso_id, req.params.id]
         );
         // Also update lesson title in curriculum and link to new module if provided

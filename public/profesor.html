@@ -55,14 +55,14 @@
         <li><a href="login.html"><i class="ph ph-sign-out"></i> Salir</a></li>
     </ul>
     <div class="sb-user">
-        <div class="sb-av">E</div>
-        <div><div class="sb-un">Elena Soto</div><div class="sb-ur">Profesora · Biomagnetismo</div></div>
+        <div class="sb-av" id="profAv">P</div>
+        <div><div class="sb-un" id="profNombre">Cargando...</div><div class="sb-ur" id="profRol">Profesor</div></div>
     </div>
 </aside>
 
 <main class="main">
     <div class="pg-hd">
-        <div><h2>Panel del Profesor</h2><p>Bienvenida, Elena. Tienes 2 evaluaciones pendientes de revisar.</p></div>
+        <div><h2>Panel del Profesor</h2><p id="profBienvenida">Bienvenido/a al panel.</p></div>
         <button class="btn btn-p" onclick="sw(null,'tu')"><i class="ph ph-plus"></i> Subir Contenido</button>
     </div>
 
@@ -227,6 +227,14 @@ function addFiles(input,listId){const l=document.getElementById(listId);l.style.
 renderG();
 
 window.onload = async () => {
+    const p = decodeToken ? decodeToken() : null;
+    if (p) {
+        const nombre = p.nombre || 'Profesor';
+        document.getElementById('profNombre').textContent = nombre;
+        document.getElementById('profAv').textContent = nombre[0].toUpperCase();
+        document.getElementById('profRol').textContent = p.rol === 'admin' ? 'Administrador' : 'Profesor';
+        document.getElementById('profBienvenida').textContent = `Bienvenido/a, ${nombre.split(' ')[0]}.`;
+    }
     const urlParams = new URLSearchParams(window.location.search);
     if(urlParams.get('tab') === 'cursos') sw(null, 'tc');
     await fetchDictados();
