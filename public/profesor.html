@@ -51,7 +51,7 @@
         <li><a href="#" onclick="sw(event,'te')"><i class="ph ph-exam"></i> Evaluaciones <span class="sb-badge">2</span></a></li>
     </ul>
     <ul class="sb-nav" style="margin-top:1rem">
-        <li><a href="admin.html"><i class="ph ph-shield-check"></i> Panel Admin</a></li>
+        <li id="adminPanelLink" style="display:none"><a href="admin.html"><i class="ph ph-shield-check"></i> Panel Admin</a></li>
         <li><a href="login.html"><i class="ph ph-sign-out"></i> Salir</a></li>
     </ul>
     <div class="sb-user">
@@ -234,6 +234,7 @@ window.onload = async () => {
         document.getElementById('profAv').textContent = nombre[0].toUpperCase();
         document.getElementById('profRol').textContent = p.rol === 'admin' ? 'Administrador' : 'Profesor';
         document.getElementById('profBienvenida').textContent = `Bienvenido/a, ${nombre.split(' ')[0]}.`;
+        if (p.rol === 'admin') document.getElementById('adminPanelLink').style.display = '';
     }
     const urlParams = new URLSearchParams(window.location.search);
     if(urlParams.get('tab') === 'cursos') sw(null, 'tc');

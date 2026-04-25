@@ -426,6 +426,20 @@
                 <input class="fc" id="lecYoutubeId" type="text" placeholder="Ej: dQw4w9WgXcQ">
                 <div style="font-size:.74rem;color:var(--l);margin-top:.5rem"><i class="ph ph-info"></i> Se sincroniza con la clase al guardar.</div>
             </div>
+            <!-- Mini-form para crear nueva clase -->
+            <div id="nuevaClaseForm" style="display:none;margin-top:.75rem;padding:.9rem;background:#FFF7ED;border-radius:8px;border:1px solid #FED7AA">
+                <div style="font-size:.75rem;font-weight:700;color:#EA580C;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.65rem"><i class="ph ph-plus-circle"></i> Nueva clase en vivo</div>
+                <label class="fl" style="font-size:.82rem;margin-bottom:.3rem">Título de la clase <span style="color:#EF4444">*</span></label>
+                <input class="fc" id="nuevaClaseTitulo" type="text" placeholder="Ej: Clase 3 — Introducción" style="margin-bottom:.6rem">
+                <label class="fl" style="font-size:.82rem;margin-bottom:.3rem">Fecha y hora <span style="color:#EF4444">*</span></label>
+                <input class="fc" id="nuevaClaseFecha" type="datetime-local" style="margin-bottom:.6rem">
+                <label class="fl" style="font-size:.82rem;margin-bottom:.3rem">Sala Google Meet (URL)</label>
+                <input class="fc" id="nuevaClaseMeet" type="url" placeholder="https://meet.google.com/xxx-xxxx-xxx" style="margin-bottom:.75rem">
+                <div style="display:flex;gap:.5rem">
+                    <button type="button" class="btn btn-p" style="flex:1;font-size:.85rem" onclick="crearNuevaClaseInline()"><i class="ph ph-check"></i> Crear clase</button>
+                    <button type="button" class="btn" style="font-size:.85rem;background:#F1F5F9;color:#64748B" onclick="cancelarNuevaClase()">Cancelar</button>
+                </div>
+            </div>
         </div>
 
         <!-- Título -->
@@ -703,7 +717,8 @@ async function cargarClasesParaSelector(valorActual) {
                 const fecha = new Date(c.fecha_inicio.replace(' ','T')).toLocaleDateString('es-CL', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
                 const label = `${estadoLabel[c.estado]||''} ${c.titulo} · ${fecha}`;
                 return `<option value="${c.id}" ${String(valorActual) === String(c.id) ? 'selected' : ''}>${label}</option>`;
-            }).join('');
+            }).join('') +
+            '<option value="__new__">➕ Crear nueva clase...</option>';
         if (valorActual) onClaseVivoChange();
     } catch(e) {
         sel.innerHTML = '<option value="">Error al cargar clases</option>';
@@ -713,11 +728,49 @@ async function cargarClasesParaSelector(valorActual) {
 function onClaseVivoChange() {
     const claseId = document.getElementById('lecClaseVivo').value;
     const details = document.getElementById('claseVivoDetails');
+    const nuevaForm = document.getElementById('nuevaClaseForm');
+    if (claseId === '__new__') {
+        details.style.display = 'none';
+        nuevaForm.style.display = 'block';
+        return;
+    }
+    nuevaForm.style.display = 'none';
     if (!claseId) { details.style.display = 'none'; return; }
     const clase = _clasesCache.find(c => String(c.id) === String(claseId));
     details.style.display = 'block';
     document.getElementById('lecMeetUrl').value = (clase && clase.meet_url) ? clase.meet_url : '';
     document.getElementById('lecYoutubeId').value = (clase && clase.youtube_id) ? clase.youtube_id : '';
+}
+
+function cancelarNuevaClase() {
+    document.getElementById('lecClaseVivo').value = '';
+    document.getElementById('nuevaClaseForm').style.display = 'none';
+}
+
+async function crearNuevaClaseInline() {
+    const titulo = document.getElementById('nuevaClaseTitulo').value.trim();
+    const fecha = document.getElementById('nuevaClaseFecha').value;
+    const meetUrl = document.getElementById('nuevaClaseMeet').value.trim();
+    if (!titulo || !fecha) { showToast('Título y fecha son obligatorios'); return; }
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/clases-vivo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ titulo, fecha_inicio: fecha, meet_url: meetUrl || null })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error al crear');
+        showToast('✅ Clase creada');
+        document.getElementById('nuevaClaseForm').style.display = 'none';
+        document.getElementById('nuevaClaseTitulo').value = '';
+        document.getElementById('nuevaClaseFecha').value = '';
+        document.getElementById('nuevaClaseMeet').value = '';
+        _clasesCache = [];
+        await cargarClasesParaSelector(data.id);
+    } catch(e) {
+        showToast('Error: ' + e.message);
+    }
 }
 
 async function handleFileSelect(input) {

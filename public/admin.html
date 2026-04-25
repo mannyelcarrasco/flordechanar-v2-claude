@@ -161,9 +161,9 @@
     <!-- TAB Usuarios -->
     <div id="tu" class="tp active">
         <div style="display:flex;gap:.75rem;margin-bottom:1rem;align-items:center">
-            <input type="text" placeholder="🔍  Buscar usuario..." style="flex:1;padding:.55rem .9rem;border:1.5px solid #E5E7EB;border-radius:var(--rf);font-family:var(--f);font-size:.86rem;outline:none">
-            <select style="padding:.55rem .9rem;border:1.5px solid #E5E7EB;border-radius:var(--rf);font-family:var(--f);font-size:.86rem;background:var(--w);outline:none;cursor:pointer">
-                <option>Todos los roles</option><option>Estudiante</option><option>Profesor</option><option>Admin</option>
+            <input id="userSearch" type="text" oninput="filterUsers()" placeholder="🔍  Buscar usuario..." style="flex:1;padding:.55rem .9rem;border:1.5px solid #E5E7EB;border-radius:var(--rf);font-family:var(--f);font-size:.86rem;outline:none">
+            <select id="userRolFilter" onchange="filterUsers()" style="padding:.55rem .9rem;border:1.5px solid #E5E7EB;border-radius:var(--rf);font-family:var(--f);font-size:.86rem;background:var(--w);outline:none;cursor:pointer">
+                <option value="">Todos los roles</option><option value="estudiante">Estudiante</option><option value="profesor">Profesor</option><option value="admin">Admin</option>
             </select>
         </div>
         <div class="tw">
@@ -348,6 +348,28 @@
     </div>
 </div>
 
+<!-- Modal: Editar Usuario -->
+<div class="modal-bg" id="editUserModalBg">
+    <div class="modal" style="max-width:460px">
+        <h3><i class="ph ph-user-gear"></i> Editar Usuario</h3>
+        <input type="hidden" id="editUserId">
+        <div class="fg"><label class="fl">Nombre completo</label><input class="fc" id="editUserNombre" type="text" placeholder="Nombre y apellido"></div>
+        <div class="fg"><label class="fl">Correo electrónico</label><input class="fc" id="editUserEmail" type="email" placeholder="correo@ejemplo.cl"></div>
+        <div class="fg"><label class="fl">Rol</label>
+            <select class="fc" id="editUserRol">
+                <option value="estudiante">Estudiante</option>
+                <option value="profesor">Profesor</option>
+                <option value="admin">Administrador</option>
+            </select>
+        </div>
+        <div class="fg"><label class="fl">Nueva contraseña <span style="font-size:.78rem;color:var(--l)">(dejar vacío para no cambiar)</span></label><input class="fc" id="editUserPass" type="password" placeholder="••••••••"></div>
+        <div class="modal-actions">
+            <button class="btn bo" onclick="closeEditUser()">Cancelar</button>
+            <button class="btn bp" onclick="guardarEditUser()"><i class="ph ph-floppy-disk"></i> Guardar</button>
+        </div>
+    </div>
+</div>
+
 <!-- Modal: Nuevo Usuario -->
 <div class="modal-bg" id="modalBg">
     <div class="modal">
@@ -444,40 +466,103 @@
 <script src="shared.js"></script>
 <script>
 // Users backend integration
+let allUsers = [];
+
 async function renderUsers(){
     const b = document.getElementById('usersBody');
     b.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem;">Cargando usuarios...</td></tr>';
     try {
         const token = localStorage.getItem('token');
         const res = await fetch('/api/usuarios', { headers: { 'Authorization': 'Bearer ' + token } });
-        const users = await res.json();
-        
-        b.innerHTML = '';
-        if(users.length === 0) {
-            b.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem;">No hay usuarios.</td></tr>';
-            return;
-        }
-
-        users.forEach(u => {
-            const roleCap = u.rol.charAt(0).toUpperCase() + u.rol.slice(1);
-            const init = u.nombre.charAt(0).toUpperCase();
-            // Assign colors dynamically or based on role
-            let bgCol = 'var(--p)';
-            if(u.rol === 'profesor') bgCol = 'var(--inf)';
-            if(u.rol === 'admin') bgCol = 'var(--err)';
-
-            b.innerHTML += `<tr>
-                <td><div style="display:flex;align-items:center;gap:.65rem"><div style="width:30px;height:30px;border-radius:50%;background:${bgCol};opacity:.85;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.72rem;color:#fff">${init}</div><div><div class="tn">${u.nombre}</div><div class="ts">${u.email}</div></div></div></td>
-                <td>${roleCap}</td>
-                <td>${u.cursos_inscritos || 0}</td>
-                <td class="ts">Registrado</td>
-                <td><span class="bp2 ${u.activo ? 'bA' : 'bD'}">${u.activo ? 'Activo' : 'Inactivo'}</span></td>
-                <td><div style="display:flex;gap:.4rem"><button class="btn bo btn-sm" onclick="showT('Perfil de ${u.nombre} abierto')">Ver</button><button class="btn bd btn-sm" onclick="showT('Próximamente')">${u.activo ? 'Suspender' : 'Activar'}</button></div></td>
-            </tr>`;
-        });
+        allUsers = await res.json();
+        paintUsers(allUsers);
     } catch(e) {
         b.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem; color:red;">Error al cargar usuarios</td></tr>';
     }
+}
+
+function paintUsers(users) {
+    const b = document.getElementById('usersBody');
+    if (!users.length) { b.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem">Sin usuarios.</td></tr>'; return; }
+    b.innerHTML = users.map(u => {
+        const roleCap = u.rol.charAt(0).toUpperCase() + u.rol.slice(1);
+        const init = u.nombre.charAt(0).toUpperCase();
+        let bgCol = 'var(--p)';
+        if(u.rol === 'profesor') bgCol = 'var(--inf)';
+        if(u.rol === 'admin') bgCol = 'var(--err)';
+        return `<tr>
+            <td><div style="display:flex;align-items:center;gap:.65rem"><div style="width:30px;height:30px;border-radius:50%;background:${bgCol};opacity:.85;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.72rem;color:#fff">${init}</div><div><div class="tn">${u.nombre}</div><div class="ts">${u.email}</div></div></div></td>
+            <td>${roleCap}</td>
+            <td>${u.cursos_inscritos || 0}</td>
+            <td class="ts">${new Date(u.creado_en).toLocaleDateString('es-CL',{day:'numeric',month:'short',year:'numeric'})}</td>
+            <td><span class="bp2 ${u.activo ? 'bA' : 'bD'}">${u.activo ? 'Activo' : 'Inactivo'}</span></td>
+            <td><div style="display:flex;gap:.4rem">
+                <button class="btn bo btn-sm" onclick="openEditUser(${u.id})"><i class="ph ph-pencil"></i> Editar</button>
+                <button class="btn btn-sm" style="background:${u.activo?'rgba(239,68,68,.1)':'rgba(104,122,97,.1)'};color:${u.activo?'var(--err)':'var(--p)'};border:none;cursor:pointer;border-radius:var(--rf);padding:.3rem .6rem;font-family:var(--f);font-weight:600"
+                    onclick="toggleActivo(${u.id},${u.activo?0:1})">${u.activo ? 'Suspender' : 'Activar'}</button>
+            </div></td>
+        </tr>`;
+    }).join('');
+}
+
+function filterUsers() {
+    const q = document.getElementById('userSearch')?.value.toLowerCase() || '';
+    const rol = document.getElementById('userRolFilter')?.value || '';
+    paintUsers(allUsers.filter(u =>
+        (!rol || u.rol === rol) &&
+        (!q || u.nombre.toLowerCase().includes(q) || u.email.toLowerCase().includes(q))
+    ));
+}
+
+function openEditUser(id) {
+    const u = allUsers.find(x => x.id === id);
+    if (!u) return;
+    document.getElementById('editUserId').value = u.id;
+    document.getElementById('editUserNombre').value = u.nombre;
+    document.getElementById('editUserEmail').value = u.email;
+    document.getElementById('editUserRol').value = u.rol;
+    document.getElementById('editUserPass').value = '';
+    document.getElementById('editUserModalBg').classList.add('open');
+}
+
+function closeEditUser() { document.getElementById('editUserModalBg').classList.remove('open'); }
+
+async function guardarEditUser() {
+    const id = document.getElementById('editUserId').value;
+    const body = {
+        nombre: document.getElementById('editUserNombre').value.trim(),
+        email: document.getElementById('editUserEmail').value.trim(),
+        rol: document.getElementById('editUserRol').value,
+        password: document.getElementById('editUserPass').value.trim() || undefined
+    };
+    if (!body.nombre || !body.email) return showT('⚠️ Nombre y email son requeridos');
+    try {
+        const res = await fetch(`/api/usuarios/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+            body: JSON.stringify(body)
+        });
+        const d = await res.json();
+        if (!res.ok) return showT('⚠️ ' + (d.error || 'Error'));
+        showT('✅ Usuario actualizado');
+        closeEditUser();
+        renderUsers();
+    } catch(e) { showT('⚠️ Error de conexión'); }
+}
+
+async function toggleActivo(id, nuevoEstado) {
+    const u = allUsers.find(x => x.id === id);
+    const accion = nuevoEstado ? 'Activar' : 'Suspender';
+    if (!confirm(`¿${accion} a ${u?.nombre}?`)) return;
+    try {
+        const res = await fetch(`/api/usuarios/${id}/activo`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+            body: JSON.stringify({ activo: nuevoEstado })
+        });
+        if (res.ok) { showT(`✅ Usuario ${nuevoEstado ? 'activado' : 'suspendido'}`); renderUsers(); }
+        else showT('⚠️ Error al actualizar');
+    } catch(e) { showT('⚠️ Error de conexión'); }
 }
 
 // Tab switching — única función st() en la página
@@ -786,6 +871,7 @@ async function addUser(){
 document.getElementById('modalBg').addEventListener('click',function(e){if(e.target===this)closeModal()});
 document.getElementById('intModalBg').addEventListener('click',function(e){if(e.target===this)closeIntModal()});
 document.getElementById('whModalBg').addEventListener('click',function(e){if(e.target===this)closeWHModal()});
+document.getElementById('editUserModalBg').addEventListener('click',function(e){if(e.target===this)closeEditUser()});
 
 // Init admin name from JWT
 (function() {

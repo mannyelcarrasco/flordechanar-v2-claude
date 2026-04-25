@@ -209,12 +209,12 @@ async function initDB() {
 
         console.log('Tables checked/created: evaluaciones, preguntas, intentos, respuestas.');
 
+        // Each statement in its own try/catch — "Duplicate column" errors are harmless
         const alterCols = [
-            // Use VARCHAR for tipo — more flexible than ENUM, no migration issues
             `ALTER TABLE lecciones MODIFY COLUMN tipo VARCHAR(20) DEFAULT 'video'`,
-            `ALTER TABLE lecciones ADD COLUMN IF NOT EXISTS duracion VARCHAR(50)`,
+            `ALTER TABLE lecciones ADD COLUMN duracion VARCHAR(50)`,      // fails silently if exists
             `ALTER TABLE lecciones MODIFY COLUMN visibilidad VARCHAR(10) DEFAULT 'privada'`,
-            `ALTER TABLE lecciones ADD COLUMN IF NOT EXISTS orden INT DEFAULT 0`
+            `ALTER TABLE lecciones ADD COLUMN orden INT DEFAULT 0`        // fails silently if exists
         ];
         for(const sql of alterCols) { try { await pool.query(sql); } catch(e) {} }
 
@@ -381,6 +381,41 @@ app.post('/api/usuarios/crear', verifyToken, async (req, res) => {
         console.error(e);
         res.status(500).json({ error: 'Error al crear usuario' });
     }
+});
+
+// Editar usuario (admin)
+app.put('/api/usuarios/:id', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Permission denied' });
+    try {
+        const { nombre, email, rol, password } = req.body;
+        const rolesPermitidos = ['estudiante', 'profesor', 'admin'];
+        if (!validStr(nombre, 2, 150)) return res.status(400).json({ error: 'Nombre inválido' });
+        if (!validEmail(email)) return res.status(400).json({ error: 'Email inválido' });
+        if (rol && !rolesPermitidos.includes(rol)) return res.status(400).json({ error: 'Rol inválido' });
+        if (password) {
+            const hash = await bcrypt.hash(password, 10);
+            await pool.query('UPDATE usuarios SET nombre=?, email=?, rol=?, password=? WHERE id=?',
+                [nombre, email, rol || 'estudiante', hash, req.params.id]);
+        } else {
+            await pool.query('UPDATE usuarios SET nombre=?, email=?, rol=? WHERE id=?',
+                [nombre, email, rol || 'estudiante', req.params.id]);
+        }
+        res.json({ success: true });
+    } catch (e) {
+        console.error(e);
+        if (e.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'El email ya está en uso' });
+        res.status(500).json({ error: 'Error al actualizar usuario' });
+    }
+});
+
+// Activar / Suspender usuario (admin)
+app.patch('/api/usuarios/:id/activo', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Permission denied' });
+    const { activo } = req.body;
+    try {
+        await pool.query('UPDATE usuarios SET activo=? WHERE id=?', [activo ? 1 : 0, req.params.id]);
+        res.json({ success: true });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Error' }); }
 });
 
 // --- Rutas de Cursos y LMS ---
