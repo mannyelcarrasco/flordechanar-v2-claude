@@ -198,6 +198,98 @@
     let currentLeccionId = null;
     let completadas = new Set();
 
+    async function renderClaseVivoEnLeccion(wrapper, claseId) {
+        wrapper.innerHTML = `<div class="video-placeholder"><i class="ph ph-spinner"></i><p>Cargando clase...</p></div>`;
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch('/api/clases-vivo', { headers: { 'Authorization': 'Bearer ' + token } });
+            if (!res.ok) throw new Error();
+            const clases = await res.json();
+            const clase = clases.find(c => String(c.id) === String(claseId));
+            if (!clase) {
+                wrapper.innerHTML = `<div class="video-placeholder"><i class="ph ph-warning"></i><p>Clase no encontrada</p></div>`;
+                return;
+            }
+
+            const ahora = new Date();
+            const inicio = new Date(clase.fecha_inicio.replace(' ','T'));
+            const estado = clase.estado;
+
+            if (estado === 'en_vivo' || (estado !== 'finalizada' && inicio <= ahora && ahora - inicio < 3*3600000)) {
+                // EN VIVO
+                wrapper.innerHTML = `
+                    <div style="background:linear-gradient(135deg,#1a1a2e,#0f3460);width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.25rem;padding:2rem;text-align:center">
+                        <div style="display:inline-flex;align-items:center;gap:.5rem;background:#EF4444;color:#fff;font-size:.8rem;font-weight:700;padding:.4rem .9rem;border-radius:99px;animation:pulse-live 1.5s infinite">
+                            <span style="width:8px;height:8px;border-radius:50%;background:#fff;display:inline-block"></span> EN VIVO AHORA
+                        </div>
+                        <div style="font-family:var(--font-serif,serif);font-size:1.4rem;font-weight:700;color:#fff;line-height:1.3">${clase.titulo}</div>
+                        <div style="font-size:.9rem;color:rgba(255,255,255,.65)">Con <strong style="color:#fff">${clase.profesor_nombre}</strong></div>
+                        ${clase.meet_url
+                            ? `<a href="${clase.meet_url}" target="_blank" rel="noopener"
+                                style="display:inline-flex;align-items:center;gap:.6rem;padding:.9rem 2rem;background:#EF4444;color:#fff;border-radius:99px;font-weight:700;font-size:1rem;text-decoration:none;margin-top:.5rem;transition:transform .2s"
+                                onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                                <i class="ph ph-video-camera"></i> Unirse a la clase ahora
+                               </a>`
+                            : `<div style="color:rgba(255,255,255,.5);font-size:.9rem">Link de acceso próximamente</div>`
+                        }
+                    </div>`;
+
+            } else if (estado === 'finalizada' && clase.youtube_id) {
+                // GRABACIÓN con watermark
+                const p = decodeToken ? decodeToken() : null;
+                const wmLabel = p ? `${p.nombre} · ${p.email}` : 'Acceso privado';
+                const wmItems = Array(20).fill(wmLabel).map(t => `<span style="font-size:.7rem;font-weight:700;color:rgba(255,255,255,.12);white-space:nowrap;letter-spacing:.5px">${t}</span>`).join('');
+                wrapper.innerHTML = `
+                    <div style="position:relative;width:100%;height:100%">
+                        <iframe src="https://www.youtube.com/embed/${clase.youtube_id}?rel=0&modestbranding=1"
+                            allowfullscreen allow="autoplay; encrypted-media" style="width:100%;height:100%;border:none"></iframe>
+                        <div oncontextmenu="return false" style="position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:10">
+                            <div style="position:absolute;inset:-50%;display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:3rem 2rem;transform:rotate(-25deg)">${wmItems}</div>
+                        </div>
+                    </div>`;
+
+            } else if (estado === 'finalizada') {
+                // Finalizada sin grabación
+                wrapper.innerHTML = `
+                    <div class="video-placeholder">
+                        <i class="ph ph-film-strip" style="font-size:3rem;color:#94A3B8;margin-bottom:.75rem"></i>
+                        <p style="font-weight:600;color:#334155">Clase finalizada</p>
+                        <p style="font-size:.85rem;color:#94A3B8;margin-top:.3rem">La grabación estará disponible próximamente.</p>
+                    </div>`;
+
+            } else {
+                // PROGRAMADA (próxima)
+                const diffMs = inicio - ahora;
+                const diffD = Math.floor(diffMs / 86400000);
+                const diffH = Math.floor((diffMs % 86400000) / 3600000);
+                const diffM = Math.floor((diffMs % 3600000) / 60000);
+                const cuando = diffD > 0 ? `en ${diffD} día${diffD>1?'s':''} y ${diffH}h`
+                             : diffH > 0 ? `en ${diffH}h ${diffM}min`
+                             : `en ${diffM} minutos`;
+                const fechaStr = inicio.toLocaleDateString('es-CL', { weekday:'long', day:'numeric', month:'long' });
+                const horaStr = inicio.toLocaleTimeString('es-CL', { hour:'2-digit', minute:'2-digit' });
+                wrapper.innerHTML = `
+                    <div style="background:linear-gradient(135deg,#1e293b,#0f172a);width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;padding:2rem;text-align:center">
+                        <i class="ph ph-calendar-blank" style="font-size:2.5rem;color:#94A3B8"></i>
+                        <div style="font-family:var(--font-serif,serif);font-size:1.3rem;font-weight:700;color:#fff;line-height:1.3">${clase.titulo}</div>
+                        <div style="font-size:.9rem;color:rgba(255,255,255,.55)">${fechaStr} · ${horaStr} hrs</div>
+                        <div style="background:rgba(104,122,97,.2);border:1px solid rgba(104,122,97,.4);border-radius:99px;padding:.5rem 1.25rem;color:#86EFAC;font-weight:700;font-size:.95rem">
+                            Comienza ${cuando}
+                        </div>
+                        ${clase.meet_url
+                            ? `<a href="${clase.meet_url}" target="_blank" rel="noopener"
+                                style="display:inline-flex;align-items:center;gap:.5rem;padding:.65rem 1.4rem;background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.15);border-radius:99px;font-size:.85rem;text-decoration:none;margin-top:.25rem">
+                                <i class="ph ph-video-camera"></i> Agregar al calendario
+                               </a>`
+                            : ''
+                        }
+                    </div>`;
+            }
+        } catch(e) {
+            wrapper.innerHTML = `<div class="video-placeholder"><i class="ph ph-warning"></i><p>Error al cargar la clase</p></div>`;
+        }
+    }
+
     function extractVideoEmbed(url) {
         if (!url) return null;
         // YouTube
@@ -296,13 +388,18 @@
         newUrl.searchParams.set('leccion', leccionId);
         history.replaceState(null, '', newUrl);
 
-        // Video
+        // Video / Clase en Vivo
         const wrapper = document.getElementById('videoWrapper');
-        const embedUrl = extractVideoEmbed(leccion.video_url);
-        if (embedUrl) {
-            wrapper.innerHTML = `<iframe src="${embedUrl}" allowfullscreen allow="autoplay; encrypted-media"></iframe>`;
+        if (leccion.tipo === 'clase_vivo' || (leccion.video_url || '').startsWith('clase_vivo:')) {
+            const claseId = (leccion.video_url || '').replace('clase_vivo:', '');
+            renderClaseVivoEnLeccion(wrapper, claseId);
         } else {
-            wrapper.innerHTML = `<div class="video-placeholder"><i class="ph ph-video"></i><p>${leccion.video_url ? 'Formato de video no compatible' : 'Sin video para esta lección'}</p></div>`;
+            const embedUrl = extractVideoEmbed(leccion.video_url);
+            if (embedUrl) {
+                wrapper.innerHTML = `<iframe src="${embedUrl}" allowfullscreen allow="autoplay; encrypted-media"></iframe>`;
+            } else {
+                wrapper.innerHTML = `<div class="video-placeholder"><i class="ph ph-video"></i><p>${leccion.video_url ? 'Formato de video no compatible' : 'Sin video para esta lección'}</p></div>`;
+            }
         }
 
         // Content
