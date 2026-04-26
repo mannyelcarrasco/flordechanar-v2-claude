@@ -70,6 +70,13 @@
         .qi-type{font-size:.65rem;opacity:.65}
         .stats-mini{display:flex;flex-direction:column;gap:.55rem;font-size:.83rem}
         .stat-row{display:flex;justify-content:space-between}.stat-val{font-weight:700;color:var(--s)}
+
+        @media(max-width:768px){
+            .editor-layout{grid-template-columns:1fr;padding:0 1rem}
+            .two-col{grid-template-columns:1fr}
+            /* Sidebar del editor: pasa a ser sección al fondo */
+            .sidebar{position:relative;top:0}
+        }
     </style>
 </head>
 <body>

@@ -51,6 +51,24 @@
         .empty-state i { font-size:3.5rem; display:block; margin-bottom:1rem; color:#D1D5DB; }
         .empty-state h3 { font-size:1.1rem; color:var(--secondary); margin-bottom:.5rem; }
         .empty-state p { font-size:.88rem; margin-bottom:1.5rem; }
+
+        @media(max-width:768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform .28s cubic-bezier(.4,0,.2,1);
+                z-index: 150; top: 0; min-height: 100vh; display: flex;
+            }
+            .sidebar.mob-open { transform: translateX(0); }
+            .main-content {
+                margin-left: 0; max-width: 100%;
+                padding: 1rem;
+                padding-top: calc(56px + 1rem);
+                padding-bottom: calc(64px + 1rem + env(safe-area-inset-bottom, 0px));
+            }
+            .mat-grid { grid-template-columns: 1fr; }
+            .filter-bar { flex-direction: column; align-items: stretch; }
+            .search-input { min-width: unset; }
+        }
     </style>
 </head>
 <body>
