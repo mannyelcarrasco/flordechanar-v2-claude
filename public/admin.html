@@ -51,6 +51,10 @@
         .tab{padding:.62rem 1.15rem;font-size:.87rem;font-weight:500;color:var(--l);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:var(--tr);background:none;border-top:none;border-left:none;border-right:none;font-family:var(--f)}
         .tab.active{color:var(--p);border-bottom-color:var(--p);font-weight:600}
         .tp{display:none}.tp.active{display:block}
+        /* Sub-tabs dentro de Ajustes */
+        .stab{padding:.5rem 1.1rem;font-size:.85rem;font-weight:500;color:var(--l);cursor:pointer;border:none;border-bottom:2.5px solid transparent;margin-bottom:-2px;background:none;font-family:var(--f);display:inline-flex;align-items:center;gap:.4rem;transition:var(--tr)}
+        .stab:hover{color:var(--s)}
+        .stab.stab-active{color:var(--p);border-bottom-color:var(--p);font-weight:600}
 
         .tw{background:var(--w);border-radius:var(--r);box-shadow:0 2px 10px rgba(0,0,0,.04);overflow:hidden}
         table{width:100%;border-collapse:collapse}thead{background:var(--bg2)}
@@ -318,8 +322,23 @@
 
     <!-- TAB Ajustes -->
     <div id="ts" class="tp">
-        <div style="max-width:680px">
-            <div class="tw" style="padding:1.5rem;margin-bottom:1.5rem">
+
+        <!-- Sub-navegación dentro de Ajustes -->
+        <div style="display:flex;gap:.35rem;margin-bottom:1.5rem;border-bottom:2px solid #E5E7EB;padding-bottom:0">
+            <button id="stab-general" class="stab stab-active" onclick="switchStab('general')">
+                <i class="ph ph-gear"></i> General
+            </button>
+            <button id="stab-integraciones" class="stab" onclick="switchStab('integraciones')">
+                <i class="ph ph-plugs-connected"></i> Integraciones
+            </button>
+            <button id="stab-whatsapp" class="stab" onclick="switchStab('whatsapp')">
+                <i class="ph ph-whatsapp-logo"></i> WhatsApp
+            </button>
+        </div>
+
+        <!-- SUB-PANEL: General -->
+        <div id="spanel-general" style="max-width:680px">
+            <div class="tw" style="padding:1.5rem">
                 <h3 style="font-size:1.05rem;margin-bottom:1.2rem">Configuración General</h3>
                 <div class="fg"><label class="fl">Nombre de la Plataforma</label><input class="fc" id="cfg-nombre" type="text" value="Escuela EyCT Flor de Chañar"></div>
                 <div class="fg"><label class="fl">Correo de Soporte</label><input class="fc" id="cfg-email" type="email" value="soporte@flordechanar.cl"></div>
@@ -327,20 +346,19 @@
                 <div class="fg"><label class="fl">Escala de Notas</label><select class="fc" id="cfg-escala"><option>1.0 – 7.0 (Chilena)</option><option>0 – 100 (Porcentual)</option></select></div>
                 <button class="btn bp" onclick="saveSettings()"><i class="ph ph-floppy-disk"></i> Guardar Cambios</button>
             </div>
+        </div>
 
-            <!-- INTEGRATIONS: fully redesigned -->
+        <!-- SUB-PANEL: Integraciones -->
+        <div id="spanel-integraciones" style="display:none">
             <div class="tw" style="padding:1.5rem">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.1rem">
-                    <h3 style="font-size:1.05rem">Integraciones</h3>
+                    <div>
+                        <h3 style="font-size:1.05rem;margin:0">Integraciones</h3>
+                        <p style="font-size:.8rem;color:var(--l);margin:.25rem 0 0">Conecta herramientas externas. Las marcadas en verde están activas.</p>
+                    </div>
                     <button class="btn bo btn-sm" onclick="openIntModal('custom')"><i class="ph ph-plus"></i> Agregar por API / Webhook</button>
                 </div>
-                <p style="font-size:.8rem;color:var(--l);margin-bottom:1.1rem">Conecta herramientas externas mediante su API Key o Webhook. Las integraciones marcadas en verde están activas.</p>
-
-                <div class="int-grid" id="intGrid">
-                    <!-- populated by JS -->
-                </div>
-
-                <!-- Custom Webhook section -->
+                <div class="int-grid" id="intGrid"></div>
                 <div class="wh-section">
                     <h4 style="font-family:var(--f);font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--l);margin-bottom:.75rem"><i class="ph ph-webhooks-logo"></i> Webhooks Personalizados</h4>
                     <div id="webhookList" style="display:flex;flex-direction:column;gap:.5rem;margin-bottom:.75rem"></div>
@@ -348,6 +366,52 @@
                 </div>
             </div>
         </div>
+
+        <!-- SUB-PANEL: WhatsApp -->
+        <div id="spanel-whatsapp" style="display:none;max-width:680px">
+            <div class="tw" style="padding:1.5rem;margin-bottom:1.25rem">
+                <h3 style="font-size:1.05rem;margin-bottom:.35rem">Botón de contacto (Click-to-Chat)</h3>
+                <p style="font-size:.82rem;color:var(--l);margin-bottom:1.1rem">Agrega un botón flotante de WhatsApp visible en toda la plataforma para estudiantes.</p>
+                <div class="fg">
+                    <label class="fl">Número WhatsApp Business (con código de país)</label>
+                    <input class="fc" id="wa-numero" type="tel" placeholder="56912345678" style="max-width:280px">
+                    <div style="font-size:.76rem;color:var(--l);margin-top:.3rem">Sin + ni espacios. Ej: 56912345678</div>
+                </div>
+                <div class="fg">
+                    <label class="fl">Mensaje predeterminado al abrir chat</label>
+                    <textarea class="fc" id="wa-mensaje" style="height:80px;resize:vertical" placeholder="Hola, me interesa información sobre los cursos de Flor de Chañar"></textarea>
+                </div>
+                <button class="btn bp" onclick="saveWhatsApp()"><i class="ph ph-floppy-disk"></i> Guardar y activar botón</button>
+                <button class="btn bo" style="margin-left:.5rem" onclick="removeWhatsApp()"><i class="ph ph-trash"></i> Desactivar</button>
+            </div>
+            <div class="tw" style="padding:1.5rem">
+                <h3 style="font-size:1.05rem;margin-bottom:.35rem">API Token (Notificaciones automáticas)</h3>
+                <p style="font-size:.82rem;color:var(--l);margin-bottom:1rem">Para enviar mensajes automáticos a estudiantes (pago aprobado, nueva clase, etc.) necesitas un proveedor con API.</p>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1rem">
+                    <div style="border:1.5px solid #E2E8F0;border-radius:10px;padding:1rem;cursor:pointer" onclick="selWaProvider('wati')" id="wa-prov-wati">
+                        <div style="font-weight:700;font-size:.9rem">WATI</div>
+                        <div style="font-size:.75rem;color:var(--l)">Panel visual + chatbot · desde USD 49/mes</div>
+                    </div>
+                    <div style="border:1.5px solid #E2E8F0;border-radius:10px;padding:1rem;cursor:pointer" onclick="selWaProvider('twilio')" id="wa-prov-twilio">
+                        <div style="font-weight:700;font-size:.9rem">Twilio</div>
+                        <div style="font-size:.75rem;color:var(--l)">Solo API · pago por mensaje</div>
+                    </div>
+                </div>
+                <div class="fg" id="wa-token-wrap">
+                    <label class="fl">API Token / Account SID</label>
+                    <input class="fc" id="wa-token" type="password" placeholder="Pega tu token aquí">
+                </div>
+                <div class="fg" id="wa-secret-wrap" style="display:none">
+                    <label class="fl">Auth Token (Twilio)</label>
+                    <input class="fc" id="wa-secret" type="password" placeholder="Auth Token de Twilio">
+                </div>
+                <button class="btn bp" onclick="saveWaApi()"><i class="ph ph-floppy-disk"></i> Guardar credenciales</button>
+                <div style="margin-top:1.2rem;padding:1rem;background:#F0FDF4;border-radius:10px;border:1px solid #86EFAC;font-size:.82rem;color:#15803D;display:none" id="wa-api-ok">
+                    <i class="ph ph-check-circle"></i> <strong>API conectada.</strong> Las notificaciones automáticas están activas.
+                </div>
+            </div>
+        </div>
+
     </div>
 </main>
 
@@ -684,6 +748,98 @@ function st(e, id) {
 }
 
 // Guardar y cargar ajustes con localStorage
+// ── Sub-tabs de Ajustes ───────────────────────────────────
+function switchStab(id) {
+    // Ocultar todos los sub-paneles
+    document.querySelectorAll('[id^="spanel-"]').forEach(p => p.style.display = 'none');
+    // Quitar active de todos los stab
+    document.querySelectorAll('.stab').forEach(b => b.classList.remove('stab-active'));
+    // Mostrar el seleccionado
+    document.getElementById('spanel-' + id).style.display = '';
+    document.getElementById('stab-' + id).classList.add('stab-active');
+    // Si integraciones, asegurarse de que el grid esté renderizado
+    if (id === 'integraciones') renderIntegrations();
+    // Si whatsapp, cargar datos guardados
+    if (id === 'whatsapp') loadWaSettings();
+}
+
+// ── WhatsApp Click-to-Chat ────────────────────────────────
+function saveWhatsApp() {
+    const num = document.getElementById('wa-numero').value.trim().replace(/\D/g,'');
+    const msg = document.getElementById('wa-mensaje').value.trim();
+    if (!num) { showT('Ingresa el número de WhatsApp'); return; }
+    localStorage.setItem('wa_numero', num);
+    localStorage.setItem('wa_mensaje', msg);
+    injectWaButton(num, msg);
+    showT('✅ Botón de WhatsApp activado');
+}
+
+function removeWhatsApp() {
+    localStorage.removeItem('wa_numero');
+    localStorage.removeItem('wa_mensaje');
+    document.getElementById('wa-float-btn')?.remove();
+    showT('Botón de WhatsApp desactivado');
+}
+
+function injectWaButton(num, msg) {
+    document.getElementById('wa-float-btn')?.remove();
+    const a = document.createElement('a');
+    a.id = 'wa-float-btn';
+    a.href = `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.innerHTML = '<i class="ph ph-whatsapp-logo" style="font-size:1.6rem"></i>';
+    a.style.cssText = 'position:fixed;bottom:90px;right:20px;z-index:500;width:52px;height:52px;border-radius:50%;background:#25D366;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(37,211,102,.4);transition:transform .2s;text-decoration:none';
+    a.onmouseover = () => a.style.transform = 'scale(1.1)';
+    a.onmouseout  = () => a.style.transform = 'scale(1)';
+    document.body.appendChild(a);
+}
+
+function loadWaSettings() {
+    const num = localStorage.getItem('wa_numero') || '';
+    const msg = localStorage.getItem('wa_mensaje') || 'Hola, me interesa información sobre los cursos de Flor de Chañar';
+    document.getElementById('wa-numero').value = num;
+    document.getElementById('wa-mensaje').value = msg;
+    if (num) injectWaButton(num, msg);
+    // API
+    const prov = localStorage.getItem('wa_provider') || '';
+    if (prov) selWaProvider(prov);
+    const tok = localStorage.getItem('wa_token') || '';
+    if (tok) { document.getElementById('wa-token').value = '••••••••'; document.getElementById('wa-api-ok').style.display = 'block'; }
+}
+
+let _waProvider = '';
+function selWaProvider(prov) {
+    _waProvider = prov;
+    document.getElementById('wa-prov-wati').style.borderColor   = prov === 'wati'   ? 'var(--p)' : '#E2E8F0';
+    document.getElementById('wa-prov-twilio').style.borderColor = prov === 'twilio' ? 'var(--p)' : '#E2E8F0';
+    document.getElementById('wa-secret-wrap').style.display = prov === 'twilio' ? '' : 'none';
+}
+
+function saveWaApi() {
+    const tok = document.getElementById('wa-token').value.trim();
+    if (!tok || tok === '••••••••') { showT('Ingresa un token válido'); return; }
+    if (!_waProvider) { showT('Selecciona un proveedor'); return; }
+    localStorage.setItem('wa_token', tok);
+    localStorage.setItem('wa_provider', _waProvider);
+    document.getElementById('wa-token').value = '••••••••';
+    document.getElementById('wa-api-ok').style.display = 'block';
+    showT('✅ Credenciales guardadas');
+}
+
+// ── Init WhatsApp button on page load ────────────────────
+(function() {
+    const num = localStorage.getItem('wa_numero');
+    const msg = localStorage.getItem('wa_mensaje') || '';
+    if (num) {
+        // Pequeño delay para que el DOM esté listo
+        setTimeout(() => {
+            const existing = document.getElementById('wa-float-btn');
+            if (!existing) injectWaButton(num, msg);
+        }, 500);
+    }
+})();
+
 function saveSettings() {
     const cfg = {
         nombre: document.getElementById('cfg-nombre').value,

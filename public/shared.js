@@ -56,6 +56,25 @@ function calcNota(obtenido, total) {
     return Math.round(((obtenido / total) * 6 + 1) * 10) / 10;
 }
 
+// ── Botón flotante WhatsApp (si está configurado en admin) ─
+(function() {
+    const num = localStorage.getItem('wa_numero');
+    const msg = localStorage.getItem('wa_mensaje') || '';
+    if (!num) return;
+    document.addEventListener('DOMContentLoaded', () => {
+        if (document.getElementById('wa-float-btn')) return; // admin ya lo inyecta
+        const a = document.createElement('a');
+        a.id = 'wa-float-btn';
+        a.href = `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
+        a.target = '_blank'; a.rel = 'noopener';
+        a.innerHTML = '<i class="ph ph-whatsapp-logo" style="font-size:1.6rem"></i>';
+        a.style.cssText = 'position:fixed;bottom:80px;right:18px;z-index:500;width:52px;height:52px;border-radius:50%;background:#25D366;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(37,211,102,.4);transition:transform .2s;text-decoration:none';
+        a.onmouseover = () => a.style.transform = 'scale(1.1)';
+        a.onmouseout  = () => a.style.transform = 'scale(1)';
+        document.body.appendChild(a);
+    });
+})();
+
 // ── Nav móvil automática ──────────────────────────────────
 // Se inyecta en todas las páginas que tienen sidebar (.sb o .sidebar)
 document.addEventListener('DOMContentLoaded', () => {
