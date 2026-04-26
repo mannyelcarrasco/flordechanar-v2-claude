@@ -22,174 +22,176 @@
             --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
 
-        /* ---- SIDEBAR ---- */
+        /* ── SIDEBAR ─────────────────────────────────────────────────── */
         .sidebar {
             width: var(--sidebar-width); background: var(--color-secondary);
             min-height: 100vh; display: flex; flex-direction: column;
             padding: 1.5rem 0; position: fixed; left: 0; top: 0; z-index: 100;
-            transition: var(--transition);
         }
         .sidebar-logo { display: flex; align-items: center; gap: 0.7rem; padding: 0 1.5rem 2rem; font-family: var(--font-serif); font-size: 1.2rem; font-weight: 700; color: white; border-bottom: 1px solid rgba(255,255,255,0.08); }
-        .sidebar-logo i { color: var(--color-primary); font-size: 1.5rem; }
-        
         .sidebar-section { padding: 1.5rem 1rem 0.5rem; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(255,255,255,0.35); }
-        
         .sidebar-nav { list-style: none; padding: 0 0.75rem; margin-top: 0.5rem; }
         .sidebar-nav li { margin-bottom: 0.25rem; }
-        .sidebar-nav a {
-            display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0.85rem;
-            border-radius: var(--radius-md); color: rgba(255,255,255,0.65); font-size: 0.93rem;
-            font-weight: 500; transition: var(--transition);
-        }
+        .sidebar-nav a { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0.85rem; border-radius: var(--radius-md); color: rgba(255,255,255,0.65); font-size: 0.93rem; font-weight: 500; transition: var(--transition); }
         .sidebar-nav a:hover { background: rgba(255,255,255,0.07); color: white; }
         .sidebar-nav a.active { background: var(--color-primary); color: white; }
         .sidebar-nav a i { font-size: 1.1rem; }
         .sidebar-nav .badge-side { margin-left: auto; background: var(--color-accent); color: white; font-size: 0.7rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: var(--radius-full); }
-
         .sidebar-user { margin-top: auto; padding: 1.5rem; border-top: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 0.75rem; }
         .user-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--color-primary); display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; font-size: 0.95rem; }
         .user-name { font-size: 0.9rem; font-weight: 600; color: white; }
         .user-role { font-size: 0.78rem; color: rgba(255,255,255,0.5); }
         .user-xp { font-size: 0.75rem; color: var(--color-xp); font-weight: 600; margin-top: 1px; }
 
-        /* ---- MAIN CONTENT ---- */
+        /* ── MAIN CONTENT ─────────────────────────────────────────────── */
         .main-content { margin-left: var(--sidebar-width); flex: 1; padding: 2rem 2.5rem; max-width: calc(100% - var(--sidebar-width)); }
 
-        /* Top Bar */
-        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
-        .topbar-greeting h1 { font-family: var(--font-serif); font-size: 1.8rem; color: var(--color-secondary); }
-        .topbar-greeting p { color: var(--color-text-light); font-size: 0.95rem; }
+        /* ── TOPBAR ───────────────────────────────────────────────────── */
+        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.75rem; }
+        .topbar-greeting h1 { font-family: var(--font-serif); font-size: 1.75rem; color: var(--color-secondary); }
+        .topbar-greeting p { color: var(--color-text-light); font-size: 0.92rem; margin-top: 0.2rem; }
         .topbar-right { display: flex; align-items: center; gap: 1rem; }
+        .notif-btn { position: relative; width: 40px; height: 40px; border-radius: 50%; border: none; background: var(--color-white); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+        .notif-dot { position: absolute; top: 6px; right: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--color-live); border: 2px solid white; }
 
-        /* XP Bar Hero */
+        /* ── HERO SECTION: XP card + Stats 2×2 ───────────────────────── */
+        .hero-section {
+            display: grid;
+            grid-template-columns: 1fr 272px;
+            gap: 1.5rem;
+            margin-bottom: 1.75rem;
+            align-items: stretch;
+        }
+
+        /* XP Card — vertical layout, fills column height */
         .xp-hero {
             background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
             border-radius: var(--radius-lg); padding: 2rem 2.5rem; color: white;
-            margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between;
-            position: relative; overflow: hidden;
+            display: flex; flex-direction: column; justify-content: space-between;
+            position: relative; overflow: hidden; min-height: 190px;
         }
-        .xp-hero::before { content: '✦'; position: absolute; right: 2rem; top: -0.5rem; font-size: 8rem; opacity: 0.06; }
-        .xp-info h2 { font-size: 1.4rem; color: white; margin-bottom: 0.3rem; }
-        .xp-info p { color: rgba(255,255,255,0.75); font-size: 0.9rem; }
-        .xp-bar-wrap { display: flex; align-items: center; gap: 1rem; margin-top: 1rem; }
-        .xp-bar { flex: 1; height: 10px; background: rgba(255,255,255,0.2); border-radius: var(--radius-full); }
-        .xp-fill { height: 100%; width: 62%; background: var(--color-xp); border-radius: var(--radius-full); position: relative; transition: width 1.5s cubic-bezier(0.25, 0.8, 0.25, 1); }
-        .xp-fill::after { content: ''; position: absolute; right: 0; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; background: var(--color-xp); border-radius: 50%; border: 3px solid white; }
-        .xp-label { font-size: 0.88rem; font-weight: 600; white-space: nowrap; }
-        .badges-row { display: flex; gap: 0.5rem; }
-        .badge-chip { display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.1); font-size: 1.4rem; transition: var(--transition); cursor: default; position: relative; }
-        .badge-chip:hover { background: rgba(255,255,255,0.2); transform: scale(1.1); }
+        .xp-hero::before { content: '✦'; position: absolute; right: 1.5rem; bottom: -1rem; font-size: 9rem; opacity: 0.05; line-height: 1; }
+        .xp-info h2 { font-size: 1.35rem; color: white; margin-bottom: 0.25rem; }
+        .xp-info p { color: rgba(255,255,255,0.72); font-size: 0.86rem; }
+        .xp-bar-wrap { display: flex; align-items: center; gap: 0.85rem; margin-top: 0.9rem; }
+        .xp-bar { flex: 1; height: 9px; background: rgba(255,255,255,0.2); border-radius: var(--radius-full); }
+        .xp-fill { height: 100%; width: 0%; background: var(--color-xp); border-radius: var(--radius-full); position: relative; transition: width 1.5s cubic-bezier(0.25, 0.8, 0.25, 1); }
+        .xp-fill::after { content: ''; position: absolute; right: 0; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; background: var(--color-xp); border-radius: 50%; border: 2.5px solid white; }
+        .xp-label { font-size: 0.82rem; font-weight: 600; white-space: nowrap; color: rgba(255,255,255,0.9); }
+        .badges-row { display: flex; gap: 0.45rem; margin-top: 1.25rem; }
+        .badge-chip { display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 50%; background: rgba(255,255,255,0.12); font-size: 1.25rem; transition: var(--transition); cursor: default; }
+        .badge-chip:hover { background: rgba(255,255,255,0.22); transform: scale(1.1); }
 
-        /* Stats Row */
-        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
-        .stat-card { background: var(--color-white); border-radius: var(--radius-md); padding: 1.5rem; box-shadow: 0 2px 12px rgba(0,0,0,0.04); display: flex; align-items: center; gap: 1rem; }
-        .stat-icon { width: 48px; height: 48px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; }
+        /* Stats 2×2 compact grid */
+        .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        .stat-card {
+            background: var(--color-white); border-radius: var(--radius-md);
+            padding: 1.2rem 1.25rem; box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+            display: flex; flex-direction: column; gap: 0; transition: var(--transition);
+            border-left: 3px solid transparent;
+        }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+        .stat-card.green { border-color: var(--color-primary); }
+        .stat-card.amber { border-color: var(--color-xp); }
+        .stat-card.red   { border-color: var(--color-live); }
+        .stat-card.sand  { border-color: var(--color-accent); }
+        .stat-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; margin-bottom: 0.6rem; }
         .stat-icon.green { background: rgba(104,122,97,0.12); color: var(--color-primary); }
         .stat-icon.amber { background: rgba(245,158,11,0.12); color: var(--color-xp); }
-        .stat-icon.red { background: rgba(239,68,68,0.12); color: var(--color-live); }
-        .stat-icon.sand { background: rgba(212,163,115,0.12); color: var(--color-accent); }
-        .stat-num { font-size: 1.6rem; font-weight: 700; color: var(--color-secondary); line-height: 1; }
-        .stat-desc { font-size: 0.82rem; color: var(--color-text-light); margin-top: 2px; }
+        .stat-icon.red   { background: rgba(239,68,68,0.12); color: var(--color-live); }
+        .stat-icon.sand  { background: rgba(212,163,115,0.12); color: var(--color-accent); }
+        .stat-num { font-size: 1.85rem; font-weight: 700; color: var(--color-secondary); line-height: 1; }
+        .stat-desc { font-size: 0.73rem; color: var(--color-text-light); margin-top: 0.2rem; }
 
-        /* Live Classes Banner */
+        /* ── LIVE BANNER ──────────────────────────────────────────────── */
         .live-banner {
-            background: var(--color-secondary); border-radius: var(--radius-lg); overflow: hidden;
-            display: flex; align-items: center; gap: 1.5rem; padding: 1.5rem 2rem;
-            margin-bottom: 2rem; position: relative;
+            background: var(--color-secondary); border-radius: var(--radius-lg);
+            display: flex; align-items: center; gap: 1.5rem; padding: 1.4rem 2rem;
+            margin-bottom: 1.75rem; position: relative; overflow: hidden;
         }
         .live-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--color-live); animation: pulse-live 1.5s infinite; flex-shrink: 0; }
         @keyframes pulse-live { 0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); } 50% { box-shadow: 0 0 0 8px rgba(239,68,68,0); } }
         .live-info { flex: 1; }
-        .live-info .label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--color-live); display: flex; align-items: center; gap: 0.4rem; }
-        .live-info h3 { color: white; font-family: var(--font-serif); font-size: 1.3rem; margin: 0.3rem 0 0.1rem; }
-        .live-info p { color: rgba(255,255,255,0.65); font-size: 0.88rem; }
-        .btn-live { background: var(--color-live); color: white; padding: 0.7rem 1.5rem; border-radius: var(--radius-full); font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem; transition: var(--transition); white-space: nowrap; }
+        .live-info .label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--color-live); display: flex; align-items: center; gap: 0.4rem; }
+        .live-info h3 { color: white; font-family: var(--font-serif); font-size: 1.25rem; margin: 0.25rem 0 0.1rem; }
+        .live-info p { color: rgba(255,255,255,0.65); font-size: 0.86rem; }
+        .btn-live { background: var(--color-live); color: white; padding: 0.65rem 1.4rem; border-radius: var(--radius-full); font-weight: 600; font-size: 0.88rem; display: flex; align-items: center; gap: 0.5rem; transition: var(--transition); white-space: nowrap; }
         .btn-live:hover { background: #DC2626; transform: translateY(-2px); }
-        .live-meta { color: rgba(255,255,255,0.5); font-size: 0.82rem; }
 
-        /* Grid Layout: Courses + Leaderboard */
-        .content-grid { display: grid; grid-template-columns: 1fr 300px; gap: 2rem; }
+        /* ── CONTENT GRID: courses (wider) + sidebar ──────────────────── */
+        .content-grid { display: grid; grid-template-columns: 1fr 310px; gap: 2rem; }
 
-        /* My Courses */
-        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-        .section-header h2 { font-family: var(--font-serif); font-size: 1.4rem; color: var(--color-secondary); }
-        .section-header a { font-size: 0.88rem; color: var(--color-primary); font-weight: 600; }
+        /* Courses column */
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+        .section-header h2 { font-family: var(--font-serif); font-size: 1.35rem; color: var(--color-secondary); }
+        .section-header a { font-size: 0.85rem; color: var(--color-primary); font-weight: 600; }
 
-        .course-list { display: flex; flex-direction: column; gap: 1rem; }
+        .course-list { display: flex; flex-direction: column; gap: 0.85rem; }
         .course-row {
-            background: var(--color-white); border-radius: var(--radius-md); padding: 1.2rem 1.5rem;
-            display: flex; align-items: center; gap: 1.2rem; transition: var(--transition);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.03); cursor: pointer;
+            background: var(--color-white); border-radius: var(--radius-md);
+            padding: 1.1rem 1.4rem; display: flex; align-items: center; gap: 1.1rem;
+            transition: var(--transition); box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+            cursor: pointer; border: 1px solid transparent;
         }
-        .course-row:hover { transform: translateX(4px); box-shadow: 0 4px 20px rgba(0,0,0,0.07); }
-        .c-thumb { width: 64px; height: 64px; border-radius: var(--radius-md); background-size: cover; background-position: center; flex-shrink: 0; }
-        .c-info { flex: 1; }
-        .c-info h3 { font-size: 1rem; color: var(--color-secondary); margin-bottom: 0.4rem; }
-        .c-info .c-sub { font-size: 0.82rem; color: var(--color-text-light); display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.6rem; }
-        .progress-wrap { display: flex; align-items: center; gap: 0.75rem; }
-        .progress-bar { flex: 1; height: 6px; background: var(--color-bg-alt); border-radius: var(--radius-full); }
-        .progress-fill { height: 100%; background: var(--color-primary); border-radius: var(--radius-full); }
-        .progress-pct { font-size: 0.8rem; font-weight: 600; color: var(--color-primary); white-space: nowrap; }
-        .c-action { display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem; }
-        .btn-continue { background: var(--color-primary); color: white; padding: 0.5rem 1.1rem; border-radius: var(--radius-full); font-size: 0.82rem; font-weight: 600; transition: var(--transition); white-space: nowrap; }
+        .course-row:hover { border-color: rgba(104,122,97,0.2); box-shadow: 0 4px 18px rgba(0,0,0,0.07); transform: translateY(-1px); }
+        .c-thumb { width: 58px; height: 58px; border-radius: 10px; background-size: cover; background-position: center; flex-shrink: 0; }
+        .c-info { flex: 1; min-width: 0; }
+        .c-info h3 { font-size: 0.97rem; color: var(--color-secondary); margin-bottom: 0.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .c-info .c-sub { font-size: 0.79rem; color: var(--color-text-light); margin-bottom: 0.5rem; }
+        .progress-wrap { display: flex; align-items: center; gap: 0.65rem; }
+        .progress-bar { flex: 1; height: 5px; background: var(--color-bg-alt); border-radius: var(--radius-full); }
+        .progress-fill { height: 100%; background: var(--color-primary); border-radius: var(--radius-full); transition: width 1s ease; }
+        .progress-pct { font-size: 0.76rem; font-weight: 700; color: var(--color-primary); white-space: nowrap; }
+        .c-action { flex-shrink: 0; }
+        .btn-continue { background: var(--color-primary); color: white; padding: 0.45rem 1rem; border-radius: var(--radius-full); font-size: 0.8rem; font-weight: 600; transition: var(--transition); white-space: nowrap; display: inline-block; }
         .btn-continue:hover { background: var(--color-primary-dark); }
-        .xp-earned { font-size: 0.78rem; color: var(--color-xp); font-weight: 600; display: flex; align-items: center; gap: 0.2rem; }
 
-        /* Leaderboard / Badges */
-        .sidebar-card { background: var(--color-white); border-radius: var(--radius-md); padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.03); margin-bottom: 1.5rem; }
-        .sidebar-card h3 { font-family: var(--font-serif); font-size: 1.1rem; margin-bottom: 1.2rem; display: flex; align-items: center; gap: 0.5rem; }
-
-        .lb-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid #F1F5F9; }
+        /* Sidebar cards */
+        .sidebar-card { background: var(--color-white); border-radius: var(--radius-md); padding: 1.4rem; box-shadow: 0 2px 10px rgba(0,0,0,0.04); margin-bottom: 1.25rem; }
+        .sidebar-card:last-child { margin-bottom: 0; }
+        .sidebar-card h3 { font-family: var(--font-serif); font-size: 1.05rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.45rem; }
+        .lb-item { display: flex; align-items: center; gap: 0.65rem; padding: 0.55rem 0; border-bottom: 1px solid #F1F5F9; }
         .lb-item:last-child { border-bottom: none; }
-        .lb-rank { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; }
+        .lb-rank { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; flex-shrink: 0; }
         .lb-rank.gold { background: #FEF3C7; color: #D97706; }
         .lb-rank.silver { background: #F1F5F9; color: #475569; }
         .lb-rank.bronze { background: #FEF2F2; color: #B91C1C; }
         .lb-rank.me { background: var(--color-primary); color: white; }
-        .lb-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--color-bg-alt); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.8rem; color: var(--color-primary-dark); }
-        .lb-name { flex: 1; font-size: 0.88rem; font-weight: 500; }
-        .lb-xp { font-size: 0.8rem; font-weight: 700; color: var(--color-xp); }
+        .lb-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--color-bg-alt); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.75rem; color: var(--color-primary-dark); }
+        .lb-name { flex: 1; font-size: 0.84rem; font-weight: 500; }
+        .lb-xp { font-size: 0.78rem; font-weight: 700; color: var(--color-xp); }
 
-        .badges-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; }
-        .badge-box { aspect-ratio: 1; border-radius: var(--radius-md); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.3rem; font-size: 1.5rem; transition: var(--transition); cursor: default; }
-        .badge-box.earned { background: rgba(104,122,97,0.1); }
-        .badge-box.locked { background: #F1F5F9; filter: grayscale(1); opacity: 0.5; }
-        .badge-box:hover.earned { background: rgba(104,122,97,0.2); transform: scale(1.08); }
-        .badge-label { font-size: 0.6rem; font-weight: 600; color: var(--color-text-light); text-align: center; }
+        /* ── LOGROS (full-width strip below content grid) ─────────────── */
+        .logros-section { margin-top: 2rem; }
+        .logros-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .logros-header h2 { font-family: var(--font-serif); font-size: 1.2rem; color: var(--color-secondary); display: flex; align-items: center; gap: 0.5rem; }
+        .badges-strip { display: grid; grid-template-columns: repeat(8, 1fr); gap: 0.85rem; }
+        .badge-box { border-radius: var(--radius-md); padding: 0.85rem 0.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.35rem; font-size: 1.6rem; transition: var(--transition); cursor: default; }
+        .badge-box.earned { background: var(--color-white); box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .badge-box.locked { background: var(--color-bg-alt); filter: grayscale(1); opacity: 0.45; }
+        .badge-box.earned:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0,0,0,0.09); }
+        .badge-label { font-size: 0.64rem; font-weight: 600; color: var(--color-text-light); text-align: center; }
 
-        /* Notification Bell */
-        .notif-btn { position: relative; width: 40px; height: 40px; border-radius: 50%; border: none; background: var(--color-white); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
-        .notif-dot { position: absolute; top: 6px; right: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--color-live); border: 2px solid white; }
-
-        @media (max-width: 1100px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
-
+        /* ── RESPONSIVE ───────────────────────────────────────────────── */
+        @media (max-width: 1200px) {
+            .hero-section { grid-template-columns: 1fr 250px; }
+            .badges-strip { grid-template-columns: repeat(4, 1fr); }
+        }
+        @media (max-width: 1024px) {
+            .hero-section { grid-template-columns: 1fr; }
+            .stats-row { grid-template-columns: repeat(4, 1fr); }
+            .content-grid { grid-template-columns: 1fr 290px; }
+        }
         @media (max-width: 768px) {
-            /* ── Sidebar drawer ─────────────────────────── */
-            .sidebar {
-                transform: translateX(-100%);
-                transition: transform .28s cubic-bezier(.4,0,.2,1);
-                z-index: 150; top: 0; min-height: 100vh; display: flex;
-            }
+            .sidebar { transform: translateX(-100%); transition: transform .28s cubic-bezier(.4,0,.2,1); z-index: 150; }
             .sidebar.mob-open { transform: translateX(0); }
-
-            /* ── Contenido principal ────────────────────── */
-            .main-content {
-                margin-left: 0; max-width: 100%;
-                padding: 1rem;
-                padding-top: calc(56px + 1rem);
-                padding-bottom: calc(64px + 1rem + env(safe-area-inset-bottom, 0px));
-            }
-
-            /* ── Header / XP ────────────────────────────── */
+            .main-content { margin-left: 0; max-width: 100%; padding: 1rem; padding-top: calc(56px + 1rem); padding-bottom: calc(64px + 1rem + env(safe-area-inset-bottom, 0px)); }
             .topbar { flex-direction: column; align-items: flex-start; gap: .75rem; }
             .topbar-right { width: 100%; justify-content: flex-end; }
-            .xp-hero { flex-direction: column; padding: 1.25rem; gap: 1rem; }
-            .badges-row { flex-wrap: wrap; }
-            .xp-bar-wrap { width: 100%; }
-
-            /* ── Grids ──────────────────────────────────── */
+            .xp-hero { min-height: 0; }
             .stats-row { grid-template-columns: 1fr 1fr; }
             .content-grid { grid-template-columns: 1fr; }
+            .badges-strip { grid-template-columns: repeat(4, 1fr); }
         }
     </style>
 </head>
@@ -243,43 +245,52 @@
         </div>
     </div>
 
-    <!-- XP Progress Hero -->
-    <div class="xp-hero">
-        <div class="xp-info">
-            <h2 id="xpNivel">⭐ Nivel 1 — Curiosa</h2>
-            <p id="xpFaltanMsg">Completa lecciones para ganar XP.</p>
-            <div class="xp-bar-wrap">
-                <div class="xp-bar"><div class="xp-fill" id="xpFill" style="width:0%"></div></div>
-                <div class="xp-label" id="xpLabel">0 / 500 XP</div>
+    <!-- ── HERO SECTION: XP card + Stats 2×2 ────────────────── -->
+    <div class="hero-section">
+
+        <!-- XP Progress Card -->
+        <div class="xp-hero">
+            <div class="xp-info">
+                <h2 id="xpNivel">⭐ Nivel 1 — Curiosa</h2>
+                <p id="xpFaltanMsg">Completa lecciones para ganar XP.</p>
+                <div class="xp-bar-wrap">
+                    <div class="xp-bar"><div class="xp-fill" id="xpFill"></div></div>
+                    <div class="xp-label" id="xpLabel">0 / 500 XP</div>
+                </div>
+            </div>
+            <div class="badges-row" title="Tus insignias">
+                <div class="badge-chip" title="Primer curso completado">🌱</div>
+                <div class="badge-chip" title="Estudiante constante">🔥</div>
+                <div class="badge-chip" title="Participante activa en el foro">💬</div>
+                <div class="badge-chip" title="Asistió a clase en vivo">📡</div>
             </div>
         </div>
-        <div class="badges-row" title="Tus insignias">
-            <div class="badge-chip" title="Primer curso completado">🌱</div>
-            <div class="badge-chip" title="Estudiante constante (7 días seguidos)">🔥</div>
-            <div class="badge-chip" title="Participante activa en el foro">💬</div>
-            <div class="badge-chip" title="Asistió a clase en vivo">📡</div>
-        </div>
-    </div>
 
-    <!-- Quick Stats -->
-    <div class="stats-row">
-        <div class="stat-card">
-            <div class="stat-icon green"><i class="ph ph-books"></i></div>
-            <div><div class="stat-num" id="statCursos">–</div><div class="stat-desc">Cursos en Progreso</div></div>
+        <!-- Stats 2×2 -->
+        <div class="stats-row">
+            <div class="stat-card green">
+                <div class="stat-icon green"><i class="ph ph-books"></i></div>
+                <div class="stat-num" id="statCursos">–</div>
+                <div class="stat-desc">Cursos en Progreso</div>
+            </div>
+            <div class="stat-card amber">
+                <div class="stat-icon amber"><i class="ph ph-clock"></i></div>
+                <div class="stat-num" id="statHoras">–</div>
+                <div class="stat-desc">Horas Estudiadas</div>
+            </div>
+            <div class="stat-card red">
+                <div class="stat-icon red"><i class="ph ph-video-camera"></i></div>
+                <div class="stat-num" id="statClasesHoy">–</div>
+                <div class="stat-desc" id="statClasesHoyDesc">Clases en Vivo Hoy</div>
+            </div>
+            <div class="stat-card sand">
+                <div class="stat-icon sand"><i class="ph ph-download-simple"></i></div>
+                <div class="stat-num" id="statMateriales">–</div>
+                <div class="stat-desc">Materiales</div>
+            </div>
         </div>
-        <div class="stat-card">
-            <div class="stat-icon amber"><i class="ph ph-clock"></i></div>
-            <div><div class="stat-num" id="statHoras">–</div><div class="stat-desc">Horas Estudiadas</div></div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon red"><i class="ph ph-video-camera"></i></div>
-            <div><div class="stat-num" id="statClasesHoy">–</div><div class="stat-desc" id="statClasesHoyDesc">Clases en Vivo Hoy</div></div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon sand"><i class="ph ph-download-simple"></i></div>
-            <div><div class="stat-num" id="statMateriales">–</div><div class="stat-desc">Materiales</div></div>
-        </div>
-    </div>
+
+    </div><!-- /hero-section -->
 
     <!-- Live Class Banner (dinámico) -->
     <div class="live-banner" id="liveBannerDash" style="display:none">
@@ -308,37 +319,38 @@
             </div>
         </div>
 
-        <!-- Right Column -->
+        <!-- Right Column: Ranking + Próxima Clase -->
         <div>
-            <!-- Leaderboard -->
             <div class="sidebar-card">
-                <h3><i class="ph ph-trophy" style="color:var(--color-xp);"></i> Ranking del Mes</h3>
+                <h3><i class="ph ph-trophy" style="color:var(--color-xp)"></i> Ranking del Mes</h3>
                 <div id="lbList">
-                    <p style="color:var(--color-text-light);font-size:.85rem;text-align:center;padding:1rem">Cargando ranking…</p>
+                    <p style="color:var(--color-text-light);font-size:.85rem;text-align:center;padding:1rem">Cargando…</p>
                 </div>
-                <a href="ranking.html" style="display:block;text-align:center;font-size:.8rem;color:var(--color-primary);font-weight:600;margin-top:.75rem">Ver ranking completo →</a>
+                <a href="ranking.html" style="display:block;text-align:center;font-size:.79rem;color:var(--color-primary);font-weight:600;margin-top:.85rem;padding-top:.75rem;border-top:1px solid #F1F5F9">Ver ranking completo →</a>
             </div>
 
-            <!-- Badges -->
-            <div class="sidebar-card" id="logros">
-                <h3><i class="ph ph-medal" style="color:var(--color-accent);"></i> Mis Logros</h3>
-                <div class="badges-grid">
-                    <div class="badge-box earned" title="Primer paso"><div>🌱</div><div class="badge-label">Inicio</div></div>
-                    <div class="badge-box earned" title="7 días seguidos"><div>🔥</div><div class="badge-label">Constante</div></div>
-                    <div class="badge-box earned" title="Foro activo"><div>💬</div><div class="badge-label">Social</div></div>
-                    <div class="badge-box earned" title="Clase en vivo"><div>📡</div><div class="badge-label">En Vivo</div></div>
-                    <div class="badge-box locked" title="Mentor"><div>🎓</div><div class="badge-label">Mentor</div></div>
-                    <div class="badge-box locked" title="Primer diploma"><div>📜</div><div class="badge-label">Diploma</div></div>
-                    <div class="badge-box locked" title="Maratón"><div>⚡</div><div class="badge-label">Maratón</div></div>
-                    <div class="badge-box locked" title="Referido"><div>🤝</div><div class="badge-label">Referido</div></div>
-                </div>
+            <div class="sidebar-card" style="background:var(--color-bg-alt);border:1.5px dashed rgba(104,122,97,0.3)" id="proximaClaseCard">
+                <h3><i class="ph ph-calendar-check" style="color:var(--color-primary)"></i> Próxima Clase</h3>
+                <p style="font-size:.88rem;color:var(--color-text-light)">Cargando…</p>
             </div>
+        </div>
+    </div>
 
-            <!-- Next Live -->
-            <div class="sidebar-card" style="background:var(--color-bg-alt); border: 1.5px dashed rgba(104,122,97,0.3);" id="proximaClaseCard">
-                <h3><i class="ph ph-calendar-check" style="color:var(--color-primary);"></i> Próxima Clase</h3>
-                <p style="font-size:.9rem;color:var(--color-text-light)">Cargando…</p>
-            </div>
+    <!-- ── MIS LOGROS (full-width strip) ──────────────────────── -->
+    <div class="logros-section" id="logros">
+        <div class="logros-header">
+            <h2><i class="ph ph-medal" style="color:var(--color-accent)"></i> Mis Logros</h2>
+            <a href="ranking.html" style="font-size:.82rem;color:var(--color-primary);font-weight:600">Ver ranking →</a>
+        </div>
+        <div class="badges-strip">
+            <div class="badge-box earned" title="Primer paso"><div>🌱</div><div class="badge-label">Inicio</div></div>
+            <div class="badge-box earned" title="7 días seguidos"><div>🔥</div><div class="badge-label">Constante</div></div>
+            <div class="badge-box earned" title="Foro activo"><div>💬</div><div class="badge-label">Social</div></div>
+            <div class="badge-box earned" title="Clase en vivo"><div>📡</div><div class="badge-label">En Vivo</div></div>
+            <div class="badge-box locked" title="Primer diploma"><div>📜</div><div class="badge-label">Diploma</div></div>
+            <div class="badge-box locked" title="Mentor"><div>🎓</div><div class="badge-label">Mentor</div></div>
+            <div class="badge-box locked" title="Maratón de estudio"><div>⚡</div><div class="badge-label">Maratón</div></div>
+            <div class="badge-box locked" title="Referiste a alguien"><div>🤝</div><div class="badge-label">Referido</div></div>
         </div>
     </div>
 </main>
