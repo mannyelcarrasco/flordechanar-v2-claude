@@ -100,6 +100,24 @@
         .int-status.off{background:#F1F5F9;color:#94A3B8}
         .wh-section{margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid #F1F5F9}
         @media(max-width:768px){
+            /* ── CRÍTICO: overrides del layout local ── */
+            /* .sb y .main se redefinen en este archivo sin @media,
+               lo que pisa las reglas de shared.css. Se reaplican aquí
+               para que los estilos móviles tengan efecto. */
+            .sb{
+                transform:translateX(-100%);
+                transition:transform .28s cubic-bezier(.4,0,.2,1);
+                z-index:150;
+            }
+            .sb.mob-open{transform:translateX(0)}
+            .main{
+                margin-left:0;
+                max-width:100%;
+                padding:1rem;
+                padding-top:calc(56px + 1rem);
+                padding-bottom:calc(64px + 1rem + env(safe-area-inset-bottom,0px));
+            }
+
             /* ── Stats ─────────────────────────────── */
             .stats{grid-template-columns:1fr 1fr}
 
