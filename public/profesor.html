@@ -67,10 +67,10 @@
     </div>
 
     <div class="stats">
-        <div class="sc"><div class="si g"><i class="ph ph-books"></i></div><div class="sn">3</div><div class="sl">Cursos asignados</div></div>
-        <div class="sc"><div class="si a"><i class="ph ph-users"></i></div><div class="sn">87</div><div class="sl">Estudiantes activos</div></div>
-        <div class="sc"><div class="si b"><i class="ph ph-exam"></i></div><div class="sn">2</div><div class="sl">Evaluaciones por revisar</div></div>
-        <div class="sc"><div class="si r"><i class="ph ph-chart-bar"></i></div><div class="sn">5.8</div><div class="sl">Promedio general</div></div>
+        <div class="sc"><div class="si g"><i class="ph ph-books"></i></div><div class="sn" id="profStatCursos">–</div><div class="sl">Cursos asignados</div></div>
+        <div class="sc"><div class="si a"><i class="ph ph-users"></i></div><div class="sn" id="profStatAlumnos">–</div><div class="sl">Estudiantes activos</div></div>
+        <div class="sc"><div class="si b"><i class="ph ph-exam"></i></div><div class="sn" id="profStatEvals">–</div><div class="sl">Evaluaciones por revisar</div></div>
+        <div class="sc"><div class="si r"><i class="ph ph-chart-bar"></i></div><div class="sn" id="profStatProm">–</div><div class="sl">Promedio general</div></div>
     </div>
 
     <div class="tabs">
@@ -94,22 +94,25 @@
 
     <!-- TAB Notas -->
     <div id="tn" class="tp">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-            <div style="display:flex;gap:.65rem;align-items:center">
-                <select class="fc" style="width:auto;padding:.45rem .8rem"><option>Diplomado Biomagnetismo</option><option>Reiki Nivel 1 y 2</option></select>
-                <select class="fc" style="width:auto;padding:.45rem .8rem"><option>Todas las evaluaciones</option><option>Evaluación Teórica 1</option><option>Práctica Observada</option></select>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.75rem">
+            <div style="display:flex;gap:.65rem;align-items:center;flex-wrap:wrap">
+                <select class="fc" id="notasCursoSel" style="width:auto;padding:.45rem .8rem" onchange="cargarNotas(this.value)">
+                    <option value="">— Selecciona un curso —</option>
+                </select>
             </div>
-            <button class="btn btn-p btn-sm" onclick="saveG()"><i class="ph ph-floppy-disk"></i> Guardar</button>
+            <div id="notasEstado" style="font-size:.82rem;color:var(--light)">Selecciona un curso para ver las notas</div>
         </div>
-        <div class="tw">
+        <div class="tw" id="notasTablaWrap" style="display:none">
             <table>
-                <thead>
-                    <tr><th>Estudiante</th><th>Ev. Teórica 1 (1–7)</th><th>Práctica (1–7)</th><th>Ev. Teórica 2 (1–7)</th><th>Promedio</th><th>Estado</th><th>Avance</th></tr>
-                </thead>
+                <thead id="notasThead"></thead>
                 <tbody id="gBody"></tbody>
             </table>
         </div>
-        <p style="font-size:.75rem;color:var(--light);margin-top:.6rem"><i class="ph ph-info"></i> Edita cualquier celda de nota directamente. El promedio se recalcula al guardar.</p>
+        <div id="notasVacio" style="text-align:center;padding:3rem;color:var(--light);display:none">
+            <i class="ph ph-exam" style="font-size:2.5rem;display:block;margin-bottom:.75rem;color:#D1D5DB"></i>
+            <p>Sin estudiantes inscritos o sin evaluaciones en este curso.</p>
+        </div>
+        <p style="font-size:.75rem;color:var(--light);margin-top:.6rem"><i class="ph ph-info"></i> Notas obtenidas por los estudiantes en cada evaluación (mejor intento). Solo lectura — edita desde Calificar en el tab Evaluaciones.</p>
     </div>
 
     <!-- TAB Evaluaciones -->
@@ -176,56 +179,36 @@
 
 <script src="shared.js"></script>
 <script>
-const students=[
-    {name:'Catalina Reyes',init:'CR',g:[6.5,null,6.0],p:78},
-    {name:'Javiera Morales',init:'JM',g:[7.0,6.8,6.5],p:95},
-    {name:'Andrea Torres',init:'AT',g:[5.5,4.8,null],p:60},
-    {name:'Paula Fernández',init:'PF',g:[6.0,6.2,6.4],p:88},
-    {name:'María González',init:'MG',g:[null,null,null],p:57},
-    {name:'Rocío Saavedra',init:'RS',g:[4.5,3.9,null],p:45},
-    {name:'Karla Ibáñez',init:'KI',g:[7.0,7.0,7.0],p:100},
-];
+/* ── Helpers ──────────────────────────────────────────────────────────── */
+function gClass(v){ if(v===null)return 'gN'; if(v>=6.5)return 'gEx'; if(v>=5.5)return 'gG'; if(v>=4.0)return 'gA'; return 'gF'; }
 
-function gClass(v){if(v===null)return 'gN';if(v>=6.5)return 'gEx';if(v>=5.5)return 'gG';if(v>=4.0)return 'gA';return 'gF'}
-function avg(g){const v=g.filter(x=>x!==null);return v.length?(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1):null}
-
-function renderG(){
-    const b=document.getElementById('gBody');b.innerHTML='';
-    students.forEach((s,i)=>{
-        const a=avg(s.g);
-        const sCls=a===null?'bpD':parseFloat(a)>=4?'bpA':'bpL';
-        const sTx=a===null?'Sin notas':parseFloat(a)>=4?'Aprobado':'Reprobado';
-        b.innerHTML+=`<tr>
-            <td><div style="display:flex;align-items:center;gap:.6rem"><div style="width:30px;height:30px;border-radius:50%;background:var(--primary);opacity:.8;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.72rem;color:#fff">${s.init}</div><div class="tn">${s.name}</div></div></td>
-            <td><input class="gi" type="number" min="1" max="7" step="0.1" value="${s.g[0]??''}" placeholder="—" onchange="students[${i}].g[0]=this.value?parseFloat(this.value):null"></td>
-            <td><input class="gi" type="number" min="1" max="7" step="0.1" value="${s.g[1]??''}" placeholder="—" onchange="students[${i}].g[1]=this.value?parseFloat(this.value):null"></td>
-            <td><input class="gi" type="number" min="1" max="7" step="0.1" value="${s.g[2]??''}" placeholder="—" onchange="students[${i}].g[2]=this.value?parseFloat(this.value):null"></td>
-            <td><span class="gb ${gClass(a?parseFloat(a):null)}">${a??'—'}</span></td>
-            <td><span class="bp ${sCls}">${sTx}</span></td>
-            <td><div class="pp"><div class="pb"><div class="pf" style="width:${s.p}%"></div></div><span class="pct">${s.p}%</span></div></td>
-        </tr>`;
-    });
-}
-
-function saveG(){renderG();showT('Notas guardadas correctamente','ph-floppy-disk')}
-
-function st(e,id){
-    if(e){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));e.target.classList.add('active')}
+/* ── Tab / sidebar switchers ──────────────────────────────────────────── */
+function st(e, id){
+    if(e){ document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); e.target.classList.add('active'); }
     document.querySelectorAll('.tp').forEach(p=>p.classList.remove('active'));
     document.getElementById(id).classList.add('active');
 }
-function sw(e,id){
-    if(e)e.preventDefault();
+function sw(e, id){
+    if(e) e.preventDefault();
     document.querySelectorAll('.tp').forEach(p=>p.classList.remove('active'));
     document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
     document.querySelectorAll('.sb-nav a').forEach(a=>a.classList.remove('active'));
     document.getElementById(id).classList.add('active');
     document.querySelectorAll(`[onclick="sw(event,'${id}')"]`).forEach(el=>el.classList.add('active'));
 }
-function addFiles(input,listId){const l=document.getElementById(listId);l.style.display='flex';l.style.flexDirection='column';[...input.files].forEach(f=>{const d=document.createElement('div');d.className='fr';d.innerHTML=`<i class="ph ph-file"></i><span class="fn">${f.name}</span><span class="fs">${(f.size/1024/1024).toFixed(1)} MB</span><i class="ph ph-trash fd" onclick="this.parentNode.remove()"></i>`;l.appendChild(d)})}
 
-renderG();
+/* ── File upload helper ───────────────────────────────────────────────── */
+function addFiles(input, listId){
+    const l = document.getElementById(listId);
+    l.style.display = 'flex'; l.style.flexDirection = 'column';
+    [...input.files].forEach(f => {
+        const d = document.createElement('div'); d.className = 'fr';
+        d.innerHTML = `<i class="ph ph-file"></i><span class="fn">${f.name}</span><span class="fs">${(f.size/1024/1024).toFixed(1)} MB</span><i class="ph ph-trash fd" onclick="this.parentNode.remove()"></i>`;
+        l.appendChild(d);
+    });
+}
 
+/* ── Boot ─────────────────────────────────────────────────────────────── */
 window.onload = async () => {
     const p = decodeToken ? decodeToken() : null;
     if (p) {
@@ -237,23 +220,174 @@ window.onload = async () => {
         if (p.rol === 'admin') document.getElementById('adminPanelLink').style.display = '';
     }
     const urlParams = new URLSearchParams(window.location.search);
-    if(urlParams.get('tab') === 'cursos') sw(null, 'tc');
+    if (urlParams.get('tab') === 'cursos') sw(null, 'tc');
     await fetchDictados();
     await loadUploadSelects();
     await fetchEvaluaciones();
 };
 
+/* ── Cursos dictados ──────────────────────────────────────────────────── */
+async function fetchDictados() {
+    const tbody = document.getElementById('profesorCoursesBody');
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/cursos/dictados', { headers: { 'Authorization': 'Bearer ' + token } });
+        if (!res.ok) throw new Error();
+        const cursos = await res.json();
+
+        // Populate Libro de Notas course selector
+        const notasSel = document.getElementById('notasCursoSel');
+        notasSel.innerHTML = '<option value="">— Selecciona un curso —</option>';
+        cursos.forEach(c => { notasSel.innerHTML += `<option value="${c.id}">${c.titulo}</option>`; });
+
+        if (cursos.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;">Aún no tienes cursos asignados como responsable.</td></tr>';
+            document.getElementById('profStatCursos').textContent = '0';
+            document.getElementById('profStatAlumnos').textContent = '0';
+            return;
+        }
+
+        tbody.innerHTML = '';
+        let totalAlumnos = 0;
+        cursos.forEach(c => {
+            totalAlumnos += c.alumnos || 0;
+            const estadoCls = c.estado === 'publicado' ? 'bpA' : 'bpD';
+            const estadoTxt = c.estado === 'publicado' ? '● Activo' : 'Borrador';
+            tbody.innerHTML += `
+                <tr>
+                    <td><div class="tn">${c.titulo}</div><div class="ts">Acceso asignado</div></td>
+                    <td><span class="bp ${estadoCls}">${estadoTxt}</span></td>
+                    <td>${c.alumnos || 0}</td>
+                    <td><span class="ts">–</span></td>
+                    <td class="ts">Sin programar</td>
+                    <td><div style="display:flex;gap:.4rem">
+                        <button class="btn btn-o btn-sm" onclick="verNotasCurso(${c.id})"><i class="ph ph-clipboard-text"></i> Ver notas</button>
+                        <a href="curso-crear.html?id=${c.id}" class="btn btn-p btn-sm"><i class="ph ph-pencil"></i> Editar</a>
+                    </div></td>
+                </tr>`;
+        });
+
+        document.getElementById('profStatCursos').textContent = cursos.length;
+        document.getElementById('profStatAlumnos').textContent = totalAlumnos;
+
+        // Compute overall grade average in background
+        computePromedioGeneral(cursos);
+
+    } catch(e) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;color:red;">Error al cargar tus cursos dictados</td></tr>';
+    }
+}
+
+/* Computes the overall average from all course grade books (background) */
+async function computePromedioGeneral(cursos) {
+    try {
+        const token = localStorage.getItem('token');
+        const allGrades = [];
+        for (const c of cursos) {
+            const res = await fetch(`/api/profesor/cursos/${c.id}/notas`, { headers: { 'Authorization': 'Bearer ' + token } });
+            if (!res.ok) continue;
+            const { estudiantes } = await res.json();
+            estudiantes.forEach(est => est.grades.forEach(g => { if (g !== null) allGrades.push(parseFloat(g)); }));
+        }
+        const el = document.getElementById('profStatProm');
+        if (allGrades.length > 0) {
+            el.textContent = (allGrades.reduce((a, b) => a + b, 0) / allGrades.length).toFixed(1);
+        } else {
+            el.textContent = '–';
+        }
+    } catch(e) { document.getElementById('profStatProm').textContent = '–'; }
+}
+
+/* ── Ver notas desde tab Cursos ───────────────────────────────────────── */
+function verNotasCurso(cursoId) {
+    // Activate notas tab panel
+    document.querySelectorAll('.tp').forEach(p => p.classList.remove('active'));
+    document.getElementById('tn').classList.add('active');
+    // Activate notas tab button
+    document.querySelectorAll('.tab').forEach(t => {
+        t.classList.toggle('active', t.getAttribute('onclick') && t.getAttribute('onclick').includes("'tn'"));
+    });
+    // Select course and load
+    const sel = document.getElementById('notasCursoSel');
+    sel.value = cursoId;
+    cargarNotas(cursoId);
+}
+
+/* ── Libro de Notas ───────────────────────────────────────────────────── */
+async function cargarNotas(cursoId) {
+    const estado    = document.getElementById('notasEstado');
+    const wrap      = document.getElementById('notasTablaWrap');
+    const vacio     = document.getElementById('notasVacio');
+    const thead     = document.getElementById('notasThead');
+    const tbody     = document.getElementById('gBody');
+
+    wrap.style.display  = 'none';
+    vacio.style.display = 'none';
+
+    if (!cursoId) {
+        estado.textContent = 'Selecciona un curso para ver las notas';
+        return;
+    }
+
+    estado.textContent = 'Cargando…';
+
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/profesor/cursos/${cursoId}/notas`, { headers: { 'Authorization': 'Bearer ' + token } });
+        if (!res.ok) throw new Error();
+        const { evaluaciones, estudiantes } = await res.json();
+
+        if (estudiantes.length === 0 || evaluaciones.length === 0) {
+            vacio.style.display = 'block';
+            estado.textContent = estudiantes.length === 0 ? 'Sin estudiantes inscritos en este curso' : 'Sin evaluaciones creadas en este curso';
+            return;
+        }
+
+        // Header row
+        thead.innerHTML = `<tr>
+            <th>Estudiante</th>
+            ${evaluaciones.map(ev => {
+                const short = ev.titulo.length > 18 ? ev.titulo.substring(0, 16) + '…' : ev.titulo;
+                return `<th style="white-space:nowrap" title="${ev.titulo}">${short}</th>`;
+            }).join('')}
+            <th>Promedio</th>
+            <th>Progreso</th>
+        </tr>`;
+
+        // Body rows
+        tbody.innerHTML = estudiantes.map(est => {
+            const valid  = est.grades.filter(g => g !== null).map(g => parseFloat(g));
+            const prom   = valid.length ? (valid.reduce((a, b) => a + b, 0) / valid.length).toFixed(1) : null;
+            const pCls   = gClass(prom !== null ? parseFloat(prom) : null);
+            return `<tr>
+                <td><div style="display:flex;align-items:center;gap:.6rem">
+                    <div style="width:30px;height:30px;border-radius:50%;background:var(--primary);opacity:.8;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.72rem;color:#fff">${est.nombre[0].toUpperCase()}</div>
+                    <div class="tn">${est.nombre}</div>
+                </div></td>
+                ${est.grades.map(g => `<td><span class="gb ${gClass(g !== null ? parseFloat(g) : null)}">${g !== null ? parseFloat(g).toFixed(1) : '—'}</span></td>`).join('')}
+                <td><span class="gb ${pCls}">${prom ?? '—'}</span></td>
+                <td><div class="pp"><div class="pb"><div class="pf" style="width:${est.progreso}%"></div></div><span class="pct">${est.progreso}%</span></div></td>
+            </tr>`;
+        }).join('');
+
+        wrap.style.display = '';
+        estado.textContent = `${estudiantes.length} estudiante${estudiantes.length !== 1 ? 's' : ''} · ${evaluaciones.length} evaluación${evaluaciones.length !== 1 ? 'es' : ''}`;
+
+    } catch(e) {
+        estado.textContent = 'Error al cargar las notas. Intenta de nuevo.';
+    }
+}
+
+/* ── Upload selects ───────────────────────────────────────────────────── */
 async function loadUploadSelects() {
     try {
         const token = localStorage.getItem('token');
         const res = await fetch('/api/cursos/dictados', { headers: { 'Authorization': 'Bearer ' + token } });
-        if(!res.ok) return;
+        if (!res.ok) return;
         const cursos = await res.json();
         const sel = document.getElementById('uploadCursoSel');
         sel.innerHTML = '<option value="">-- Selecciona un curso --</option>';
-        cursos.forEach(c => {
-            sel.innerHTML += `<option value="${c.id}">${c.titulo}</option>`;
-        });
+        cursos.forEach(c => { sel.innerHTML += `<option value="${c.id}">${c.titulo}</option>`; });
     } catch(e) { console.error('Error cargando cursos para upload', e); }
 }
 
@@ -263,113 +397,43 @@ async function loadModulosForUpload(cursoId) {
     modSel.innerHTML = '<option>Cargando módulos...</option>';
     try {
         const token = localStorage.getItem('token');
-        const res = await fetch(`/api/cursos/${cursoId}/curriculum`, { headers: {'Authorization': 'Bearer '+token} });
+        const res = await fetch(`/api/cursos/${cursoId}/curriculum`, { headers: { 'Authorization': 'Bearer ' + token } });
         const modulos = await res.json();
         modSel.innerHTML = '<option value="">-- Selecciona un módulo --</option>';
-        if(modulos.length === 0) {
-            modSel.innerHTML = '<option value="">Sin módulos aún (créalos en el curso)</option>';
-            return;
-        }
-        modulos.forEach(m => {
-            modSel.innerHTML += `<option value="${m.id}">${m.titulo}</option>`;
-        });
+        if (modulos.length === 0) { modSel.innerHTML = '<option value="">Sin módulos aún (créalos en el curso)</option>'; return; }
+        modulos.forEach(m => { modSel.innerHTML += `<option value="${m.id}">${m.titulo}</option>`; });
     } catch(e) { modSel.innerHTML = '<option value="">Error al cargar</option>'; }
 }
 
 async function subirLeccion() {
-    const moduloId = document.getElementById('uploadModuloSel').value;
-    const titulo = document.getElementById('uploadLecTitulo').value.trim();
+    const moduloId   = document.getElementById('uploadModuloSel').value;
+    const titulo     = document.getElementById('uploadLecTitulo').value.trim();
     const descripcion = document.getElementById('uploadLecDesc').value.trim();
-    const video_url = document.getElementById('uploadLecVideo').value.trim();
-
-    if(!moduloId || !titulo) {
-        showT('Selecciona un módulo y escribe un título', 'ph-warning');
-        return;
-    }
-
+    const video_url  = document.getElementById('uploadLecVideo').value.trim();
+    if (!moduloId || !titulo) { showT('Selecciona un módulo y escribe un título', 'ph-warning'); return; }
     try {
         const token = localStorage.getItem('token');
-        // Crear lección
         const res = await fetch('/api/lecciones', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
             body: JSON.stringify({ modulo_id: moduloId, titulo })
         });
         const data = await res.json();
-        if(res.ok && data.id) {
-            // Guardar descripcion y video
+        if (res.ok && data.id) {
             await fetch('/api/lecciones/' + data.id, {
                 method: 'PUT',
-                headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                 body: JSON.stringify({ titulo, descripcion, video_url })
             });
-            showT('✅ Lección guardada correctamente', 'ph-check-circle');
-            // Limpiar formulario
+            showT('Lección guardada correctamente', 'ph-check-circle');
             document.getElementById('uploadLecTitulo').value = '';
-            document.getElementById('uploadLecDesc').value = '';
-            document.getElementById('uploadLecVideo').value = '';
-        } else {
-            showT('⚠️ Error al guardar la lección', 'ph-warning');
-        }
-    } catch(e) {
-        showT('⚠️ Error de conexión', 'ph-warning');
-    }
+            document.getElementById('uploadLecDesc').value   = '';
+            document.getElementById('uploadLecVideo').value  = '';
+        } else { showT('Error al guardar la lección', 'ph-warning'); }
+    } catch(e) { showT('Error de conexión', 'ph-warning'); }
 }
 
-async function fetchDictados() {
-    const tbody = document.getElementById('profesorCoursesBody');
-    try {
-        const token = localStorage.getItem('token');
-        const res = await fetch('/api/cursos/dictados', { headers: { 'Authorization': 'Bearer ' + token } });
-        if(!res.ok) throw new Error();
-        
-        const cursos = await res.json();
-        
-        if (cursos.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem;">Aún no tienes cursos asignados como responsable.</td></tr>';
-            
-            // Actualizar Stats a 0
-            document.querySelectorAll('.sn').forEach((el, index) => {
-                if(index === 0) el.textContent = '0';
-                if(index === 1) el.textContent = '0';
-            });
-            return;
-        }
-
-        tbody.innerHTML = '';
-        let totalAlumnos = 0;
-        
-        cursos.forEach(c => {
-            totalAlumnos += c.alumnos || 0;
-            const estadoCls = c.estado === 'publicado' ? 'bpA' : 'bpD';
-            const estadoTxt = c.estado === 'publicado' ? '● Activo' : 'Borrador';
-            
-            tbody.innerHTML += `
-                <tr>
-                    <td><div class="tn">${c.titulo}</div><div class="ts">Acceso asignado</div></td>
-                    <td><span class="bp ${estadoCls}">${estadoTxt}</span></td>
-                    <td>${c.alumnos || 0}</td>
-                    <td><span class="ts">Sin datos</span></td>
-                    <td class="ts">Sin programar</td>
-                    <td><div style="display:flex;gap:.4rem">
-                        <button class="btn btn-o btn-sm" onclick="showT('Próximamente','ph-info')">Ver notas</button>
-                        <a href="curso-crear.html?id=${c.id}" class="btn btn-p btn-sm"><i class="ph ph-pencil"></i> Editar curso</a>
-                    </div></td>
-                </tr>
-            `;
-        });
-        
-        // Actualizar Stats dinámicamente
-        document.querySelectorAll('.sn').forEach((el, index) => {
-            if(index === 0) el.textContent = cursos.length;
-            if(index === 1) el.textContent = totalAlumnos;
-        });
-
-    } catch(e) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem; color:red;">Error al cargar tus cursos dictados</td></tr>';
-    }
-}
-
+/* ── Evaluaciones ─────────────────────────────────────────────────────── */
 async function fetchEvaluaciones() {
     const tbody = document.getElementById('evalBody');
     try {
@@ -380,6 +444,7 @@ async function fetchEvaluaciones() {
 
         if (cursos.length === 0) {
             tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--light)">Sin cursos asignados.</td></tr>';
+            document.getElementById('profStatEvals').textContent = '0';
             return;
         }
 
@@ -387,21 +452,18 @@ async function fetchEvaluaciones() {
         const evalsArrays = await Promise.all(
             cursos.map(c =>
                 fetch(`/api/cursos/${c.id}/evaluaciones`, { headers: { 'Authorization': 'Bearer ' + token } })
-                    .then(r => r.ok ? r.json() : [])
-                    .catch(() => [])
+                    .then(r => r.ok ? r.json() : []).catch(() => [])
             )
         );
-
         const evals = evalsArrays.flat();
 
         if (evals.length === 0) {
             tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--light)">Aún no hay evaluaciones creadas.</td></tr>';
-            // Update badge
             document.querySelector('.sb-badge').textContent = '0';
+            document.getElementById('profStatEvals').textContent = '0';
             return;
         }
 
-        // Fetch pending counts in parallel
         const pendCounts = await Promise.all(
             evals.map(ev =>
                 fetch(`/api/evaluaciones/${ev.id}/intentos`, { headers: { 'Authorization': 'Bearer ' + token } })
@@ -413,30 +475,26 @@ async function fetchEvaluaciones() {
 
         const totalPend = pendCounts.reduce((a, b) => a + b, 0);
         document.querySelector('.sb-badge').textContent = totalPend;
+        document.getElementById('profStatEvals').textContent = totalPend;
 
         tbody.innerHTML = '';
         evals.forEach((ev, idx) => {
-            const pend = pendCounts[idx];
-            const cierre = ev.fecha_cierre ? new Date(ev.fecha_cierre).toLocaleDateString('es-CL', { day:'numeric', month:'short', year:'numeric' }) : '–';
+            const pend  = pendCounts[idx];
+            const cierre = ev.fecha_cierre
+                ? new Date(ev.fecha_cierre).toLocaleDateString('es-CL', { day:'numeric', month:'short', year:'numeric' })
+                : '–';
             tbody.innerHTML += `
                 <tr>
-                    <td>
-                        <div class="tn">${ev.titulo}</div>
-                        <div class="ts">${ev.publicada ? '● Publicada' : 'Borrador'}</div>
-                    </td>
+                    <td><div class="tn">${ev.titulo}</div><div class="ts">${ev.publicada ? '● Publicada' : 'Borrador'}</div></td>
                     <td class="ts">${cursosMap[ev.curso_id] || '–'}</td>
                     <td class="ts">${cierre}</td>
                     <td>${pend > 0
                         ? `<span style="color:var(--danger);font-weight:600">${pend}</span>`
-                        : `<span style="color:var(--primary);font-weight:600">0</span>`
-                    }</td>
-                    <td>
-                        <a href="eval-revisar.html?eval_id=${ev.id}" class="btn ${pend > 0 ? 'btn-p' : 'btn-o'} btn-sm">
-                            <i class="ph ph-${pend > 0 ? 'pencil' : 'eye'}"></i> ${pend > 0 ? 'Calificar' : 'Ver'}
-                        </a>
-                    </td>
-                </tr>
-            `;
+                        : `<span style="color:var(--primary);font-weight:600">0</span>`}</td>
+                    <td><a href="eval-revisar.html?eval_id=${ev.id}" class="btn ${pend > 0 ? 'btn-p' : 'btn-o'} btn-sm">
+                        <i class="ph ph-${pend > 0 ? 'pencil' : 'eye'}"></i> ${pend > 0 ? 'Calificar' : 'Ver'}
+                    </a></td>
+                </tr>`;
         });
     } catch(e) {
         tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;color:red;">Error al cargar evaluaciones.</td></tr>';
