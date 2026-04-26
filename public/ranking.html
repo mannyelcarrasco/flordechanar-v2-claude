@@ -62,6 +62,36 @@
 
         .empty-state { text-align:center; padding:4rem 2rem; color:var(--light); }
         .empty-state i { font-size:3rem; display:block; margin-bottom:1rem; color:#D1D5DB; }
+
+        @media(max-width:768px) {
+            /* Sidebar drawer */
+            .sidebar {
+                transform:translateX(-100%);
+                transition:transform .28s cubic-bezier(.4,0,.2,1);
+                z-index:150; top:0; min-height:100vh; display:flex;
+            }
+            .sidebar.mob-open { transform:translateX(0); }
+            /* Contenido */
+            .main-content {
+                margin-left:0; max-width:100%;
+                padding:1rem;
+                padding-top:calc(56px + 1rem);
+                padding-bottom:calc(64px + 1rem + env(safe-area-inset-bottom,0px));
+            }
+            /* Pódium más compacto */
+            .podium { gap:.5rem; margin-bottom:1.5rem; }
+            .podium-base.p1 { width:70px; height:60px; font-size:1.2rem; }
+            .podium-base.p2 { width:60px; height:46px; font-size:1.1rem; }
+            .podium-base.p3 { width:54px; height:34px; font-size:1rem; }
+            .podium-avatar.p1 { width:56px; height:56px; font-size:.95rem; }
+            .podium-avatar.p2 { width:46px; height:46px; font-size:.85rem; }
+            .podium-avatar.p3 { width:40px; height:40px; font-size:.8rem; }
+            .podium-name { font-size:.74rem; max-width:72px; }
+            /* Lista ranking full width */
+            .ranking-list { max-width:100%; }
+            .ranking-row { padding:.75rem 1rem; gap:.65rem; }
+            .rank-name small { display:none; } /* ocultar sub-info en filas */
+        }
     </style>
 </head>
 <body>
