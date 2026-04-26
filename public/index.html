@@ -205,6 +205,7 @@
             color: var(--color-secondary);
             cursor: pointer;
         }
+        .mob-cta { display: none; } /* solo visible dentro del menú móvil abierto */
 
         /* --- Hero Section --- */
         .hero {
@@ -579,6 +580,16 @@
                 font-size: 1rem; font-weight: 500;
             }
             .nav-links.mob-open a:last-child { border-bottom: none; }
+            .nav-links.mob-open .mob-cta {
+                margin: 1rem 1.25rem 0;
+                padding: 0.85rem 1.5rem;
+                background: var(--color-primary); color: #fff;
+                border-radius: 9999px; text-align: center;
+                font-weight: 600; font-size: 0.95rem;
+                display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+                border-bottom: none;
+            }
+            .nav-links.mob-open .mob-cta:hover { background: var(--color-primary-dark); }
 
             .hero { padding-top: 120px; text-align: center; }
             .hero h1 { font-size: 2.5rem; }
@@ -618,6 +629,7 @@
                 <a href="escuela.html">Escuela</a>
                 <a href="#sedes">Sedes</a>
                 <a href="#contacto">Contacto</a>
+                <a href="terapias.html" class="mob-cta"><i class="ph ph-calendar-plus"></i> Agendar Sesión</a>
             </nav>
 
             <div class="header-actions">

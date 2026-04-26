@@ -61,6 +61,7 @@
         .btn-accent:hover { background-color: var(--color-accent-hover); transform: translateY(-2px); box-shadow: 0 10px 20px rgba(212, 163, 115, 0.2); }
         
         .mobile-menu-btn { display: none; font-size: 1.8rem; background: none; border: none; color: var(--color-secondary); cursor: pointer; }
+        .mob-cta { display: none; } /* solo visible dentro del menú móvil abierto */
 
         /* Inner Hero */
         .inner-hero {
@@ -139,6 +140,16 @@
                 font-size: 1rem; font-weight: 500;
             }
             .nav-links.mob-open a:last-child { border-bottom: none; }
+            .nav-links.mob-open .mob-cta {
+                margin: 1rem 1.25rem 0;
+                padding: 0.85rem 1.5rem;
+                background: var(--color-primary); color: #fff;
+                border-radius: 9999px; text-align: center;
+                font-weight: 600; font-size: 0.95rem;
+                display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+                border-bottom: none;
+            }
+            .nav-links.mob-open .mob-cta:hover { background: var(--color-primary-dark); }
 
             .inner-hero h1 { font-size: 2.5rem; }
             .booking-tabs { flex-direction: column; padding: 0 2rem; }
@@ -159,6 +170,7 @@
                 <a href="escuela.html">Escuela</a>
                 <a href="index.html#sedes">Sedes</a>
                 <a href="index.html#contacto">Contacto</a>
+                <a href="#agendar" class="mob-cta"><i class="ph ph-calendar-plus"></i> Agendar Ahora</a>
             </nav>
             <div class="header-actions">
                 <a href="#agendar" class="btn btn-primary">Agendar Ahora</a>
