@@ -1780,6 +1780,10 @@ if(urlParams.get('tab') === 'cursos') {
     hdrIc.className='ph ph-plus';
     hdrBtn.onclick=function(){window.location.href='curso-crear.html'};
 }
+if(urlParams.get('tab') === 'tv') {
+    // Navigate directly to Clases en Vivo tab
+    st(null, 'tv');
+}
 
 // Cargar ajustes guardados
 loadSettings();

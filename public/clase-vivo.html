@@ -138,10 +138,17 @@
         <p>Transmisiones en directo y grabaciones de clases anteriores</p>
     </div>
 
+    <!-- adminBar for admins -->
     <div id="adminBar" style="display:none" class="admin-bar">
         <i class="ph ph-shield-check" style="color:var(--primary)"></i>
-        <span>Vista de administrador — puedes configurar las salas Meet directamente desde aquí</span>
-        <a href="admin.html#tv" class="btn-admin-sm" style="background:var(--primary);color:#fff"><i class="ph ph-gear"></i> Gestionar clases</a>
+        <span>Vista de administrador — gestiona las clases y salas Meet desde el panel.</span>
+        <a href="admin.html?tab=tv" class="btn-admin-sm" style="background:var(--primary);color:#fff"><i class="ph ph-gear"></i> Gestionar clases</a>
+    </div>
+    <!-- profBar for professors (no admin access) -->
+    <div id="profBar" style="display:none" class="admin-bar">
+        <i class="ph ph-chalkboard-teacher" style="color:var(--primary)"></i>
+        <span>Modo Profesor — usa los botones <strong>"Agregar sala"</strong> en cada clase para configurar tu sala Meet.</span>
+        <a href="profesor.html" class="btn-admin-sm" style="background:var(--primary);color:#fff"><i class="ph ph-arrow-left"></i> Mi panel</a>
     </div>
 
     <div id="liveBanner" style="display:none"></div>
@@ -190,7 +197,11 @@ window.onload = async () => {
         usuarioNombre = p.nombre || '';
         usuarioEmail = p.email || '';
         esAdmin = p.rol === 'admin' || p.rol === 'profesor';
-        if (esAdmin) document.getElementById('adminBar').style.display = 'flex';
+        if (p.rol === 'admin') {
+            document.getElementById('adminBar').style.display = 'flex';
+        } else if (p.rol === 'profesor') {
+            document.getElementById('profBar').style.display = 'flex';
+        }
     }
     await cargarClases();
 };
