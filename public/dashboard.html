@@ -225,7 +225,7 @@
         <div>
             <div class="user-name" id="sidebarName">Cargando...</div>
             <div class="user-role">Estudiante Activa</div>
-            <div class="user-xp">⭐ 1.240 XP — Nivel 8</div>
+            <div class="user-xp" id="sidebarXp">⭐ 0 XP — Nivel 1</div>
         </div>
     </div>
 </aside>
@@ -236,7 +236,7 @@
     <div class="topbar">
         <div class="topbar-greeting">
             <h1 id="greetingName">¡Hola! 🌿</h1>
-            <p>Tienes lecciones pendientes y una clase en vivo esta tarde.</p>
+            <p id="greetingSubtitle">Bienvenida a tu aula.</p>
         </div>
         <div class="topbar-right">
             <button class="notif-btn"><i class="ph ph-bell"></i><span class="notif-dot"></span></button>
@@ -246,11 +246,11 @@
     <!-- XP Progress Hero -->
     <div class="xp-hero">
         <div class="xp-info">
-            <h2>⭐ Nivel 8 — Terapeuta Iniciada</h2>
-            <p>¡Te faltan solo 360 XP para desbloquear el Nivel 9!</p>
+            <h2 id="xpNivel">⭐ Nivel 1 — Curiosa</h2>
+            <p id="xpFaltanMsg">Completa lecciones para ganar XP.</p>
             <div class="xp-bar-wrap">
-                <div class="xp-bar"><div class="xp-fill" id="xpFill"></div></div>
-                <div class="xp-label">1.240 / 1.600 XP</div>
+                <div class="xp-bar"><div class="xp-fill" id="xpFill" style="width:0%"></div></div>
+                <div class="xp-label" id="xpLabel">0 / 500 XP</div>
             </div>
         </div>
         <div class="badges-row" title="Tus insignias">
@@ -265,19 +265,19 @@
     <div class="stats-row">
         <div class="stat-card">
             <div class="stat-icon green"><i class="ph ph-books"></i></div>
-            <div><div class="stat-num">3</div><div class="stat-desc">Cursos en Progreso</div></div>
+            <div><div class="stat-num" id="statCursos">–</div><div class="stat-desc">Cursos en Progreso</div></div>
         </div>
         <div class="stat-card">
             <div class="stat-icon amber"><i class="ph ph-clock"></i></div>
-            <div><div class="stat-num">18h</div><div class="stat-desc">Horas Estudiadas</div></div>
+            <div><div class="stat-num" id="statHoras">–</div><div class="stat-desc">Horas Estudiadas</div></div>
         </div>
         <div class="stat-card">
             <div class="stat-icon red"><i class="ph ph-video-camera"></i></div>
-            <div><div class="stat-num">2</div><div class="stat-desc">Clases en Vivo Hoy</div></div>
+            <div><div class="stat-num" id="statClasesHoy">–</div><div class="stat-desc" id="statClasesHoyDesc">Clases en Vivo Hoy</div></div>
         </div>
         <div class="stat-card">
             <div class="stat-icon sand"><i class="ph ph-download-simple"></i></div>
-            <div><div class="stat-num">9</div><div class="stat-desc">Materiales</div></div>
+            <div><div class="stat-num" id="statMateriales">–</div><div class="stat-desc">Materiales</div></div>
         </div>
     </div>
 
@@ -313,30 +313,10 @@
             <!-- Leaderboard -->
             <div class="sidebar-card">
                 <h3><i class="ph ph-trophy" style="color:var(--color-xp);"></i> Ranking del Mes</h3>
-                <div class="lb-item">
-                    <div class="lb-rank gold">1</div>
-                    <div class="lb-avatar">C</div>
-                    <div class="lb-name">Catalina R.</div>
-                    <div class="lb-xp">⭐ 2.140</div>
+                <div id="lbList">
+                    <p style="color:var(--color-text-light);font-size:.85rem;text-align:center;padding:1rem">Cargando ranking…</p>
                 </div>
-                <div class="lb-item">
-                    <div class="lb-rank silver">2</div>
-                    <div class="lb-avatar">J</div>
-                    <div class="lb-name">Javiera M.</div>
-                    <div class="lb-xp">⭐ 1.890</div>
-                </div>
-                <div class="lb-item">
-                    <div class="lb-rank bronze">3</div>
-                    <div class="lb-avatar">A</div>
-                    <div class="lb-name">Andrea T.</div>
-                    <div class="lb-xp">⭐ 1.600</div>
-                </div>
-                <div class="lb-item">
-                    <div class="lb-rank me">Tú</div>
-                    <div class="lb-avatar" style="background:rgba(104,122,97,0.15);">M</div>
-                    <div class="lb-name" style="font-weight:700;">María G. (Tú)</div>
-                    <div class="lb-xp">⭐ 1.240</div>
-                </div>
+                <a href="ranking.html" style="display:block;text-align:center;font-size:.8rem;color:var(--color-primary);font-weight:600;margin-top:.75rem">Ver ranking completo →</a>
             </div>
 
             <!-- Badges -->
@@ -355,11 +335,9 @@
             </div>
 
             <!-- Next Live -->
-            <div class="sidebar-card" style="background:var(--color-bg-alt); border: 1.5px dashed rgba(104,122,97,0.3);">
+            <div class="sidebar-card" style="background:var(--color-bg-alt); border: 1.5px dashed rgba(104,122,97,0.3);" id="proximaClaseCard">
                 <h3><i class="ph ph-calendar-check" style="color:var(--color-primary);"></i> Próxima Clase</h3>
-                <p style="font-size:0.9rem; color:var(--color-text-light); margin-bottom:1rem;">Mañana, Jueves 27 March · 19:00 h</p>
-                <p style="font-weight:600; font-size:0.95rem;">Reiki — Módulo Práctico de Canalización</p>
-                <div style="margin-top: 1rem; display:flex; align-items:center; gap:0.5rem; font-size:0.82rem; color:var(--color-text-light);"><i class="ph ph-alarm"></i> Recordatorio activado</div>
+                <p style="font-size:.9rem;color:var(--color-text-light)">Cargando…</p>
             </div>
         </div>
     </div>
@@ -367,124 +345,221 @@
 
 <script src="shared.js"></script>
 <script>
-    function scrollToLogros(e) {
-        e.preventDefault();
-        document.getElementById('logros').scrollIntoView({ behavior: 'smooth', block: 'center' });
+function scrollToLogros(e) {
+    e.preventDefault();
+    document.getElementById('logros').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+const ld = s => new Date(s.replace(' ', 'T'));
+const XP_PER_LESSON = 50;
+const XP_PER_LEVEL  = 500;
+const LEVEL_NAMES   = ['Curiosa','Aprendiz','Exploradora','Practicante','Iniciada',
+                       'Avanzada','Experta','Terapeuta','Maestra','Guía'];
+
+window.addEventListener('load', async () => {
+    const token = localStorage.getItem('token');
+    if (!token) { window.location.href = 'login.html'; return; }
+
+    const p = (typeof decodeToken === 'function') ? decodeToken() : null;
+    const nombre = (p && p.nombre) || localStorage.getItem('nombre') || 'Estudiante';
+
+    document.getElementById('greetingName').textContent  = `¡Hola, ${nombre.split(' ')[0]}! 🌿`;
+    document.getElementById('sidebarName').textContent   = nombre;
+    document.getElementById('sidebarAvatar').textContent = nombre[0].toUpperCase();
+
+    // ── Fetch all in parallel ────────────────────────────────────────────
+    const hdr = { headers: { 'Authorization': 'Bearer ' + token } };
+    const [cursosR, rankingR, clasesR, materialesR] = await Promise.allSettled([
+        fetch('/api/cursos/mis-cursos', hdr).then(r => r.json()),
+        fetch('/api/ranking',           hdr).then(r => r.json()),
+        fetch('/api/clases-vivo',       hdr).then(r => r.json()),
+        fetch('/api/mis-materiales',    hdr).then(r => r.json()),
+    ]);
+
+    const cursos     = cursosR.status     === 'fulfilled' && Array.isArray(cursosR.value)     ? cursosR.value     : [];
+    const rankingData= rankingR.status    === 'fulfilled'                                      ? rankingR.value    : { ranking: [], mi_id: null };
+    const clases     = clasesR.status     === 'fulfilled' && Array.isArray(clasesR.value)     ? clasesR.value     : [];
+    const materiales = materialesR.status === 'fulfilled' && Array.isArray(materialesR.value) ? materialesR.value : [];
+
+    // ── Mis Cursos + progreso ────────────────────────────────────────────
+    let totalCompletadas = 0, totalLecciones = 0;
+
+    if (cursos.length > 0) {
+        const progressData = await Promise.all(
+            cursos.map(c =>
+                fetch(`/api/cursos/${c.id}/progreso`, hdr)
+                    .then(r => r.ok ? r.json() : { porcentaje: 0, completadas: 0, total: 0 })
+                    .catch(() => ({ porcentaje: 0, completadas: 0, total: 0 }))
+            )
+        );
+        progressData.forEach(pg => {
+            totalCompletadas += pg.completadas || 0;
+            totalLecciones   += pg.total       || 0;
+        });
+
+        const list = document.getElementById('myCoursesList');
+        list.innerHTML = cursos.map((c, i) => {
+            const pg     = progressData[i];
+            const cover  = c.portada_url || 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=200&q=80';
+            const label  = pg.completadas > 0 ? 'Continuar →' : 'Empezar →';
+            return `<div class="course-row" onclick="window.location='curso.html?id=${c.id}'">
+                <div class="c-thumb" style="background-image:url('${cover}')"></div>
+                <div class="c-info">
+                    <h3>${c.titulo}</h3>
+                    <div class="c-sub"><span><i class="ph ph-play-circle"></i> ${pg.completadas} de ${pg.total} lecciones completadas</span></div>
+                    <div class="progress-wrap">
+                        <div class="progress-bar"><div class="progress-fill" style="width:${pg.porcentaje}%"></div></div>
+                        <div class="progress-pct">${pg.porcentaje}%</div>
+                    </div>
+                </div>
+                <div class="c-action"><a href="curso.html?id=${c.id}" class="btn-continue">${label}</a></div>
+            </div>`;
+        }).join('');
+    } else {
+        document.getElementById('myCoursesList').innerHTML = `
+            <div style="text-align:center;padding:3rem 1rem;background:var(--color-white);border-radius:var(--radius-md)">
+                <i class="ph ph-books" style="font-size:3rem;color:#CBD5E1;display:block;margin-bottom:1rem"></i>
+                <p style="color:var(--color-text-light);margin-bottom:1rem">Aún no estás inscrita en ningún curso.</p>
+                <a href="escuela.html" class="btn-continue" style="display:inline-block">Ir a la Escuela</a>
+            </div>`;
     }
 
-    // Animate XP bar on load
-    window.addEventListener('load', async () => {
-        setTimeout(() => {
-            document.getElementById('xpFill').style.width = '62%';
-        }, 300);
+    // ── Stats Row ────────────────────────────────────────────────────────
+    document.getElementById('statCursos').textContent = cursos.length;
 
-        // Load User info
-        const nombre = localStorage.getItem('nombre') || 'Estudiante';
-        const token = localStorage.getItem('token');
-        
-        if(!token) {
-            window.location.href = 'login.html';
-            return;
-        }
+    const horas = Math.round(totalCompletadas * 0.75); // ~45 min/lección
+    document.getElementById('statHoras').textContent  = horas > 0 ? `${horas}h` : '0h';
 
-        document.getElementById('greetingName').textContent = `¡Hola, ${nombre.split(' ')[0]}! 🌿`;
-        document.getElementById('sidebarName').textContent = nombre;
-        document.getElementById('sidebarAvatar').textContent = nombre.charAt(0).toUpperCase();
+    const ahora   = new Date();
+    const clasesHoy = clases.filter(c => {
+        const d = ld(c.fecha_inicio);
+        return d.getFullYear() === ahora.getFullYear() &&
+               d.getMonth()   === ahora.getMonth()    &&
+               d.getDate()    === ahora.getDate();
+    }).length;
+    document.getElementById('statClasesHoy').textContent    = clasesHoy;
+    document.getElementById('statClasesHoyDesc').textContent = clasesHoy === 1 ? 'Clase en Vivo Hoy' : 'Clases en Vivo Hoy';
 
-        // Load Mis Cursos
-        const list = document.getElementById('myCoursesList');
-        try {
-            const res = await fetch('/api/cursos/mis-cursos', {
-                headers: { 'Authorization': 'Bearer ' + token }
-            });
-            const cursos = await res.json();
+    document.getElementById('statMateriales').textContent = materiales.length;
 
-            if(!res.ok) throw new Error(cursos.error || 'Error fetching');
+    // ── XP + Nivel ───────────────────────────────────────────────────────
+    const { ranking, mi_id } = rankingData;
+    const miEntrada   = Array.isArray(ranking) ? ranking.find(r => r.id === mi_id) : null;
+    const misLec      = miEntrada ? parseInt(miEntrada.lecciones_completadas) : totalCompletadas;
+    const xp          = misLec * XP_PER_LESSON;
+    const nivel       = Math.floor(xp / XP_PER_LEVEL) + 1;
+    const xpEnNivel   = xp % XP_PER_LEVEL;
+    const xpFaltante  = XP_PER_LEVEL - xpEnNivel;
+    const pct         = Math.min(100, Math.round((xpEnNivel / XP_PER_LEVEL) * 100));
+    const levelName   = LEVEL_NAMES[Math.min(nivel - 1, LEVEL_NAMES.length - 1)];
 
-            if(cursos.length === 0) {
-                list.innerHTML = `
-                    <div style="text-align:center; padding: 3rem 1rem; background: var(--color-white); border-radius: var(--radius-md);">
-                        <i class="ph ph-books" style="font-size: 3rem; color: #CBD5E1; margin-bottom: 1rem;"></i>
-                        <p style="color: var(--color-text-light); margin-bottom: 1rem;">Aún no estás inscrito en ningún curso.</p>
-                        <a href="escuela.html" class="btn-continue" style="display:inline-block;">Ir a la Escuela</a>
-                    </div>
-                `;
-                return;
-            }
+    document.getElementById('xpNivel').textContent    = `⭐ Nivel ${nivel} — ${levelName}`;
+    document.getElementById('xpFaltanMsg').textContent= xp > 0
+        ? `¡Te faltan solo ${xpFaltante} XP para desbloquear el Nivel ${nivel + 1}!`
+        : 'Completa lecciones para ganar XP y subir de nivel.';
+    document.getElementById('xpLabel').textContent    = `${xp.toLocaleString('es-CL')} / ${(nivel * XP_PER_LEVEL).toLocaleString('es-CL')} XP`;
+    document.getElementById('sidebarXp').textContent  = `⭐ ${xp.toLocaleString('es-CL')} XP — Nivel ${nivel}`;
+    setTimeout(() => { document.getElementById('xpFill').style.width = pct + '%'; }, 300);
 
-            list.innerHTML = '';
+    // ── Mini Ranking ─────────────────────────────────────────────────────
+    renderMiniRanking(ranking, mi_id);
 
-            // Fetch progress for each course in parallel
-            const progressData = await Promise.all(
-                cursos.map(c =>
-                    fetch(`/api/cursos/${c.id}/progreso`, { headers: { 'Authorization': 'Bearer ' + token } })
-                        .then(r => r.ok ? r.json() : { porcentaje: 0, completadas: 0, total: 0 })
-                        .catch(() => ({ porcentaje: 0, completadas: 0, total: 0 }))
-                )
-            );
+    // ── Clases en vivo / próxima ─────────────────────────────────────────
+    const enVivo   = clases.find(c => c.estado === 'en_vivo' ||
+        (c.estado !== 'finalizada' && ld(c.fecha_inicio) <= ahora && ahora - ld(c.fecha_inicio) < 3 * 3600000));
+    const proximas = clases.filter(c => c.estado === 'programada' && ld(c.fecha_inicio) > ahora)
+                           .sort((a, b) => ld(a.fecha_inicio) - ld(b.fecha_inicio));
 
-            cursos.forEach((c, i) => {
-                const prog = progressData[i];
-                const cover = c.portada_url || 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=200&q=80';
-                const btnLabel = prog.completadas > 0 ? 'Continuar →' : 'Empezar →';
-                list.innerHTML += `
-                    <div class="course-row" onclick="window.location='curso.html?id=${c.id}'">
-                        <div class="c-thumb" style="background-image:url('${cover}');"></div>
-                        <div class="c-info">
-                            <h3>${c.titulo}</h3>
-                            <div class="c-sub">
-                                <span><i class="ph ph-play-circle"></i> ${prog.completadas} de ${prog.total} lecciones completadas</span>
-                            </div>
-                            <div class="progress-wrap">
-                                <div class="progress-bar"><div class="progress-fill" style="width:${prog.porcentaje}%;"></div></div>
-                                <div class="progress-pct">${prog.porcentaje}%</div>
-                            </div>
-                        </div>
-                        <div class="c-action">
-                            <a href="curso.html?id=${c.id}" class="btn-continue">${btnLabel}</a>
-                        </div>
-                    </div>
-                `;
-            });
-            
-        } catch(e) {
-            console.error(e);
-            list.innerHTML = '<p style="color:red; font-size:0.9rem;">Error al cargar tus cursos.</p>';
-        }
+    renderLiveBanner(enVivo || null);
+    renderProximaClase(proximas[0] || null);
 
-        // Cargar banner clase en vivo
-        try {
-            const resLive = await fetch('/api/clases-vivo', { headers: { 'Authorization': 'Bearer ' + token } });
-            if (resLive.ok) {
-                const clases = await resLive.json();
-                const ahora = new Date();
-                const ld = s => new Date(s.replace(' ','T'));
-                const enVivo = clases.find(c => c.estado === 'en_vivo' ||
-                    (c.estado !== 'finalizada' && ld(c.fecha_inicio) <= ahora &&
-                     ahora - ld(c.fecha_inicio) < 3 * 3600000));
-                if (enVivo) {
-                    const mins = Math.floor((ahora - ld(enVivo.fecha_inicio)) / 60000);
-                    const tiempoStr = mins <= 1 ? 'Recién iniciada' : `Iniciada hace ${mins} min`;
-                    document.getElementById('liveTitulo').textContent = enVivo.titulo;
-                    document.getElementById('liveMeta').innerHTML =
-                        `Con <strong style="color:white">${enVivo.profesor_nombre}</strong> · ${tiempoStr}`;
-                    const btnUnirse = document.getElementById('btnUnirse');
-                    if (enVivo.meet_url && enVivo.meet_url.startsWith('http')) {
-                        btnUnirse.href = enVivo.meet_url;
-                        btnUnirse.target = '_blank';
-                        btnUnirse.rel = 'noopener';
-                        btnUnirse.innerHTML = '<i class="ph ph-video-camera"></i> Abrir Google Meet';
-                    } else {
-                        btnUnirse.href = 'clase-vivo.html';
-                        btnUnirse.removeAttribute('target');
-                        btnUnirse.innerHTML = '<i class="ph ph-video-camera"></i> Ver clase en vivo';
-                    }
-                    document.getElementById('liveBannerDash').style.display = 'flex';
-                }
-            }
-        } catch(e) { console.error('live banner error', e); }
+    // ── Greeting subtitle ────────────────────────────────────────────────
+    const parts = [];
+    if (enVivo) parts.push('¡Hay una clase en vivo ahora!');
+    else if (proximas.length > 0) {
+        const next = ld(proximas[0].fecha_inicio);
+        const diffDias = Math.floor((next - ahora) / 86400000);
+        parts.push(`Próxima clase ${diffDias === 0 ? 'hoy' : diffDias === 1 ? 'mañana' : 'próximamente'}`);
+    }
+    const pendientes = totalLecciones - totalCompletadas;
+    if (pendientes > 0) parts.push(`${pendientes} lección${pendientes !== 1 ? 'es' : ''} pendiente${pendientes !== 1 ? 's' : ''}`);
+    document.getElementById('greetingSubtitle').textContent = parts.length > 0 ? parts.join(' · ') : 'Bienvenida a tu aula.';
+});
 
-    });
+/* ── Mini ranking (top 3 + yo) ─────────────────────────────────────── */
+function renderMiniRanking(ranking, mi_id) {
+    const el = document.getElementById('lbList');
+    if (!Array.isArray(ranking) || ranking.length === 0) {
+        el.innerHTML = '<p style="color:var(--color-text-light);font-size:.85rem;text-align:center;padding:1rem">Sin datos de ranking aún.</p>';
+        return;
+    }
+    const cls = i => i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+    const top3  = ranking.slice(0, 3);
+    const miPos = ranking.findIndex(r => r.id === mi_id);
+    const yo    = miPos >= 0 ? ranking[miPos] : null;
+
+    let html = top3.map((u, i) => {
+        const isMe = u.id === mi_id;
+        return `<div class="lb-item">
+            <div class="lb-rank ${isMe ? 'me' : cls(i)}">${isMe ? 'Tú' : i + 1}</div>
+            <div class="lb-avatar">${(u.nombre || '?')[0].toUpperCase()}</div>
+            <div class="lb-name" ${isMe ? 'style="font-weight:700"' : ''}>${u.nombre.split(' ')[0]}${isMe ? ' (Tú)' : ''}</div>
+            <div class="lb-xp">⭐ ${(parseInt(u.lecciones_completadas) * XP_PER_LESSON).toLocaleString('es-CL')}</div>
+        </div>`;
+    }).join('');
+
+    if (yo && miPos >= 3) {
+        html += `<div class="lb-item" style="border-top:1px dashed #E2E8F0;margin-top:.3rem;padding-top:.6rem">
+            <div class="lb-rank me">Tú</div>
+            <div class="lb-avatar" style="background:rgba(104,122,97,.15)">${(yo.nombre || '?')[0].toUpperCase()}</div>
+            <div class="lb-name" style="font-weight:700">${yo.nombre.split(' ')[0]} · #${miPos + 1}</div>
+            <div class="lb-xp">⭐ ${(parseInt(yo.lecciones_completadas) * XP_PER_LESSON).toLocaleString('es-CL')}</div>
+        </div>`;
+    }
+    el.innerHTML = html;
+}
+
+/* ── Live banner ─────────────────────────────────────────────────────── */
+function renderLiveBanner(clase) {
+    const el = document.getElementById('liveBannerDash');
+    if (!clase) { el.style.display = 'none'; return; }
+    const ahora = new Date();
+    const mins  = Math.floor((ahora - ld(clase.fecha_inicio)) / 60000);
+    document.getElementById('liveTitulo').textContent    = clase.titulo;
+    document.getElementById('liveMeta').innerHTML        = `Con <strong style="color:white">${clase.profesor_nombre}</strong> · ${mins <= 1 ? 'Recién iniciada' : `Iniciada hace ${mins} min`}`;
+    const btn = document.getElementById('btnUnirse');
+    if (clase.meet_url && clase.meet_url.startsWith('http')) {
+        btn.href = clase.meet_url; btn.target = '_blank'; btn.rel = 'noopener';
+        btn.innerHTML = '<i class="ph ph-video-camera"></i> Abrir Google Meet';
+    } else {
+        btn.href = 'clase-vivo.html'; btn.removeAttribute('target');
+        btn.innerHTML = '<i class="ph ph-video-camera"></i> Ver clase en vivo';
+    }
+    el.style.display = 'flex';
+}
+
+/* ── Próxima clase card ──────────────────────────────────────────────── */
+function renderProximaClase(clase) {
+    const el = document.getElementById('proximaClaseCard');
+    if (!clase) {
+        el.innerHTML = `
+            <h3><i class="ph ph-calendar-check" style="color:var(--color-primary)"></i> Próxima Clase</h3>
+            <p style="font-size:.9rem;color:var(--color-text-light);margin-bottom:.5rem">No hay clases programadas por ahora.</p>
+            <a href="clase-vivo.html" style="font-size:.82rem;color:var(--color-primary);font-weight:600">Ver grabaciones →</a>`;
+        return;
+    }
+    const ahora = new Date();
+    const d     = ld(clase.fecha_inicio);
+    const diff  = Math.floor((d - ahora) / 86400000);
+    const cuando = diff === 0 ? 'Hoy' : diff === 1 ? 'Mañana' : d.toLocaleDateString('es-CL', { weekday:'long', day:'numeric', month:'long' });
+    const hora   = d.toLocaleTimeString('es-CL', { hour:'2-digit', minute:'2-digit' });
+    el.innerHTML = `
+        <h3><i class="ph ph-calendar-check" style="color:var(--color-primary)"></i> Próxima Clase</h3>
+        <p style="font-size:.9rem;color:var(--color-text-light);margin-bottom:.35rem">${cuando} · ${hora} h</p>
+        <p style="font-weight:600;font-size:.95rem">${clase.titulo}</p>
+        ${clase.profesor_nombre ? `<p style="font-size:.82rem;color:var(--color-text-light);margin-top:.2rem">Con ${clase.profesor_nombre}</p>` : ''}
+        <div style="margin-top:.85rem;display:flex;align-items:center;gap:.5rem;font-size:.82rem;color:var(--color-text-light)"><i class="ph ph-alarm"></i> Recordatorio activado</div>`;
+}
 </script>
 </body>
 </html>
