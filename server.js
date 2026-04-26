@@ -328,6 +328,12 @@ async function initDB() {
                 FOREIGN KEY (post_id) REFERENCES foro_posts(id) ON DELETE CASCADE
             )
         `);
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS configuracion (
+                clave VARCHAR(100) PRIMARY KEY,
+                valor TEXT
+            )
+        `);
 
         console.log('Tables checked/created: usuarios, cursos, inscripciones, modulos, lecciones, progreso_lecciones.');
 
@@ -1668,6 +1674,50 @@ app.put('/api/admin/planes/:id', verifyToken, async (req, res) => {
         );
         res.json({ ok: true });
     } catch (e) { res.status(500).json({ error: 'Error' }); }
+});
+
+// ── Configuración pública (WhatsApp, etc.) ─────────────────────────────────
+// GET /api/config/publica — sin autenticación, retorna wa_numero y wa_mensaje
+app.get('/api/config/publica', async (req, res) => {
+    try {
+        const [rows] = await pool.query(
+            "SELECT clave, valor FROM configuracion WHERE clave IN ('wa_numero','wa_mensaje','wa_activo')"
+        );
+        const cfg = {};
+        rows.forEach(r => { cfg[r.clave] = r.valor; });
+        res.json(cfg);
+    } catch (e) { res.status(500).json({ error: 'Error' }); }
+});
+
+// GET /api/admin/config — leer toda la config (admin)
+app.get('/api/admin/config', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Solo admin' });
+    try {
+        const [rows] = await pool.query('SELECT clave, valor FROM configuracion');
+        const cfg = {};
+        rows.forEach(r => { cfg[r.clave] = r.valor; });
+        res.json(cfg);
+    } catch (e) { res.status(500).json({ error: 'Error' }); }
+});
+
+// POST /api/admin/config — guardar/actualizar claves de config (admin)
+app.post('/api/admin/config', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Solo admin' });
+    try {
+        const entries = Object.entries(req.body);
+        if (entries.length === 0) return res.status(400).json({ error: 'Sin datos' });
+        for (const [clave, valor] of entries) {
+            if (valor === null || valor === '') {
+                await pool.query('DELETE FROM configuracion WHERE clave = ?', [clave]);
+            } else {
+                await pool.query(
+                    'INSERT INTO configuracion (clave, valor) VALUES (?,?) ON DUPLICATE KEY UPDATE valor = ?',
+                    [clave, valor, valor]
+                );
+            }
+        }
+        res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: 'Error al guardar config' }); }
 });
 
 // Any Uncaught API routes return 404

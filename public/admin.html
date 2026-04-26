@@ -764,17 +764,33 @@ function switchStab(id) {
 }
 
 // ── WhatsApp Click-to-Chat ────────────────────────────────
-function saveWhatsApp() {
+async function saveWhatsApp() {
     const num = document.getElementById('wa-numero').value.trim().replace(/\D/g,'');
     const msg = document.getElementById('wa-mensaje').value.trim();
     if (!num) { showT('Ingresa el número de WhatsApp'); return; }
-    localStorage.setItem('wa_numero', num);
-    localStorage.setItem('wa_mensaje', msg);
-    injectWaButton(num, msg);
-    showT('✅ Botón de WhatsApp activado');
+    try {
+        const r = await fetch('/api/admin/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+            body: JSON.stringify({ wa_numero: num, wa_mensaje: msg, wa_activo: '1' })
+        });
+        if (!r.ok) throw new Error();
+        // Sincronizar localStorage para el botón flotante de esta sesión
+        localStorage.setItem('wa_numero', num);
+        localStorage.setItem('wa_mensaje', msg);
+        injectWaButton(num, msg);
+        showT('✅ Botón de WhatsApp activado y guardado');
+    } catch(e) { showT('Error al guardar en servidor'); }
 }
 
-function removeWhatsApp() {
+async function removeWhatsApp() {
+    try {
+        await fetch('/api/admin/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+            body: JSON.stringify({ wa_numero: '', wa_mensaje: '', wa_activo: '0' })
+        });
+    } catch(e) { /* continuar aunque falle */ }
     localStorage.removeItem('wa_numero');
     localStorage.removeItem('wa_mensaje');
     document.getElementById('wa-float-btn')?.remove();
@@ -795,13 +811,27 @@ function injectWaButton(num, msg) {
     document.body.appendChild(a);
 }
 
-function loadWaSettings() {
-    const num = localStorage.getItem('wa_numero') || '';
-    const msg = localStorage.getItem('wa_mensaje') || 'Hola, me interesa información sobre los cursos de Flor de Chañar';
-    document.getElementById('wa-numero').value = num;
-    document.getElementById('wa-mensaje').value = msg;
-    if (num) injectWaButton(num, msg);
-    // API
+async function loadWaSettings() {
+    try {
+        const r = await fetch('/api/admin/config', {
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        const cfg = await r.json();
+        const num = cfg.wa_numero || '';
+        const msg = cfg.wa_mensaje || 'Hola, me interesa información sobre los cursos de Flor de Chañar';
+        document.getElementById('wa-numero').value = num;
+        document.getElementById('wa-mensaje').value = msg;
+        if (num && cfg.wa_activo !== '0') injectWaButton(num, msg);
+        // Sincronizar localStorage
+        if (num) { localStorage.setItem('wa_numero', num); localStorage.setItem('wa_mensaje', msg); }
+    } catch(e) {
+        // Fallback a localStorage si la API falla
+        const num = localStorage.getItem('wa_numero') || '';
+        const msg = localStorage.getItem('wa_mensaje') || 'Hola, me interesa información sobre los cursos de Flor de Chañar';
+        document.getElementById('wa-numero').value = num;
+        document.getElementById('wa-mensaje').value = msg;
+        if (num) injectWaButton(num, msg);
+    }
     const prov = localStorage.getItem('wa_provider') || '';
     if (prov) selWaProvider(prov);
     const tok = localStorage.getItem('wa_token') || '';
@@ -827,18 +857,24 @@ function saveWaApi() {
     showT('✅ Credenciales guardadas');
 }
 
-// ── Init WhatsApp button on page load ────────────────────
-(function() {
-    const num = localStorage.getItem('wa_numero');
-    const msg = localStorage.getItem('wa_mensaje') || '';
-    if (num) {
-        // Pequeño delay para que el DOM esté listo
-        setTimeout(() => {
-            const existing = document.getElementById('wa-float-btn');
-            if (!existing) injectWaButton(num, msg);
-        }, 500);
-    }
-})();
+// ── Cargar config WA al iniciar desde la API ─────────────
+document.addEventListener('DOMContentLoaded', () => {
+    fetch('/api/config/publica')
+        .then(r => r.json())
+        .then(cfg => {
+            if (cfg.wa_numero && cfg.wa_activo !== '0') {
+                const existing = document.getElementById('wa-float-btn');
+                if (!existing) injectWaButton(cfg.wa_numero, cfg.wa_mensaje || '');
+                localStorage.setItem('wa_numero', cfg.wa_numero);
+                if (cfg.wa_mensaje) localStorage.setItem('wa_mensaje', cfg.wa_mensaje);
+            }
+        })
+        .catch(() => {
+            const num = localStorage.getItem('wa_numero');
+            const msg = localStorage.getItem('wa_mensaje') || '';
+            if (num && !document.getElementById('wa-float-btn')) injectWaButton(num, msg);
+        });
+});
 
 function saveSettings() {
     const cfg = {
