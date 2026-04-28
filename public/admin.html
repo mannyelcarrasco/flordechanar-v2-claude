@@ -234,6 +234,7 @@
         <button class="tab" onclick="st(event,'tpagos')">💳 Pagos</button>
         <button class="tab" onclick="st(event,'tplanes')">📋 Planes</button>
         <button class="tab" onclick="st(event,'ts')">Ajustes</button>
+        <button class="tab" onclick="st(event,'tmig')" style="color:#7C3AED"><i class="ph ph-cloud-arrow-down"></i> Importar WP</button>
     </div>
 
     <!-- TAB Usuarios -->
@@ -483,6 +484,96 @@
                 </div>
             </div>
         </div>
+
+    </div>
+
+    <!-- TAB Importar WordPress -->
+    <div id="tmig" class="tp">
+        <div style="max-width:720px">
+
+            <!-- Encabezado -->
+            <div style="background:linear-gradient(135deg,#7C3AED,#5B21B6);border-radius:var(--r);padding:1.75rem 2rem;color:#fff;margin-bottom:1.5rem;position:relative;overflow:hidden">
+                <div style="position:absolute;right:1.5rem;top:-1rem;font-size:7rem;opacity:.07">⬇</div>
+                <h3 style="font-size:1.2rem;margin-bottom:.4rem;font-family:var(--f)"><i class="ph ph-cloud-arrow-down"></i> Importar desde WordPress / LearnPress</h3>
+                <p style="font-size:.87rem;color:rgba(255,255,255,.8)">Trae automáticamente los cursos de <strong>flordechanar.cl</strong> a esta plataforma.</p>
+            </div>
+
+            <!-- PASO 1 -->
+            <div class="tw" style="padding:1.5rem;margin-bottom:1rem">
+                <div style="display:flex;align-items:flex-start;gap:1rem">
+                    <div style="min-width:36px;height:36px;border-radius:50%;background:#7C3AED;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;flex-shrink:0">1</div>
+                    <div style="flex:1">
+                        <h4 style="font-size:1rem;margin-bottom:.3rem">Importar cursos (sin configuración)</h4>
+                        <p style="font-size:.85rem;color:var(--l);margin-bottom:1rem">Importa los 13 cursos conocidos con título, precio e imagen. No necesitas hacer nada previo — solo haz clic.</p>
+                        <button class="btn bp" id="btnMigAuto" onclick="migrarAuto()" style="background:#7C3AED;border-color:#7C3AED">
+                            <i class="ph ph-cloud-arrow-down"></i> Importar cursos ahora
+                        </button>
+                        <div id="migAutoLog" style="margin-top:1rem;font-size:.83rem;display:none"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PASO 2 -->
+            <div class="tw" style="padding:1.5rem;margin-bottom:1rem">
+                <div style="display:flex;align-items:flex-start;gap:1rem">
+                    <div style="min-width:36px;height:36px;border-radius:50%;background:#5B21B6;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;flex-shrink:0">2</div>
+                    <div style="flex:1">
+                        <h4 style="font-size:1rem;margin-bottom:.3rem">Importar lecciones y contenido real</h4>
+                        <p style="font-size:.85rem;color:var(--l);margin-bottom:.75rem">Para importar el contenido interno de cada curso necesitas una <strong>Contraseña de Aplicación</strong> de WordPress.</p>
+                        <div style="background:#F5F3FF;border:1px solid #DDD6FE;border-radius:10px;padding:1rem;margin-bottom:1rem;font-size:.83rem;line-height:1.8">
+                            <strong style="color:#5B21B6">Cómo obtenerla (2 minutos):</strong><br>
+                            1. Ve a <a href="https://flordechanar.cl/wp-admin/profile.php" target="_blank" style="color:#7C3AED">flordechanar.cl/wp-admin → Tu Perfil</a><br>
+                            2. Baja hasta <em>"Contraseñas de aplicación"</em><br>
+                            3. Escribe el nombre <code style="background:#EDE9FE;padding:.1rem .3rem;border-radius:4px">Migracion</code> → clic en <strong>Añadir</strong><br>
+                            4. Copia la contraseña que aparece (solo se muestra una vez)<br>
+                            5. En EasyPanel → tu servicio → <strong>Variables de entorno</strong> → agrega:<br>
+                            &nbsp;&nbsp;&nbsp;<code style="background:#EDE9FE;padding:.1rem .3rem;border-radius:4px">WP_USER = tu_usuario_wordpress</code><br>
+                            &nbsp;&nbsp;&nbsp;<code style="background:#EDE9FE;padding:.1rem .3rem;border-radius:4px">WP_APP_PASS = la contraseña copiada</code><br>
+                            6. Guarda y haz Deploy → luego vuelve aquí y haz clic en el botón de abajo
+                        </div>
+                        <button class="btn bp" id="btnMigCompleto" onclick="migrarCompleto()" style="background:#5B21B6;border-color:#5B21B6">
+                            <i class="ph ph-magic-wand"></i> Importar lecciones y contenido real
+                        </button>
+                        <div id="migCompletoLog" style="margin-top:1rem;font-size:.83rem;display:none"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PASO 3 -->
+            <div class="tw" style="padding:1.5rem">
+                <div style="display:flex;align-items:flex-start;gap:1rem">
+                    <div style="min-width:36px;height:36px;border-radius:50%;background:#4C1D95;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;flex-shrink:0">3</div>
+                    <div style="flex:1">
+                        <h4 style="font-size:1rem;margin-bottom:.3rem">Migrar estudiantes y matrículas</h4>
+                        <p style="font-size:.85rem;color:var(--l);margin-bottom:.75rem">Los usuarios de WordPress usan un sistema de contraseñas distinto. El proceso es:</p>
+                        <div style="background:#F5F3FF;border:1px solid #DDD6FE;border-radius:10px;padding:1rem;font-size:.83rem;line-height:1.9">
+                            <strong style="color:#5B21B6">Pasos en phpMyAdmin de WordPress:</strong><br>
+                            1. Ve al panel de hosting → <strong>phpMyAdmin</strong> → selecciona la BD de WordPress<br>
+                            2. Clic en <strong>SQL</strong> (pestaña de arriba)<br>
+                            3. Pega y ejecuta esta consulta para ver todos los estudiantes:
+                            <pre style="background:#EDE9FE;padding:.75rem;border-radius:8px;margin:.5rem 0;font-size:.78rem;overflow-x:auto">SELECT u.ID, u.display_name AS nombre, u.user_email AS email,
+       u.user_registered AS registrado
+FROM wp_users u
+JOIN wp_usermeta um ON u.ID = um.user_id
+WHERE um.meta_key = 'wp_capabilities'
+  AND um.meta_value LIKE '%subscriber%'
+ORDER BY u.user_registered;</pre>
+                            4. Exporta el resultado como <strong>CSV</strong><br>
+                            5. En esta plataforma ve a <strong>Usuarios → Crear usuario</strong> por cada estudiante<br>
+                            &nbsp;&nbsp;&nbsp;(La contraseña temporal recomendada: <code style="background:#EDE9FE;padding:.1rem .3rem;border-radius:4px">FlordeChanar2025!</code>)<br>
+                            6. Notifica a cada estudiante para que cambie su contraseña
+                        </div>
+                        <div style="margin-top:.85rem;background:#FFF7ED;border:1px solid #FED7AA;border-radius:8px;padding:.75rem 1rem;font-size:.81rem;color:#92400E">
+                            <i class="ph ph-info"></i> <strong>Tip:</strong> Si tienes muchos estudiantes, comparte este link con ellos para que se registren solos:
+                            <code style="background:#FEF3C7;padding:.1rem .4rem;border-radius:4px;display:block;margin-top:.3rem">https://tu-dominio.com/login.html</code>
+                            Luego ve a Inscripciones → inscribe manualmente cada estudiante en su curso correspondiente.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
 
     </div>
 </main>
@@ -1787,6 +1878,117 @@ if(urlParams.get('tab') === 'tv') {
 
 // Cargar ajustes guardados
 loadSettings();
+
+/* ══════════════════════════════════════════════
+   MIGRACIÓN WORDPRESS
+   ══════════════════════════════════════════════ */
+async function migrarAuto() {
+    const btn = document.getElementById('btnMigAuto');
+    const log = document.getElementById('migAutoLog');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ph ph-spinner"></i> Importando...';
+    log.style.display = 'block';
+    log.innerHTML = '<div style="color:#7C3AED"><i class="ph ph-spinner"></i> Conectando con WordPress...</div>';
+
+    try {
+        const tk = localStorage.getItem('token');
+        const res = await fetch('/api/admin/migrar-wp', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + tk, 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error desconocido');
+
+        let html = `<div style="background:#F5F3FF;border:1px solid #DDD6FE;border-radius:10px;padding:1rem;margin-top:.5rem">
+            <div style="font-weight:600;color:#5B21B6;margin-bottom:.5rem">✅ Importación completada</div>
+            <div>Cursos importados: <strong>${data.importados}</strong> de ${data.stats ? (data.stats.total || '?') : '?'}</div>
+            <div style="margin-top:.5rem;font-size:.8rem;color:#6B7280">Base de datos: ${data.stats ? `${data.stats.cursos} cursos · ${data.stats.modulos} módulos · ${data.stats.lecciones} lecciones` : ''}</div>`;
+
+        if (data.resultados && data.resultados.length) {
+            html += `<div style="margin-top:.75rem;font-size:.78rem;max-height:180px;overflow-y:auto;border-top:1px solid #DDD6FE;padding-top:.5rem">`;
+            data.resultados.forEach(r => {
+                const icon = r.ok ? '✓' : '✗';
+                const color = r.ok ? '#059669' : '#DC2626';
+                html += `<div style="color:${color};padding:.15rem 0">${icon} ${r.titulo}</div>`;
+            });
+            html += `</div>`;
+        }
+        html += `</div>
+        <div style="margin-top:.75rem;padding:.65rem 1rem;background:#ECFDF5;border:1px solid #A7F3D0;border-radius:8px;font-size:.82rem;color:#065F46">
+            <strong>✅ Paso 1 completo.</strong> Ahora puedes editar los cursos desde <strong>Panel → Cursos</strong>, o continuar con el Paso 2 para importar el contenido real de las lecciones.
+        </div>`;
+
+        log.innerHTML = html;
+        btn.innerHTML = '<i class="ph ph-check"></i> Importados';
+        btn.style.background = '#059669';
+    } catch (e) {
+        log.innerHTML = `<div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:.75rem 1rem;color:#DC2626;font-size:.83rem">
+            ❌ <strong>Error:</strong> ${e.message}
+        </div>`;
+        btn.disabled = false;
+        btn.innerHTML = '<i class="ph ph-cloud-arrow-down"></i> Reintentar';
+    }
+}
+
+async function migrarCompleto() {
+    const btn = document.getElementById('btnMigCompleto');
+    const log = document.getElementById('migCompletoLog');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ph ph-spinner"></i> Importando lecciones...';
+    log.style.display = 'block';
+    log.innerHTML = '<div style="color:#5B21B6"><i class="ph ph-spinner"></i> Conectando con WordPress API... (puede tardar 1-2 minutos)</div>';
+
+    try {
+        const tk = localStorage.getItem('token');
+        const res = await fetch('/api/admin/migrar-wp/completo', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + tk, 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            // Error por falta de credenciales WP
+            if (res.status === 400 && data.error && data.error.includes('WP_USER')) {
+                log.innerHTML = `<div style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:8px;padding:.75rem 1rem;font-size:.83rem;color:#92400E">
+                    <strong>⚠ Falta configuración:</strong> ${data.error}<br><br>
+                    Sigue los pasos del recuadro de arriba para agregar <code>WP_USER</code> y <code>WP_APP_PASS</code> en EasyPanel, luego haz Deploy y vuelve aquí.
+                </div>`;
+            } else {
+                throw new Error(data.error || 'Error desconocido');
+            }
+            btn.disabled = false;
+            btn.innerHTML = '<i class="ph ph-magic-wand"></i> Reintentar';
+            return;
+        }
+
+        let html = `<div style="background:#F5F3FF;border:1px solid #DDD6FE;border-radius:10px;padding:1rem;margin-top:.5rem">
+            <div style="font-weight:600;color:#5B21B6;margin-bottom:.5rem">✅ Importación de lecciones completada</div>
+            <div>Cursos procesados: <strong>${data.importados}</strong> de <strong>${data.total}</strong></div>`;
+
+        if (data.log && data.log.length) {
+            html += `<div style="margin-top:.75rem;font-size:.78rem;max-height:220px;overflow-y:auto;border-top:1px solid #DDD6FE;padding-top:.5rem;font-family:monospace">`;
+            data.log.forEach(line => {
+                const color = line.startsWith('✓') ? '#059669' : line.startsWith('✗') || line.startsWith('❌') ? '#DC2626' : '#6B7280';
+                html += `<div style="color:${color};padding:.1rem 0">${line}</div>`;
+            });
+            html += `</div>`;
+        }
+        html += `</div>
+        <div style="margin-top:.75rem;padding:.65rem 1rem;background:#ECFDF5;border:1px solid #A7F3D0;border-radius:8px;font-size:.82rem;color:#065F46">
+            <strong>✅ Paso 2 completo.</strong> Las lecciones ya están en la plataforma. Ve a <strong>Panel → Cursos</strong> para verificar y editar los contenidos.
+        </div>`;
+
+        log.innerHTML = html;
+        btn.innerHTML = '<i class="ph ph-check"></i> Lecciones importadas';
+        btn.style.background = '#059669';
+    } catch (e) {
+        log.innerHTML = `<div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:.75rem 1rem;color:#DC2626;font-size:.83rem">
+            ❌ <strong>Error:</strong> ${e.message}
+        </div>`;
+        btn.disabled = false;
+        btn.innerHTML = '<i class="ph ph-magic-wand"></i> Reintentar';
+    }
+}
 </script>
 </body>
 </html>

@@ -969,6 +969,73 @@ app.get('/api/evaluaciones/:id/intentos', verifyToken, async (req, res) => {
     } catch (e) { console.error(e); res.status(500).json({ error: 'Error al obtener intentos' }); }
 });
 
+// ── Libro de notas: estudiantes + sus calificaciones por curso ────────────
+app.get('/api/profesor/cursos/:id/notas', verifyToken, async (req, res) => {
+    if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Sin acceso' });
+    try {
+        const cursoId = req.params.id;
+
+        // Estudiantes activos en el curso
+        const [estudiantes] = await pool.query(
+            `SELECT u.id, u.nombre
+             FROM inscripciones i
+             JOIN usuarios u ON u.id = i.usuario_id
+             WHERE i.curso_id = ? AND i.estado = 'activo'
+             ORDER BY u.nombre`,
+            [cursoId]
+        );
+
+        // Evaluaciones del curso
+        const [evals] = await pool.query(
+            `SELECT id, titulo FROM evaluaciones WHERE curso_id = ? ORDER BY id`,
+            [cursoId]
+        );
+
+        // Total de lecciones del curso (para calcular progreso)
+        const [[{ totalLec }]] = await pool.query(
+            `SELECT COUNT(*) AS totalLec FROM lecciones l
+             JOIN modulos m ON m.id = l.modulo_id WHERE m.curso_id = ?`,
+            [cursoId]
+        );
+
+        // Para cada estudiante: mejor nota por evaluación + porcentaje de avance
+        const estudiantesConNotas = await Promise.all(
+            estudiantes.map(async (est) => {
+                const grades = await Promise.all(
+                    evals.map(async (ev) => {
+                        const [[row]] = await pool.query(
+                            `SELECT nota FROM intentos
+                             WHERE evaluacion_id = ? AND usuario_id = ? AND estado = 'entregado'
+                             ORDER BY nota DESC LIMIT 1`,
+                            [ev.id, est.id]
+                        );
+                        return row ? row.nota : null;
+                    })
+                );
+
+                let progreso = 0;
+                if (totalLec > 0) {
+                    const [[{ completadas }]] = await pool.query(
+                        `SELECT COUNT(*) AS completadas FROM progreso_lecciones pl
+                         JOIN lecciones l ON l.id = pl.leccion_id
+                         JOIN modulos m ON m.id = l.modulo_id
+                         WHERE m.curso_id = ? AND pl.usuario_id = ? AND pl.completada = 1`,
+                        [cursoId, est.id]
+                    );
+                    progreso = Math.round((completadas / totalLec) * 100);
+                }
+
+                return { id: est.id, nombre: est.nombre, grades, progreso };
+            })
+        );
+
+        res.json({ evaluaciones: evals, estudiantes: estudiantesConNotas });
+    } catch(e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error al cargar notas' });
+    }
+});
+
 // Ver intento completo con respuestas (profesor/admin)
 app.get('/api/intentos/:id/revisar', verifyToken, async (req, res) => {
     if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
@@ -1718,6 +1785,186 @@ app.post('/api/admin/config', verifyToken, async (req, res) => {
         }
         res.json({ ok: true });
     } catch (e) { res.status(500).json({ error: 'Error al guardar config' }); }
+});
+
+// ─── MIGRACIÓN WORDPRESS → FLORDECHANAR ─────────────────────────────────────
+const WP_CURSOS = [
+    { wp_id:9752, titulo:'Programa de estudio Terapeuta en Masoterapia Profesional Presencial 2026', precio:1840000, lecciones:3,  imagen:'https://i0.wp.com/flordechanar.cl/wp-content/uploads/2025/03/Copia-de-Horario-Escolar-Universidad-Juvenil-1.jpg' },
+    { wp_id:9755, titulo:'Programa de Reflexología Holística Biomagnetismo y Flores de Bach 2026',    precio:1340000, lecciones:4,  imagen:'https://i0.wp.com/flordechanar.cl/wp-content/uploads/2024/02/Copia-de-Curso-de-reiki-nivel-1-4.jpg' },
+    { wp_id:9603, titulo:'Curso de Terapeuta en Flores de Bach 2025',                                  precio:495000,  lecciones:18, imagen:'https://i0.wp.com/flordechanar.cl/wp-content/uploads/2024/01/portada_cursocompletodereflexologiapodal-Banner-para-YouTube-1440-x-900-px.jpg' },
+    { wp_id:8710, titulo:'Masoterapia Profesional 2026 OnLINE',                                        precio:1240000, lecciones:15, imagen:'https://i0.wp.com/flordechanar.cl/wp-content/uploads/2024/04/4472777.jpg' },
+    { wp_id:9375, titulo:'Curso de Reflexología Podal: Aprendizaje Paso a Paso ¡A tu Ritmo!',          precio:225000,  lecciones:12, imagen:'https://i0.wp.com/flordechanar.cl/wp-content/uploads/2021/10/imagenvideoclasegratuitarefle.png' },
+    { wp_id:9251, titulo:'Reflexología Emocional',                                                      precio:495000,  lecciones:19, imagen:'https://i0.wp.com/flordechanar.cl/wp-content/uploads/2020/02/REFLEJOLO.jpg' },
+    { wp_id:9186, titulo:'Reflexología Metamórfica',                                                    precio:295000,  lecciones:6,  imagen:'https://i0.wp.com/flordechanar.cl/wp-content/uploads/2018/10/images.jpg' },
+    { wp_id:8967, titulo:'Programa de estudio Terapeuta en Masoterapia Profesional Presencial 2025',   precio:1580000, lecciones:23, imagen:'https://i0.wp.com/flordechanar.cl/wp-content/uploads/2025/03/Copia-de-Horario-Escolar-Universidad-Juvenil-1.jpg' },
+    { wp_id:9062, titulo:'Curso de Reflexología Podal: Aprendizaje Paso a Paso',                       precio:225000,  lecciones:13, imagen:'https://i0.wp.com/flordechanar.cl/wp-content/uploads/2021/10/imagenvideoclasegratuitarefle.png' },
+    { wp_id:8588, titulo:'Curso de Terapeuta en Flores de Bach',                                       precio:495000,  lecciones:19, imagen:'https://i0.wp.com/flordechanar.cl/wp-content/uploads/2024/01/portada_cursocompletodereflexologiapodal-Banner-para-YouTube-1440-x-900-px.jpg' },
+    { wp_id:8507, titulo:'Programa de Terapeuta Emocional Evolutiva',                                  precio:0,       lecciones:0,  imagen:'https://i0.wp.com/flordechanar.cl/wp-content/uploads/2023/04/2023Presentacion-tee-programadeestudios.jpg' },
+    { wp_id:8013, titulo:'Curso de Formación para Terapeutas en Árbol Transgeneracional AVANZADO',     precio:0,       lecciones:0,  imagen:null },
+    { wp_id:7374, titulo:'Programa de Reflexología Holística Biomagnetismo y Flores de Bach',           precio:0,       lecciones:0,  imagen:'https://i0.wp.com/flordechanar.cl/wp-content/uploads/2024/04/Copia-de-Horario-Escolar-Universidad-Juvenil-2.jpg' },
+];
+
+// POST /api/admin/migrar-wp  — importa cursos desde WordPress (sin credenciales)
+app.post('/api/admin/migrar-wp', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Solo administradores' });
+    try {
+        // Buscar primer admin/profesor como responsable de cursos
+        const [[prof]] = await pool.query(
+            `SELECT id FROM usuarios WHERE rol IN ('admin','profesor') ORDER BY id LIMIT 1`
+        );
+        if (!prof) return res.status(400).json({ error: 'Crea al menos un usuario admin o profesor primero.' });
+        const profesorId = prof.id;
+
+        const resultados = [];
+
+        for (const c of WP_CURSOS) {
+            // Intentar obtener descripción vía API pública de WP
+            let descripcion = '';
+            try {
+                const r = await fetch(`https://flordechanar.cl/wp-json/wp/v2/lp_course/${c.wp_id}`, { signal: AbortSignal.timeout(5000) });
+                if (r.ok) {
+                    const d = await r.json();
+                    descripcion = (d.excerpt?.rendered || '').replace(/<[^>]+>/g, '').replace(/\s+/g,' ').trim().slice(0,1000);
+                }
+            } catch { /* sin descripción */ }
+
+            const [ins] = await pool.query(
+                `INSERT INTO cursos (titulo, descripcion, precio, portada_url, estado, profesor_id)
+                 VALUES (?, ?, ?, ?, 'publicado', ?)
+                 ON DUPLICATE KEY UPDATE
+                   descripcion = IF(VALUES(descripcion)!='', VALUES(descripcion), descripcion),
+                   precio      = VALUES(precio),
+                   portada_url = VALUES(portada_url)`,
+                [c.titulo, descripcion, c.precio, c.imagen, profesorId]
+            );
+
+            let cursoId = ins.insertId;
+            if (!cursoId) {
+                const [[row]] = await pool.query('SELECT id FROM cursos WHERE titulo=? LIMIT 1', [c.titulo]);
+                cursoId = row?.id;
+            }
+
+            // Crear módulo + lecciones placeholder si no existen
+            if (cursoId) {
+                const [[modExiste]] = await pool.query('SELECT id FROM modulos WHERE curso_id=? LIMIT 1', [cursoId]);
+                if (!modExiste) {
+                    const [mIns] = await pool.query(
+                        `INSERT INTO modulos (curso_id, titulo, orden) VALUES (?, 'Contenido del Curso', 0)`, [cursoId]
+                    );
+                    for (let i = 0; i < (c.lecciones || 0); i++) {
+                        await pool.query(
+                            `INSERT INTO lecciones (modulo_id, titulo, tipo, orden, visibilidad) VALUES (?,?,?,?,'privada')`,
+                            [mIns.insertId, `Lección ${i + 1}`, 'video', i]
+                        );
+                    }
+                }
+            }
+            resultados.push({ titulo: c.titulo, curso_id: cursoId, ok: true });
+        }
+
+        const [[stats]] = await pool.query(`
+            SELECT
+                (SELECT COUNT(*) FROM cursos)    AS cursos,
+                (SELECT COUNT(*) FROM modulos)   AS modulos,
+                (SELECT COUNT(*) FROM lecciones) AS lecciones`
+        );
+        res.json({ ok: true, importados: resultados.length, stats, resultados });
+    } catch (e) {
+        console.error('migrar-wp error:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// POST /api/admin/migrar-wp/completo — importa secciones y lecciones reales (requiere credenciales WP)
+app.post('/api/admin/migrar-wp/completo', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Solo administradores' });
+    const wpUser = process.env.WP_USER;
+    const wpPass = process.env.WP_APP_PASS;
+    if (!wpUser || !wpPass) {
+        return res.status(400).json({
+            error: 'Faltan credenciales de WordPress. Agrega WP_USER y WP_APP_PASS en las variables de entorno de EasyPanel.'
+        });
+    }
+    const authB64 = Buffer.from(`${wpUser}:${wpPass}`).toString('base64');
+    const wpGet = async (path) => {
+        const r = await fetch(`https://flordechanar.cl/wp-json${path}`, {
+            headers: { 'Authorization': `Basic ${authB64}` },
+            signal: AbortSignal.timeout(10000)
+        });
+        if (!r.ok) throw new Error(`WP API ${path} → ${r.status}`);
+        return r.json();
+    };
+
+    try {
+        const [[prof]] = await pool.query(`SELECT id FROM usuarios WHERE rol IN ('admin','profesor') ORDER BY id LIMIT 1`);
+        if (!prof) return res.status(400).json({ error: 'Crea al menos un usuario admin o profesor primero.' });
+        const profesorId = prof.id;
+
+        // Traer lista de cursos
+        let cursosWP = [];
+        for (let page = 1; page <= 5; page++) {
+            const data = await wpGet(`/lp/v1/courses?per_page=20&page=${page}`);
+            const items = Array.isArray(data) ? data : (data.data || data.items || []);
+            cursosWP = cursosWP.concat(items);
+            if (items.length < 20) break;
+        }
+
+        let importados = 0;
+        const log = [];
+
+        for (const cResumen of cursosWP) {
+            try {
+                // Detalle completo
+                const c = await wpGet(`/lp/v1/courses/${cResumen.id}`);
+                const titulo      = c.name || cResumen.name || '';
+                const descripcion = (c.description || '').replace(/<[^>]+>/g,'').slice(0,1000);
+                const precio      = parseInt(String(c.price||0).replace(/[^0-9]/g,''))||0;
+                const imagen      = c.image || c.thumbnail || null;
+
+                const [ins] = await pool.query(
+                    `INSERT INTO cursos (titulo, descripcion, precio, portada_url, estado, profesor_id)
+                     VALUES (?,?,?,?,'publicado',?)
+                     ON DUPLICATE KEY UPDATE descripcion=VALUES(descripcion), precio=VALUES(precio), portada_url=VALUES(portada_url)`,
+                    [titulo, descripcion, precio, imagen, profesorId]
+                );
+                let cursoId = ins.insertId;
+                if (!cursoId) { const [[r]] = await pool.query('SELECT id FROM cursos WHERE titulo=? LIMIT 1',[titulo]); cursoId=r?.id; }
+
+                // Eliminar módulos/lecciones anteriores para reimportar limpio
+                await pool.query('DELETE FROM modulos WHERE curso_id=?', [cursoId]);
+
+                const secciones = c.sections || c.curriculum || [];
+                for (let si = 0; si < secciones.length; si++) {
+                    const sec = secciones[si];
+                    const [mIns] = await pool.query(
+                        `INSERT INTO modulos (curso_id, titulo, orden) VALUES (?,?,?)`,
+                        [cursoId, sec.title || `Módulo ${si+1}`, si]
+                    );
+                    const items = sec.lessons || sec.items || [];
+                    for (let li = 0; li < items.length; li++) {
+                        const item = items[li];
+                        // Extraer video URL del contenido
+                        const html = item.content || '';
+                        const ytMatch = html.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+                        const videoUrl = ytMatch ? `https://www.youtube.com/watch?v=${ytMatch[1]}` : null;
+                        await pool.query(
+                            `INSERT INTO lecciones (modulo_id, titulo, descripcion, video_url, tipo, orden, visibilidad)
+                             VALUES (?,?,?,?,?,?,'privada')`,
+                            [mIns.insertId, item.title||`Lección ${li+1}`, '', videoUrl, videoUrl?'video':'texto', li]
+                        );
+                    }
+                }
+                log.push({ titulo, cursoId, secciones: secciones.length, ok: true });
+                importados++;
+            } catch (e) {
+                log.push({ titulo: cResumen.name, ok: false, error: e.message });
+            }
+        }
+
+        res.json({ ok: true, importados, total: cursosWP.length, log });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
 });
 
 // Any Uncaught API routes return 404
