@@ -1997,6 +1997,86 @@ app.post('/api/admin/migrar-wp/completo', verifyToken, async (req, res) => {
     }
 });
 
+// POST /api/admin/migrar-wp/paginas — importa páginas desde WordPress
+app.post('/api/admin/migrar-wp/paginas', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Solo administradores' });
+    const wpUser = process.env.WP_USER;
+    const wpPass = process.env.WP_APP_PASS;
+    const wpBase = (process.env.WP_BASE_URL || 'https://flordechanar.cl').replace(/\/$/, '');
+
+    // Función helper — funciona con o sin credenciales
+    const wpGet = async (path) => {
+        const headers = wpUser && wpPass
+            ? { 'Authorization': 'Basic ' + Buffer.from(`${wpUser}:${wpPass}`).toString('base64') }
+            : {};
+        const r = await fetch(`${wpBase}/wp-json${path}`, { headers, signal: AbortSignal.timeout(15000) });
+        if (!r.ok) throw new Error(`WP API ${path} → ${r.status} ${r.statusText}`);
+        return r.json();
+    };
+
+    try {
+        // Obtener páginas publicadas de WordPress (paginado)
+        let wpPages = [];
+        for (let page = 1; page <= 10; page++) {
+            const items = await wpGet(`/wp/v2/pages?per_page=20&page=${page}&status=publish`);
+            if (!Array.isArray(items) || !items.length) break;
+            wpPages = wpPages.concat(items);
+            if (items.length < 20) break;
+        }
+
+        if (!wpPages.length) {
+            return res.status(404).json({ error: 'No se encontraron páginas publicadas en WordPress.' });
+        }
+
+        const log = [];
+        let importadas = 0;
+
+        for (const wp of wpPages) {
+            const titulo    = (wp.title?.rendered || '').replace(/<[^>]+>/g, '').trim();
+            const slug      = wp.slug || '';
+            const contenido = wp.content?.rendered || '';
+            const extracto  = (wp.excerpt?.rendered || '').replace(/<[^>]+>/g, '').trim().slice(0, 500);
+            const metaDesc  = extracto.slice(0, 160);
+
+            // Intentar obtener imagen destacada si existe
+            let portadaUrl = null;
+            if (wp.featured_media && wp.featured_media > 0) {
+                try {
+                    const media = await wpGet(`/wp/v2/media/${wp.featured_media}`);
+                    portadaUrl = media.source_url || null;
+                } catch { /* sin imagen */ }
+            }
+
+            if (!titulo || !slug) {
+                log.push(`⚠ Omitida (sin título/slug): ID ${wp.id}`);
+                continue;
+            }
+
+            try {
+                await pool.query(
+                    `INSERT INTO paginas (titulo, slug, contenido, extracto, meta_desc, portada_url, estado)
+                     VALUES (?,?,?,?,?,?,'publicado')
+                     ON DUPLICATE KEY UPDATE
+                       titulo    = VALUES(titulo),
+                       contenido = VALUES(contenido),
+                       extracto  = VALUES(extracto),
+                       meta_desc = VALUES(meta_desc),
+                       portada_url = COALESCE(VALUES(portada_url), portada_url)`,
+                    [titulo, slug, contenido, extracto, metaDesc, portadaUrl]
+                );
+                log.push(`✓ ${titulo}`);
+                importadas++;
+            } catch (e) {
+                log.push(`✗ ${titulo}: ${e.message}`);
+            }
+        }
+
+        res.json({ ok: true, importadas, total: wpPages.length, log });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // ══════════════════════════════════════════════════════════
 //  PÁGINAS CMS
 // ══════════════════════════════════════════════════════════

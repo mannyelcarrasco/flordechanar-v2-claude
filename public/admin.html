@@ -214,6 +214,7 @@
         <li><a href="#" onclick="st(event,'tu')"><i class="ph ph-users-three"></i> Usuarios <span class="sb-b">12</span></a></li>
         <li><a href="#" onclick="st(event,'tc')"><i class="ph ph-books"></i> Cursos</a></li>
         <li><a href="#" onclick="st(event,'ta')"><i class="ph ph-lock-key"></i> Accesos</a></li>
+        <li><a href="#" onclick="st(event,'tpag')"><i class="ph ph-files"></i> Páginas</a></li>
     </ul>
     <div class="sb-s">Reportes</div>
     <ul class="sb-n">
@@ -513,10 +514,15 @@
         <div style="display:grid;grid-template-columns:300px 1fr;gap:1.25rem;height:calc(100vh - 200px)">
 
             <!-- Panel izquierdo: listado -->
-            <div style="display:flex;flex-direction:column;gap:.75rem">
+            <div style="display:flex;flex-direction:column;gap:.6rem">
                 <button class="btn bp" onclick="pagNueva()" style="width:100%">
                     <i class="ph ph-plus"></i> Nueva Página
                 </button>
+                <button class="btn" onclick="pagImportarWP()" id="btnPagImport"
+                    style="width:100%;background:#7C3AED;border-color:#7C3AED;color:#fff">
+                    <i class="ph ph-cloud-arrow-down"></i> Importar desde WordPress
+                </button>
+                <div id="pagImportLog" style="display:none;font-size:.78rem;background:#F5F3FF;border:1px solid #DDD6FE;border-radius:8px;padding:.65rem .85rem;line-height:1.7"></div>
                 <div class="tw" style="flex:1;overflow-y:auto;padding:.5rem">
                     <div id="pagList" style="display:flex;flex-direction:column;gap:.4rem">
                         <div style="color:var(--l);font-size:.84rem;text-align:center;padding:2rem">Cargando...</div>
@@ -1950,6 +1956,42 @@ function _initQuill() {
             ]
         }
     });
+}
+
+async function pagImportarWP() {
+    const btn = document.getElementById('btnPagImport');
+    const log = document.getElementById('pagImportLog');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ph ph-spinner"></i> Importando...';
+    log.style.display = 'block';
+    log.innerHTML = '⏳ Conectando con WordPress...';
+
+    try {
+        const tk = localStorage.getItem('token');
+        const res = await fetch('/api/admin/migrar-wp/paginas', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + tk, 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error desconocido');
+
+        const lines = data.log || [];
+        log.innerHTML = `<strong style="color:#5B21B6">✅ ${data.importadas} páginas importadas</strong><br>` +
+            lines.map(l => {
+                const s = String(l);
+                const color = s.startsWith('✓') ? '#059669' : s.startsWith('✗') ? '#DC2626' : '#6B7280';
+                return `<span style="color:${color}">${s}</span>`;
+            }).join('<br>');
+
+        btn.innerHTML = '<i class="ph ph-check"></i> Importadas';
+        btn.style.background = '#059669';
+        btn.style.borderColor = '#059669';
+        await pagCargarLista();
+    } catch (e) {
+        log.innerHTML = `<span style="color:#DC2626">❌ ${e.message}</span>`;
+        btn.disabled = false;
+        btn.innerHTML = '<i class="ph ph-cloud-arrow-down"></i> Importar desde WordPress';
+    }
 }
 
 async function pagCargarLista() {
