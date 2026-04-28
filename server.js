@@ -1887,13 +1887,14 @@ app.post('/api/admin/migrar-wp/completo', verifyToken, async (req, res) => {
             error: 'Faltan credenciales de WordPress. Agrega WP_USER y WP_APP_PASS en las variables de entorno de EasyPanel.'
         });
     }
+    const wpBase = (process.env.WP_BASE_URL || 'https://flordechanar.cl').replace(/\/$/, '');
     const authB64 = Buffer.from(`${wpUser}:${wpPass}`).toString('base64');
     const wpGet = async (path) => {
-        const r = await fetch(`https://flordechanar.cl/wp-json${path}`, {
+        const r = await fetch(`${wpBase}/wp-json${path}`, {
             headers: { 'Authorization': `Basic ${authB64}` },
-            signal: AbortSignal.timeout(10000)
+            signal: AbortSignal.timeout(15000)
         });
-        if (!r.ok) throw new Error(`WP API ${path} → ${r.status}`);
+        if (!r.ok) throw new Error(`WP API ${path} → ${r.status} ${r.statusText}`);
         return r.json();
     };
 
@@ -1902,13 +1903,25 @@ app.post('/api/admin/migrar-wp/completo', verifyToken, async (req, res) => {
         if (!prof) return res.status(400).json({ error: 'Crea al menos un usuario admin o profesor primero.' });
         const profesorId = prof.id;
 
-        // Traer lista de cursos
+        // Verificar conexión con WP primero
         let cursosWP = [];
-        for (let page = 1; page <= 5; page++) {
-            const data = await wpGet(`/lp/v1/courses?per_page=20&page=${page}`);
-            const items = Array.isArray(data) ? data : (data.data || data.items || []);
-            cursosWP = cursosWP.concat(items);
-            if (items.length < 20) break;
+        try {
+            for (let page = 1; page <= 5; page++) {
+                const data = await wpGet(`/lp/v1/courses?per_page=20&page=${page}`);
+                const items = Array.isArray(data) ? data : (data.data || data.items || []);
+                cursosWP = cursosWP.concat(items);
+                if (items.length < 20) break;
+            }
+        } catch (wpErr) {
+            return res.status(502).json({
+                error: `No se pudo conectar con WordPress: ${wpErr.message}. Verifica que WP_USER y WP_APP_PASS sean correctos y que WordPress tenga habilitada la API REST.`
+            });
+        }
+
+        if (cursosWP.length === 0) {
+            return res.status(404).json({
+                error: 'WordPress respondió correctamente pero no devolvió cursos. Verifica que LearnPress esté activo y tenga cursos publicados.'
+            });
         }
 
         let importados = 0;
@@ -1956,10 +1969,10 @@ app.post('/api/admin/migrar-wp/completo', verifyToken, async (req, res) => {
                         );
                     }
                 }
-                log.push({ titulo, cursoId, secciones: secciones.length, ok: true });
+                log.push(`✓ [${cursoId}] ${titulo} (${secciones.length} secciones)`);
                 importados++;
             } catch (e) {
-                log.push({ titulo: cResumen.name, ok: false, error: e.message });
+                log.push(`✗ ${cResumen.name || cResumen.id}: ${e.message}`);
             }
         }
 
