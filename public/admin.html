@@ -1968,7 +1968,9 @@ async function migrarCompleto() {
         if (data.log && data.log.length) {
             html += `<div style="margin-top:.75rem;font-size:.78rem;max-height:220px;overflow-y:auto;border-top:1px solid #DDD6FE;padding-top:.5rem;font-family:monospace">`;
             data.log.forEach(line => {
-                const color = line.startsWith('✓') ? '#059669' : line.startsWith('✗') || line.startsWith('❌') ? '#DC2626' : '#6B7280';
+                const s = String(line);
+                const color = s.startsWith('✓') ? '#059669' : s.startsWith('✗') || s.startsWith('❌') ? '#DC2626' : '#6B7280';
+                line = s;
                 html += `<div style="color:${color};padding:.1rem 0">${line}</div>`;
             });
             html += `</div>`;

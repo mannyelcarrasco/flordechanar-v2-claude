@@ -271,9 +271,11 @@ async function initDB() {
 
         // Each statement in its own try/catch — "Duplicate column" errors are harmless
         const alterCols = [
-            `ALTER TABLE lecciones MODIFY COLUMN tipo VARCHAR(20) DEFAULT 'video'`,
+            // ADD instead of MODIFY — if the column already exists the error is caught silently;
+            // if it doesn't exist (old DB), this creates it correctly.
+            `ALTER TABLE lecciones ADD COLUMN tipo VARCHAR(20) DEFAULT 'video'`,
             `ALTER TABLE lecciones ADD COLUMN duracion VARCHAR(50)`,
-            `ALTER TABLE lecciones MODIFY COLUMN visibilidad VARCHAR(10) DEFAULT 'privada'`,
+            `ALTER TABLE lecciones ADD COLUMN visibilidad VARCHAR(10) DEFAULT 'privada'`,
             `ALTER TABLE lecciones ADD COLUMN orden INT DEFAULT 0`,
             `ALTER TABLE cursos ADD COLUMN tipo_acceso VARCHAR(20) DEFAULT 'gratis'`,
             `ALTER TABLE usuarios ADD COLUMN matriculado BOOLEAN DEFAULT FALSE`,
