@@ -2030,6 +2030,7 @@ app.post('/api/admin/migrar-wp/paginas', verifyToken, async (req, res) => {
 
         const log = [];
         let importadas = 0;
+        const importIds = [];
 
         for (const wp of wpPages) {
             const titulo    = (wp.title?.rendered || '').replace(/<[^>]+>/g, '').trim();
@@ -2053,7 +2054,7 @@ app.post('/api/admin/migrar-wp/paginas', verifyToken, async (req, res) => {
             }
 
             try {
-                await pool.query(
+                const [ins] = await pool.query(
                     `INSERT INTO paginas (titulo, slug, contenido, extracto, meta_desc, portada_url, estado)
                      VALUES (?,?,?,?,?,?,'publicado')
                      ON DUPLICATE KEY UPDATE
@@ -2064,6 +2065,12 @@ app.post('/api/admin/migrar-wp/paginas', verifyToken, async (req, res) => {
                        portada_url = COALESCE(VALUES(portada_url), portada_url)`,
                     [titulo, slug, contenido, extracto, metaDesc, portadaUrl]
                 );
+                let pid = ins.insertId;
+                if (!pid) {
+                    const [[row]] = await pool.query('SELECT id FROM paginas WHERE slug=? LIMIT 1',[slug]);
+                    pid = row?.id;
+                }
+                if (pid) importIds.push(pid);
                 log.push(`✓ ${titulo}`);
                 importadas++;
             } catch (e) {
@@ -2071,7 +2078,7 @@ app.post('/api/admin/migrar-wp/paginas', verifyToken, async (req, res) => {
             }
         }
 
-        res.json({ ok: true, importadas, total: wpPages.length, log });
+        res.json({ ok: true, importadas, total: wpPages.length, log, ids: importIds });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
@@ -2173,6 +2180,70 @@ app.delete('/api/admin/paginas/:id', verifyToken, async (req, res) => {
         await pool.query('DELETE FROM paginas WHERE id=?', [req.params.id]);
         res.json({ ok: true });
     } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/admin/paginas/batch-delete  — eliminar varias a la vez (tickets post-importación)
+app.post('/api/admin/paginas/batch-delete', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Sin acceso' });
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || !ids.length) return res.json({ ok: true, eliminadas: 0 });
+    try {
+        await pool.query('DELETE FROM paginas WHERE id IN (?)', [ids]);
+        res.json({ ok: true, eliminadas: ids.length });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/admin/ia/pagina  — Asistente IA de diseño
+app.post('/api/admin/ia/pagina', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Sin acceso' });
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+        return res.status(400).json({
+            error: 'Agrega ANTHROPIC_API_KEY en las variables de entorno de EasyPanel para usar el asistente IA.'
+        });
+    }
+    const { prompt, contenido, titulo } = req.body;
+    if (!prompt) return res.status(400).json({ error: 'Falta el prompt' });
+
+    try {
+        const r = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'x-api-key': apiKey,
+                'anthropic-version': '2023-06-01',
+                'content-type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: 'claude-3-5-haiku-20241022',
+                max_tokens: 4096,
+                messages: [{
+                    role: 'user',
+                    content: `Eres un experto en diseño web y HTML. La página se llama: "${titulo || 'Sin título'}".
+
+INSTRUCCIÓN DEL USUARIO: ${prompt}
+
+CONTENIDO ACTUAL DE LA PÁGINA (HTML):
+${contenido ? contenido.slice(0, 8000) : '(sin contenido aún)'}
+
+Genera ÚNICAMENTE el HTML mejorado del contenido de la página.
+- No incluyas <!DOCTYPE>, <html>, <head>, <body> ni CSS externo
+- Usa clases semánticas simples (h1, h2, p, ul, strong, em, section, etc.)
+- El resultado debe ser HTML limpio y legible
+- Responde SOLO con el HTML, sin explicaciones adicionales`
+                }]
+            }),
+            signal: AbortSignal.timeout(30000)
+        });
+        if (!r.ok) {
+            const err = await r.json().catch(()=>({}));
+            throw new Error(err.error?.message || `Anthropic API ${r.status}`);
+        }
+        const data = await r.json();
+        const html = data.content?.[0]?.text || '';
+        res.json({ ok: true, html });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
 });
 
 // Any Uncaught API routes return 404
