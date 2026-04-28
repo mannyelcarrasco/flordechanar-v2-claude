@@ -336,6 +336,21 @@ async function initDB() {
                 valor TEXT
             )
         `);
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS paginas (
+                id          INT AUTO_INCREMENT PRIMARY KEY,
+                titulo      VARCHAR(300) NOT NULL,
+                slug        VARCHAR(300) NOT NULL UNIQUE,
+                contenido   LONGTEXT,
+                extracto    TEXT,
+                meta_desc   VARCHAR(500),
+                portada_url VARCHAR(500),
+                estado      ENUM('publicado','borrador') DEFAULT 'borrador',
+                orden       INT DEFAULT 0,
+                creado_en   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            )
+        `);
 
         console.log('Tables checked/created: usuarios, cursos, inscripciones, modulos, lecciones, progreso_lecciones.');
 
@@ -1982,9 +1997,112 @@ app.post('/api/admin/migrar-wp/completo', verifyToken, async (req, res) => {
     }
 });
 
+// ══════════════════════════════════════════════════════════
+//  PÁGINAS CMS
+// ══════════════════════════════════════════════════════════
+
+// GET /api/paginas  — listado público (solo publicadas)
+app.get('/api/paginas', async (req, res) => {
+    try {
+        const [rows] = await pool.query(
+            `SELECT id, titulo, slug, extracto, portada_url, meta_desc, estado, orden, actualizado_en
+             FROM paginas WHERE estado='publicado' ORDER BY orden ASC, id ASC`
+        );
+        res.json(rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/paginas/:slug  — página pública por slug
+app.get('/api/paginas/:slug', async (req, res) => {
+    try {
+        const [[page]] = await pool.query(
+            `SELECT * FROM paginas WHERE slug=? AND estado='publicado'`, [req.params.slug]
+        );
+        if (!page) return res.status(404).json({ error: 'Página no encontrada' });
+        res.json(page);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/admin/paginas  — listado completo (admin)
+app.get('/api/admin/paginas', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Sin acceso' });
+    try {
+        const [rows] = await pool.query(
+            `SELECT id, titulo, slug, extracto, portada_url, meta_desc, estado, orden, actualizado_en
+             FROM paginas ORDER BY orden ASC, id ASC`
+        );
+        res.json(rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/admin/paginas/:id  — detalle para editar (admin)
+app.get('/api/admin/paginas/:id', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Sin acceso' });
+    try {
+        const [[page]] = await pool.query('SELECT * FROM paginas WHERE id=?', [req.params.id]);
+        if (!page) return res.status(404).json({ error: 'No encontrada' });
+        res.json(page);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/admin/paginas  — crear
+app.post('/api/admin/paginas', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Sin acceso' });
+    const { titulo, slug, contenido, extracto, meta_desc, portada_url, estado, orden } = req.body;
+    if (!titulo) return res.status(400).json({ error: 'El título es obligatorio' });
+    // Auto-generar slug si no viene
+    const slugFinal = (slug || titulo)
+        .toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    try {
+        const [ins] = await pool.query(
+            `INSERT INTO paginas (titulo, slug, contenido, extracto, meta_desc, portada_url, estado, orden)
+             VALUES (?,?,?,?,?,?,?,?)`,
+            [titulo, slugFinal, contenido||'', extracto||'', meta_desc||'', portada_url||null,
+             estado||'borrador', orden||0]
+        );
+        res.json({ ok: true, id: ins.insertId, slug: slugFinal });
+    } catch (e) {
+        if (e.code === 'ER_DUP_ENTRY') return res.status(409).json({ error: 'Ya existe una página con ese slug' });
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// PUT /api/admin/paginas/:id  — actualizar
+app.put('/api/admin/paginas/:id', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Sin acceso' });
+    const { titulo, slug, contenido, extracto, meta_desc, portada_url, estado, orden } = req.body;
+    try {
+        await pool.query(
+            `UPDATE paginas SET titulo=?, slug=?, contenido=?, extracto=?, meta_desc=?,
+             portada_url=?, estado=?, orden=? WHERE id=?`,
+            [titulo, slug, contenido||'', extracto||'', meta_desc||'', portada_url||null,
+             estado||'borrador', orden||0, req.params.id]
+        );
+        res.json({ ok: true });
+    } catch (e) {
+        if (e.code === 'ER_DUP_ENTRY') return res.status(409).json({ error: 'Ya existe una página con ese slug' });
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// DELETE /api/admin/paginas/:id  — eliminar
+app.delete('/api/admin/paginas/:id', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Sin acceso' });
+    try {
+        await pool.query('DELETE FROM paginas WHERE id=?', [req.params.id]);
+        res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // Any Uncaught API routes return 404
 app.use('/api', (req, res) => {
     res.status(404).json({ error: 'Endpoint no encontrado' });
+});
+
+// Páginas CMS públicas — /p/:slug
+app.get('/p/:slug', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'pagina.html'));
 });
 
 // Frontend fallback
