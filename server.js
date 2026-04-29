@@ -2252,11 +2252,17 @@ app.post('/api/admin/ia/pagina', verifyToken, async (req, res) => {
     const isPro = provider === 'gemini' && geminiModel.includes('pro');
     const API_TIMEOUT = isPro ? 120000 : 45000;
 
-    // Construir prompt del sistema
-    const systemPrompt = `Eres un experto en diseño web y HTML. La página se llama: "${titulo || 'Sin título'}".
-Genera ÚNICAMENTE el HTML mejorado del contenido. Sin <!DOCTYPE>, <html>, <head>, <body> ni CSS externo.
-Usa etiquetas semánticas: h1-h3, p, ul, ol, section, article, strong, em.
-Responde SOLO con el HTML limpio, sin markdown ni explicaciones.`;
+    // Construir prompt del sistema — muy estricto para evitar razonamiento en la salida
+    const systemPrompt = `Eres un generador de HTML puro para páginas web. La página se llama: "${titulo || 'Sin título'}".
+
+REGLAS ABSOLUTAS (violarlas arruina el resultado):
+1. Tu respuesta debe comenzar DIRECTAMENTE con una etiqueta HTML. La primera línea debe ser algo como <section>, <div>, <h1>, <article>, etc.
+2. NUNCA incluyas texto sin etiquetas, razonamiento, explicaciones, pensamientos ni comentarios antes o después del HTML.
+3. NUNCA uses <!DOCTYPE>, <html>, <head>, <body>, ni bloques markdown como \`\`\`html.
+4. Si tu respuesta no empieza con "<", es un error grave.
+5. Usa etiquetas semánticas: h1-h3, p, ul, ol, section, article, strong, em.
+6. El HTML puede incluir <style> inline para estilos necesarios.
+SALIDA ESPERADA: Código HTML comenzando con < inmediatamente, sin nada antes.`;
 
     const userMsg = `INSTRUCCIÓN: ${prompt}
 
@@ -2328,7 +2334,11 @@ ${contenido ? contenido.slice(0, 8000) : '(sin contenido aún)'}`;
             );
             if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.error?.message || `Gemini ${r.status}`); }
             const d = await r.json();
-            html = d.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            // Gemini 2.5 Pro devuelve partes "thought" (razonamiento interno) separadas de la respuesta real.
+            // Filtramos SOLO las partes que NO son thought (la respuesta real).
+            const parts = d.candidates?.[0]?.content?.parts || [];
+            const realParts = parts.filter(p => !p.thought);
+            html = realParts.map(p => p.text || '').join('') || parts.map(p => p.text || '').join('');
         }
 
         /* ── Groq (LLaMA) ── */
@@ -2357,8 +2367,20 @@ ${contenido ? contenido.slice(0, 8000) : '(sin contenido aún)'}`;
             return res.status(400).json({ error: `Proveedor desconocido: ${provider}` });
         }
 
-        // Limpiar posibles bloques markdown que algunos modelos agregan
-        html = html.replace(/^```html?\n?/i, '').replace(/\n?```$/,'').trim();
+        // ── Limpieza robusta de la respuesta ──────────────────────────────
+        // 1. Quitar bloques markdown ```html ... ```
+        html = html.replace(/^```html?\n?/i, '').replace(/\n?```\s*$/g, '').trim();
+        // 2. Quitar etiquetas <think>...</think> (razonamiento de modelos extendidos)
+        html = html.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+        // 3. Si la respuesta empieza con texto plano (sin "<"), cortar hasta el primer "<"
+        //    para eliminar razonamiento que quedó suelto antes del HTML
+        const firstTag = html.indexOf('<');
+        if (firstTag > 0) html = html.slice(firstTag);
+        // 4. Quitar texto suelto DESPUÉS del último ">" (cierre de última etiqueta)
+        const lastTag = html.lastIndexOf('>');
+        if (lastTag !== -1 && lastTag < html.length - 1) html = html.slice(0, lastTag + 1);
+        html = html.trim();
+        // ─────────────────────────────────────────────────────────────────
         res.json({ ok: true, html, provider });
 
     } catch (e) {
