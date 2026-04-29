@@ -26,7 +26,12 @@
             --bg2:var(--bg-alt);
         }
 
-        .sb{width:var(--sw);background:var(--s);min-height:100vh;position:fixed;display:flex;flex-direction:column;padding:1.25rem 0}
+        .sb{width:var(--sw);background:var(--s);min-height:100vh;position:fixed;display:flex;flex-direction:column;padding:1.25rem 0;transition:transform .28s ease,width .28s ease;z-index:300}
+        .sb.sb-hidden{transform:translateX(-100%)}
+        /* Botón flotante para abrir/cerrar sidebar */
+        #sbToggle{position:fixed;top:50%;left:var(--sw);transform:translateY(-50%);z-index:301;background:var(--s);border:none;color:rgba(255,255,255,.7);cursor:pointer;padding:.55rem .28rem;border-radius:0 8px 8px 0;box-shadow:3px 0 10px rgba(0,0,0,.18);transition:left .28s ease,color .15s;line-height:1}
+        #sbToggle:hover{color:#fff}
+        #sbToggle.sb-hidden{left:0;border-radius:0 8px 8px 0}
         .sb-logo{padding:0 1.2rem 1.1rem;font-family:var(--fs);font-size:1.05rem;font-weight:700;color:#fff;display:flex;align-items:center;gap:.5rem;border-bottom:1px solid rgba(255,255,255,.08)}.sb-logo i{color:var(--p)}
         .sb-role{margin:.75rem 1.2rem;background:rgba(239,68,68,.2);color:rgba(255,255,255,.9);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:.25rem .7rem;border-radius:var(--rf);display:flex;align-items:center;gap:.3rem}
         .sb-s{padding:.75rem 1.2rem .2rem;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,.3)}
@@ -38,8 +43,9 @@
         .sb-av{width:34px;height:34px;border-radius:50%;background:var(--err);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:.8rem}
         .sb-un{font-size:.82rem;font-weight:600;color:#fff}.sb-ur{font-size:.7rem;color:rgba(255,255,255,.4)}
 
-        .main{margin-left:var(--sw);flex:1;padding:1.75rem 2.25rem;max-width:calc(100% - var(--sw));transition:padding-right .3s ease}
+        .main{margin-left:var(--sw);flex:1;padding:1.75rem 2.25rem;max-width:calc(100% - var(--sw));transition:margin-left .28s ease,max-width .28s ease,padding-right .3s ease}
         .main.ia-active{padding-right:calc(2.25rem + 395px)}
+        .main.sb-hidden{margin-left:0;max-width:100%}
         .ph{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.75rem}
         .ph h2{font-size:1.5rem}.ph p{color:var(--l);font-size:.87rem;margin-top:.2rem}
 
@@ -203,6 +209,30 @@
         .editor-modo-btn{padding:.3rem .75rem;font-size:.77rem;font-weight:600;border:1.5px solid #E5E7EB;border-radius:var(--rf);background:#fff;cursor:pointer;color:var(--s);transition:all .15s;font-family:var(--f);display:inline-flex;align-items:center;gap:.3rem}
         .editor-modo-btn.active{background:#7C3AED;color:#fff;border-color:#7C3AED}
         .editor-modo-btn:hover:not(.active){border-color:#DDD6FE;color:#7C3AED}
+        /* Panel lista páginas colapsable */
+        #pagMainGrid{transition:grid-template-columns .25s ease}
+        #pagListPanel{transition:opacity .2s ease,min-width .25s ease}
+        #pagListPanel.pag-list-hidden{display:none!important}
+        .btn-toggle-list{background:rgba(124,58,237,.08);border:1.5px solid #DDD6FE;color:#7C3AED;border-radius:6px;padding:.28rem .48rem;cursor:pointer;font-size:.82rem;line-height:1;transition:all .15s;display:inline-flex;align-items:center;gap:.3rem}
+        .btn-toggle-list:hover{background:#EDE9FE}
+        /* GrapesJS add-block panel (bottom sheet dentro del canvas) */
+        #gjsWrap{position:relative}
+        .gjs-add-btn{position:absolute;bottom:1.25rem;left:calc(190px + 50% - 190px/2 - 56px);transform:translateX(-50%);z-index:15;background:#7C3AED;color:#fff;border:none;border-radius:50px;padding:.52rem 1.3rem;font-size:.82rem;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(124,58,237,.45);display:flex;align-items:center;gap:.4rem;transition:transform .15s,box-shadow .15s;pointer-events:auto}
+        .gjs-add-btn:hover{transform:translateX(-50%) translateY(-2px);box-shadow:0 6px 24px rgba(124,58,237,.55)}
+        .gjs-add-overlay{position:absolute;inset:0;z-index:25;background:rgba(10,15,30,.55);backdrop-filter:blur(3px);display:none;align-items:flex-end}
+        .gjs-add-overlay.open{display:flex}
+        .gjs-add-sheet{background:#fff;width:100%;border-radius:16px 16px 0 0;padding:1.1rem 1.25rem 1.25rem;max-height:72%;overflow-y:auto}
+        .gjs-add-sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem;padding-bottom:.65rem;border-bottom:1px solid #E5E7EB}
+        .gjs-add-sheet-head h3{margin:0;font-size:.95rem;font-weight:700;color:var(--s)}
+        .gjs-add-close{border:none;background:none;font-size:1.1rem;cursor:pointer;color:#9CA3AF;padding:.15rem .35rem;border-radius:4px}
+        .gjs-add-close:hover{background:#F3F4F6;color:var(--s)}
+        .gjs-add-cat{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7C3AED;margin:.7rem 0 .4rem}
+        .gjs-add-cat:first-child{margin-top:0}
+        .gjs-add-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:.4rem;margin-bottom:.4rem}
+        .gjs-add-item{border:1.5px solid #E5E7EB;border-radius:8px;padding:.55rem .35rem;text-align:center;cursor:pointer;background:#fff;transition:all .15s;font-family:Inter,sans-serif}
+        .gjs-add-item:hover{border-color:#7C3AED;background:#F5F3FF;transform:translateY(-1px)}
+        .gjs-add-item-icon{font-size:1.3rem;display:block;margin-bottom:.25rem}
+        .gjs-add-item-label{font-size:.66rem;color:#374151;font-weight:500;line-height:1.3}
 
         /* Tickets post-importación */
         .ticket-grid{display:grid;grid-template-columns:1fr 1fr;gap:.35rem;max-height:320px;overflow-y:auto;padding:.25rem}
@@ -341,7 +371,12 @@
 </head>
 <body>
 
-<aside class="sb">
+<!-- Botón flotante toggle sidebar -->
+<button id="sbToggle" onclick="toggleSidebar()" title="Mostrar/ocultar menú">
+    <i class="ph ph-caret-left" id="sbToggleIcon"></i>
+</button>
+
+<aside class="sb" id="adminSb">
     <div class="sb-logo"><img src="logo.png" style="height:28px;border-radius:50%;margin-right:8px;object-fit:cover;"> Flor de Chañar</div>
     <div class="sb-role"><i class="ph ph-shield-check"></i> Administrador</div>
     <div class="sb-s">Plataforma</div>
@@ -654,6 +689,9 @@
             <h2>Páginas del Sitio</h2>
             <span id="pagCount" style="font-size:.78rem;color:var(--l)"></span>
             <div class="pag-topbar-actions">
+                <button class="btn-toggle-list" onclick="togglePagList()" id="btnTogglePagList" title="Mostrar/ocultar lista de páginas">
+                    <i class="ph ph-layout" id="togglePagListIcon"></i> Lista
+                </button>
                 <button class="btn" onclick="pagImportarWP()" id="btnPagImport"
                     style="background:#7C3AED;border-color:#7C3AED;color:#fff;padding:.45rem .9rem;font-size:.82rem">
                     <i class="ph ph-cloud-arrow-down"></i> Importar WP
@@ -668,10 +706,10 @@
         <div id="pagImportLog" style="display:none;font-size:.78rem;background:#F5F3FF;border:1px solid #DDD6FE;border-radius:8px;padding:.65rem .85rem;line-height:1.7;margin-bottom:.75rem"></div>
 
         <!-- Panel principal: lista + editor -->
-        <div style="display:grid;grid-template-columns:290px 1fr;gap:1.1rem;flex:1;overflow:hidden">
+        <div id="pagMainGrid" style="display:grid;grid-template-columns:290px 1fr;gap:1.1rem;flex:1;overflow:hidden">
 
             <!-- Panel izquierdo: listado -->
-            <div style="display:flex;flex-direction:column;gap:.4rem;overflow:hidden">
+            <div id="pagListPanel" style="display:flex;flex-direction:column;gap:.4rem;overflow:hidden">
                 <input id="pagSearch" type="text" oninput="pagFiltrar()" placeholder="🔍 Buscar página..."
                     style="padding:.48rem .8rem;border:1.5px solid #E5E7EB;border-radius:var(--rf);font-size:.83rem;font-family:var(--f);outline:none">
                 <div style="flex:1;overflow-y:auto;padding-right:.15rem">
@@ -1196,6 +1234,122 @@ async function toggleActivo(id, nuevoEstado) {
         if (res.ok) { showT(`✅ Usuario ${nuevoEstado ? 'activado' : 'suspendido'}`); renderUsers(); }
         else showT('⚠️ Error al actualizar');
     } catch(e) { showT('⚠️ Error de conexión'); }
+}
+
+/* ══ SIDEBAR TOGGLE ══════════════════════════ */
+let _sbVisible = true;
+function toggleSidebar() {
+    _sbVisible = !_sbVisible;
+    const sb   = document.getElementById('adminSb');
+    const main = document.querySelector('.main');
+    const btn  = document.getElementById('sbToggle');
+    const icon = document.getElementById('sbToggleIcon');
+    if (_sbVisible) {
+        sb.classList.remove('sb-hidden');
+        main.classList.remove('sb-hidden');
+        btn.classList.remove('sb-hidden');
+        btn.style.left = 'var(--sw)';
+        icon.className = 'ph ph-caret-left';
+    } else {
+        sb.classList.add('sb-hidden');
+        main.classList.add('sb-hidden');
+        btn.classList.add('sb-hidden');
+        btn.style.left = '0';
+        icon.className = 'ph ph-list';
+    }
+}
+
+/* ══ PAGES LIST TOGGLE ════════════════════════ */
+let _pagListVisible = true;
+function togglePagList() {
+    _pagListVisible = !_pagListVisible;
+    const list  = document.getElementById('pagListPanel');
+    const grid  = document.getElementById('pagMainGrid');
+    const icon  = document.getElementById('togglePagListIcon');
+    if (_pagListVisible) {
+        list.classList.remove('pag-list-hidden');
+        if (grid) grid.style.gridTemplateColumns = '290px 1fr';
+        if (icon) icon.className = 'ph ph-layout';
+    } else {
+        list.classList.add('pag-list-hidden');
+        if (grid) grid.style.gridTemplateColumns = '1fr';
+        if (icon) icon.className = 'ph ph-layout';
+    }
+}
+
+/* ══ GRAPES ADD-BLOCK PANEL ══════════════════ */
+let _gjsAddOpen = false;
+function gjsToggleAddPanel() {
+    _gjsAddOpen = !_gjsAddOpen;
+    const overlay = document.getElementById('gjsAddOverlay');
+    if (!overlay) return;
+    if (_gjsAddOpen) {
+        overlay.classList.add('open');
+        gjsBuildAddPanel();
+    } else {
+        overlay.classList.remove('open');
+    }
+}
+function gjsAddOverlayClick(e) {
+    // Cerrar al hacer click en el fondo (fuera del sheet)
+    if (e.target === document.getElementById('gjsAddOverlay')) gjsToggleAddPanel();
+}
+
+function gjsBuildAddPanel() {
+    if (!_pagGrapes) return;
+    const cont = document.getElementById('gjsAddPanelContent');
+    if (!cont || cont.dataset.built) return; // ya construido
+
+    const fdcBlocks = [
+        { id:'fdc-hero-verde',   icon:'🟢', label:'Hero Verde' },
+        { id:'fdc-hero-crema',   icon:'🌾', label:'Hero Crema' },
+        { id:'fdc-texto',        icon:'📝', label:'Texto' },
+        { id:'fdc-tarjetas',     icon:'🗂', label:'Tarjetas 3 cols' },
+        { id:'fdc-imagen-texto', icon:'🖼', label:'Imagen+Texto' },
+        { id:'fdc-beneficios',   icon:'✅', label:'Beneficios' },
+        { id:'fdc-cta',          icon:'📢', label:'Banner CTA' },
+        { id:'fdc-testimonio',   icon:'"', label:'Testimonio' },
+        { id:'fdc-curso-card',   icon:'📋', label:'Ficha Curso' },
+        { id:'fdc-separador',    icon:'✦', label:'Separador' },
+        { id:'fdc-galeria',      icon:'🖼', label:'Galería' },
+    ];
+    const basicBlocks = [
+        { id:'column1',  icon:'▬', label:'1 columna' },
+        { id:'column2',  icon:'▬▬', label:'2 columnas' },
+        { id:'column3',  icon:'▬▬▬', label:'3 columnas' },
+        { id:'text',     icon:'T', label:'Texto' },
+        { id:'image',    icon:'🖼', label:'Imagen' },
+        { id:'link',     icon:'🔗', label:'Enlace' },
+        { id:'video',    icon:'▶', label:'Video' },
+    ];
+
+    function renderGrid(blocks) {
+        return `<div class="gjs-add-grid">` +
+            blocks.map(b => `<div class="gjs-add-item" onclick="gjsAddBlock('${b.id}')">
+                <span class="gjs-add-item-icon">${b.icon}</span>
+                <span class="gjs-add-item-label">${b.label}</span>
+            </div>`).join('') + `</div>`;
+    }
+
+    cont.innerHTML = `
+        <div class="gjs-add-cat">✨ Flor de Chañar</div>
+        ${renderGrid(fdcBlocks)}
+        <div class="gjs-add-cat">Básicos</div>
+        ${renderGrid(basicBlocks)}`;
+    cont.dataset.built = '1';
+}
+
+function gjsAddBlock(blockId) {
+    if (!_pagGrapes) return;
+    const block = _pagGrapes.BlockManager.get(blockId);
+    if (block) {
+        const content = block.get('content');
+        _pagGrapes.addComponents(content);
+    }
+    // Cerrar panel
+    _gjsAddOpen = false;
+    const overlay = document.getElementById('gjsAddOverlay');
+    if (overlay) overlay.classList.remove('open');
 }
 
 // Tab switching — única función st() en la página
@@ -2807,12 +2961,28 @@ function pagMostrarEditor(p) {
                         <button class="gjs-topbar-btn" onclick="_pagGrapes?.runCommand('core:undo')" title="Deshacer (Ctrl+Z)">↩ Deshacer</button>
                         <button class="gjs-topbar-btn" onclick="_pagGrapes?.runCommand('core:redo')" title="Rehacer (Ctrl+Y)">↪ Rehacer</button>
                         <div class="gjs-topbar-sep"></div>
+                        <button class="gjs-topbar-btn" onclick="gjsToggleAddPanel()" style="background:rgba(167,139,250,.35);font-weight:600">
+                            <i class="ph ph-plus-circle"></i> + Agregar
+                        </button>
+                        <div class="gjs-topbar-sep"></div>
                         <button class="gjs-topbar-btn" onclick="_pagGrapes?.runCommand('core:component-delete')" title="Eliminar seleccionado" style="color:#FCA5A5">🗑 Eliminar</button>
                         <div style="flex:1"></div>
                         <span style="font-size:.7rem;color:rgba(255,255,255,.5);margin-right:.3rem">Vista:</span>
                         <button class="gjs-topbar-device-btn active" id="gjsDevDesktop" onclick="gjsSetDevice('Desktop',this)" title="Escritorio">🖥</button>
                         <button class="gjs-topbar-device-btn" id="gjsDevTablet" onclick="gjsSetDevice('Tablet',this)" title="Tablet">📱</button>
                         <button class="gjs-topbar-device-btn" id="gjsDevMobile" onclick="gjsSetDevice('Mobile',this)" title="Móvil">📲</button>
+                    </div>
+                    <!-- Overlay add-block panel (bottom sheet) -->
+                    <div class="gjs-add-overlay" id="gjsAddOverlay" onclick="gjsAddOverlayClick(event)">
+                        <div class="gjs-add-sheet" id="gjsAddSheet">
+                            <div class="gjs-add-sheet-head">
+                                <h3><i class="ph ph-squares-four" style="color:#7C3AED"></i> Agregar bloque al canvas</h3>
+                                <button class="gjs-add-close" onclick="gjsToggleAddPanel()">✕</button>
+                            </div>
+                            <div id="gjsAddPanelContent">
+                                <!-- Se llena dinámicamente con gjsBuildAddPanel() -->
+                            </div>
+                        </div>
                     </div>
                     <!-- Main -->
                     <div style="display:flex;flex:1;overflow:hidden;min-height:0">
