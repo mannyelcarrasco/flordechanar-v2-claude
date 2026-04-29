@@ -2193,54 +2193,130 @@ app.post('/api/admin/paginas/batch-delete', verifyToken, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// POST /api/admin/ia/pagina  — Asistente IA de diseño
+// GET /api/admin/ia/proveedores — qué proveedores tienen API key configurada
+app.get('/api/admin/ia/proveedores', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Sin acceso' });
+    res.json({
+        claude:  !!process.env.ANTHROPIC_API_KEY,
+        openai:  !!process.env.OPENAI_API_KEY,
+        gemini:  !!process.env.GEMINI_API_KEY,
+        groq:    !!process.env.GROQ_API_KEY,
+    });
+});
+
+// POST /api/admin/ia/pagina  — Asistente IA multi-proveedor
 app.post('/api/admin/ia/pagina', verifyToken, async (req, res) => {
     if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Sin acceso' });
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-        return res.status(400).json({
-            error: 'Agrega ANTHROPIC_API_KEY en las variables de entorno de EasyPanel para usar el asistente IA.'
-        });
-    }
-    const { prompt, contenido, titulo } = req.body;
+    const { prompt, contenido, titulo, provider = 'claude' } = req.body;
     if (!prompt) return res.status(400).json({ error: 'Falta el prompt' });
 
+    // Construir prompt del sistema
+    const systemPrompt = `Eres un experto en diseño web y HTML. La página se llama: "${titulo || 'Sin título'}".
+Genera ÚNICAMENTE el HTML mejorado del contenido. Sin <!DOCTYPE>, <html>, <head>, <body> ni CSS externo.
+Usa etiquetas semánticas: h1-h3, p, ul, ol, section, article, strong, em.
+Responde SOLO con el HTML limpio, sin markdown ni explicaciones.`;
+
+    const userMsg = `INSTRUCCIÓN: ${prompt}
+
+CONTENIDO ACTUAL (HTML):
+${contenido ? contenido.slice(0, 8000) : '(sin contenido aún)'}`;
+
     try {
-        const r = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: {
-                'x-api-key': apiKey,
-                'anthropic-version': '2023-06-01',
-                'content-type': 'application/json'
-            },
-            body: JSON.stringify({
-                model: 'claude-3-5-haiku-20241022',
-                max_tokens: 4096,
-                messages: [{
-                    role: 'user',
-                    content: `Eres un experto en diseño web y HTML. La página se llama: "${titulo || 'Sin título'}".
+        let html = '';
 
-INSTRUCCIÓN DEL USUARIO: ${prompt}
-
-CONTENIDO ACTUAL DE LA PÁGINA (HTML):
-${contenido ? contenido.slice(0, 8000) : '(sin contenido aún)'}
-
-Genera ÚNICAMENTE el HTML mejorado del contenido de la página.
-- No incluyas <!DOCTYPE>, <html>, <head>, <body> ni CSS externo
-- Usa clases semánticas simples (h1, h2, p, ul, strong, em, section, etc.)
-- El resultado debe ser HTML limpio y legible
-- Responde SOLO con el HTML, sin explicaciones adicionales`
-                }]
-            }),
-            signal: AbortSignal.timeout(30000)
-        });
-        if (!r.ok) {
-            const err = await r.json().catch(()=>({}));
-            throw new Error(err.error?.message || `Anthropic API ${r.status}`);
+        /* ── Claude (Anthropic) ── */
+        if (provider === 'claude') {
+            const key = process.env.ANTHROPIC_API_KEY;
+            if (!key) return res.status(400).json({ error: 'Agrega ANTHROPIC_API_KEY en EasyPanel → Variables de entorno.' });
+            const r = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+                body: JSON.stringify({
+                    model: 'claude-3-5-haiku-20241022',
+                    max_tokens: 4096,
+                    system: systemPrompt,
+                    messages: [{ role: 'user', content: userMsg }]
+                }),
+                signal: AbortSignal.timeout(30000)
+            });
+            if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.error?.message || `Claude ${r.status}`); }
+            const d = await r.json();
+            html = d.content?.[0]?.text || '';
         }
-        const data = await r.json();
-        const html = data.content?.[0]?.text || '';
-        res.json({ ok: true, html });
+
+        /* ── ChatGPT (OpenAI) ── */
+        else if (provider === 'openai') {
+            const key = process.env.OPENAI_API_KEY;
+            if (!key) return res.status(400).json({ error: 'Agrega OPENAI_API_KEY en EasyPanel → Variables de entorno.' });
+            const r = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: 'gpt-4o-mini',
+                    max_tokens: 4096,
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user',   content: userMsg }
+                    ]
+                }),
+                signal: AbortSignal.timeout(30000)
+            });
+            if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.error?.message || `OpenAI ${r.status}`); }
+            const d = await r.json();
+            html = d.choices?.[0]?.message?.content || '';
+        }
+
+        /* ── Gemini (Google) ── */
+        else if (provider === 'gemini') {
+            const key = process.env.GEMINI_API_KEY;
+            if (!key) return res.status(400).json({ error: 'Agrega GEMINI_API_KEY en EasyPanel → Variables de entorno.' });
+            const r = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: `${systemPrompt}\n\n${userMsg}` }] }],
+                        generationConfig: { maxOutputTokens: 4096 }
+                    }),
+                    signal: AbortSignal.timeout(30000)
+                }
+            );
+            if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.error?.message || `Gemini ${r.status}`); }
+            const d = await r.json();
+            html = d.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        }
+
+        /* ── Groq (LLaMA) ── */
+        else if (provider === 'groq') {
+            const key = process.env.GROQ_API_KEY;
+            if (!key) return res.status(400).json({ error: 'Agrega GROQ_API_KEY en EasyPanel → Variables de entorno.' });
+            const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: 'llama-3.3-70b-versatile',
+                    max_tokens: 4096,
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user',   content: userMsg }
+                    ]
+                }),
+                signal: AbortSignal.timeout(30000)
+            });
+            if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.error?.message || `Groq ${r.status}`); }
+            const d = await r.json();
+            html = d.choices?.[0]?.message?.content || '';
+        }
+
+        else {
+            return res.status(400).json({ error: `Proveedor desconocido: ${provider}` });
+        }
+
+        // Limpiar posibles bloques markdown que algunos modelos agregan
+        html = html.replace(/^```html?\n?/i, '').replace(/\n?```$/,'').trim();
+        res.json({ ok: true, html, provider });
+
     } catch (e) {
         res.status(500).json({ error: e.message });
     }

@@ -109,6 +109,16 @@
         .ia-req-item{display:flex;align-items:center;gap:.4rem;font-size:.78rem;color:var(--s);cursor:pointer;padding:.2rem 0}
         .ia-req-item input[type=checkbox]{accent-color:#7C3AED;cursor:pointer;flex-shrink:0;width:14px;height:14px}
         .ia-req-item span{line-height:1.3}
+        /* Botones de proveedor IA */
+        .ia-prov-btn{display:grid;grid-template-columns:auto 1fr auto;grid-template-rows:auto auto;gap:0 .4rem;align-items:center;padding:.55rem .7rem;border:1.5px solid #E5E7EB;border-radius:10px;background:#fff;cursor:pointer;transition:var(--tr);text-align:left;font-family:var(--f)}
+        .ia-prov-btn:hover{border-color:#DDD6FE;background:#F8F7FF}
+        .ia-prov-btn.active{border-color:#7C3AED;background:#F5F3FF;box-shadow:0 0 0 3px rgba(124,58,237,.1)}
+        .ia-prov-logo{font-size:1.1rem;grid-row:1/3;line-height:1}
+        .ia-prov-name{font-size:.82rem;font-weight:700;color:var(--s);line-height:1.2}
+        .ia-prov-sub{font-size:.68rem;color:var(--l);line-height:1.2}
+        .ia-prov-dot{font-size:.55rem;grid-row:1/3;color:#D1D5DB;transition:color .2s}
+        .ia-prov-dot.ok{color:#10B981}
+        .ia-prov-dot.err{color:#D1D5DB}
 
         /* Tickets post-importación */
         .ticket-grid{display:grid;grid-template-columns:1fr 1fr;gap:.35rem;max-height:320px;overflow-y:auto;padding:.25rem}
@@ -605,6 +615,38 @@
             <button onclick="iaClose()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:.25rem .5rem;cursor:pointer;font-size:.85rem">✕</button>
         </div>
         <div class="ia-drawer-body">
+
+            <!-- Selector de proveedor -->
+            <div>
+                <div style="font-size:.7rem;font-weight:700;color:var(--l);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem">Proveedor</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem" id="iaProveedores">
+                    <button class="ia-prov-btn active" data-prov="claude" onclick="iaSetProv('claude')">
+                        <span class="ia-prov-logo">🟣</span>
+                        <span class="ia-prov-name">Claude</span>
+                        <span class="ia-prov-sub">Anthropic · Haiku</span>
+                        <span class="ia-prov-dot" id="dot-claude">●</span>
+                    </button>
+                    <button class="ia-prov-btn" data-prov="openai" onclick="iaSetProv('openai')">
+                        <span class="ia-prov-logo">🟢</span>
+                        <span class="ia-prov-name">ChatGPT</span>
+                        <span class="ia-prov-sub">OpenAI · 4o-mini</span>
+                        <span class="ia-prov-dot" id="dot-openai">●</span>
+                    </button>
+                    <button class="ia-prov-btn" data-prov="gemini" onclick="iaSetProv('gemini')">
+                        <span class="ia-prov-logo">🔵</span>
+                        <span class="ia-prov-name">Gemini</span>
+                        <span class="ia-prov-sub">Google · Flash 1.5</span>
+                        <span class="ia-prov-dot" id="dot-gemini">●</span>
+                    </button>
+                    <button class="ia-prov-btn" data-prov="groq" onclick="iaSetProv('groq')">
+                        <span class="ia-prov-logo">⚡</span>
+                        <span class="ia-prov-name">Groq</span>
+                        <span class="ia-prov-sub">LLaMA 3.3 · Gratis</span>
+                        <span class="ia-prov-dot" id="dot-groq">●</span>
+                    </button>
+                </div>
+                <div id="iaProvMsg" style="font-size:.75rem;margin-top:.4rem;display:none"></div>
+            </div>
 
             <!-- Plantillas rápidas -->
             <div>
@@ -2413,10 +2455,12 @@ async function pagEliminarId(id, titulo) {
 }
 
 /* ── Asistente IA ───────────────────────────── */
-let _iaGenerado = '';
+let _iaGenerado  = '';
+let _iaProveedor = localStorage.getItem('ia_prov') || 'claude';
 
 function iaOpen() {
     document.getElementById('iaDrawer').classList.add('open');
+    iaCargarEstadoProveedores();
 }
 function iaClose() {
     document.getElementById('iaDrawer').classList.remove('open');
@@ -2424,51 +2468,102 @@ function iaClose() {
 function iaSetPrompt(text) {
     document.getElementById('iaPromptInput').value = text;
 }
+
+/* Seleccionar proveedor */
+function iaSetProv(prov) {
+    _iaProveedor = prov;
+    localStorage.setItem('ia_prov', prov);
+    document.querySelectorAll('.ia-prov-btn').forEach(b => b.classList.toggle('active', b.dataset.prov === prov));
+    iaActualizarMsgProv();
+}
+
+/* Cargar estado (verde/gris) de cada proveedor desde el servidor */
+async function iaCargarEstadoProveedores() {
+    try {
+        const tk = localStorage.getItem('token');
+        const r = await fetch('/api/admin/ia/proveedores', { headers:{ 'Authorization':'Bearer '+tk } });
+        const data = await r.json();
+        ['claude','openai','gemini','groq'].forEach(p => {
+            const dot = document.getElementById('dot-'+p);
+            if (dot) dot.className = 'ia-prov-dot ' + (data[p] ? 'ok' : 'err');
+        });
+        iaActualizarMsgProv(data);
+    } catch {}
+}
+
+function iaActualizarMsgProv(estado) {
+    const msgs = {
+        claude: ['ANTHROPIC_API_KEY', 'console.anthropic.com'],
+        openai: ['OPENAI_API_KEY',    'platform.openai.com/api-keys'],
+        gemini: ['GEMINI_API_KEY',    'aistudio.google.com/app/apikey'],
+        groq:   ['GROQ_API_KEY',      'console.groq.com/keys'],
+    };
+    const msg = document.getElementById('iaProvMsg');
+    if (!msg) return;
+    const [varName, url] = msgs[_iaProveedor] || [];
+    // Si no tenemos estado aún, ocultar
+    if (!estado) { msg.style.display = 'none'; return; }
+    if (!estado[_iaProveedor]) {
+        msg.style.display = 'block';
+        msg.innerHTML = `<span style="color:#DC2626">⚠ Falta la API Key.</span> Agrega <code style="background:#FEE2E2;padding:.1rem .3rem;border-radius:4px">${varName}</code> en EasyPanel → Variables de entorno. Consíguela en <a href="https://${url}" target="_blank" style="color:#7C3AED">${url}</a>`;
+    } else {
+        msg.style.display = 'block';
+        msg.innerHTML = `<span style="color:#059669">✅ Configurado y listo.</span>`;
+        setTimeout(()=>{ msg.style.display='none'; }, 2500);
+    }
+}
+
+/* Checklist de requisitos */
 function iaGetRequisitos() {
     const checks = [
-        { id: 'iaReqResponsive', texto: 'El diseño debe ser completamente responsive y funcionar bien en móviles (320px+)' },
-        { id: 'iaReqColores',    texto: 'Usa los colores de la marca: verde #687A61 como primario, fondo crema #F5F0E8, texto oscuro #2D2D2D' },
-        { id: 'iaReqLimpio',     texto: 'El HTML debe ser semántico y limpio, sin clases de WordPress ni estilos inline' },
-        { id: 'iaReqCta',        texto: 'Incluye un botón CTA (llamada a la acción) visible y prominente' },
-        { id: 'iaReqImagen',     texto: 'Reserva espacio para una imagen hero en la parte superior con un <div class="hero-img"> placeholder' },
-        { id: 'iaReqSeo',        texto: 'Estructura SEO correcta: un solo h1, luego h2 para secciones, h3 para subsecciones' },
-        { id: 'iaReqLista',      texto: 'Usa listas visuales (ul/ol) para enumerar beneficios, pasos o características' },
-        { id: 'iaReqAnimado',    texto: 'Agrega clases "fade-in" y "slide-up" en los elementos principales para animaciones CSS' },
+        { id:'iaReqResponsive', texto:'El diseño debe ser completamente responsive y funcionar bien en móviles (320px+)' },
+        { id:'iaReqColores',    texto:'Usa los colores de la marca: verde #687A61 como primario, fondo crema #F5F0E8, texto oscuro #2D2D2D' },
+        { id:'iaReqLimpio',     texto:'El HTML debe ser semántico y limpio, sin clases de WordPress ni estilos inline' },
+        { id:'iaReqCta',        texto:'Incluye un botón CTA (llamada a la acción) visible y prominente' },
+        { id:'iaReqImagen',     texto:'Reserva espacio para una imagen hero con <div class="hero-img"> placeholder' },
+        { id:'iaReqSeo',        texto:'Estructura SEO: un solo h1, luego h2 para secciones, h3 para subsecciones' },
+        { id:'iaReqLista',      texto:'Usa listas (ul/ol) para enumerar beneficios, pasos o características' },
+        { id:'iaReqAnimado',    texto:'Agrega clases "fade-in" y "slide-up" en elementos principales para animaciones CSS' },
     ];
-    return checks
-        .filter(c => document.getElementById(c.id)?.checked)
-        .map(c => `• ${c.texto}`)
-        .join('\n');
+    return checks.filter(c=>document.getElementById(c.id)?.checked).map(c=>`• ${c.texto}`).join('\n');
 }
+
+/* Generar */
 async function iaGenerar() {
     const promptBase = document.getElementById('iaPromptInput')?.value?.trim();
     if (!promptBase) { alert('Escribe una instrucción primero.'); return; }
     const requisitos = iaGetRequisitos();
-    const prompt = requisitos
-        ? `${promptBase}\n\nREQUISITOS OBLIGATORIOS:\n${requisitos}`
-        : promptBase;
+    const prompt = requisitos ? `${promptBase}\n\nREQUISITOS OBLIGATORIOS:\n${requisitos}` : promptBase;
     const contenidoActual = _pagQuill ? _pagQuill.root.innerHTML : '';
+
     const btn = document.getElementById('iaBtnGen');
-    const res = document.getElementById('iaResult');
+    const resEl = document.getElementById('iaResult');
     const txt = document.getElementById('iaResultText');
 
+    const provLabels = { claude:'Claude', openai:'ChatGPT', gemini:'Gemini', groq:'Groq ⚡' };
     btn.disabled = true;
-    btn.innerHTML = '<i class="ph ph-spinner"></i> Generando...';
-    res.style.display = 'none';
+    btn.innerHTML = `<i class="ph ph-spinner"></i> Generando con ${provLabels[_iaProveedor]||_iaProveedor}...`;
+    resEl.style.display = 'none';
 
     try {
         const tk = localStorage.getItem('token');
         const r = await fetch('/api/admin/ia/pagina', {
             method: 'POST',
             headers: { 'Authorization':'Bearer '+tk, 'Content-Type':'application/json' },
-            body: JSON.stringify({ prompt, contenido: contenidoActual, titulo: _pagActual?.titulo||'' })
+            body: JSON.stringify({
+                prompt,
+                contenido: contenidoActual,
+                titulo: _pagActual?.titulo || '',
+                provider: _iaProveedor
+            })
         });
         const data = await r.json();
         if (!r.ok) throw new Error(data.error || 'Error de IA');
 
-        _iaGenerado = data.html || data.resultado || '';
+        _iaGenerado = data.html || '';
         txt.textContent = _iaGenerado;
-        res.style.display = 'block';
+        resEl.style.display = 'block';
+        resEl.scrollIntoView({ behavior:'smooth', block:'nearest' });
     } catch(e) {
         alert('Error IA: ' + e.message);
     } finally {
@@ -2476,12 +2571,18 @@ async function iaGenerar() {
         btn.innerHTML = '<i class="ph ph-sparkle"></i> Generar con IA';
     }
 }
+
 function iaAplicar() {
     if (!_pagQuill || !_iaGenerado) return;
     _pagQuill.root.innerHTML = _iaGenerado;
     document.getElementById('iaResult').style.display = 'none';
     iaClose();
 }
+
+// Restaurar proveedor seleccionado al cargar
+document.addEventListener('DOMContentLoaded', () => {
+    iaSetProv(_iaProveedor);
+});
 
 // Cargar lista cuando se activa el tab
 const _origSt = window.st;
