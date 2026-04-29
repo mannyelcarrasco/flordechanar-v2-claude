@@ -2390,6 +2390,10 @@ let _pagImportIds = []; // IDs de la última importación (para tickets)
 /* ── Quill ─────────────────────────────────── */
 function _initQuill() {
     if (_pagQuill) return;
+    // Limpiar toolbars huérfanas que Quill pudo haber dejado antes
+    document.querySelectorAll('#editorQuillSection .ql-toolbar').forEach(el => el.remove());
+    const cont = document.getElementById('pagEditorQuill');
+    if (cont) { cont.className = ''; cont.innerHTML = ''; }
     _pagQuill = new Quill('#pagEditorQuill', {
         theme: 'snow',
         modules: {
@@ -3120,6 +3124,39 @@ let _iaGenerado    = '';
 let _iaProveedor   = localStorage.getItem('ia_prov')         || 'claude';
 let _iaGeminiModel = localStorage.getItem('ia_gemini_model') || 'gemini-2.0-flash';
 let _iaEstadoProv  = {};  // cache del estado de proveedores
+// Pila de deshacer — soporta múltiples pasos hacia atrás
+let _iaUndoStack   = [];   // [{content, modo}]
+let _iaOriginal    = null; // snapshot ANTES de cualquier generación (para restaurar todo)
+
+/* Helpers de la pila de deshacer */
+function _iaPushUndo() {
+    const content = _editorModo === 'grapes' && _pagGrapes
+        ? JSON.stringify(_pagGrapes.getProjectData())
+        : (_pagQuill ? _pagQuill.root.innerHTML : '');
+    _iaUndoStack.push({ content, modo: _editorModo });
+    if (_iaUndoStack.length > 15) _iaUndoStack.shift();
+    _iaUpdateUndoBtn();
+}
+function _iaUpdateUndoBtn() {
+    const n = _iaUndoStack.length;
+    const btn = document.querySelector('#iaActionBar [onclick="iaDeshacer()"]');
+    if (btn) btn.innerHTML = n > 0
+        ? `<i class="ph ph-arrow-counter-clockwise"></i> Deshacer${n > 1 ? ` (${n})` : ''}`
+        : `<i class="ph ph-arrow-counter-clockwise"></i> Deshacer`;
+    // Mostrar u ocultar botón según haya pasos
+    if (btn) btn.style.opacity = n > 0 ? '1' : '.4';
+}
+function _iaApplyContent(content, modo) {
+    if (modo === 'grapes' && _pagGrapes) {
+        try { _pagGrapes.loadProjectData(JSON.parse(content)); } catch { _pagGrapes.setComponents(content); }
+    } else if (_pagQuill) {
+        _pagQuill.clipboard.dangerouslyPasteHTML(content);
+        const codeEl = document.getElementById('pagCodigoHTML');
+        if (codeEl && codeEl.style.display !== 'none') codeEl.value = content;
+        const prev = document.getElementById('pagVistaPrevia');
+        if (prev && prev.style.display !== 'none') prev.innerHTML = content;
+    }
+}
 
 function iaOpen() {
     const d = document.getElementById('iaDrawer');
@@ -3318,9 +3355,14 @@ async function iaGenerar() {
     const requisitos = iaGetRequisitos();
     const prompt = requisitos ? `${promptBase}\n\nREQUISITOS OBLIGATORIOS:\n${requisitos}` : promptBase;
 
-    // Guardar estado anterior para poder deshacer
-    _iaAnterior = _editorModo === 'grapes' && _pagGrapes
-        ? JSON.stringify(_pagGrapes.getProjectData())
+    // Guardar estado actual en la pila de deshacer
+    _iaPushUndo();
+    // Si es la primera generación, guardar también el original
+    if (_iaUndoStack.length === 1) _iaOriginal = _iaUndoStack[0].content;
+
+    // Contenido actual para enviarlo a la IA como contexto
+    const contenidoActual = _editorModo === 'grapes' && _pagGrapes
+        ? _pagGrapes.getHtml()
         : (_pagQuill ? _pagQuill.root.innerHTML : '');
 
     const btn   = document.getElementById('iaBtnGen');
@@ -3341,7 +3383,7 @@ async function iaGenerar() {
             headers: { 'Authorization':'Bearer '+tk, 'Content-Type':'application/json' },
             body: JSON.stringify({
                 prompt,
-                contenido: _iaAnterior,
+                contenido: contenidoActual,
                 titulo: _pagActual?.titulo || '',
                 provider: _iaProveedor,
                 geminiModel: _iaGeminiModel
@@ -3365,7 +3407,7 @@ async function iaGenerar() {
 
         // Mostrar barra de acciones en el editor
         const bar = document.getElementById('iaActionBar');
-        if (bar) bar.style.display = 'flex';
+        if (bar) { bar.style.display = 'flex'; _iaUpdateUndoBtn(); }
 
         // Mensaje en cajón
         if (msg) {
@@ -3387,14 +3429,10 @@ async function iaGenerar() {
             msg.style.color = '#DC2626';
             msg.innerHTML = `❌ ${e.message}`;
         }
-        // Restaurar si algo salió mal
-        if (_iaAnterior) {
-            if (_editorModo === 'grapes' && _pagGrapes) {
-                try { _pagGrapes.loadProjectData(JSON.parse(_iaAnterior)); } catch { _pagGrapes.setComponents(_iaAnterior); }
-            } else if (_pagQuill) {
-                _pagQuill.clipboard.dangerouslyPasteHTML(_iaAnterior);
-            }
-        }
+        // Restaurar si algo salió mal (sacar el snapshot que acabamos de meter)
+        const lastSnap = _iaUndoStack.pop();
+        if (lastSnap) _iaApplyContent(lastSnap.content, lastSnap.modo);
+        _iaUpdateUndoBtn();
     } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="ph ph-sparkle"></i> Generar con IA';
@@ -3403,39 +3441,49 @@ async function iaGenerar() {
 
 /* Barra de acciones IA */
 function iaMantener() {
+    // Aceptar: vaciar pila (ya no se puede deshacer)
+    _iaUndoStack = [];
+    _iaOriginal  = null;
+    _iaGenerado  = '';
     document.getElementById('iaActionBar').style.display = 'none';
     iaClose();
 }
 
 function iaDeshacer() {
-    if (_iaAnterior === null) return;
-    if (_editorModo === 'grapes' && _pagGrapes) {
-        try { _pagGrapes.loadProjectData(JSON.parse(_iaAnterior)); } catch { _pagGrapes.setComponents(_iaAnterior); }
-    } else if (_pagQuill) {
-        _pagQuill.clipboard.dangerouslyPasteHTML(_iaAnterior);
-        const codeEl = document.getElementById('pagCodigoHTML');
-        if (codeEl && codeEl.style.display !== 'none') codeEl.value = _iaAnterior;
-        const prev = document.getElementById('pagVistaPrevia');
-        if (prev && prev.style.display !== 'none') prev.innerHTML = _iaAnterior;
-    }
-    document.getElementById('iaActionBar').style.display = 'none';
+    if (_iaUndoStack.length === 0) return;
+    const prev = _iaUndoStack.pop();
+    _iaApplyContent(prev.content, prev.modo);
+    _iaUpdateUndoBtn();
     const msg = document.getElementById('iaDrawerMsg');
+    const quedan = _iaUndoStack.length;
     if (msg) {
         msg.style.display = 'block';
         msg.style.background = '#FFF7ED';
         msg.style.border = '1px solid #FED7AA';
         msg.style.color = '#92400E';
-        msg.innerHTML = '↩ Cambio deshecho. El contenido original fue restaurado.';
+        msg.innerHTML = quedan > 0
+            ? `↩ Paso deshecho. Puedes deshacer ${quedan} paso${quedan>1?'s':''} más.`
+            : '↩ Restaurado al estado original.';
     }
-    _iaAnterior = null;
-    _iaGenerado = '';
+    // Ocultar barra si ya no hay pasos
+    if (quedan === 0) {
+        document.getElementById('iaActionBar').style.display = 'none';
+        _iaGenerado = '';
+    }
 }
 
 function iaSeguirModificando() {
-    document.getElementById('iaActionBar').style.display = 'none';
-    // Mantener cajón abierto para seguir escribiendo instrucciones
+    // NO limpiar la pila — el usuario puede seguir generando y deshaciendo
+    // Solo limpiar el prompt para escribir la nueva instrucción
     const input = document.getElementById('iaPromptInput');
-    if (input) { input.value = ''; input.focus(); }
+    if (input) {
+        // Añadir prefijo de contexto para que la IA sepa que es una modificación
+        input.value = '';
+        input.placeholder = 'Describe qué quieres modificar del diseño actual…';
+        input.focus();
+    }
+    // Mantener la barra oculta pero accesible si el usuario genera
+    document.getElementById('iaActionBar').style.display = 'none';
 }
 
 /* Toggle Vista Previa */

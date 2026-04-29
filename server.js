@@ -2252,22 +2252,38 @@ app.post('/api/admin/ia/pagina', verifyToken, async (req, res) => {
     const isPro = provider === 'gemini' && geminiModel.includes('pro');
     const API_TIMEOUT = isPro ? 120000 : 45000;
 
-    // Construir prompt del sistema — muy estricto para evitar razonamiento en la salida
-    const systemPrompt = `Eres un generador de HTML puro para páginas web. La página se llama: "${titulo || 'Sin título'}".
+    // Construir prompt del sistema — estructurado, incremental, sin razonamiento
+    const systemPrompt = `Eres un generador de HTML estructurado para páginas web. La página se llama: "${titulo || 'Sin título'}".
 
-REGLAS ABSOLUTAS (violarlas arruina el resultado):
-1. Tu respuesta debe comenzar DIRECTAMENTE con una etiqueta HTML. La primera línea debe ser algo como <section>, <div>, <h1>, <article>, etc.
-2. NUNCA incluyas texto sin etiquetas, razonamiento, explicaciones, pensamientos ni comentarios antes o después del HTML.
-3. NUNCA uses <!DOCTYPE>, <html>, <head>, <body>, ni bloques markdown como \`\`\`html.
+REGLAS DE FORMATO (obligatorias):
+1. Tu respuesta debe comenzar DIRECTAMENTE con una etiqueta HTML (<section>, <div>, <article>, etc.). NUNCA texto antes.
+2. NUNCA incluyas razonamiento, explicaciones ni comentarios en la salida.
+3. NUNCA uses <!DOCTYPE>, <html>, <head>, <body> ni bloques markdown \`\`\`html.
 4. Si tu respuesta no empieza con "<", es un error grave.
-5. Usa etiquetas semánticas: h1-h3, p, ul, ol, section, article, strong, em.
-6. El HTML puede incluir <style> inline para estilos necesarios.
-SALIDA ESPERADA: Código HTML comenzando con < inmediatamente, sin nada antes.`;
 
-    const userMsg = `INSTRUCCIÓN: ${prompt}
+ESTRUCTURA OBLIGATORIA (muy importante para el editor visual):
+5. Organiza el contenido en SECCIONES INDEPENDIENTES. Cada bloque temático debe estar en su propio <section> o <div> con estilos propios.
+6. NUNCA pongas todo el contenido en un solo párrafo o elemento.
+7. Usa esta jerarquía: <section> contiene <div class="container"> que contiene h1/h2/p/ul/etc.
+8. Cada sección debe tener padding propio (mínimo 40px) y fondo propio si corresponde.
+9. Colores de la marca: verde #687A61 (primario), crema #F5F0E8 (fondo), navy #1E3A5F (texto oscuro).
 
-CONTENIDO ACTUAL (HTML):
-${contenido ? contenido.slice(0, 8000) : '(sin contenido aún)'}`;
+COMPORTAMIENTO INCREMENTAL (crítico cuando hay contenido existente):
+10. Si se te proporciona "CONTENIDO ACTUAL", debes MODIFICAR ÚNICAMENTE lo que el usuario pide. El resto del HTML debe permanecer IDÉNTICO, sin restructurarlo ni re-estilizarlo.
+11. Si el usuario dice "agrega", "cambia solo X", "modifica la sección de...", opera solo sobre esa parte.
+12. Si el usuario pide crear algo desde cero (sin contenido actual o pide "rediseño total"), genera todo nuevo.
+
+SALIDA: HTML estructurado en secciones, comenzando con < inmediatamente.`;
+
+    const tieneContenido = contenido && contenido.trim().length > 20 && contenido.trim() !== '<p><br></p>';
+    const userMsg = tieneContenido
+        ? `MODIFICACIÓN INCREMENTAL — modifica solo lo que se pide, el resto queda igual.
+INSTRUCCIÓN: ${prompt}
+
+CONTENIDO ACTUAL (modifica sobre esto, no lo reemplaces todo):
+${contenido.slice(0, 8000)}`
+        : `NUEVO DISEÑO — crea el HTML completo desde cero.
+INSTRUCCIÓN: ${prompt}`;
 
     try {
         let html = '';
