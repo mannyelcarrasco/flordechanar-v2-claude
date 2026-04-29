@@ -95,6 +95,19 @@
         .ql-toolbar{border-radius:var(--r) var(--r) 0 0 !important;border-color:#E5E7EB !important;background:#FAFAF8}
         .ql-container{border-radius:0 0 var(--r) var(--r) !important;border-color:#E5E7EB !important;font-size:.9rem;min-height:280px;max-height:380px;overflow-y:auto}
         .ql-editor{min-height:260px;font-family:var(--f);color:var(--s)}
+        /* Modo código activo: quill sin radio inferior */
+        .codigo-activo .ql-container{border-radius:0 !important}
+        .codigo-activo .ql-toolbar{border-radius:var(--r) var(--r) 0 0 !important}
+        /* Vista previa del contenido renderizado */
+        #pagVistaPrevia h1,#pagVistaPrevia h2,#pagVistaPrevia h3{font-family:var(--serif);color:var(--s);margin:1rem 0 .4rem}
+        #pagVistaPrevia h1{font-size:1.7rem}#pagVistaPrevia h2{font-size:1.3rem}#pagVistaPrevia h3{font-size:1.1rem}
+        #pagVistaPrevia p{margin-bottom:.75rem}
+        #pagVistaPrevia ul,#pagVistaPrevia ol{padding-left:1.4rem;margin-bottom:.75rem}
+        #pagVistaPrevia a{color:var(--p);text-decoration:underline}
+        #pagVistaPrevia img{max-width:100%;border-radius:var(--r);margin:.5rem 0}
+        #pagVistaPrevia blockquote{border-left:3px solid var(--p);padding:.5rem 1rem;background:var(--bg-alt);margin:.75rem 0;color:var(--l)}
+        /* Botón activo en toggle vista/código */
+        .toggle-active{background:var(--s)!important;color:#fff!important;border-color:var(--s)!important}
 
         /* Panel IA */
         .ia-drawer{position:fixed;top:0;right:0;width:380px;height:100vh;background:#fff;box-shadow:-4px 0 24px rgba(0,0,0,.12);z-index:200;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s ease}
@@ -729,15 +742,11 @@
                 <i class="ph ph-sparkle"></i> Generar con IA
             </button>
 
-            <div id="iaResult" style="display:none">
-                <div style="font-size:.72rem;color:var(--l);margin-bottom:.35rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px">Vista previa del resultado</div>
-                <div class="ia-result" id="iaResultText"></div>
-                <div style="display:flex;gap:.5rem;margin-top:.5rem">
-                    <button class="btn bp btn-sm" onclick="iaAplicar()" style="background:#059669;border-color:#059669">
-                        <i class="ph ph-check"></i> Aplicar al editor
-                    </button>
-                    <button class="btn bo btn-sm" onclick="document.getElementById('iaResult').style.display='none'">Descartar</button>
-                </div>
+            <div id="iaDrawerMsg" style="display:none;font-size:.81rem;padding:.6rem .8rem;border-radius:8px;line-height:1.5"></div>
+
+            <div style="font-size:.75rem;color:var(--l);border-top:1px solid #E5E7EB;padding-top:.65rem;line-height:1.6">
+                <strong style="color:var(--s)">Flujo:</strong> El resultado aparece directo en el editor.
+                Usa <strong>↩ Deshacer</strong> si no te gusta, o escribe una nueva instrucción para seguir refinando.
             </div>
         </div>
     </div>
@@ -2366,9 +2375,41 @@ function pagMostrarEditor(p) {
             </div>
         </div>
 
+        <!-- Barra de acción IA (aparece después de generar) -->
+        <div id="iaActionBar" style="display:none;background:linear-gradient(135deg,#F5F3FF,#EDE9FE);border:1.5px solid #7C3AED;border-radius:10px;padding:.65rem 1rem;display:none;align-items:center;gap:.65rem;flex-wrap:wrap">
+            <i class="ph ph-sparkle" style="color:#7C3AED;font-size:1.1rem;flex-shrink:0"></i>
+            <span style="font-size:.83rem;font-weight:600;color:#5B21B6;flex:1">Resultado IA aplicado — ¿qué hacemos?</span>
+            <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+                <button class="btn btn-sm" onclick="iaDeshacer()" style="background:#fff;border:1.5px solid #7C3AED;color:#7C3AED;font-size:.76rem">
+                    <i class="ph ph-arrow-counter-clockwise"></i> Deshacer
+                </button>
+                <button class="btn btn-sm" onclick="iaSeguirModificando()" style="background:#7C3AED;color:#fff;border-color:#7C3AED;font-size:.76rem">
+                    <i class="ph ph-pencil"></i> Seguir modificando
+                </button>
+                <button class="btn btn-sm" onclick="iaMantener()" style="background:#059669;color:#fff;border-color:#059669;font-size:.76rem">
+                    <i class="ph ph-check"></i> Mantener
+                </button>
+            </div>
+        </div>
+
         <div class="pag-field">
-            <label class="pag-label">Contenido</label>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.3rem">
+                <label class="pag-label" style="margin:0">Contenido</label>
+                <div style="display:flex;gap:.3rem">
+                    <button id="btnVistaPrevia" class="btn bo btn-sm" onclick="toggleVistaPrevia()" style="font-size:.72rem;padding:.22rem .55rem">
+                        <i class="ph ph-eye"></i> Vista previa
+                    </button>
+                    <button id="btnCodigo" class="btn bo btn-sm" onclick="toggleCodigo()" style="font-size:.72rem;padding:.22rem .55rem">
+                        <i class="ph ph-code"></i> Código
+                    </button>
+                </div>
+            </div>
+            <!-- Editor Quill (modo normal) -->
             <div id="pagEditorQuill" style="background:#fff"></div>
+            <!-- Vista previa renderizada -->
+            <div id="pagVistaPrevia" style="display:none;border:1.5px solid #E5E7EB;border-radius:0 0 var(--r) var(--r);padding:1.5rem 2rem;background:#fff;min-height:200px;font-family:var(--f);line-height:1.75;color:var(--s)"></div>
+            <!-- Editor de código HTML -->
+            <textarea id="pagCodigoHTML" style="display:none;width:100%;min-height:300px;font-family:monospace;font-size:.8rem;padding:.75rem;border:1.5px solid #E5E7EB;border-top:none;border-radius:0 0 var(--r) var(--r);resize:vertical;outline:none;background:#1E293B;color:#E2E8F0;tab-size:2" oninput="syncCodigoToQuill()" placeholder="HTML del contenido..."></textarea>
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem;padding-top:.65rem;border-top:1px solid #E5E7EB">
@@ -2634,34 +2675,37 @@ function iaGetRequisitos() {
     return checks.filter(c=>document.getElementById(c.id)?.checked).map(c=>`• ${c.texto}`).join('\n');
 }
 
-/* Generar */
+/* Generar — aplica directo al editor */
 async function iaGenerar() {
     const promptBase = document.getElementById('iaPromptInput')?.value?.trim();
     if (!promptBase) { alert('Escribe una instrucción primero.'); return; }
+    if (!_pagQuill) { alert('Abre una página para editar primero.'); return; }
+
     const requisitos = iaGetRequisitos();
     const prompt = requisitos ? `${promptBase}\n\nREQUISITOS OBLIGATORIOS:\n${requisitos}` : promptBase;
-    const contenidoActual = _pagQuill ? _pagQuill.root.innerHTML : '';
 
-    const btn = document.getElementById('iaBtnGen');
-    const resEl = document.getElementById('iaResult');
-    const txt = document.getElementById('iaResultText');
+    // Guardar estado anterior para poder deshacer
+    _iaAnterior = _pagQuill.root.innerHTML;
 
+    const btn   = document.getElementById('iaBtnGen');
+    const msg   = document.getElementById('iaDrawerMsg');
     const isProModel = _iaProveedor === 'gemini' && _iaGeminiModel.includes('pro');
     const provLabel  = _iaProveedor === 'gemini'
         ? _iaGeminiModel.replace('gemini-','Gemini ').replace('-latest','')
         : { claude:'Claude', openai:'ChatGPT', groq:'Groq ⚡' }[_iaProveedor] || _iaProveedor;
+
     btn.disabled = true;
-    btn.innerHTML = `<i class="ph ph-spinner"></i> Generando con ${provLabel}${isProModel?' (puede tardar ~1 min)…':'…'}`;
-    resEl.style.display = 'none';
+    btn.innerHTML = `<i class="ph ph-spinner"></i> Generando con ${provLabel}${isProModel?' (~1 min)':''}…`;
+    if (msg) { msg.style.display='none'; }
 
     try {
         const tk = localStorage.getItem('token');
-        const r = await fetch('/api/admin/ia/pagina', {
+        const r  = await fetch('/api/admin/ia/pagina', {
             method: 'POST',
             headers: { 'Authorization':'Bearer '+tk, 'Content-Type':'application/json' },
             body: JSON.stringify({
                 prompt,
-                contenido: contenidoActual,
+                contenido: _iaAnterior,
                 titulo: _pagActual?.titulo || '',
                 provider: _iaProveedor,
                 geminiModel: _iaGeminiModel
@@ -2671,23 +2715,146 @@ async function iaGenerar() {
         if (!r.ok) throw new Error(data.error || 'Error de IA');
 
         _iaGenerado = data.html || '';
-        txt.textContent = _iaGenerado;
-        resEl.style.display = 'block';
-        resEl.scrollIntoView({ behavior:'smooth', block:'nearest' });
+
+        // Aplicar directo al editor
+        _pagQuill.root.innerHTML = _iaGenerado;
+        // Sincronizar vista código si está abierta
+        const codeEl = document.getElementById('pagCodigoHTML');
+        if (codeEl && codeEl.style.display !== 'none') codeEl.value = _iaGenerado;
+        // Sincronizar vista previa si está abierta
+        const prev = document.getElementById('pagVistaPrevia');
+        if (prev && prev.style.display !== 'none') prev.innerHTML = _iaGenerado;
+
+        // Mostrar barra de acciones en el editor
+        const bar = document.getElementById('iaActionBar');
+        if (bar) bar.style.display = 'flex';
+
+        // Mensaje en cajón
+        if (msg) {
+            msg.style.display = 'block';
+            msg.style.background = '#ECFDF5';
+            msg.style.border = '1px solid #A7F3D0';
+            msg.style.color = '#065F46';
+            msg.innerHTML = `✅ Aplicado en el editor. Revisa el resultado y usa la barra de acciones para mantener, deshacer o seguir refinando.`;
+        }
+
+        // Scroll al editor
+        document.getElementById('pagEditorPanel')?.scrollTo({ top: 0, behavior: 'smooth' });
+
     } catch(e) {
-        alert('Error IA: ' + e.message);
+        if (msg) {
+            msg.style.display = 'block';
+            msg.style.background = '#FEF2F2';
+            msg.style.border = '1px solid #FECACA';
+            msg.style.color = '#DC2626';
+            msg.innerHTML = `❌ ${e.message}`;
+        }
+        // Restaurar si algo salió mal
+        if (_iaAnterior) _pagQuill.root.innerHTML = _iaAnterior;
     } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="ph ph-sparkle"></i> Generar con IA';
     }
 }
 
-function iaAplicar() {
-    if (!_pagQuill || !_iaGenerado) return;
-    _pagQuill.root.innerHTML = _iaGenerado;
-    document.getElementById('iaResult').style.display = 'none';
+/* Barra de acciones IA */
+function iaMantener() {
+    document.getElementById('iaActionBar').style.display = 'none';
     iaClose();
 }
+
+function iaDeshacer() {
+    if (!_pagQuill || _iaAnterior === null) return;
+    _pagQuill.root.innerHTML = _iaAnterior;
+    const codeEl = document.getElementById('pagCodigoHTML');
+    if (codeEl && codeEl.style.display !== 'none') codeEl.value = _iaAnterior;
+    const prev = document.getElementById('pagVistaPrevia');
+    if (prev && prev.style.display !== 'none') prev.innerHTML = _iaAnterior;
+    document.getElementById('iaActionBar').style.display = 'none';
+    const msg = document.getElementById('iaDrawerMsg');
+    if (msg) {
+        msg.style.display = 'block';
+        msg.style.background = '#FFF7ED';
+        msg.style.border = '1px solid #FED7AA';
+        msg.style.color = '#92400E';
+        msg.innerHTML = '↩ Cambio deshecho. El contenido original fue restaurado.';
+    }
+    _iaAnterior = null;
+    _iaGenerado = '';
+}
+
+function iaSeguirModificando() {
+    document.getElementById('iaActionBar').style.display = 'none';
+    // Mantener cajón abierto para seguir escribiendo instrucciones
+    const input = document.getElementById('iaPromptInput');
+    if (input) { input.value = ''; input.focus(); }
+}
+
+/* Toggle Vista Previa */
+function toggleVistaPrevia() {
+    const quillWrap = document.querySelector('#pagEditorPanel .ql-toolbar')?.closest('.pag-field') || document.getElementById('pagEditorQuill')?.closest('.pag-field');
+    const prev  = document.getElementById('pagVistaPrevia');
+    const code  = document.getElementById('pagCodigoHTML');
+    const btnV  = document.getElementById('btnVistaPrevia');
+    const btnC  = document.getElementById('btnCodigo');
+
+    const yaActivo = prev && prev.style.display !== 'none';
+    // Cerrar código si estaba abierto
+    if (code) { code.style.display = 'none'; }
+    if (btnC) btnC.classList.remove('toggle-active');
+
+    if (yaActivo) {
+        // Volver a Quill
+        if (prev) prev.style.display = 'none';
+        if (btnV) btnV.classList.remove('toggle-active');
+        document.getElementById('pagEditorQuill').style.display = 'block';
+        document.querySelector('.ql-toolbar') && (document.querySelector('.ql-toolbar').style.display = 'block');
+    } else {
+        // Mostrar vista previa
+        if (_pagQuill) prev.innerHTML = _pagQuill.root.innerHTML || '<em style="color:var(--l)">Sin contenido aún.</em>';
+        if (prev) prev.style.display = 'block';
+        document.getElementById('pagEditorQuill').style.display = 'none';
+        document.querySelector('.ql-toolbar') && (document.querySelector('.ql-toolbar').style.display = 'none');
+        if (btnV) btnV.classList.add('toggle-active');
+    }
+}
+
+/* Toggle Código HTML */
+function toggleCodigo() {
+    const prev  = document.getElementById('pagVistaPrevia');
+    const code  = document.getElementById('pagCodigoHTML');
+    const quill = document.getElementById('pagEditorQuill');
+    const btnV  = document.getElementById('btnVistaPrevia');
+    const btnC  = document.getElementById('btnCodigo');
+
+    const yaActivo = code && code.style.display !== 'none';
+    // Cerrar vista previa si estaba abierta
+    if (prev) prev.style.display = 'none';
+    if (btnV) btnV.classList.remove('toggle-active');
+
+    if (yaActivo) {
+        // Sincronizar código → Quill y volver a modo normal
+        if (_pagQuill && code) _pagQuill.root.innerHTML = code.value;
+        code.style.display = 'none';
+        quill.style.display = 'block';
+        document.querySelector('.ql-toolbar') && (document.querySelector('.ql-toolbar').style.display = 'block');
+        if (btnC) btnC.classList.remove('toggle-active');
+    } else {
+        // Mostrar código
+        if (_pagQuill && code) code.value = _pagQuill.root.innerHTML;
+        code.style.display = 'block';
+        quill.style.display = 'none';
+        document.querySelector('.ql-toolbar') && (document.querySelector('.ql-toolbar').style.display = 'none');
+        if (btnC) btnC.classList.add('toggle-active');
+    }
+}
+
+/* Sincronizar código HTML editado manualmente → Quill */
+function syncCodigoToQuill() {
+    // Solo actualiza en memoria, se sincroniza al cerrar el modo código
+}
+
+function iaAplicar() { /* legacy – ya no se usa */ }
 
 // Restaurar proveedor y modelo seleccionados al cargar
 document.addEventListener('DOMContentLoaded', () => {
