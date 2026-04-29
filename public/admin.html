@@ -635,7 +635,7 @@
                     <button class="ia-prov-btn" data-prov="gemini" onclick="iaSetProv('gemini')">
                         <span class="ia-prov-logo">🔵</span>
                         <span class="ia-prov-name">Gemini</span>
-                        <span class="ia-prov-sub">Google · Flash 2.0</span>
+                        <span class="ia-prov-sub" id="geminiSubLabel">Google · Flash 2.0</span>
                         <span class="ia-prov-dot" id="dot-gemini">●</span>
                     </button>
                     <button class="ia-prov-btn" data-prov="groq" onclick="iaSetProv('groq')">
@@ -646,6 +646,22 @@
                     </button>
                 </div>
                 <div id="iaProvMsg" style="font-size:.75rem;margin-top:.4rem;display:none"></div>
+            </div>
+
+            <!-- Selector de modelo Gemini (visible solo cuando Gemini está activo) -->
+            <div id="geminiModelPanel" style="display:none;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:.75rem .9rem">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem">
+                    <span style="font-size:.7rem;font-weight:700;color:#1D4ED8;text-transform:uppercase;letter-spacing:.5px">
+                        🔵 Modelo Gemini
+                    </span>
+                    <button onclick="iaCargarModelosGemini()" id="btnRecargarModelos"
+                        style="font-size:.7rem;color:#1D4ED8;background:none;border:none;cursor:pointer;text-decoration:underline">
+                        🔄 Actualizar
+                    </button>
+                </div>
+                <div id="geminiModelSel">
+                    <div style="font-size:.78rem;color:#6B7280">Cargando modelos disponibles...</div>
+                </div>
             </div>
 
             <!-- Plantillas rápidas -->
@@ -2455,8 +2471,10 @@ async function pagEliminarId(id, titulo) {
 }
 
 /* ── Asistente IA ───────────────────────────── */
-let _iaGenerado  = '';
-let _iaProveedor = localStorage.getItem('ia_prov') || 'claude';
+let _iaGenerado    = '';
+let _iaProveedor   = localStorage.getItem('ia_prov')         || 'claude';
+let _iaGeminiModel = localStorage.getItem('ia_gemini_model') || 'gemini-2.0-flash';
+let _iaEstadoProv  = {};  // cache del estado de proveedores
 
 function iaOpen() {
     document.getElementById('iaDrawer').classList.add('open');
@@ -2474,20 +2492,28 @@ function iaSetProv(prov) {
     _iaProveedor = prov;
     localStorage.setItem('ia_prov', prov);
     document.querySelectorAll('.ia-prov-btn').forEach(b => b.classList.toggle('active', b.dataset.prov === prov));
-    iaActualizarMsgProv();
+
+    // Mostrar/ocultar panel de modelos Gemini
+    const gemPanel = document.getElementById('geminiModelPanel');
+    if (gemPanel) gemPanel.style.display = prov === 'gemini' ? 'block' : 'none';
+    if (prov === 'gemini' && _iaEstadoProv.gemini) iaCargarModelosGemini();
+
+    iaActualizarMsgProv(_iaEstadoProv);
 }
 
-/* Cargar estado (verde/gris) de cada proveedor desde el servidor */
+/* Cargar estado (verde/gris) de cada proveedor */
 async function iaCargarEstadoProveedores() {
     try {
         const tk = localStorage.getItem('token');
         const r = await fetch('/api/admin/ia/proveedores', { headers:{ 'Authorization':'Bearer '+tk } });
-        const data = await r.json();
+        _iaEstadoProv = await r.json();
         ['claude','openai','gemini','groq'].forEach(p => {
             const dot = document.getElementById('dot-'+p);
-            if (dot) dot.className = 'ia-prov-dot ' + (data[p] ? 'ok' : 'err');
+            if (dot) dot.className = 'ia-prov-dot ' + (_iaEstadoProv[p] ? 'ok' : 'err');
         });
-        iaActualizarMsgProv(data);
+        iaActualizarMsgProv(_iaEstadoProv);
+        // Si ya está en Gemini, cargar modelos
+        if (_iaProveedor === 'gemini' && _iaEstadoProv.gemini) iaCargarModelosGemini();
     } catch {}
 }
 
@@ -2499,18 +2525,79 @@ function iaActualizarMsgProv(estado) {
         groq:   ['GROQ_API_KEY',      'console.groq.com/keys'],
     };
     const msg = document.getElementById('iaProvMsg');
-    if (!msg) return;
+    if (!msg || !estado) return;
     const [varName, url] = msgs[_iaProveedor] || [];
-    // Si no tenemos estado aún, ocultar
-    if (!estado) { msg.style.display = 'none'; return; }
     if (!estado[_iaProveedor]) {
         msg.style.display = 'block';
-        msg.innerHTML = `<span style="color:#DC2626">⚠ Falta la API Key.</span> Agrega <code style="background:#FEE2E2;padding:.1rem .3rem;border-radius:4px">${varName}</code> en EasyPanel → Variables de entorno. Consíguela en <a href="https://${url}" target="_blank" style="color:#7C3AED">${url}</a>`;
+        msg.innerHTML = `<span style="color:#DC2626">⚠ Falta la API Key.</span> Agrega <code style="background:#FEE2E2;padding:.1rem .3rem;border-radius:4px">${varName}</code> en EasyPanel → Variables de entorno. <a href="https://${url}" target="_blank" style="color:#7C3AED">Obtenerla →</a>`;
     } else {
         msg.style.display = 'block';
         msg.innerHTML = `<span style="color:#059669">✅ Configurado y listo.</span>`;
         setTimeout(()=>{ msg.style.display='none'; }, 2500);
     }
+}
+
+/* Cargar modelos disponibles de Gemini */
+async function iaCargarModelosGemini() {
+    const cont = document.getElementById('geminiModelSel');
+    const btn  = document.getElementById('btnRecargarModelos');
+    if (!cont) return;
+    cont.innerHTML = '<div style="font-size:.78rem;color:#6B7280">⏳ Cargando modelos...</div>';
+    if (btn) btn.style.pointerEvents = 'none';
+
+    try {
+        const tk = localStorage.getItem('token');
+        const r  = await fetch('/api/admin/ia/gemini-modelos', { headers:{ 'Authorization':'Bearer '+tk } });
+        const d  = await r.json();
+        if (!r.ok) throw new Error(d.error || 'Error');
+
+        if (!d.modelos?.length) {
+            cont.innerHTML = '<div style="font-size:.78rem;color:#6B7280">No se encontraron modelos disponibles.</div>';
+            return;
+        }
+
+        cont.innerHTML = d.modelos.map(m => {
+            const isActive = m.id === _iaGeminiModel;
+            const isPro    = m.id.includes('pro');
+            const badge    = isPro
+                ? '<span style="font-size:.6rem;background:#DBEAFE;color:#1D4ED8;padding:.1rem .35rem;border-radius:10px;font-weight:700">PRO</span>'
+                : '<span style="font-size:.6rem;background:#DCFCE7;color:#166534;padding:.1rem .35rem;border-radius:10px;font-weight:700">FREE</span>';
+            return `<label style="display:flex;align-items:flex-start;gap:.5rem;padding:.45rem .5rem;border:1.5px solid ${isActive?'#3B82F6':'#E5E7EB'};border-radius:8px;background:${isActive?'#EFF6FF':'#fff'};cursor:pointer;margin-bottom:.3rem;transition:border-color .15s">
+                <input type="radio" name="geminiModel" value="${m.id}" ${isActive?'checked':''} onchange="iaSelGeminiModel('${m.id}','${m.nombre}')" style="accent-color:#3B82F6;margin-top:.2rem;flex-shrink:0">
+                <div style="flex:1;overflow:hidden">
+                    <div style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap">
+                        <span style="font-size:.8rem;font-weight:600;color:#1E3A5F">${m.nombre}</span>
+                        ${badge}
+                    </div>
+                    <div style="font-size:.68rem;color:#6B7280;margin-top:.1rem;font-family:monospace">${m.id}</div>
+                    ${m.descripcion ? `<div style="font-size:.7rem;color:#9CA3AF;margin-top:.1rem;line-height:1.4">${m.descripcion}</div>` : ''}
+                </div>
+            </label>`;
+        }).join('');
+    } catch(e) {
+        cont.innerHTML = `<div style="font-size:.78rem;color:#DC2626">❌ ${e.message}</div>`;
+    } finally {
+        if (btn) btn.style.pointerEvents = '';
+    }
+}
+
+function iaSelGeminiModel(id, nombre) {
+    _iaGeminiModel = id;
+    localStorage.setItem('ia_gemini_model', id);
+    // Actualizar subtítulo del botón Gemini
+    const sub = document.getElementById('geminiSubLabel');
+    if (sub) {
+        const short = nombre.replace('Gemini ', '').replace(' (latest)', '');
+        sub.textContent = `Google · ${short}`;
+    }
+    // Resaltar el item seleccionado
+    document.querySelectorAll('[name="geminiModel"]').forEach(cb => {
+        const lbl = cb.closest('label');
+        if (!lbl) return;
+        const sel = cb.value === id;
+        lbl.style.borderColor  = sel ? '#3B82F6' : '#E5E7EB';
+        lbl.style.background   = sel ? '#EFF6FF' : '#fff';
+    });
 }
 
 /* Checklist de requisitos */
@@ -2554,7 +2641,8 @@ async function iaGenerar() {
                 prompt,
                 contenido: contenidoActual,
                 titulo: _pagActual?.titulo || '',
-                provider: _iaProveedor
+                provider: _iaProveedor,
+                geminiModel: _iaGeminiModel
             })
         });
         const data = await r.json();
@@ -2579,9 +2667,17 @@ function iaAplicar() {
     iaClose();
 }
 
-// Restaurar proveedor seleccionado al cargar
+// Restaurar proveedor y modelo seleccionados al cargar
 document.addEventListener('DOMContentLoaded', () => {
-    iaSetProv(_iaProveedor);
+    // Marcar botón activo sin disparar carga de modelos aún (no hay token todavía)
+    document.querySelectorAll('.ia-prov-btn').forEach(b => b.classList.toggle('active', b.dataset.prov === _iaProveedor));
+    const gemPanel = document.getElementById('geminiModelPanel');
+    if (gemPanel) gemPanel.style.display = _iaProveedor === 'gemini' ? 'block' : 'none';
+    // Actualizar subtítulo si hay modelo guardado
+    if (_iaGeminiModel !== 'gemini-2.0-flash') {
+        const sub = document.getElementById('geminiSubLabel');
+        if (sub) sub.textContent = `Google · ${_iaGeminiModel.replace('gemini-','').replace('-latest','')}`;
+    }
 });
 
 // Cargar lista cuando se activa el tab

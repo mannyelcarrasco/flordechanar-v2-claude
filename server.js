@@ -2204,10 +2204,49 @@ app.get('/api/admin/ia/proveedores', verifyToken, async (req, res) => {
     });
 });
 
+// GET /api/admin/ia/gemini-modelos — lista los modelos Gemini disponibles para esta API key
+app.get('/api/admin/ia/gemini-modelos', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Sin acceso' });
+    const key = process.env.GEMINI_API_KEY;
+    if (!key) return res.status(400).json({ error: 'GEMINI_API_KEY no configurada' });
+    try {
+        const r = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models?key=${key}&pageSize=50`,
+            { signal: AbortSignal.timeout(10000) }
+        );
+        if (!r.ok) {
+            const e = await r.json().catch(()=>({}));
+            throw new Error(e.error?.message || `Gemini ListModels ${r.status}`);
+        }
+        const data = await r.json();
+        // Filtrar solo modelos que soportan generateContent y son tipo gemini
+        const modelos = (data.models || [])
+            .filter(m =>
+                m.supportedGenerationMethods?.includes('generateContent') &&
+                m.name.includes('gemini')
+            )
+            .map(m => ({
+                id:          m.name.replace('models/', ''),   // "gemini-2.0-flash"
+                nombre:      m.displayName || m.name,         // "Gemini 2.0 Flash"
+                descripcion: (m.description || '').slice(0, 120),
+                inputLimit:  m.inputTokenLimit  || 0,
+                outputLimit: m.outputTokenLimit || 0,
+            }))
+            // Ordenar: pro primero, luego flash, luego el resto
+            .sort((a, b) => {
+                const rank = s => s.includes('pro') ? 0 : s.includes('flash') ? 1 : 2;
+                return rank(a.id) - rank(b.id) || a.id.localeCompare(b.id);
+            });
+        res.json({ ok: true, modelos });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // POST /api/admin/ia/pagina  — Asistente IA multi-proveedor
 app.post('/api/admin/ia/pagina', verifyToken, async (req, res) => {
     if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Sin acceso' });
-    const { prompt, contenido, titulo, provider = 'claude' } = req.body;
+    const { prompt, contenido, titulo, provider = 'claude', geminiModel = 'gemini-2.0-flash' } = req.body;
     if (!prompt) return res.status(400).json({ error: 'Falta el prompt' });
 
     // Construir prompt del sistema
@@ -2270,8 +2309,7 @@ ${contenido ? contenido.slice(0, 8000) : '(sin contenido aún)'}`;
         else if (provider === 'gemini') {
             const key = process.env.GEMINI_API_KEY;
             if (!key) return res.status(400).json({ error: 'Agrega GEMINI_API_KEY en EasyPanel → Variables de entorno.' });
-            // Try gemini-2.0-flash first (latest free model), fallback to gemini-1.5-flash
-            const GEMINI_MODEL = 'gemini-2.0-flash';
+            const GEMINI_MODEL = geminiModel || 'gemini-2.0-flash';
             const r = await fetch(
                 `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`,
                 {
