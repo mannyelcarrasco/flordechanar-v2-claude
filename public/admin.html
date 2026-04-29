@@ -678,7 +678,7 @@
                     <span style="font-size:.7rem;font-weight:700;color:#1D4ED8;text-transform:uppercase;letter-spacing:.5px">
                         🔵 Modelo Gemini
                     </span>
-                    <button onclick="iaCargarModelosGemini()" id="btnRecargarModelos"
+                    <button onclick="iaCargarModelosGemini(true)" id="btnRecargarModelos"
                         style="font-size:.7rem;color:#1D4ED8;background:none;border:none;cursor:pointer;text-decoration:underline">
                         🔄 Actualizar
                     </button>
@@ -2614,7 +2614,7 @@ function iaActualizarMsgProv(estado) {
 }
 
 /* Cargar modelos disponibles de Gemini */
-async function iaCargarModelosGemini() {
+async function iaCargarModelosGemini(forceExpand = false) {
     const cont = document.getElementById('geminiModelSel');
     const btn  = document.getElementById('btnRecargarModelos');
     if (!cont) return;
@@ -2651,8 +2651,8 @@ async function iaCargarModelosGemini() {
             </label>`;
         }).join('');
 
-        // Auto-colapsar si ya hay un modelo seleccionado
-        if (_iaGeminiModel) {
+        // Auto-colapsar si ya hay un modelo seleccionado Y no se está pidiendo expansión forzada
+        if (_iaGeminiModel && !forceExpand) {
             const sel = d.modelos.find(m => m.id === _iaGeminiModel);
             if (sel) iaSelGeminiModel(sel.id, sel.nombre);
         }
@@ -2698,7 +2698,7 @@ function iaSelGeminiModel(id, nombre) {
 }
 
 function iaExpandirModelos() {
-    iaCargarModelosGemini();
+    iaCargarModelosGemini(true); // forceExpand = true → no colapsar aunque haya modelo guardado
 }
 
 /* Checklist de requisitos */

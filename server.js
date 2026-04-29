@@ -2327,7 +2327,13 @@ ${contenido ? contenido.slice(0, 8000) : '(sin contenido aún)'}`;
                     body: JSON.stringify({
                         system_instruction: { parts: [{ text: systemPrompt }] },
                         contents: [{ role: 'user', parts: [{ text: userMsg }] }],
-                        generationConfig: { maxOutputTokens: 4096 }
+                        generationConfig: {
+                            maxOutputTokens: 4096,
+                            // Para thinking models (2.5/3.x Pro): desactivar thinking para
+                            // obtener HTML directo sin razonamiento interno en la respuesta.
+                            // thinkingBudget: 0 → sin thinking; -1 → auto (default)
+                            thinkingConfig: { thinkingBudget: 0 }
+                        }
                     }),
                     signal: AbortSignal.timeout(API_TIMEOUT)
                 }
