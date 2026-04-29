@@ -2270,13 +2270,16 @@ ${contenido ? contenido.slice(0, 8000) : '(sin contenido aún)'}`;
         else if (provider === 'gemini') {
             const key = process.env.GEMINI_API_KEY;
             if (!key) return res.status(400).json({ error: 'Agrega GEMINI_API_KEY en EasyPanel → Variables de entorno.' });
+            // Try gemini-2.0-flash first (latest free model), fallback to gemini-1.5-flash
+            const GEMINI_MODEL = 'gemini-2.0-flash';
             const r = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
+                `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`,
                 {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: `${systemPrompt}\n\n${userMsg}` }] }],
+                        system_instruction: { parts: [{ text: systemPrompt }] },
+                        contents: [{ role: 'user', parts: [{ text: userMsg }] }],
                         generationConfig: { maxOutputTokens: 4096 }
                     }),
                     signal: AbortSignal.timeout(30000)
