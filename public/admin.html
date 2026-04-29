@@ -2584,20 +2584,39 @@ async function iaCargarModelosGemini() {
 function iaSelGeminiModel(id, nombre) {
     _iaGeminiModel = id;
     localStorage.setItem('ia_gemini_model', id);
+
     // Actualizar subtítulo del botón Gemini
     const sub = document.getElementById('geminiSubLabel');
     if (sub) {
         const short = nombre.replace('Gemini ', '').replace(' (latest)', '');
         sub.textContent = `Google · ${short}`;
     }
-    // Resaltar el item seleccionado
-    document.querySelectorAll('[name="geminiModel"]').forEach(cb => {
-        const lbl = cb.closest('label');
-        if (!lbl) return;
-        const sel = cb.value === id;
-        lbl.style.borderColor  = sel ? '#3B82F6' : '#E5E7EB';
-        lbl.style.background   = sel ? '#EFF6FF' : '#fff';
-    });
+
+    // Colapsar la lista y mostrar solo el modelo elegido con botón para cambiar
+    const cont = document.getElementById('geminiModelSel');
+    const isPro = id.includes('pro');
+    const badge = isPro
+        ? '<span style="font-size:.6rem;background:#DBEAFE;color:#1D4ED8;padding:.1rem .35rem;border-radius:10px;font-weight:700">PRO</span>'
+        : '<span style="font-size:.6rem;background:#DCFCE7;color:#166534;padding:.1rem .35rem;border-radius:10px;font-weight:700">FREE</span>';
+    if (cont) {
+        cont.innerHTML = `
+            <div style="display:flex;align-items:center;justify-content:space-between;background:#fff;border:1.5px solid #3B82F6;border-radius:8px;padding:.4rem .65rem">
+                <div>
+                    <div style="display:flex;align-items:center;gap:.35rem">
+                        <span style="font-size:.82rem;font-weight:700;color:#1E3A5F">${nombre}</span>
+                        ${badge}
+                    </div>
+                    <div style="font-size:.68rem;color:#6B7280;font-family:monospace">${id}</div>
+                </div>
+                <button onclick="iaExpandirModelos()" style="font-size:.72rem;color:#3B82F6;background:none;border:none;cursor:pointer;white-space:nowrap;font-weight:600">
+                    Cambiar ↓
+                </button>
+            </div>`;
+    }
+}
+
+function iaExpandirModelos() {
+    iaCargarModelosGemini();
 }
 
 /* Checklist de requisitos */
@@ -2627,9 +2646,12 @@ async function iaGenerar() {
     const resEl = document.getElementById('iaResult');
     const txt = document.getElementById('iaResultText');
 
-    const provLabels = { claude:'Claude', openai:'ChatGPT', gemini:'Gemini', groq:'Groq ⚡' };
+    const isProModel = _iaProveedor === 'gemini' && _iaGeminiModel.includes('pro');
+    const provLabel  = _iaProveedor === 'gemini'
+        ? _iaGeminiModel.replace('gemini-','Gemini ').replace('-latest','')
+        : { claude:'Claude', openai:'ChatGPT', groq:'Groq ⚡' }[_iaProveedor] || _iaProveedor;
     btn.disabled = true;
-    btn.innerHTML = `<i class="ph ph-spinner"></i> Generando con ${provLabels[_iaProveedor]||_iaProveedor}...`;
+    btn.innerHTML = `<i class="ph ph-spinner"></i> Generando con ${provLabel}${isProModel?' (puede tardar ~1 min)…':'…'}`;
     resEl.style.display = 'none';
 
     try {

@@ -2248,6 +2248,9 @@ app.post('/api/admin/ia/pagina', verifyToken, async (req, res) => {
     if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Sin acceso' });
     const { prompt, contenido, titulo, provider = 'claude', geminiModel = 'gemini-2.0-flash' } = req.body;
     if (!prompt) return res.status(400).json({ error: 'Falta el prompt' });
+    // Timeout adaptivo: modelos Pro son más lentos (hasta 2 min), flash es rápido
+    const isPro = provider === 'gemini' && geminiModel.includes('pro');
+    const API_TIMEOUT = isPro ? 120000 : 45000;
 
     // Construir prompt del sistema
     const systemPrompt = `Eres un experto en diseño web y HTML. La página se llama: "${titulo || 'Sin título'}".
@@ -2276,7 +2279,7 @@ ${contenido ? contenido.slice(0, 8000) : '(sin contenido aún)'}`;
                     system: systemPrompt,
                     messages: [{ role: 'user', content: userMsg }]
                 }),
-                signal: AbortSignal.timeout(30000)
+                signal: AbortSignal.timeout(API_TIMEOUT)
             });
             if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.error?.message || `Claude ${r.status}`); }
             const d = await r.json();
@@ -2298,7 +2301,7 @@ ${contenido ? contenido.slice(0, 8000) : '(sin contenido aún)'}`;
                         { role: 'user',   content: userMsg }
                     ]
                 }),
-                signal: AbortSignal.timeout(30000)
+                signal: AbortSignal.timeout(API_TIMEOUT)
             });
             if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.error?.message || `OpenAI ${r.status}`); }
             const d = await r.json();
@@ -2320,7 +2323,7 @@ ${contenido ? contenido.slice(0, 8000) : '(sin contenido aún)'}`;
                         contents: [{ role: 'user', parts: [{ text: userMsg }] }],
                         generationConfig: { maxOutputTokens: 4096 }
                     }),
-                    signal: AbortSignal.timeout(30000)
+                    signal: AbortSignal.timeout(API_TIMEOUT)
                 }
             );
             if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.error?.message || `Gemini ${r.status}`); }
@@ -2343,7 +2346,7 @@ ${contenido ? contenido.slice(0, 8000) : '(sin contenido aún)'}`;
                         { role: 'user',   content: userMsg }
                     ]
                 }),
-                signal: AbortSignal.timeout(30000)
+                signal: AbortSignal.timeout(API_TIMEOUT)
             });
             if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.error?.message || `Groq ${r.status}`); }
             const d = await r.json();
