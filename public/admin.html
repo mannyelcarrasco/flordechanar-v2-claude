@@ -34,7 +34,8 @@
         .sb-av{width:34px;height:34px;border-radius:50%;background:var(--err);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:.8rem}
         .sb-un{font-size:.82rem;font-weight:600;color:#fff}.sb-ur{font-size:.7rem;color:rgba(255,255,255,.4)}
 
-        .main{margin-left:var(--sw);flex:1;padding:1.75rem 2.25rem;max-width:calc(100% - var(--sw))}
+        .main{margin-left:var(--sw);flex:1;padding:1.75rem 2.25rem;max-width:calc(100% - var(--sw));transition:padding-right .3s ease}
+        .main.ia-active{padding-right:calc(2.25rem + 395px)}
         .ph{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.75rem}
         .ph h2{font-size:1.5rem}.ph p{color:var(--l);font-size:.87rem;margin-top:.2rem}
 
@@ -110,10 +111,19 @@
         .toggle-active{background:var(--s)!important;color:#fff!important;border-color:var(--s)!important}
 
         /* Panel IA */
-        .ia-drawer{position:fixed;top:0;right:0;width:380px;height:100vh;background:#fff;box-shadow:-4px 0 24px rgba(0,0,0,.12);z-index:200;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s ease}
+        .ia-drawer{position:fixed;top:0;right:0;width:380px;height:100vh;background:#fff;box-shadow:-4px 0 24px rgba(0,0,0,.12);z-index:200;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s ease, width .3s ease, height .3s ease, top .3s ease, border-radius .3s ease, bottom .3s ease}
         .ia-drawer.open{transform:translateX(0)}
+        /* Mini: collapsa a una píldora en la esquina inferior derecha */
+        .ia-drawer.mini{transform:translateX(0);width:auto;height:auto;top:auto;bottom:1.5rem;border-radius:50px;box-shadow:0 6px 24px rgba(124,58,237,.35)}
+        .ia-drawer.mini .ia-drawer-body{display:none}
+        .ia-drawer.mini .ia-drawer-head{padding:.65rem 1.1rem;border-bottom:none;border-radius:50px;cursor:pointer;gap:.5rem}
+        .ia-drawer.mini .ia-drawer-head h3{font-size:.88rem}
+        .ia-drawer.mini .ia-hbtn-close{display:none}
+        .ia-drawer.mini .ia-hbtn-min i::before{content:"↑"}
         .ia-drawer-head{padding:1.1rem 1.25rem;border-bottom:1px solid #E5E7EB;display:flex;align-items:center;gap:.6rem;background:linear-gradient(135deg,#7C3AED,#5B21B6);color:#fff}
         .ia-drawer-head h3{margin:0;font-size:1rem;flex:1}
+        .ia-hbtn-min,.ia-hbtn-close{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:.25rem .5rem;cursor:pointer;font-size:.85rem;line-height:1;transition:background .15s}
+        .ia-hbtn-min:hover,.ia-hbtn-close:hover{background:rgba(255,255,255,.35)}
         .ia-drawer-body{flex:1;padding:1.1rem;display:flex;flex-direction:column;gap:.85rem;overflow-y:auto}
         .ia-chip{display:inline-flex;align-items:center;gap:.3rem;padding:.28rem .65rem;border:1.5px solid #DDD6FE;border-radius:20px;font-size:.74rem;font-weight:500;color:#5B21B6;cursor:pointer;background:#F5F3FF;transition:var(--tr)}
         .ia-chip:hover{background:#EDE9FE;border-color:#7C3AED}
@@ -622,10 +632,11 @@
 
     <!-- Cajón IA -->
     <div class="ia-drawer" id="iaDrawer">
-        <div class="ia-drawer-head">
+        <div class="ia-drawer-head" id="iaDrawerHead" onclick="iaDrawerHeadClick(event)">
             <i class="ph ph-sparkle" style="font-size:1.2rem"></i>
             <h3>Asistente de Diseño IA</h3>
-            <button onclick="iaClose()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:.25rem .5rem;cursor:pointer;font-size:.85rem">✕</button>
+            <button class="ia-hbtn-min" onclick="iaMinimize(event)" title="Minimizar"><i class="ph ph-minus"></i></button>
+            <button class="ia-hbtn-close ia-close-btn" onclick="iaClose(event)" title="Cerrar">✕</button>
         </div>
         <div class="ia-drawer-body">
 
@@ -2426,7 +2437,7 @@ function pagMostrarEditor(p) {
 
     _pagQuill = null;
     _initQuill();
-    if (p && p.contenido) _pagQuill.root.innerHTML = p.contenido;
+    if (p && p.contenido) _pagQuill.clipboard.dangerouslyPasteHTML(p.contenido);
 }
 
 function escH(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
@@ -2518,11 +2529,35 @@ let _iaGeminiModel = localStorage.getItem('ia_gemini_model') || 'gemini-2.0-flas
 let _iaEstadoProv  = {};  // cache del estado de proveedores
 
 function iaOpen() {
-    document.getElementById('iaDrawer').classList.add('open');
+    const d = document.getElementById('iaDrawer');
+    d.classList.add('open');
+    d.classList.remove('mini');
+    document.querySelector('.main').classList.add('ia-active');
     iaCargarEstadoProveedores();
 }
-function iaClose() {
-    document.getElementById('iaDrawer').classList.remove('open');
+function iaClose(ev) {
+    if (ev) ev.stopPropagation();
+    const d = document.getElementById('iaDrawer');
+    d.classList.remove('open');
+    d.classList.remove('mini');
+    document.querySelector('.main').classList.remove('ia-active');
+}
+function iaMinimize(ev) {
+    if (ev) ev.stopPropagation();
+    const d = document.getElementById('iaDrawer');
+    d.classList.remove('open');
+    d.classList.add('mini');
+    document.querySelector('.main').classList.remove('ia-active');
+}
+function iaRestore() {
+    const d = document.getElementById('iaDrawer');
+    d.classList.add('open');
+    d.classList.remove('mini');
+    document.querySelector('.main').classList.add('ia-active');
+}
+function iaDrawerHeadClick(ev) {
+    // Solo restaura si está en modo mini
+    if (document.getElementById('iaDrawer').classList.contains('mini')) iaRestore();
 }
 function iaSetPrompt(text) {
     document.getElementById('iaPromptInput').value = text;
@@ -2615,6 +2650,12 @@ async function iaCargarModelosGemini() {
                 </div>
             </label>`;
         }).join('');
+
+        // Auto-colapsar si ya hay un modelo seleccionado
+        if (_iaGeminiModel) {
+            const sel = d.modelos.find(m => m.id === _iaGeminiModel);
+            if (sel) iaSelGeminiModel(sel.id, sel.nombre);
+        }
     } catch(e) {
         cont.innerHTML = `<div style="font-size:.78rem;color:#DC2626">❌ ${e.message}</div>`;
     } finally {
@@ -2716,8 +2757,8 @@ async function iaGenerar() {
 
         _iaGenerado = data.html || '';
 
-        // Aplicar directo al editor
-        _pagQuill.root.innerHTML = _iaGenerado;
+        // Aplicar directo al editor usando la API de Quill (no raw innerHTML)
+        _pagQuill.clipboard.dangerouslyPasteHTML(_iaGenerado);
         // Sincronizar vista código si está abierta
         const codeEl = document.getElementById('pagCodigoHTML');
         if (codeEl && codeEl.style.display !== 'none') codeEl.value = _iaGenerado;
@@ -2750,7 +2791,7 @@ async function iaGenerar() {
             msg.innerHTML = `❌ ${e.message}`;
         }
         // Restaurar si algo salió mal
-        if (_iaAnterior) _pagQuill.root.innerHTML = _iaAnterior;
+        if (_iaAnterior) _pagQuill.clipboard.dangerouslyPasteHTML(_iaAnterior);
     } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="ph ph-sparkle"></i> Generar con IA';
@@ -2765,7 +2806,7 @@ function iaMantener() {
 
 function iaDeshacer() {
     if (!_pagQuill || _iaAnterior === null) return;
-    _pagQuill.root.innerHTML = _iaAnterior;
+    _pagQuill.clipboard.dangerouslyPasteHTML(_iaAnterior);
     const codeEl = document.getElementById('pagCodigoHTML');
     if (codeEl && codeEl.style.display !== 'none') codeEl.value = _iaAnterior;
     const prev = document.getElementById('pagVistaPrevia');
@@ -2834,7 +2875,7 @@ function toggleCodigo() {
 
     if (yaActivo) {
         // Sincronizar código → Quill y volver a modo normal
-        if (_pagQuill && code) _pagQuill.root.innerHTML = code.value;
+        if (_pagQuill && code) _pagQuill.clipboard.dangerouslyPasteHTML(code.value);
         code.style.display = 'none';
         quill.style.display = 'block';
         document.querySelector('.ql-toolbar') && (document.querySelector('.ql-toolbar').style.display = 'block');
