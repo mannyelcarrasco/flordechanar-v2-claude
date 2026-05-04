@@ -2380,11 +2380,12 @@ loadSettings();
 /* ══════════════════════════════════════════════
    PÁGINAS CMS
    ══════════════════════════════════════════════ */
-let _pagQuill   = null;
-let _pagGrapes  = null;
-let _editorModo = localStorage.getItem('editor_modo') || 'quill'; // 'quill' | 'grapes'
-let _pagActual  = null;
-let _pagLista   = [];
+let _pagQuill      = null;
+let _pagGrapes     = null;
+let _pagGrapesData = null;   // Guarda getProjectData() al salir de modo visual (para restaurar sin pérdida)
+let _editorModo    = localStorage.getItem('editor_modo') || 'quill'; // 'quill' | 'grapes'
+let _pagActual     = null;
+let _pagLista      = [];
 let _pagImportIds = []; // IDs de la última importación (para tickets)
 
 /* ── Quill ─────────────────────────────────── */
@@ -2414,40 +2415,71 @@ function _initQuill() {
 /* ── Toggle modo editor ─────────────────────── */
 function setEditorModo(modo) {
     if (_editorModo === modo) return;
-    // Capturar contenido del editor activo
-    let contenido = _pagGetContenido();
+
+    // ── Al SALIR de modo visual: guardar estado completo (JSON) ──────────
+    if (_editorModo === 'grapes' && _pagGrapes) {
+        _pagGrapesData = _pagGrapes.getProjectData();   // preserva CSS + componentes
+    }
+
+    // Obtener HTML limpio para transferir a Quill (sin etiqueta <style>)
+    let htmlParaQuill = _pagGetHtmlSolo();
+
     _editorModo = modo;
     localStorage.setItem('editor_modo', modo);
-    // Limpiar instancias
+
+    // Destruir instancias actuales
     if (_pagGrapes) { try { _pagGrapes.destroy(); } catch {} _pagGrapes = null; }
     _pagQuill = null;
+
     // Mostrar/ocultar secciones
     const qs = document.getElementById('editorQuillSection');
     const gs = document.getElementById('editorGrapesSection');
     const qt = document.getElementById('quillModeTools');
+
     if (modo === 'grapes') {
         if (qs) qs.style.display = 'none';
         if (gs) gs.style.display = 'block';
         if (qt) qt.style.display = 'none';
         _initGrapes();
-        if (contenido) setTimeout(() => _pagGrapes?.setComponents(contenido), 50);
+        setTimeout(() => {
+            if (!_pagGrapes) return;
+            if (_pagGrapesData) {
+                // Restaurar estado exacto: CSS + componentes sin pérdida
+                _pagGrapes.loadProjectData(_pagGrapesData);
+                _pagGrapesData = null;   // consumido — próximo cambio recalcula
+            } else if (htmlParaQuill) {
+                // Primera carga desde DB o Quill
+                _pagGrapes.setComponents(htmlParaQuill);
+            }
+        }, 80);
     } else {
         if (gs) gs.style.display = 'none';
         if (qs) qs.style.display = 'block';
         if (qt) qt.style.display = 'flex';
         _initQuill();
-        if (contenido) _pagQuill.clipboard.dangerouslyPasteHTML(contenido);
+        // Cargar HTML (sin CSS) en Quill
+        if (htmlParaQuill) _pagQuill.clipboard.dangerouslyPasteHTML(htmlParaQuill);
     }
+
     // Actualizar botones toggle
     document.getElementById('btnModoQuill')?.classList.toggle('active', modo === 'quill');
     document.getElementById('btnModoGrapes')?.classList.toggle('active', modo === 'grapes');
 }
 
+/* Devuelve el contenido completo para guardar en DB (CSS + HTML) */
 function _pagGetContenido() {
     if (_editorModo === 'grapes' && _pagGrapes) {
-        const css = _pagGrapes.getCss({ avoidProtected: true });
+        const css  = _pagGrapes.getCss({ avoidProtected: true });
         const html = _pagGrapes.getHtml();
         return css ? `<style>${css}</style>\n${html}` : html;
+    }
+    return _pagQuill ? _pagQuill.root.innerHTML : '';
+}
+
+/* Devuelve SOLO el HTML del cuerpo (sin <style>) para transferencias entre modos */
+function _pagGetHtmlSolo() {
+    if (_editorModo === 'grapes' && _pagGrapes) {
+        return _pagGrapes.getHtml() || '';
     }
     return _pagQuill ? _pagQuill.root.innerHTML : '';
 }
@@ -3026,8 +3058,9 @@ function pagMostrarEditor(p) {
         </div>
         <div id="pagSaveMsg" style="display:none"></div>`;
 
-    _pagQuill = null;
-    _pagGrapes = null;
+    _pagQuill      = null;
+    _pagGrapes     = null;
+    _pagGrapesData = null;  // limpiar caché de página anterior
     if (isGrapes) {
         _initGrapes();
         if (p && p.contenido) setTimeout(() => _pagGrapes?.setComponents(p.contenido), 50);
@@ -3149,8 +3182,10 @@ function _iaUpdateUndoBtn() {
 function _iaApplyContent(content, modo) {
     if (modo === 'grapes' && _pagGrapes) {
         try { _pagGrapes.loadProjectData(JSON.parse(content)); } catch { _pagGrapes.setComponents(content); }
+        _pagGrapesData = null; // el estado restaurado ya está en GrapesJS
     } else if (_pagQuill) {
         _pagQuill.clipboard.dangerouslyPasteHTML(content);
+        _pagGrapesData = null; // invalidar caché visual al restaurar en Quill
         const codeEl = document.getElementById('pagCodigoHTML');
         if (codeEl && codeEl.style.display !== 'none') codeEl.value = content;
         const prev = document.getElementById('pagVistaPrevia');
@@ -3397,8 +3432,10 @@ async function iaGenerar() {
         // Aplicar directo al editor activo
         if (_editorModo === 'grapes' && _pagGrapes) {
             _pagGrapes.setComponents(_iaGenerado);
+            _pagGrapesData = null; // invalidar caché — el estado nuevo ya está en GrapesJS
         } else if (_pagQuill) {
             _pagQuill.clipboard.dangerouslyPasteHTML(_iaGenerado);
+            _pagGrapesData = null; // invalidar caché — al volver a visual se importará desde Quill
             const codeEl = document.getElementById('pagCodigoHTML');
             if (codeEl && codeEl.style.display !== 'none') codeEl.value = _iaGenerado;
             const prev = document.getElementById('pagVistaPrevia');
