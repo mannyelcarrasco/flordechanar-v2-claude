@@ -2416,39 +2416,6 @@ INSTRUCCIÓN: ${prompt}`;
     }
 });
 
-// ── Endpoint TEMPORAL de diagnóstico de BD (quitar tras depurar la conexión) ──
-// Devuelve el ERROR REAL de MySQL directo en el navegador, porque Hostinger no
-// expone los logs de ejecución. NO revela la contraseña.
-app.get('/api/_dbcheck', async (req, res) => {
-    const info = {
-        host: dbConfig.host, port: dbConfig.port, user: dbConfig.user, database: DB_NAME,
-        pool_ready: !!pool,
-        db_init_error: dbInitError ? { code: dbInitError.code || null, message: dbInitError.message } : null
-    };
-    let conn;
-    try {
-        conn = await mysql.createConnection({
-            host: dbConfig.host, user: dbConfig.user, password: dbConfig.password,
-            port: dbConfig.port, database: DB_NAME, connectTimeout: 8000
-        });
-        const [tablesRaw] = await conn.query('SHOW TABLES');
-        const tables = tablesRaw.map(r => Object.values(r)[0]);
-        const result = { ok: true, ...info, tables };
-        // Probar la MISMA query que usa /api/cursos, para ver si falla y por qué.
-        try {
-            const [cursos] = await conn.query('SELECT c.id, c.titulo FROM cursos c LEFT JOIN usuarios u ON c.profesor_id = u.id WHERE c.estado = "publicado"');
-            result.cursos_query = { ok: true, publicados: cursos.length };
-        } catch (qe) {
-            result.cursos_query = { ok: false, code: qe.code || null, message: qe.message };
-        }
-        await conn.end();
-        res.json(result);
-    } catch (err) {
-        if (conn) { try { await conn.end(); } catch (_) {} }
-        res.status(500).json({ ok: false, ...info, error_code: err.code || null, errno: err.errno || null, message: err.message });
-    }
-});
-
 // Any Uncaught API routes return 404
 app.use('/api', (req, res) => {
     res.status(404).json({ error: 'Endpoint no encontrado' });
