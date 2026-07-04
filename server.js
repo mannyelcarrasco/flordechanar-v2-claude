@@ -34,6 +34,7 @@ const loginLimiter = rateLimit({
 });
 
 // Create DB Connection Pool
+const DB_NAME = process.env.DB_NAME || 'flordechanar';
 const dbConfig = {
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
@@ -52,11 +53,18 @@ async function initDB() {
         console.log('Connecting to MySQL DB...');
         let connection = await mysql.createConnection(dbConfig);
 
-        await connection.query('CREATE DATABASE IF NOT EXISTS flordechanar CHARACTER SET utf8mb4');
-        console.log('Database flordechanar checked/created.');
+        // En hosting compartido (ej. Hostinger) el usuario de BD normalmente NO tiene
+        // permiso para crear bases de datos (solo usar la que ya te asignaron con prefijo,
+        // ej. u123_flordechanar) — por eso este intento se degrada sin ser fatal.
+        try {
+            await connection.query(`CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4`);
+            console.log(`Database ${DB_NAME} checked/created.`);
+        } catch (createErr) {
+            console.warn(`No se pudo auto-crear la BD "${DB_NAME}" (normal en hosting compartido si ya existe): ${createErr.message}`);
+        }
         await connection.end();
 
-        pool = mysql.createPool({ ...dbConfig, database: 'flordechanar' });
+        pool = mysql.createPool({ ...dbConfig, database: DB_NAME });
 
         await pool.query(`
             CREATE TABLE IF NOT EXISTS usuarios (
