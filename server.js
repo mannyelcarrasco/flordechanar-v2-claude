@@ -2423,15 +2423,26 @@ INSTRUCCIÓN: ${prompt}`;
 // expone los logs de ejecución. NO revela la contraseña.
 app.get('/api/_dbcheck', async (req, res) => {
     const info = { host: dbConfig.host, port: dbConfig.port, user: dbConfig.user, database: DB_NAME, pool_ready: !!pool };
+    let conn;
     try {
-        const conn = await mysql.createConnection({
+        conn = await mysql.createConnection({
             host: dbConfig.host, user: dbConfig.user, password: dbConfig.password,
             port: dbConfig.port, database: DB_NAME, connectTimeout: 8000
         });
-        const [rows] = await conn.query('SELECT 1 AS ok');
+        const [tablesRaw] = await conn.query('SHOW TABLES');
+        const tables = tablesRaw.map(r => Object.values(r)[0]);
+        const result = { ok: true, ...info, tables };
+        // Probar la MISMA query que usa /api/cursos, para ver si falla y por qué.
+        try {
+            const [cursos] = await conn.query('SELECT c.id, c.titulo FROM cursos c LEFT JOIN usuarios u ON c.profesor_id = u.id WHERE c.estado = "publicado"');
+            result.cursos_query = { ok: true, publicados: cursos.length };
+        } catch (qe) {
+            result.cursos_query = { ok: false, code: qe.code || null, message: qe.message };
+        }
         await conn.end();
-        res.json({ ok: true, ...info, test_query: rows });
+        res.json(result);
     } catch (err) {
+        if (conn) { try { await conn.end(); } catch (_) {} }
         res.status(500).json({ ok: false, ...info, error_code: err.code || null, errno: err.errno || null, message: err.message });
     }
 });
