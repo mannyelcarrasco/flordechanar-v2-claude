@@ -47,24 +47,21 @@ const dbConfig = {
 };
 
 let pool;
+let dbInitError = null;
 
 async function initDB() {
+    // Crear el pool PRIMERO y directo a la BASE DE DATOS. createPool es lazy (no conecta hasta la
+    // primera query), así que 'pool' SIEMPRE queda asignado. Antes el código se conectaba SIN
+    // especificar base de datos para intentar CREATE DATABASE, y recién después creaba el pool —
+    // pero en hosting compartido (Hostinger) el usuario está restringido a su propia BD: conectar
+    // sin especificarla falla, y como ese paso iba ANTES del pool, el pool quedaba null y TODA la
+    // app devolvía "Database not connected". La BD ya existe (creada en el panel), así que el paso
+    // de CREATE DATABASE ya no hace falta.
+    pool = mysql.createPool({ ...dbConfig, database: DB_NAME });
     try {
-        console.log('Connecting to MySQL DB...');
-        let connection = await mysql.createConnection(dbConfig);
-
-        // En hosting compartido (ej. Hostinger) el usuario de BD normalmente NO tiene
-        // permiso para crear bases de datos (solo usar la que ya te asignaron con prefijo,
-        // ej. u123_flordechanar) — por eso este intento se degrada sin ser fatal.
-        try {
-            await connection.query(`CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4`);
-            console.log(`Database ${DB_NAME} checked/created.`);
-        } catch (createErr) {
-            console.warn(`No se pudo auto-crear la BD "${DB_NAME}" (normal en hosting compartido si ya existe): ${createErr.message}`);
-        }
-        await connection.end();
-
-        pool = mysql.createPool({ ...dbConfig, database: DB_NAME });
+        console.log(`Connecting to MySQL DB "${DB_NAME}"...`);
+        await pool.query('SELECT 1'); // valida que la conexión real funcione
+        console.log('Connected.');
 
         await pool.query(`
             CREATE TABLE IF NOT EXISTS usuarios (
@@ -373,6 +370,7 @@ async function initDB() {
         }
 
     } catch (err) {
+        dbInitError = err;
         console.error('Database initialization error:', err);
     }
 }
@@ -2422,7 +2420,11 @@ INSTRUCCIÓN: ${prompt}`;
 // Devuelve el ERROR REAL de MySQL directo en el navegador, porque Hostinger no
 // expone los logs de ejecución. NO revela la contraseña.
 app.get('/api/_dbcheck', async (req, res) => {
-    const info = { host: dbConfig.host, port: dbConfig.port, user: dbConfig.user, database: DB_NAME, pool_ready: !!pool };
+    const info = {
+        host: dbConfig.host, port: dbConfig.port, user: dbConfig.user, database: DB_NAME,
+        pool_ready: !!pool,
+        db_init_error: dbInitError ? { code: dbInitError.code || null, message: dbInitError.message } : null
+    };
     let conn;
     try {
         conn = await mysql.createConnection({
