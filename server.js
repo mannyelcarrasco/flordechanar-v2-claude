@@ -2418,6 +2418,24 @@ INSTRUCCIÓN: ${prompt}`;
     }
 });
 
+// ── Endpoint TEMPORAL de diagnóstico de BD (quitar tras depurar la conexión) ──
+// Devuelve el ERROR REAL de MySQL directo en el navegador, porque Hostinger no
+// expone los logs de ejecución. NO revela la contraseña.
+app.get('/api/_dbcheck', async (req, res) => {
+    const info = { host: dbConfig.host, port: dbConfig.port, user: dbConfig.user, database: DB_NAME, pool_ready: !!pool };
+    try {
+        const conn = await mysql.createConnection({
+            host: dbConfig.host, user: dbConfig.user, password: dbConfig.password,
+            port: dbConfig.port, database: DB_NAME, connectTimeout: 8000
+        });
+        const [rows] = await conn.query('SELECT 1 AS ok');
+        await conn.end();
+        res.json({ ok: true, ...info, test_query: rows });
+    } catch (err) {
+        res.status(500).json({ ok: false, ...info, error_code: err.code || null, errno: err.errno || null, message: err.message });
+    }
+});
+
 // Any Uncaught API routes return 404
 app.use('/api', (req, res) => {
     res.status(404).json({ error: 'Endpoint no encontrado' });
