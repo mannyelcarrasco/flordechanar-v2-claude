@@ -90,14 +90,26 @@
         .therapy-card h3 { font-size: 1.6rem; margin-bottom: 1rem; }
         .therapy-card p { color: var(--color-text-light); margin-bottom: 2rem; font-size: 0.95rem; }
         
-        /* Modern Booking Section Mock (Replaces old software) */
+        /* Booking Section con Widget AtendIA */
         .booking-integration {
             background-color: var(--color-secondary); color: var(--color-white);
-            padding: 80px 0; margin-top: 40px; border-radius: var(--radius-lg);
-            text-align: center; margin-bottom: 80px; position: relative; overflow: hidden;
+            padding: 60px 2rem 60px; margin-top: 40px; border-radius: var(--radius-lg);
+            text-align: center; margin-bottom: 80px; position: relative;
+            /* sin overflow:hidden para que el widget crezca libremente */
         }
         .booking-integration h2 { color: var(--color-white); margin-bottom: 1.5rem; font-size: 2.5rem; }
-        .booking-integration p { color: rgba(255,255,255,0.7); max-width: 600px; margin: 0 auto 3rem; }
+        .booking-integration p { color: rgba(255,255,255,0.7); max-width: 600px; margin: 0 auto 2rem; }
+
+        /* Contenedor del widget — crece con el contenido */
+        .atendia-wrapper {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            /* sin height ni overflow — el iframe interno se auto-redimensiona */
+        }
+        .atendia-wrapper .atendia-booking {
+            width: 100%;
+        }
         
         .booking-tabs {
             display: flex; justify-content: center; gap: 1rem; margin-bottom: 3rem;
@@ -127,6 +139,9 @@
         @media (max-width: 768px) {
             .nav-links, .header-actions .btn-primary { display: none; }
             .mobile-menu-btn { display: block; }
+            .booking-integration { padding: 40px 1rem 40px; margin-top: 20px; border-radius: var(--radius-md); }
+            .booking-integration h2 { font-size: 1.8rem; }
+            .atendia-wrapper { max-width: 100%; }
 
             .nav-links.mob-open {
                 display: flex; flex-direction: column;
@@ -225,8 +240,8 @@
             <h2>Agenda tu Espacio de Sanación</h2>
             <p>Selecciona tu servicio. Nuestro nuevo sistema te permite reservar en menos de 1 minuto sin complicaciones ni registros extensos.</p>
             
-            <!-- Widget de Agenda AtendIA -->
-            <div style="width:100%; min-height:600px; max-height:90vh; overflow:hidden; position:relative;">
+            <!-- Widget de Agenda AtendIA — crece libremente con el contenido -->
+            <div class="atendia-wrapper">
                 <div class="atendia-booking" data-company="3"></div>
             </div>
             <script src="https://funnelstudio.click/AtendIA_dev/embed.js" async></script>
