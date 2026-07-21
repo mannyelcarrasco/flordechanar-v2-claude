@@ -283,6 +283,11 @@ async function initDB() {
             `ALTER TABLE lecciones ADD COLUMN visibilidad VARCHAR(10) DEFAULT 'privada'`,
             `ALTER TABLE lecciones ADD COLUMN orden INT DEFAULT 0`,
             `ALTER TABLE cursos ADD COLUMN tipo_acceso VARCHAR(20) DEFAULT 'gratis'`,
+            `ALTER TABLE cursos ADD COLUMN categoria VARCHAR(100)`,
+            `ALTER TABLE cursos ADD COLUMN nivel VARCHAR(50)`,
+            `ALTER TABLE cursos ADD COLUMN duracion_total VARCHAR(100)`,
+            `ALTER TABLE cursos ADD COLUMN idioma VARCHAR(50)`,
+            `ALTER TABLE cursos ADD COLUMN certificacion BOOLEAN DEFAULT FALSE`,
             `ALTER TABLE usuarios ADD COLUMN matriculado BOOLEAN DEFAULT FALSE`,
             `ALTER TABLE usuarios ADD COLUMN matriculado_en DATETIME DEFAULT NULL`,
             `ALTER TABLE inscripciones ADD COLUMN pago_id INT DEFAULT NULL`
@@ -586,14 +591,14 @@ app.get('/api/cursos', async (req, res) => {
 app.post('/api/cursos', verifyToken, async (req, res) => {
     if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
     try {
-        const { titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id } = req.body;
+        const { titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion } = req.body;
         if (!validStr(titulo, 3, 300)) return res.status(400).json({ error: 'Título del curso requerido (3-300 caracteres)' });
         const estadosPermitidos = ['borrador', 'publicado', 'archivado'];
         if (estado && !estadosPermitidos.includes(estado)) return res.status(400).json({ error: 'Estado inválido' });
         const profAsignado = profesor_id || req.usuario.id;
         const result = await pool.query(
-            'INSERT INTO cursos (titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [titulo, descripcion, precio, tipo_acceso || 'gratis', portada_url, estado, profAsignado]
+            'INSERT INTO cursos (titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [titulo, descripcion, precio, tipo_acceso || 'gratis', portada_url, estado, profAsignado, categoria||null, nivel||null, duracion_total||null, idioma||null, certificacion ? 1 : 0]
         );
         res.json({ success: true, id: result[0].insertId });
     } catch (e) {
@@ -729,11 +734,11 @@ app.get('/api/cursos/:id', verifyToken, async (req, res) => {
 app.put('/api/cursos/:id', verifyToken, async (req, res) => {
     if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
     try {
-        const { titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id } = req.body;
+        const { titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion } = req.body;
         const profAsignado = profesor_id || req.usuario.id;
         await pool.query(
-            'UPDATE cursos SET titulo=?, descripcion=?, precio=?, tipo_acceso=?, portada_url=?, estado=?, profesor_id=? WHERE id=?',
-            [titulo, descripcion, precio, tipo_acceso || 'gratis', portada_url, estado, profAsignado, req.params.id]
+            'UPDATE cursos SET titulo=?, descripcion=?, precio=?, tipo_acceso=?, portada_url=?, estado=?, profesor_id=?, categoria=?, nivel=?, duracion_total=?, idioma=?, certificacion=? WHERE id=?',
+            [titulo, descripcion, precio, tipo_acceso || 'gratis', portada_url, estado, profAsignado, categoria||null, nivel||null, duracion_total||null, idioma||null, certificacion ? 1 : 0, req.params.id]
         );
         res.json({ success: true, message: 'Curso actualizado con éxito' });
     } catch (e) {
@@ -748,8 +753,8 @@ app.delete('/api/cursos/:id', verifyToken, async (req, res) => {
         await pool.query('DELETE FROM cursos WHERE id = ?', [req.params.id]);
         res.json({ success: true, message: 'Curso eliminado' });
     } catch (e) {
-        console.error(e);
-        res.status(500).json({ error: 'Error al eliminar curso' });
+        console.error('DELETE ERROR:', e);
+        res.status(500).json({ error: e.message || 'Error al eliminar curso' });
     }
 });
 

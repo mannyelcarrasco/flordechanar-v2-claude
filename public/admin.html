@@ -2304,7 +2304,8 @@ async function eliminarCursoDesdeAdmin(id, titulo) {
             renderAdminCourses();
             renderAccessMatrix();
         } else {
-            showT('⚠️ No se pudo eliminar el curso');
+            const errData = await res.json();
+            showT('⚠️ No se pudo eliminar: ' + (errData.error || ''));
         }
     } catch(e) {
         showT('⚠️ Error de red al eliminar el curso');

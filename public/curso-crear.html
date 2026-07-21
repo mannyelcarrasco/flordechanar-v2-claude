@@ -210,7 +210,7 @@
                 </div>
                 <div class="fg">
                     <label class="fl">Nivel</label>
-                    <select class="fc">
+                    <select class="fc" id="courseLevel">
                         <option>Principiante</option>
                         <option>Intermedio</option>
                         <option>Avanzado</option>
@@ -220,9 +220,9 @@
             </div>
 
             <div class="three">
-                <div class="fg"><label class="fl">Duración total</label><input class="fc" type="text" placeholder="Ej: 120 horas"></div>
-                <div class="fg"><label class="fl">Idioma</label><select class="fc"><option>Español</option><option>Inglés</option></select></div>
-                <div class="fg"><label class="fl">Certificación</label><select class="fc"><option>Sí, otorga certificado</option><option>No</option></select></div>
+                <div class="fg"><label class="fl">Duración total</label><input class="fc" type="text" id="courseDuration" placeholder="Ej: 120 horas"></div>
+                <div class="fg"><label class="fl">Idioma</label><select class="fc" id="courseLanguage"><option value="Español">Español</option><option value="Inglés">Inglés</option></select></div>
+                <div class="fg"><label class="fl">Certificación</label><select class="fc" id="courseCert"><option value="1">Sí, otorga certificado</option><option value="0">No</option></select></div>
             </div>
 
             <div class="fg">
@@ -1015,6 +1015,11 @@ window.addEventListener('load', async () => {
                     document.getElementById('courseTitle').value = c.titulo || '';
                     document.getElementById('courseDesc').value = c.descripcion || '';
                     document.getElementById('coursePrice').value = c.precio || '';
+                    document.getElementById('courseCategory').value = c.categoria || '';
+                    document.getElementById('courseLevel').value = c.nivel || 'Principiante';
+                    document.getElementById('courseDuration').value = c.duracion_total || '';
+                    document.getElementById('courseLanguage').value = c.idioma || 'Español';
+                    document.getElementById('courseCert').value = c.certificacion ? "1" : "0";
                     if (c.tipo_acceso) {
                         document.getElementById('accessType').value = c.tipo_acceso;
                         togglePrice();
@@ -1066,7 +1071,12 @@ async function saveDraft() {
             precio: price,
             tipo_acceso: document.getElementById('accessType').value,
             portada_url: currentCoverUrl || null,
-            estado: 'borrador'
+            estado: 'borrador',
+            categoria: document.getElementById('courseCategory').value,
+            nivel: document.getElementById('courseLevel').value,
+            duracion_total: document.getElementById('courseDuration').value,
+            idioma: document.getElementById('courseLanguage').value,
+            certificacion: document.getElementById('courseCert').value === "1"
         };
 
         if (currentMode === 'profesor' && selectedProfId) {
@@ -1122,7 +1132,12 @@ async function publishCourse() {
             precio: price,
             tipo_acceso: document.getElementById('accessType').value,
             portada_url: portada_url,
-            estado: 'publicado'
+            estado: 'publicado',
+            categoria: document.getElementById('courseCategory').value,
+            nivel: document.getElementById('courseLevel').value,
+            duracion_total: document.getElementById('courseDuration').value,
+            idioma: document.getElementById('courseLanguage').value,
+            certificacion: document.getElementById('courseCert').value === "1"
         };
 
         if (currentMode === 'profesor' && selectedProfId) {
