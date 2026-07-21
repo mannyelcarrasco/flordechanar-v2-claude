@@ -467,7 +467,7 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
         }
 
         const token = jwt.sign(
-            { id: usuario.id, rol: usuario.rol, nombre: usuario.nombre },
+            { id: usuario.id, rol: usuario.rol, nombre: usuario.nombre, email: usuario.email },
             process.env.JWT_SECRET || 'fallback_secret_flordechanar',
             { expiresIn: '7d' }
         );
