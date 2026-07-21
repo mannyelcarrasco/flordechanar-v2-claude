@@ -93,8 +93,35 @@
         /* Modern Booking Section Mock (Replaces old software) */
         .booking-integration {
             background-color: var(--color-secondary); color: var(--color-white);
-            padding: 80px 0; margin-top: 40px; border-radius: var(--radius-lg);
+            padding: 60px 0; margin-top: 40px; border-radius: var(--radius-lg);
             text-align: center; margin-bottom: 80px; position: relative; overflow: hidden;
+        }
+
+        /* Contenedor del widget con scroll interno */
+        .atendia-scroll-container {
+            width: 100%; 
+            min-height: 600px; 
+            max-height: 800px; 
+            overflow-y: auto; 
+            overflow-x: hidden;
+            position: relative; 
+            padding: 0 10px;
+        }
+        
+        /* Estilos para la barra de scroll (Webkit) */
+        .atendia-scroll-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        .atendia-scroll-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05); 
+            border-radius: 4px;
+        }
+        .atendia-scroll-container::-webkit-scrollbar-thumb {
+            background: var(--color-accent); 
+            border-radius: 4px;
+        }
+        .atendia-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: #e5b787; 
         }
         .booking-integration h2 { color: var(--color-white); margin-bottom: 1.5rem; font-size: 2.5rem; }
         .booking-integration p { color: rgba(255,255,255,0.7); max-width: 600px; margin: 0 auto 3rem; }
@@ -226,7 +253,7 @@
             <p>Selecciona tu servicio. Nuestro nuevo sistema te permite reservar en menos de 1 minuto sin complicaciones ni registros extensos.</p>
             
             <!-- Widget de Agenda AtendIA -->
-            <div style="width:100%; min-height:600px; max-height:90vh; overflow:hidden; position:relative;">
+            <div class="atendia-scroll-container">
                 <div class="atendia-booking" data-company="3"></div>
             </div>
             <script src="https://funnelstudio.click/AtendIA_dev/embed.js" async></script>
