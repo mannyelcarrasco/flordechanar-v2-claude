@@ -90,24 +90,28 @@
         .therapy-card h3 { font-size: 1.6rem; margin-bottom: 1rem; }
         .therapy-card p { color: var(--color-text-light); margin-bottom: 2rem; font-size: 0.95rem; }
         
-        /* Booking Section — fondo blanco con bordes verdes */
+        /* Modern Booking Section Mock (Replaces old software) */
         .booking-integration {
-            background-color: var(--color-white);
-            border-top: 4px solid var(--color-primary);
-            border-bottom: 4px solid var(--color-primary);
-            padding: 60px 2rem 60px;
-            margin-top: 40px;
-            margin-bottom: 80px;
-            text-align: center;
+            background-color: var(--color-secondary); color: var(--color-white);
+            padding: 80px 0; margin-top: 40px; border-radius: var(--radius-lg);
+            text-align: center; margin-bottom: 80px; position: relative; overflow: hidden;
         }
-        .booking-integration h2 { color: var(--color-secondary); margin-bottom: 1rem; font-size: 2.5rem; }
-        .booking-integration p  { color: var(--color-text-light); max-width: 600px; margin: 0 auto 2rem; }
+        .booking-integration h2 { color: var(--color-white); margin-bottom: 1.5rem; font-size: 2.5rem; }
+        .booking-integration p { color: rgba(255,255,255,0.7); max-width: 600px; margin: 0 auto 3rem; }
+        
+        .booking-tabs {
+            display: flex; justify-content: center; gap: 1rem; margin-bottom: 3rem;
+        }
+        .b-tab {
+            padding: 1rem 2rem; border-radius: var(--radius-full); font-weight: 500; cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.2); transition: var(--transition-smooth); background: transparent; color: white;
+        }
+        .b-tab.active { background-color: var(--color-accent); border-color: var(--color-accent); }
 
-        /* Contenedor del widget — ancho amplio, sin restricciones de altura */
-        .atendia-wrapper {
-            width: 100%;
-            max-width: 1100px;
-            margin: 0 auto;
+        .mock-calendly {
+            background: var(--color-white); border-radius: var(--radius-md); max-width: 800px;
+            margin: 0 auto; height: 400px; display: flex; align-items: center; justify-content: center;
+            color: var(--color-text-light); box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
 
         /* Footer */
@@ -123,9 +127,6 @@
         @media (max-width: 768px) {
             .nav-links, .header-actions .btn-primary { display: none; }
             .mobile-menu-btn { display: block; }
-            .booking-integration { padding: 30px 0.75rem; margin-top: 20px; }
-            .booking-integration h2 { font-size: 1.8rem; }
-            .atendia-wrapper { max-width: 100%; padding: 0; }
 
             .nav-links.mob-open {
                 display: flex; flex-direction: column;
@@ -185,8 +186,7 @@
         </div>
     </section>
 
-    <!-- Tarjetas de terapias ocultas (reactivar quitando display:none de therapies-section) -->
-    <section class="container therapies-section" style="display:none">
+    <section class="container therapies-section">
         <div class="therapies-grid">
             <div class="therapy-card">
                 <i class="ph ph-magnet therapy-icon"></i>
@@ -218,17 +218,17 @@
         </div>
     </section>
 
-    <!-- Sección de Reservas -->
-    <section class="booking-integration" id="agendar">
-        <h2>Agenda tu Espacio de Sanación</h2>
-        <p>Selecciona tu servicio. Nuestro nuevo sistema te permite reservar en menos de 1 minuto sin complicaciones ni registros extensos.</p>
-
-        <!-- Widget AtendIA -->
-        <div class="atendia-wrapper">
+    <!-- Seamless Booking Prototype -->
+    <div class="container">
+        <section class="booking-integration" id="agendar">
+            <h2>Agenda tu Espacio de Sanación</h2>
+            <p>Selecciona tu ciudad. Nuestro nuevo sistema te permite reservar en menos de 1 minuto sin complicaciones ni registros extensos.</p>
+            
+            <!-- Widget de Agenda AtendIA -->
             <div class="atendia-booking" data-company="3"></div>
-        </div>
-        <script src="https://funnelstudio.click/AtendIA_dev/embed.js" async></script>
-    </section>
+            <script src="https://funnelstudio.click/AtendIA_dev/embed.js" async></script>
+        </section>
+    </div>
 
     <!-- WhatsApp Flotante -->
     <a href="https://wa.me/56912345678?text=Hola%20Flor%20de%20Cha%C3%B1ar%2C%20me%20gustar%C3%ADa%20obtener%20m%C3%A1s%20informaci%C3%B3n" class="wa-float" target="_blank" title="Escríbenos por WhatsApp"><i class="ph ph-whatsapp-logo"></i></a>
@@ -242,56 +242,6 @@
     </footer>
     <script>
         document.getElementById('year').textContent = new Date().getFullYear();
-
-        // ── Control de altura del iframe de AtendIA ──────────────────
-        // El widget comunica su altura via postMessage o modificando
-        // directamente el estilo del iframe. Usamos MutationObserver
-        // para detectar cada vez que el iframe cambia de alto y lo
-        // limitamos a MAX_H píxeles, evitando el espacio infinito.
-        (function () {
-            var MAX_H = 1400; // altura máxima razonable en px
-            var applied = false;
-
-            function capIframe(iframe) {
-                if (!iframe) return;
-                var obs = new MutationObserver(function () {
-                    var h = parseInt(iframe.style.height) || iframe.offsetHeight;
-                    if (h > MAX_H) {
-                        iframe.style.height = MAX_H + 'px';
-                        iframe.style.maxHeight = MAX_H + 'px';
-                    }
-                });
-                obs.observe(iframe, { attributes: true, attributeFilter: ['style', 'height'] });
-            }
-
-            function watchWidget() {
-                var container = document.querySelector('.atendia-booking');
-                if (!container) return;
-
-                // El embed puede insertar el iframe de forma asíncrona
-                var childObs = new MutationObserver(function (mutations) {
-                    mutations.forEach(function (m) {
-                        m.addedNodes.forEach(function (node) {
-                            if (node.tagName === 'IFRAME') {
-                                capIframe(node);
-                            }
-                        });
-                    });
-                    // También vigilar si ya estaba el iframe
-                    if (!applied) {
-                        var existing = container.querySelector('iframe');
-                        if (existing) { capIframe(existing); applied = true; }
-                    }
-                });
-                childObs.observe(container, { childList: true, subtree: true });
-            }
-
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', watchWidget);
-            } else {
-                watchWidget();
-            }
-        })();
     </script>
     <script src="wa-connect.js"></script>
     <script>
