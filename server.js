@@ -1468,6 +1468,18 @@ const FLOW_SANDBOX    = process.env.FLOW_SANDBOX !== 'false';
 const FLOW_HOST       = FLOW_SANDBOX ? 'sandbox.flow.cl' : 'www.flow.cl';
 const APP_URL         = (process.env.APP_URL || 'http://localhost:3000').replace(/\/$/, '');
 
+// DEBUG ENDPOINT PARA VERIFICAR VARIABLES (Solo desarrollo/diagnóstico)
+app.get('/api/debug/env', (req, res) => {
+    res.json({
+        FLOW_API_KEY_LOADED: !!FLOW_API_KEY,
+        FLOW_API_KEY_LENGTH: FLOW_API_KEY.length,
+        FLOW_SECRET_KEY_LOADED: !!FLOW_SECRET_KEY,
+        NODE_ENV: process.env.NODE_ENV,
+        PROCESS_CWD: process.cwd(),
+        DIRNAME: __dirname
+    });
+});
+
 function flowSign(params) {
     const str = Object.keys(params).sort().map(k => `${k}${params[k]}`).join('');
     return crypto.createHmac('sha256', FLOW_SECRET_KEY).update(str).digest('hex');
