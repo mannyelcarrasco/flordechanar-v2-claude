@@ -816,7 +816,12 @@ app.get('/api/cursos/publico/:id', async (req, res) => {
             [req.params.id]
         );
         if (cursos.length === 0) return res.status(404).json({ error: 'Curso no encontrado o no disponible' });
-        res.json(cursos[0]);
+        
+        const curso = cursos[0];
+        const [planes] = await pool.query('SELECT * FROM planes WHERE curso_id = ? AND activo = 1', [curso.id]);
+        curso.planes = planes;
+        
+        res.json(curso);
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: 'Error interno' });
