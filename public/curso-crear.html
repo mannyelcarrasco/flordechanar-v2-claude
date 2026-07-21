@@ -966,7 +966,7 @@ async function fetchProfessors() {
         });
         if (!res.ok) return;
         const profs = await res.json();
-        const container = document.getElementById('professorsPanel');
+        const container = document.getElementById('professorsContainer');
         if (!container) return;
         container.innerHTML = '';
         profs.forEach(p => {
