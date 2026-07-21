@@ -96,31 +96,12 @@
             text-align: center; margin-bottom: 80px; position: relative;
         }
 
-        /* Contenedor del widget con scroll interno */
-        .atendia-scroll-container {
-            width: 100%; 
-            min-height: 600px; 
-            max-height: 800px; 
-            overflow-y: auto; 
-            overflow-x: hidden;
-            position: relative; 
+        /* Contenedor del widget — sin restricciones para que se expanda naturalmente */
+        .atendia-wrapper {
+            width: 100%;
+            margin: 0 auto;
+            position: relative;
             padding: 0 10px;
-        }
-        
-        /* Estilos para la barra de scroll (Webkit) */
-        .atendia-scroll-container::-webkit-scrollbar {
-            width: 8px;
-        }
-        .atendia-scroll-container::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.05); 
-            border-radius: 4px;
-        }
-        .atendia-scroll-container::-webkit-scrollbar-thumb {
-            background: var(--color-accent); 
-            border-radius: 4px;
-        }
-        .atendia-scroll-container::-webkit-scrollbar-thumb:hover {
-            background: #e5b787; 
         }
         .booking-integration h2 { color: var(--color-white); margin-bottom: 1.5rem; font-size: 2.5rem; }
         .booking-integration p { color: rgba(255,255,255,0.7); max-width: 600px; margin: 0 auto 3rem; }
@@ -180,7 +161,7 @@
             .inner-hero h1 { font-size: 1.8rem; }
             .booking-tabs { flex-direction: column; padding: 0 1rem; }
             .booking-integration { margin-top: 0; margin-bottom: 40px; }
-            .atendia-scroll-container { padding: 0; }
+            .atendia-wrapper { padding: 0; }
         }
     </style>
 </head>
@@ -251,7 +232,7 @@
     <div class="container">
         <section class="booking-integration" id="agendar">
             <!-- Widget de Agenda AtendIA -->
-            <div class="atendia-scroll-container">
+            <div class="atendia-wrapper">
                 <div class="atendia-booking" data-company="3"></div>
             </div>
             <script src="https://funnelstudio.click/AtendIA_dev/embed.js" async></script>
