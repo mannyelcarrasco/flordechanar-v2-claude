@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle del Curso | Flor de Chañar</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="shared.css">
+
+    <style>
+        .inner-hero {
+            padding-top: 150px; padding-bottom: 60px;
+            background-color: var(--color-primary-dark);
+            color: var(--color-white);
+            text-align: center;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+        .inner-hero::before {
+            content: '';
+            position: absolute; top:0; left:0; width:100%; height:100%;
+            background: rgba(44, 53, 49, 0.7);
+        }
+        .inner-hero .container {
+            position: relative; z-index: 2;
+        }
+        .inner-hero h1 { font-size: 3.5rem; margin-bottom: 1rem; color: var(--color-white); max-width: 900px; margin: 0 auto 1rem; }
+        .inner-hero p { font-size: 1.1rem; color: rgba(255,255,255,0.8); max-width: 700px; margin: 0 auto; }
+        
+        .c-meta-top {
+            display: flex; justify-content: center; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;
+        }
+        .c-meta-top span {
+            background: rgba(255,255,255,0.2); padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
+        }
+
+        .landing-layout {
+            display: grid; grid-template-columns: 1fr 350px; gap: 4rem; padding: 60px 0;
+            max-width: 1100px; margin: 0 auto;
+        }
+
+        .l-content h2 { margin-top: 2rem; margin-bottom: 1rem; font-size: 1.8rem; color: var(--color-secondary); }
+        .l-content h3 { margin-top: 1.5rem; margin-bottom: 0.8rem; font-size: 1.4rem; color: var(--color-secondary); }
+        .l-content p { color: var(--color-text-main); margin-bottom: 1rem; font-size: 1.05rem; line-height: 1.7; }
+        .l-content ul { padding-left: 1.5rem; margin-bottom: 1.5rem; }
+        .l-content li { margin-bottom: 0.5rem; color: var(--color-text-main); }
+        .l-content strong { color: var(--color-secondary); }
+
+        .l-sidebar { position: sticky; top: 100px; align-self: start; }
+        .buy-card {
+            background: var(--color-white); border-radius: var(--radius-md); padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.06); text-align: center;
+        }
+        .buy-card h3 { font-family: var(--font-sans); font-size: 2.2rem; margin-bottom: 1rem; color: var(--color-primary-dark); }
+        .buy-card .btn { width: 100%; justify-content: center; font-size: 1.1rem; padding: 1rem; margin-bottom: 1rem; }
+        .buy-card .includes { text-align: left; margin-top: 1.5rem; border-top: 1px solid #E2E8F0; padding-top: 1.5rem; }
+        .buy-card .includes h4 { font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem; }
+        .buy-card .includes ul { list-style: none; padding: 0; }
+        .buy-card .includes li { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.8rem; font-size: 0.9rem; color: var(--color-text-light); }
+        .buy-card .includes i { color: var(--color-primary); font-size: 1.2rem; }
+
+        .curriculum-box {
+            border: 1px solid #E2E8F0; border-radius: var(--radius-md); margin-top: 2rem; overflow: hidden;
+        }
+        .curriculum-module { border-bottom: 1px solid #E2E8F0; }
+        .curriculum-module:last-child { border-bottom: none; }
+        .mod-hdr { padding: 1.2rem 1.5rem; background: #F8FAFC; font-weight: 600; color: var(--color-secondary); cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .mod-hdr:hover { background: #F1F5F9; }
+        .mod-bdy { padding: 0 1.5rem; display: none; }
+        .mod-bdy.open { display: block; padding-bottom: 1.2rem; }
+        .mod-bdy .lesson { display: flex; align-items: center; gap: 0.8rem; padding: 0.8rem 0; border-bottom: 1px dashed #E2E8F0; font-size: 0.95rem; color: var(--color-text-light); }
+        .mod-bdy .lesson:last-child { border-bottom: none; }
+        .mod-bdy .lesson i { color: var(--color-primary); font-size: 1.2rem; }
+
+        @media (max-width: 900px) {
+            .landing-layout { grid-template-columns: 1fr; padding: 30px 1.5rem; }
+            .inner-hero h1 { font-size: 2.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container header-content">
+            <a href="index.html" class="logo">
+                <img src="logo.png" alt="Logo" style="height: 40px; border-radius: 50%;">
+                Flor de Chañar
+            </a>
+            <nav class="nav-links" id="navLinks">
+                <a href="index.html">Inicio</a>
+                <a href="terapias.html">Terapias</a>
+                <a href="escuela.html" class="active">Escuela</a>
+                <a href="#">Sedes</a>
+                <a href="#">Contacto</a>
+                <a href="login.html" class="mob-cta"><i class="ph ph-user"></i> Iniciar Sesión</a>
+            </nav>
+            <div class="header-actions">
+                <a href="login.html" class="btn btn-primary"><i class="ph ph-user"></i> Mi Aula</a>
+                <button class="mobile-menu-btn" onclick="toggleMenu()"><i class="ph ph-list"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <div id="loading" style="text-align: center; padding: 200px 0; color: var(--color-text-light); font-size: 1.2rem;">
+        <i class="ph ph-spinner ph-spin" style="font-size: 3rem; color: var(--color-primary); margin-bottom: 1rem;"></i><br>
+        Cargando detalles del curso...
+    </div>
+
+    <div id="courseContent" style="display: none;">
+        <!-- Hero -->
+        <section class="inner-hero" id="heroSec">
+            <div class="container">
+                <div class="c-meta-top" id="cMeta">
+                    <!-- Badges -->
+                </div>
+                <h1 id="cTitle">Título del Curso</h1>
+                <p id="cDesc">Descripción corta</p>
+            </div>
+        </section>
+
+        <!-- Layout principal -->
+        <div class="landing-layout">
+            <!-- Left: Description & Curriculum -->
+            <div class="l-content">
+                <div id="cLongDesc" style="margin-bottom: 3rem;">
+                    <!-- AI Generated Sales Copy -->
+                </div>
+
+                <h2>Temario del Curso</h2>
+                <div class="curriculum-box" id="cCurriculum">
+                    <p style="padding: 2rem; text-align: center; color: var(--color-text-light);">Cargando temario...</p>
+                </div>
+            </div>
+
+            <!-- Right: Buy Card -->
+            <div class="l-sidebar">
+                <div class="buy-card">
+                    <h3 id="cPrice">$0</h3>
+                    <a href="#" id="cBuyBtn" class="btn btn-primary" onclick="handleBuy(event)">Inscribirme Ahora</a>
+                    <p style="font-size: 0.8rem; color: var(--color-text-light);"><i class="ph ph-shield-check"></i> Pago 100% seguro</p>
+
+                    <div class="includes">
+                        <h4>Este curso incluye:</h4>
+                        <ul>
+                            <li id="incMod"><i class="ph ph-video-camera"></i> <span id="lblMod">100% Online</span></li>
+                            <li><i class="ph ph-device-mobile"></i> Acceso en cualquier dispositivo</li>
+                            <li id="incCert"><i class="ph ph-certificate"></i> Certificado al finalizar</li>
+                            <li><i class="ph ph-infinity"></i> Acceso 24/7 de por vida</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <a href="https://wa.me/56912345678" class="wa-float" target="_blank"><i class="ph ph-whatsapp-logo"></i></a>
+
+    <script>
+        function toggleMenu() {
+            document.getElementById('navLinks').classList.toggle('mob-open');
+        }
+
+        let currentCourse = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const courseId = urlParams.get('id');
+            
+            if (!courseId) {
+                document.getElementById('loading').innerHTML = '⚠️ Curso no encontrado.';
+                return;
+            }
+
+            try {
+                // Fetch public course data
+                const res = await fetch('/api/cursos/publico/' + courseId);
+                if (!res.ok) {
+                    document.getElementById('loading').innerHTML = '⚠️ Curso no encontrado o no disponible.';
+                    return;
+                }
+                
+                currentCourse = await res.json();
+                renderCourse(currentCourse);
+
+                // Fetch curriculum
+                const curRes = await fetch('/api/cursos/' + courseId + '/curriculum');
+                if (curRes.ok) {
+                    const curriculum = await curRes.json();
+                    renderCurriculum(curriculum);
+                }
+            } catch(e) {
+                document.getElementById('loading').innerHTML = '⚠️ Error de conexión.';
+                console.error(e);
+            }
+        });
+
+        function renderCourse(c) {
+            document.title = c.titulo + " | Flor de Chañar";
+            
+            // Hero
+            if(c.portada_url) {
+                document.getElementById('heroSec').style.backgroundImage = `url('${c.portada_url}')`;
+            } else {
+                document.getElementById('heroSec').style.backgroundImage = `url('https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1200&q=80')`;
+            }
+            
+            document.getElementById('cTitle').textContent = c.titulo;
+            document.getElementById('cDesc').textContent = c.descripcion;
+
+            let badges = '';
+            if(c.categoria) badges += `<span>${c.categoria}</span>`;
+            if(c.nivel) badges += `<span>${c.nivel}</span>`;
+            if(c.modalidad) badges += `<span>${c.modalidad}</span>`;
+            document.getElementById('cMeta').innerHTML = badges;
+
+            // Description
+            if (c.descripcion_ventas && c.descripcion_ventas.trim() !== '') {
+                document.getElementById('cLongDesc').innerHTML = c.descripcion_ventas;
+            } else {
+                document.getElementById('cLongDesc').innerHTML = `<p>${c.descripcion}</p><p>Próximamente más información detallada de este curso.</p>`;
+            }
+
+            // Buy Box
+            const isGratis = c.tipo_acceso === 'gratis' || !c.precio;
+            if (isGratis) {
+                document.getElementById('cPrice').textContent = 'Gratis';
+                document.getElementById('cBuyBtn').textContent = 'Inscribirme Gratis';
+            } else if (c.tipo_acceso === 'suscripcion') {
+                document.getElementById('cPrice').textContent = 'Suscripción';
+                document.getElementById('cBuyBtn').textContent = 'Ver Planes';
+            } else {
+                const fmt = n => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(n);
+                document.getElementById('cPrice').textContent = fmt(c.precio);
+                document.getElementById('cBuyBtn').textContent = 'Comprar Ahora';
+            }
+
+            document.getElementById('lblMod').textContent = c.modalidad || 'Online';
+            if(!c.certificacion) {
+                document.getElementById('incCert').style.display = 'none';
+            }
+
+            // Show content
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('courseContent').style.display = 'block';
+        }
+
+        function renderCurriculum(modules) {
+            const box = document.getElementById('cCurriculum');
+            if (!modules || modules.length === 0) {
+                box.innerHTML = '<p style="padding: 1.5rem; text-align: center; color: var(--color-text-light);">El temario aún no ha sido publicado.</p>';
+                return;
+            }
+
+            let html = '';
+            modules.forEach((mod, idx) => {
+                const isOpen = idx === 0 ? 'open' : '';
+                html += `<div class="curriculum-module">
+                    <div class="mod-hdr" onclick="toggleMod(this)">
+                        <span>Módulo ${idx+1}: ${mod.titulo}</span>
+                        <i class="ph ph-caret-down"></i>
+                    </div>
+                    <div class="mod-bdy ${isOpen}">
+                `;
+                if(mod.lecciones && mod.lecciones.length > 0) {
+                    mod.lecciones.forEach(lec => {
+                        let icon = 'ph-play-circle';
+                        if(lec.tipo === 'texto') icon = 'ph-file-text';
+                        if(lec.tipo === 'clase_vivo') icon = 'ph-video-camera';
+                        html += `<div class="lesson"><i class="ph ${icon}"></i> ${lec.titulo}</div>`;
+                    });
+                } else {
+                    html += `<div class="lesson" style="justify-content:center;font-style:italic">Clases por anunciar</div>`;
+                }
+                html += `</div></div>`;
+            });
+            box.innerHTML = html;
+        }
+
+        function toggleMod(hdr) {
+            const bdy = hdr.nextElementSibling;
+            bdy.classList.toggle('open');
+        }
+
+        async function handleBuy(e) {
+            e.preventDefault();
+            if(!currentCourse) return;
+            
+            const isGratis = currentCourse.tipo_acceso === 'gratis' || !currentCourse.precio;
+            if (isGratis) {
+                // Inscribir directo
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+                try {
+                    const res = await fetch('/api/cursos/inscribir', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                        body: JSON.stringify({ curso_id: currentCourse.id })
+                    });
+                    if (res.ok) {
+                        window.location.href = 'dashboard.html';
+                    } else {
+                        const data = await res.json();
+                        alert(data.error || 'Error al intentar inscribirse.');
+                    }
+                } catch(e) { console.error(e); }
+            } else if (currentCourse.tipo_acceso === 'suscripcion') {
+                window.location.href = 'pago.html?tipo=suscripcion';
+            } else {
+                window.location.href = 'pago.html?tipo=curso&id=' + currentCourse.id;
+            }
+        }
+    </script>
+</body>
+</html>

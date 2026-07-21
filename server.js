@@ -287,6 +287,7 @@ async function initDB() {
             `ALTER TABLE cursos ADD COLUMN nivel VARCHAR(50)`,
             `ALTER TABLE cursos ADD COLUMN duracion_total VARCHAR(100)`,
             `ALTER TABLE cursos ADD COLUMN idioma VARCHAR(50)`,
+            `ALTER TABLE cursos ADD COLUMN descripcion_ventas LONGTEXT`,
             `ALTER TABLE cursos ADD COLUMN certificacion BOOLEAN DEFAULT FALSE`,
             `ALTER TABLE cursos ADD COLUMN modalidad VARCHAR(50) DEFAULT 'Online (Grabado)'`,
             `ALTER TABLE usuarios ADD COLUMN matriculado BOOLEAN DEFAULT FALSE`,
@@ -418,7 +419,96 @@ app.post('/api/upload', verifyToken, (req, res) => {
     });
 });
 
-// --- Helpers de validación ---
+// --- Helpers de IA ---
+let pdfParse = null;
+try { pdfParse = require('pdf-parse'); } catch (e) { console.warn("pdf-parse no instalado aún"); }
+
+app.post('/api/ai/generar-ventas', verifyToken, (req, res) => {
+    upload.single('file')(req, res, async (err) => {
+        if (err) return res.status(400).json({ error: err.message });
+        
+        try {
+            const { titulo, modulosText, extraContext } = req.body;
+            let fullContext = `Título del curso: ${titulo || 'Sin título'}\n\n`;
+            if (modulosText) {
+                fullContext += `Temario (Módulos):\n${modulosText}\n\n`;
+            }
+            if (extraContext) {
+                fullContext += `Contexto Adicional:\n${extraContext}\n\n`;
+            }
+
+            // Procesar PDF si existe
+            if (req.file) {
+                if (req.file.mimetype === 'application/pdf') {
+                    if (!pdfParse) return res.status(500).json({ error: "Librería pdf-parse no está instalada" });
+                    const dataBuffer = fs.readFileSync(req.file.path);
+                    const pdfData = await pdfParse(dataBuffer);
+                    fullContext += `Contenido del documento PDF:\n${pdfData.text}\n\n`;
+                }
+                // Limpiar el archivo subido para no ocupar espacio
+                fs.unlinkSync(req.file.path);
+            }
+
+            const prompt = `Eres un experto copywriter de ventas para cursos educativos de terapias holísticas y naturales. 
+Con la siguiente información del curso, redacta una página de ventas (landing page) persuasiva, estructurada en HTML limpio (usando <h2>, <h3>, <ul>, <p>, y <strong>). 
+No incluyas etiquetas <html>, <head> o <body>, solo el contenido. 
+Estructura sugerida:
+1. Párrafo introductorio enganchador (dolor/solución).
+2. "Para quién es este curso".
+3. "Qué lograrás".
+4. Breve resumen de por qué la metodología es la mejor.
+Usa un tono profesional, inspirador y empático.
+
+Información del curso:
+${fullContext}`;
+
+            const openaiKey = process.env.OPENAI_API_KEY;
+            const geminiKey = process.env.GEMINI_API_KEY;
+            let aiResponse = "";
+
+            if (openaiKey) {
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
+                    body: JSON.stringify({
+                        model: "gpt-4o-mini",
+                        messages: [
+                            { role: "system", content: "Eres un copywriter experto en marketing educativo." },
+                            { role: "user", content: prompt }
+                        ]
+                    })
+                });
+                const data = await response.json();
+                if (data.error) throw new Error(data.error.message);
+                aiResponse = data.choices[0].message.content;
+
+            } else if (geminiKey) {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }]
+                    })
+                });
+                const data = await response.json();
+                if (data.error) throw new Error(data.error.message);
+                aiResponse = data.candidates[0].content.parts[0].text;
+            } else {
+                return res.status(500).json({ error: "No hay ninguna API Key de IA configurada en el servidor (.env)" });
+            }
+
+            // Remove markdown code block wrapping if present
+            aiResponse = aiResponse.replace(/^```html/i, '').replace(/```$/i, '').trim();
+
+            res.json({ result: aiResponse });
+
+        } catch (e) {
+            console.error(e);
+            res.status(500).json({ error: e.message || "Error al generar texto" });
+        }
+    });
+});
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 function validEmail(e) { return typeof e === 'string' && EMAIL_RE.test(e.trim()); }
 function validStr(s, min = 1, max = 300) { return typeof s === 'string' && s.trim().length >= min && s.trim().length <= max; }
@@ -593,14 +683,14 @@ app.get('/api/cursos', async (req, res) => {
 app.post('/api/cursos', verifyToken, async (req, res) => {
     if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
     try {
-        const { titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad } = req.body;
+        const { titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas } = req.body;
         if (!validStr(titulo, 3, 300)) return res.status(400).json({ error: 'Título del curso requerido (3-300 caracteres)' });
         const estadosPermitidos = ['borrador', 'publicado', 'archivado', 'interno'];
         if (estado && !estadosPermitidos.includes(estado)) return res.status(400).json({ error: 'Estado inválido' });
         const profAsignado = profesor_id || req.usuario.id;
         const result = await pool.query(
-            'INSERT INTO cursos (titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [titulo, descripcion, precio, tipo_acceso || 'gratis', portada_url, estado, profAsignado, categoria||null, nivel||null, duracion_total||null, idioma||null, certificacion ? 1 : 0, modalidad||'Online (Grabado)']
+            'INSERT INTO cursos (titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [titulo, descripcion, precio, tipo_acceso || 'gratis', portada_url, estado, profAsignado, categoria||null, nivel||null, duracion_total||null, idioma||null, certificacion ? 1 : 0, modalidad||'Online (Grabado)', descripcion_ventas||null]
         );
         res.json({ success: true, id: result[0].insertId });
     } catch (e) {
@@ -715,6 +805,24 @@ app.get('/api/cursos/:id/progreso', verifyToken, async (req, res) => {
     }
 });
 
+// Obtener Curso Público por ID (Para la Landing Page)
+app.get('/api/cursos/publico/:id', async (req, res) => {
+    try {
+        const [cursos] = await pool.query(
+            `SELECT c.*, u.nombre as profesor_nombre
+             FROM cursos c
+             LEFT JOIN usuarios u ON c.profesor_id = u.id
+             WHERE c.id = ? AND c.estado IN ('publicado', 'interno')`,
+            [req.params.id]
+        );
+        if (cursos.length === 0) return res.status(404).json({ error: 'Curso no encontrado o no disponible' });
+        res.json(cursos[0]);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error interno' });
+    }
+});
+
 // Obtener Curso por ID (ruta genérica - debe ir DESPUÉS de las rutas específicas)
 app.get('/api/cursos/:id', verifyToken, async (req, res) => {
     try {
@@ -736,11 +844,11 @@ app.get('/api/cursos/:id', verifyToken, async (req, res) => {
 app.put('/api/cursos/:id', verifyToken, async (req, res) => {
     if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
     try {
-        const { titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad } = req.body;
+        const { titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas } = req.body;
         const profAsignado = profesor_id || req.usuario.id;
         await pool.query(
-            'UPDATE cursos SET titulo=?, descripcion=?, precio=?, tipo_acceso=?, portada_url=?, estado=?, profesor_id=?, categoria=?, nivel=?, duracion_total=?, idioma=?, certificacion=?, modalidad=? WHERE id=?',
-            [titulo, descripcion, precio, tipo_acceso || 'gratis', portada_url, estado, profAsignado, categoria||null, nivel||null, duracion_total||null, idioma||null, certificacion ? 1 : 0, modalidad||'Online (Grabado)', req.params.id]
+            'UPDATE cursos SET titulo=?, descripcion=?, precio=?, tipo_acceso=?, portada_url=?, estado=?, profesor_id=?, categoria=?, nivel=?, duracion_total=?, idioma=?, certificacion=?, modalidad=?, descripcion_ventas=? WHERE id=?',
+            [titulo, descripcion, precio, tipo_acceso || 'gratis', portada_url, estado, profAsignado, categoria||null, nivel||null, duracion_total||null, idioma||null, certificacion ? 1 : 0, modalidad||'Online (Grabado)', descripcion_ventas||null, req.params.id]
         );
         res.json({ success: true, message: 'Curso actualizado con éxito' });
     } catch (e) {

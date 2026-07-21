@@ -260,12 +260,8 @@
                         : tipo === 'suscripcion'
                             ? `<span style="background:#EFF6FF;color:#2563EB;padding:.2rem .7rem;border-radius:20px;font-size:.75rem;font-weight:700">Con suscripción</span>`
                             : `<span style="font-weight:800;color:var(--color-primary);font-size:1rem">${fmt(curso.precio)}</span>`;
-                    const ctaLabel = isGratis ? 'Inscribirme gratis' : tipo === 'suscripcion' ? 'Suscribirme' : `Comprar ${fmt(curso.precio)}`;
-                    const ctaOnclick = isGratis
-                        ? `inscribir(${curso.id})`
-                        : tipo === 'suscripcion'
-                            ? `location.href='pago.html?tipo=suscripcion'`
-                            : `location.href='pago.html?tipo=curso&id=${curso.id}'`;
+                    const ctaLabel = 'Ver detalles';
+                    const ctaOnclick = `location.href='detalle.html?id=${curso.id}'`;
 
                     grid.innerHTML += `
                         <div class="course-card">

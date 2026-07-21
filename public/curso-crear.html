@@ -194,7 +194,16 @@
 
             <div class="fg"><label class="fl">Título del curso <span style="color:var(--err)">*</span></label><input class="fc" type="text" id="courseTitle" placeholder="Ej: Diplomado en Biomagnetismo Clínico Integral" oninput="updateChecklist()"></div>
             <div class="fg"><label class="fl">Subtítulo / descripción corta</label><input class="fc" type="text" placeholder="Ej: Aprende a dominar los pares biomagnéticos desde cero hasta nivel clínico"></div>
-            <div class="fg"><label class="fl">Descripción completa</label><textarea class="fc" id="courseDesc" rows="4" placeholder="Describe qué aprenderá el estudiante, a quién va dirigido y cuáles son los requisitos previos..."></textarea></div>
+            <div class="fg"><label class="fl">Descripción corta (Tarjeta)</label><textarea class="fc" id="courseDesc" rows="2" placeholder="Describe brevemente el curso..."></textarea></div>
+            <div class="fg">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
+                    <label class="fl" style="margin:0;">Página de Ventas (Landing Page HTML)</label>
+                    <button class="btn" style="background:var(--color-primary); color:white; font-size:0.75rem; padding:0.2rem 0.6rem; border-radius:6px; cursor:pointer;" onclick="openAiModal()">
+                        <i class="ph ph-magic-wand"></i> Generar con IA
+                    </button>
+                </div>
+                <textarea class="fc" id="courseDescVentas" rows="6" placeholder="Texto persuasivo y estructurado en HTML para tu página de ventas..."></textarea>
+            </div>
 
             <div class="three">
                 <div class="fg">
@@ -384,6 +393,28 @@
                 <button class="btn" style="background:var(--s);color:#fff;width:100%;justify-content:center;margin-bottom:.5rem;" onclick="publishCourse('publicado')"><i class="ph ph-paper-plane-tilt"></i> Publicar al Público</button>
                 <a href="profesor.html" class="btn" style="background:transparent;border:1.5px solid #D1D5DB;color:var(--s);width:100%;justify-content:center;font-size:.82rem"><i class="ph ph-arrow-square-out"></i> Ir al Panel de Profesor</a>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Generar con IA -->
+<div class="modal-overlay" id="aiModalBg" onclick="closeAiModal()">
+    <div class="modal-card" onclick="event.stopPropagation()">
+        <h3 style="margin-bottom:1rem"><i class="ph ph-magic-wand" style="color:var(--color-primary)"></i> Asistente de IA para Ventas</h3>
+        <p style="font-size:0.85rem; color:var(--l); margin-bottom:1rem;">Sube un documento o pega texto con información de tu curso. La IA leerá tu temario y este contexto para redactar una página de ventas persuasiva.</p>
+        
+        <div class="fg">
+            <label class="fl">Documento de contexto (PDF Opcional)</label>
+            <input type="file" id="aiFile" class="fc" accept=".pdf">
+        </div>
+        <div class="fg">
+            <label class="fl">Instrucciones o texto adicional</label>
+            <textarea class="fc" id="aiExtraText" rows="4" placeholder="Ej: Menciona que no se requieren conocimientos previos y que el enfoque es 100% práctico..."></textarea>
+        </div>
+        
+        <div style="display:flex;justify-content:flex-end;gap:.5rem;margin-top:1rem">
+            <button class="btn bo" onclick="closeAiModal()">Cancelar</button>
+            <button class="btn bp" id="btnGenerateAi" onclick="generateSalesCopy()"><i class="ph ph-sparkle"></i> Generar Texto</button>
         </div>
     </div>
 </div>
@@ -1047,6 +1078,7 @@ window.addEventListener('load', async () => {
                     const c = await res.json();
                     document.getElementById('courseTitle').value = c.titulo || '';
                     document.getElementById('courseDesc').value = c.descripcion || '';
+                    document.getElementById('courseDescVentas').value = c.descripcion_ventas || '';
                     document.getElementById('coursePrice').value = c.precio || '';
                     document.getElementById('courseCategory').value = c.categoria || '';
                     document.getElementById('courseLevel').value = c.nivel || 'Principiante';
@@ -1105,6 +1137,7 @@ async function saveDraft() {
         const payload = {
             titulo: title,
             descripcion: desc,
+            descripcion_ventas: document.getElementById('courseDescVentas').value,
             precio: price,
             tipo_acceso: document.getElementById('accessType').value,
             portada_url: currentCoverUrl || null,
@@ -1168,6 +1201,7 @@ async function publishCourse(estadoFinal = 'publicado') {
         const payload = {
             titulo: title,
             descripcion: desc,
+            descripcion_ventas: document.getElementById('courseDescVentas').value,
             precio: price,
             tipo_acceso: document.getElementById('accessType').value,
             portada_url: portada_url,
