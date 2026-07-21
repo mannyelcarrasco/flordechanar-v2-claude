@@ -2261,7 +2261,8 @@ loadStats();
 async function renderAdminCourses() {
     const tbody = document.getElementById('adminCoursesBody');
     try {
-        const res = await fetch('/api/cursos');
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/admin/cursos', { headers: { 'Authorization': 'Bearer ' + token } });
         const cursos = await res.json();
         
         if (cursos.length === 0) {
@@ -2320,7 +2321,7 @@ async function renderAccessMatrix() {
         const resProf = await fetch('/api/usuarios/profesores', { headers: {'Authorization': 'Bearer ' + token} });
         const profesores = await resProf.json();
         
-        const resCur = await fetch('/api/cursos');
+        const resCur = await fetch('/api/admin/cursos', { headers: { 'Authorization': 'Bearer ' + token } });
         const cursos = await resCur.json();
 
         // Build Head

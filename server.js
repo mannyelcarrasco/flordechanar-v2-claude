@@ -281,7 +281,7 @@ async function initDB() {
             `ALTER TABLE lecciones ADD COLUMN tipo VARCHAR(20) DEFAULT 'video'`,
             `ALTER TABLE lecciones ADD COLUMN duracion VARCHAR(50)`,
             `ALTER TABLE lecciones ADD COLUMN visibilidad VARCHAR(10) DEFAULT 'privada'`,
-            `ALTER TABLE lecciones ADD COLUMN orden INT DEFAULT 0`,
+            `ALTER TABLE cursos MODIFY COLUMN estado ENUM('borrador','publicado','archivado','interno') DEFAULT 'borrador'`,
             `ALTER TABLE cursos ADD COLUMN tipo_acceso VARCHAR(20) DEFAULT 'gratis'`,
             `ALTER TABLE cursos ADD COLUMN categoria VARCHAR(100)`,
             `ALTER TABLE cursos ADD COLUMN nivel VARCHAR(50)`,
@@ -593,7 +593,7 @@ app.post('/api/cursos', verifyToken, async (req, res) => {
     try {
         const { titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion } = req.body;
         if (!validStr(titulo, 3, 300)) return res.status(400).json({ error: 'Título del curso requerido (3-300 caracteres)' });
-        const estadosPermitidos = ['borrador', 'publicado', 'archivado'];
+        const estadosPermitidos = ['borrador', 'publicado', 'archivado', 'interno'];
         if (estado && !estadosPermitidos.includes(estado)) return res.status(400).json({ error: 'Estado inválido' });
         const profAsignado = profesor_id || req.usuario.id;
         const result = await pool.query(
@@ -750,7 +750,22 @@ app.put('/api/cursos/:id', verifyToken, async (req, res) => {
 app.delete('/api/cursos/:id', verifyToken, async (req, res) => {
     if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
     try {
-        await pool.query('DELETE FROM cursos WHERE id = ?', [req.params.id]);
+        const cid = req.params.id;
+        
+        // Manual cascading delete to prevent foreign key issues on strict DBs without CASCADE
+        await pool.query('DELETE FROM progreso_lecciones WHERE leccion_id IN (SELECT id FROM lecciones WHERE modulo_id IN (SELECT id FROM modulos WHERE curso_id = ?))', [cid]);
+        await pool.query('DELETE FROM lecciones WHERE modulo_id IN (SELECT id FROM modulos WHERE curso_id = ?)', [cid]);
+        await pool.query('DELETE FROM modulos WHERE curso_id = ?', [cid]);
+        
+        await pool.query('DELETE FROM respuestas WHERE intento_id IN (SELECT id FROM intentos WHERE evaluacion_id IN (SELECT id FROM evaluaciones WHERE curso_id = ?))', [cid]);
+        await pool.query('DELETE FROM intentos WHERE evaluacion_id IN (SELECT id FROM evaluaciones WHERE curso_id = ?)', [cid]);
+        await pool.query('DELETE FROM preguntas WHERE evaluacion_id IN (SELECT id FROM evaluaciones WHERE curso_id = ?)', [cid]);
+        await pool.query('DELETE FROM evaluaciones WHERE curso_id = ?', [cid]);
+
+        await pool.query('DELETE FROM inscripciones WHERE curso_id = ?', [cid]);
+        await pool.query('DELETE FROM clases_vivo WHERE curso_id = ?', [cid]);
+        
+        await pool.query('DELETE FROM cursos WHERE id = ?', [cid]);
         res.json({ success: true, message: 'Curso eliminado' });
     } catch (e) {
         console.error('DELETE ERROR:', e);
@@ -1138,6 +1153,39 @@ app.get('/api/admin/stats', verifyToken, async (req, res) => {
         `);
         res.json(stats);
     } catch (e) { console.error(e); res.status(500).json({ error: 'Error al obtener stats' }); }
+});
+
+app.get('/api/admin/estadisticas', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Permission denied' });
+    try {
+        const [[stats]] = await pool.query(`
+            SELECT 
+                (SELECT COUNT(*) FROM usuarios) as total_usuarios,
+                (SELECT COUNT(*) FROM cursos WHERE estado = 'publicado') as cursos_publicados,
+                (SELECT COUNT(*) FROM inscripciones) as total_inscripciones
+        `);
+        res.json(stats);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error al obtener estadísticas' });
+    }
+});
+
+app.get('/api/admin/cursos', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Permission denied' });
+    try {
+        const [cursos] = await pool.query(`
+            SELECT c.*, u.nombre as profesor,
+                   (SELECT COUNT(*) FROM inscripciones WHERE curso_id = c.id) as alumnos
+            FROM cursos c
+            LEFT JOIN usuarios u ON c.profesor_id = u.id
+            ORDER BY c.creado_en DESC
+        `);
+        res.json(cursos);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error al obtener cursos admin' });
+    }
 });
 
 // Listar todas las inscripciones (admin)
