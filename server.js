@@ -1696,7 +1696,7 @@ app.post('/api/suscripciones/iniciar', verifyToken, async (req, res) => {
         // Registrar tarjeta
         const { data: regData } = await flowPost('customer/register', {
             customerId: flowCustomerId,
-            urlReturn: `${APP_URL}/suscripcion.html?estado=ok&plan=${plan.id}`
+            url_return: `${APP_URL}/suscripcion.html?estado=ok&plan=${plan.id}`
         });
         if (!regData.url) throw new Error('Error registro tarjeta: ' + JSON.stringify(regData));
         res.json({ redirectUrl: `${regData.url}?token=${regData.token}` });
