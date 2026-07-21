@@ -224,41 +224,9 @@
             <h2>Agenda tu Espacio de Sanación</h2>
             <p>Selecciona tu ciudad. Nuestro nuevo sistema te permite reservar en menos de 1 minuto sin complicaciones ni registros extensos.</p>
             
-            <div class="booking-tabs">
-                <button class="b-tab active" onclick="switchSede(this,'sede-calama')">Sede Calama</button>
-                <button class="b-tab" onclick="switchSede(this,'sede-serena')">Sede La Serena</button>
-                <button class="b-tab" onclick="switchSede(this,'sede-online')">Online (Videollamada)</button>
-            </div>
-
-            <!-- Panel Calama -->
-            <div class="mock-calendly sede-panel active" id="sede-calama">
-                <div style="text-align:center">
-                    <i class="ph ph-map-pin" style="font-size:3rem;color:#cbd5e1;margin-bottom:.75rem"></i>
-                    <p style="font-size:1.15rem;color:#94a3b8;margin-bottom:1rem"><strong style="color:#fff">Sede Calama</strong><br>Elige tu terapeuta y reserva tu hora.</p>
-                    <p style="font-size:.9rem;color:rgba(255,255,255,.5)">📍 Calama, Región de Antofagasta<br>📞 Contáctanos por WhatsApp para disponibilidad inmediata</p>
-                    <a href="https://wa.me/56912345678?text=Hola%2C%20quiero%20agendar%20una%20sesi%C3%B3n%20en%20Calama" target="_blank" style="display:inline-flex;align-items:center;gap:.5rem;margin-top:1.5rem;padding:.8rem 1.8rem;background:#25D366;color:#fff;border-radius:9999px;font-weight:600;text-decoration:none"><i class="ph ph-whatsapp-logo"></i> Agendar por WhatsApp</a>
-                </div>
-            </div>
-
-            <!-- Panel La Serena -->
-            <div class="mock-calendly sede-panel" id="sede-serena">
-                <div style="text-align:center">
-                    <i class="ph ph-waves" style="font-size:3rem;color:#cbd5e1;margin-bottom:.75rem"></i>
-                    <p style="font-size:1.15rem;color:#94a3b8;margin-bottom:1rem"><strong style="color:#fff">Sede La Serena</strong><br>Nueva locación, misma calidad de atención.</p>
-                    <p style="font-size:.9rem;color:rgba(255,255,255,.5)">📍 La Serena, Región de Coquimbo<br>📞 Contáctanos por WhatsApp para disponibilidad inmediata</p>
-                    <a href="https://wa.me/56912345678?text=Hola%2C%20quiero%20agendar%20una%20sesi%C3%B3n%20en%20La%20Serena" target="_blank" style="display:inline-flex;align-items:center;gap:.5rem;margin-top:1.5rem;padding:.8rem 1.8rem;background:#25D366;color:#fff;border-radius:9999px;font-weight:600;text-decoration:none"><i class="ph ph-whatsapp-logo"></i> Agendar por WhatsApp</a>
-                </div>
-            </div>
-
-            <!-- Panel Online -->
-            <div class="mock-calendly sede-panel" id="sede-online">
-                <div style="text-align:center">
-                    <i class="ph ph-video-camera" style="font-size:3rem;color:#cbd5e1;margin-bottom:.75rem"></i>
-                    <p style="font-size:1.15rem;color:#94a3b8;margin-bottom:1rem"><strong style="color:#fff">Sesión Online</strong><br>Videollamada desde donde estés, sin desplazamientos.</p>
-                    <p style="font-size:.9rem;color:rgba(255,255,255,.5)">🌐 Disponible para todo Chile y el exterior<br>📞 Contáctanos para coordinar día y hora</p>
-                    <a href="https://wa.me/56912345678?text=Hola%2C%20quiero%20agendar%20una%20sesi%C3%B3n%20online" target="_blank" style="display:inline-flex;align-items:center;gap:.5rem;margin-top:1.5rem;padding:.8rem 1.8rem;background:#25D366;color:#fff;border-radius:9999px;font-weight:600;text-decoration:none"><i class="ph ph-whatsapp-logo"></i> Agendar por WhatsApp</a>
-                </div>
-            </div>
+            <!-- Widget de Agenda AtendIA -->
+            <div class="atendia-booking" data-company="3"></div>
+            <script src="https://funnelstudio.click/AtendIA_dev/embed.js" async></script>
         </section>
     </div>
 
@@ -274,12 +242,6 @@
     </footer>
     <script>
         document.getElementById('year').textContent = new Date().getFullYear();
-        function switchSede(btn, sedeId) {
-            document.querySelectorAll('.b-tab').forEach(t => t.classList.remove('active'));
-            btn.classList.add('active');
-            document.querySelectorAll('.sede-panel').forEach(p => p.classList.remove('active'));
-            document.getElementById(sedeId).classList.add('active');
-        }
     </script>
     <script src="wa-connect.js"></script>
     <script>
