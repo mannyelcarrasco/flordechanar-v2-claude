@@ -196,7 +196,7 @@
             <div class="fg"><label class="fl">Subtítulo / descripción corta</label><input class="fc" type="text" placeholder="Ej: Aprende a dominar los pares biomagnéticos desde cero hasta nivel clínico"></div>
             <div class="fg"><label class="fl">Descripción completa</label><textarea class="fc" id="courseDesc" rows="4" placeholder="Describe qué aprenderá el estudiante, a quién va dirigido y cuáles son los requisitos previos..."></textarea></div>
 
-            <div class="two">
+            <div class="three">
                 <div class="fg">
                     <label class="fl">Categoría</label>
                     <select class="fc" id="courseCategory" onchange="updateChecklist()">
@@ -216,6 +216,15 @@
                         <option>Intermedio</option>
                         <option>Avanzado</option>
                         <option>Todos los niveles</option>
+                    </select>
+                </div>
+                <div class="fg">
+                    <label class="fl">Modalidad</label>
+                    <select class="fc" id="courseModalidad">
+                        <option value="Online (Grabado)">Online (Grabado)</option>
+                        <option value="Online (En vivo)">Online (En vivo)</option>
+                        <option value="Presencial">Presencial</option>
+                        <option value="Híbrido">Híbrido</option>
                     </select>
                 </div>
             </div>
@@ -1022,6 +1031,7 @@ window.addEventListener('load', async () => {
                     document.getElementById('courseDuration').value = c.duracion_total || '';
                     document.getElementById('courseLanguage').value = c.idioma || 'Español';
                     document.getElementById('courseCert').value = c.certificacion ? "1" : "0";
+                    document.getElementById('courseModalidad').value = c.modalidad || 'Online (Grabado)';
                     if (c.tipo_acceso) {
                         document.getElementById('accessType').value = c.tipo_acceso;
                         togglePrice();
@@ -1078,7 +1088,8 @@ async function saveDraft() {
             nivel: document.getElementById('courseLevel').value,
             duracion_total: document.getElementById('courseDuration').value,
             idioma: document.getElementById('courseLanguage').value,
-            certificacion: document.getElementById('courseCert').value === "1"
+            certificacion: document.getElementById('courseCert').value === "1",
+            modalidad: document.getElementById('courseModalidad').value
         };
 
         if (currentMode === 'profesor' && selectedProfId) {
@@ -1139,7 +1150,8 @@ async function publishCourse(estadoFinal = 'publicado') {
             nivel: document.getElementById('courseLevel').value,
             duracion_total: document.getElementById('courseDuration').value,
             idioma: document.getElementById('courseLanguage').value,
-            certificacion: document.getElementById('courseCert').value === "1"
+            certificacion: document.getElementById('courseCert').value === "1",
+            modalidad: document.getElementById('courseModalidad').value
         };
 
         if (currentMode === 'profesor' && selectedProfId) {
