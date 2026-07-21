@@ -1,0 +1,39 @@
+name: Deploy a Hostinger
+
+on:
+  push:
+    branches:
+      - main   # Se dispara solo cuando haces push a main
+
+jobs:
+  deploy:
+    name: Deploy via SSH
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Descarga el código del repo
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      # 2. Se conecta al servidor y actualiza el proyecto
+      - name: Deploy en Hostinger via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOSTINGER_HOST }}
+          username: ${{ secrets.HOSTINGER_USER }}
+          key: ${{ secrets.HOSTINGER_SSH_KEY }}
+          port: ${{ secrets.HOSTINGER_PORT }}
+          script: |
+            # Ir a la carpeta del proyecto en el servidor
+            cd ~/flordechanar-v2-claude
+
+            # Bajar los últimos cambios de GitHub
+            git pull origin main
+
+            # Instalar dependencias nuevas (si hubiera)
+            npm install --production
+
+            # Reiniciar la app con PM2 para aplicar los cambios
+            pm2 restart flordechanar --update-env
+
+            echo "✅ Deploy completado exitosamente"
