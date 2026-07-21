@@ -187,12 +187,8 @@
             <!-- Sidebar -->
             <aside class="school-sidebar">
                 <h4>Categorías</h4>
-                <ul class="filter-list">
-                    <li><a href="#" class="active">Todos los Cursos <span>12</span></a></li>
-                    <li><a href="#">Diplomados <span>3</span></a></li>
-                    <li><a href="#">Biomagnetismo <span>4</span></a></li>
-                    <li><a href="#">Reiki & Energía <span>2</span></a></li>
-                    <li><a href="#">Masoterapia <span>3</span></a></li>
+                <ul class="filter-list" id="category-list">
+                    <li><a href="#" class="active">Todos los Cursos <span id="total-courses-count">...</span></a></li>
                 </ul>
 
                 <h4 style="margin-top: 3rem;">Nivel</h4>
@@ -234,6 +230,26 @@
                 }
 
                 grid.innerHTML = '';
+                
+                // Dynamic Categories
+                const catCounts = {};
+                cursos.forEach(c => {
+                    const cat = c.categoria || 'Sin Categoría';
+                    catCounts[cat] = (catCounts[cat] || 0) + 1;
+                });
+                
+                const catList = document.getElementById('category-list');
+                document.getElementById('total-courses-count').textContent = cursos.length;
+                
+                Object.keys(catCounts).sort().forEach(cat => {
+                    if(cat !== 'Sin Categoría') {
+                        catList.innerHTML += `<li><a href="#">${cat} <span>${catCounts[cat]}</span></a></li>`;
+                    }
+                });
+                if(catCounts['Sin Categoría']) {
+                    catList.innerHTML += `<li><a href="#">Otros <span>${catCounts['Sin Categoría']}</span></a></li>`;
+                }
+
                 const fmt = n => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(n);
                 cursos.forEach(curso => {
                     const cover = curso.portada_url || 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=600&q=80';
