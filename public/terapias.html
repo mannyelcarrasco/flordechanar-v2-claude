@@ -186,7 +186,8 @@
         </div>
     </section>
 
-    <section class="container therapies-section">
+    <!-- Tarjetas de terapias ocultas (reactivar quitando display:none de therapies-section) -->
+    <section class="container therapies-section" style="display:none">
         <div class="therapies-grid">
             <div class="therapy-card">
                 <i class="ph ph-magnet therapy-icon"></i>
@@ -222,10 +223,12 @@
     <div class="container">
         <section class="booking-integration" id="agendar">
             <h2>Agenda tu Espacio de Sanación</h2>
-            <p>Selecciona tu ciudad. Nuestro nuevo sistema te permite reservar en menos de 1 minuto sin complicaciones ni registros extensos.</p>
+            <p>Selecciona tu servicio. Nuestro nuevo sistema te permite reservar en menos de 1 minuto sin complicaciones ni registros extensos.</p>
             
             <!-- Widget de Agenda AtendIA -->
-            <div class="atendia-booking" data-company="3"></div>
+            <div style="width:100%; min-height:600px; max-height:90vh; overflow:hidden; position:relative;">
+                <div class="atendia-booking" data-company="3"></div>
+            </div>
             <script src="https://funnelstudio.click/AtendIA_dev/embed.js" async></script>
         </section>
     </div>
