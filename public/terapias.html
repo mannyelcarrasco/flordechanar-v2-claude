@@ -90,11 +90,10 @@
         .therapy-card h3 { font-size: 1.6rem; margin-bottom: 1rem; }
         .therapy-card p { color: var(--color-text-light); margin-bottom: 2rem; font-size: 0.95rem; }
         
-        /* Modern Booking Section Mock (Replaces old software) */
+        /* Integración Limpia de Reservas (Sin caja verde) */
         .booking-integration {
-            background-color: var(--color-secondary); color: var(--color-white);
-            padding: 60px 0; margin-top: 40px; border-radius: var(--radius-lg);
-            text-align: center; margin-bottom: 80px; position: relative; overflow: hidden;
+            margin-top: 20px;
+            text-align: center; margin-bottom: 80px; position: relative;
         }
 
         /* Contenedor del widget con scroll interno */
@@ -113,7 +112,7 @@
             width: 8px;
         }
         .atendia-scroll-container::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05); 
+            background: rgba(0, 0, 0, 0.05); 
             border-radius: 4px;
         }
         .atendia-scroll-container::-webkit-scrollbar-thumb {
@@ -208,8 +207,8 @@
 
     <section class="inner-hero">
         <div class="container">
-            <h1>Sanación y Equilibrio</h1>
-            <p>Descubre nuestras terapias clínicas diseñadas para restaurar tu salud física, mental y espiritual en un entorno de paz absoluta.</p>
+            <h1>Agenda tu Espacio de Sanación</h1>
+            <p>Selecciona tu servicio. Nuestro nuevo sistema te permite reservar en menos de 1 minuto sin complicaciones ni registros extensos.</p>
         </div>
     </section>
 
@@ -249,9 +248,6 @@
     <!-- Seamless Booking Prototype -->
     <div class="container">
         <section class="booking-integration" id="agendar">
-            <h2>Agenda tu Espacio de Sanación</h2>
-            <p>Selecciona tu servicio. Nuestro nuevo sistema te permite reservar en menos de 1 minuto sin complicaciones ni registros extensos.</p>
-            
             <!-- Widget de Agenda AtendIA -->
             <div class="atendia-scroll-container">
                 <div class="atendia-booking" data-company="3"></div>
