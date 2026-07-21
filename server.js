@@ -575,7 +575,7 @@ app.patch('/api/usuarios/:id/activo', verifyToken, async (req, res) => {
 app.get('/api/cursos', async (req, res) => {
     try {
         if (!pool) return res.status(500).json({ error: 'Database not connected' });
-        const [cursos] = await pool.query('SELECT c.id, c.titulo, c.descripcion, c.precio, c.portada_url, u.nombre as profesor FROM cursos c LEFT JOIN usuarios u ON c.profesor_id = u.id WHERE c.estado = "publicado"');
+        const [cursos] = await pool.query('SELECT c.id, c.titulo, c.descripcion, c.precio, c.tipo_acceso, c.portada_url, u.nombre as profesor FROM cursos c LEFT JOIN usuarios u ON c.profesor_id = u.id WHERE c.estado = "publicado"');
         res.json(cursos);
     } catch (e) {
         console.error(e);
@@ -586,14 +586,14 @@ app.get('/api/cursos', async (req, res) => {
 app.post('/api/cursos', verifyToken, async (req, res) => {
     if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
     try {
-        const { titulo, descripcion, precio, portada_url, estado, profesor_id } = req.body;
+        const { titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id } = req.body;
         if (!validStr(titulo, 3, 300)) return res.status(400).json({ error: 'Título del curso requerido (3-300 caracteres)' });
         const estadosPermitidos = ['borrador', 'publicado', 'archivado'];
         if (estado && !estadosPermitidos.includes(estado)) return res.status(400).json({ error: 'Estado inválido' });
         const profAsignado = profesor_id || req.usuario.id;
         const result = await pool.query(
-            'INSERT INTO cursos (titulo, descripcion, precio, portada_url, estado, profesor_id) VALUES (?, ?, ?, ?, ?, ?)',
-            [titulo, descripcion, precio, portada_url, estado, profAsignado]
+            'INSERT INTO cursos (titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [titulo, descripcion, precio, tipo_acceso || 'gratis', portada_url, estado, profAsignado]
         );
         res.json({ success: true, id: result[0].insertId });
     } catch (e) {
@@ -729,11 +729,11 @@ app.get('/api/cursos/:id', verifyToken, async (req, res) => {
 app.put('/api/cursos/:id', verifyToken, async (req, res) => {
     if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
     try {
-        const { titulo, descripcion, precio, portada_url, estado, profesor_id } = req.body;
+        const { titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id } = req.body;
         const profAsignado = profesor_id || req.usuario.id;
         await pool.query(
-            'UPDATE cursos SET titulo=?, descripcion=?, precio=?, portada_url=?, estado=?, profesor_id=? WHERE id=?',
-            [titulo, descripcion, precio, portada_url, estado, profAsignado, req.params.id]
+            'UPDATE cursos SET titulo=?, descripcion=?, precio=?, tipo_acceso=?, portada_url=?, estado=?, profesor_id=? WHERE id=?',
+            [titulo, descripcion, precio, tipo_acceso || 'gratis', portada_url, estado, profAsignado, req.params.id]
         );
         res.json({ success: true, message: 'Curso actualizado con éxito' });
     } catch (e) {

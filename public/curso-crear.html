@@ -310,9 +310,9 @@
                 <div class="fg">
                     <label class="fl">Tipo de acceso</label>
                     <select class="fc" id="accessType" onchange="togglePrice()">
-                        <option value="paid">De pago</option>
-                        <option value="free">Gratuito</option>
-                        <option value="subscription">Solo suscriptores</option>
+                        <option value="pago_unico">De pago</option>
+                        <option value="gratis">Gratuito</option>
+                        <option value="suscripcion">Solo suscriptores</option>
                     </select>
                 </div>
                 <div class="fg" id="priceField">
@@ -915,16 +915,16 @@ async function uploadCover(input) {
 
 function togglePrice() {
     const t = document.getElementById('accessType').value;
-    document.getElementById('priceField').style.opacity = t==='free' ? '.4' : '1';
-    document.getElementById('priceField').style.pointerEvents = t==='free' ? 'none' : 'auto';
-    if(t==='free') document.getElementById('coursePrice').value = '0';
+    document.getElementById('priceField').style.opacity = t==='gratis' ? '.4' : '1';
+    document.getElementById('priceField').style.pointerEvents = t==='gratis' ? 'none' : 'auto';
+    if(t==='gratis') document.getElementById('coursePrice').value = '0';
     updateChecklist();
 }
 
 function updateChecklist() {
     const title = document.getElementById('courseTitle').value.trim();
     const cat = document.getElementById('courseCategory').value;
-    const price = document.getElementById('coursePrice').value || document.getElementById('accessType').value==='free';
+    const price = document.getElementById('coursePrice').value || document.getElementById('accessType').value==='gratis';
     const cover = document.getElementById('coverPreview').style.display!=='none';
     const modules = curriculumData.length > 0;
     const assignOk = currentMode==='admin' || (currentMode==='profesor' && selectedProfId !== null);
@@ -1015,6 +1015,10 @@ window.addEventListener('load', async () => {
                     document.getElementById('courseTitle').value = c.titulo || '';
                     document.getElementById('courseDesc').value = c.descripcion || '';
                     document.getElementById('coursePrice').value = c.precio || '';
+                    if (c.tipo_acceso) {
+                        document.getElementById('accessType').value = c.tipo_acceso;
+                        togglePrice();
+                    }
                     if (c.profesor_id) {
                         selectMode('profesor');
                         selectProfReal(c.profesor_id, c.profesor_nombre || 'Profesor asignado');
@@ -1060,6 +1064,7 @@ async function saveDraft() {
             titulo: title,
             descripcion: desc,
             precio: price,
+            tipo_acceso: document.getElementById('accessType').value,
             portada_url: currentCoverUrl || null,
             estado: 'borrador'
         };
@@ -1115,6 +1120,7 @@ async function publishCourse() {
             titulo: title,
             descripcion: desc,
             precio: price,
+            tipo_acceso: document.getElementById('accessType').value,
             portada_url: portada_url,
             estado: 'publicado'
         };
