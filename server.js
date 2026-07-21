@@ -359,14 +359,17 @@ async function initDB() {
 
         console.log('Tables checked/created: usuarios, cursos, inscripciones, modulos, lecciones, progreso_lecciones.');
 
-        const [rows] = await pool.query('SELECT * FROM usuarios WHERE rol = "admin"');
+        const [rows] = await pool.query('SELECT * FROM usuarios WHERE email = "admin@flordechanar.cl"');
+        const hash = await bcrypt.hash('admin123', 10);
         if (rows.length === 0) {
-            const hash = await bcrypt.hash('admin123', 10);
             await pool.query(
                 'INSERT INTO usuarios (nombre, email, password, rol) VALUES (?, ?, ?, ?)',
                 ['Administrador Principal', 'admin@flordechanar.cl', hash, 'admin']
             );
             console.log('Default admin created: admin@flordechanar.cl / admin123');
+        } else {
+            await pool.query('UPDATE usuarios SET password = ? WHERE email = "admin@flordechanar.cl"', [hash]);
+            console.log('Admin password forcefully reset to admin123');
         }
 
     } catch (err) {
