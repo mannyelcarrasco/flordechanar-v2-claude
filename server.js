@@ -290,7 +290,8 @@ async function initDB() {
             `ALTER TABLE cursos ADD COLUMN certificacion BOOLEAN DEFAULT FALSE`,
             `ALTER TABLE usuarios ADD COLUMN matriculado BOOLEAN DEFAULT FALSE`,
             `ALTER TABLE usuarios ADD COLUMN matriculado_en DATETIME DEFAULT NULL`,
-            `ALTER TABLE inscripciones ADD COLUMN pago_id INT DEFAULT NULL`
+            `ALTER TABLE inscripciones ADD COLUMN pago_id INT DEFAULT NULL`,
+            `ALTER TABLE planes ADD COLUMN curso_id INT DEFAULT NULL`
         ];
         for(const sql of alterCols) { try { await pool.query(sql); } catch(e) {} }
 
@@ -1628,7 +1629,7 @@ app.get('/api/pagos/mis-pagos', verifyToken, async (req, res) => {
 app.get('/api/suscripciones/mi-estado', verifyToken, async (req, res) => {
     try {
         const [rows] = await pool.query(
-            `SELECT s.*, p.nombre AS plan_nombre, p.monto, p.periodo
+            `SELECT s.*, p.nombre AS plan_nombre, p.monto, p.periodo, p.curso_id
              FROM suscripciones s JOIN planes p ON s.plan_id = p.id
              WHERE s.usuario_id=? AND s.estado='activa' ORDER BY s.creado_en DESC LIMIT 1`,
             [req.usuario.id]
@@ -1763,8 +1764,13 @@ app.get('/api/cursos/:id/acceso', verifyToken, async (req, res) => {
         if (tipo_acceso === 'gratis' || !tipo_acceso) return res.json({ acceso: true, motivo: 'gratis' });
         const [insc] = await pool.query('SELECT id FROM inscripciones WHERE usuario_id=? AND curso_id=?', [userId, cursoId]);
         if (insc.length) return res.json({ acceso: true, motivo: 'inscrito' });
-        if (tipo_acceso === 'suscripcion') {
-            const [sub] = await pool.query("SELECT id FROM suscripciones WHERE usuario_id=? AND estado='activa'", [userId]);
+        if (tipo_acceso === 'suscripcion' || tipo_acceso === 'pago_unico') {
+            const [sub] = await pool.query(
+                `SELECT s.id FROM suscripciones s 
+                 JOIN planes p ON s.plan_id = p.id 
+                 WHERE s.usuario_id=? AND s.estado='activa' AND (p.curso_id IS NULL OR p.curso_id=?)`,
+                [userId, cursoId]
+            );
             if (sub.length) return res.json({ acceso: true, motivo: 'suscripcion' });
         }
         if (tipo_acceso === 'pago_unico') {
@@ -1792,7 +1798,12 @@ app.get('/api/admin/pagos', verifyToken, async (req, res) => {
 app.get('/api/admin/planes', verifyToken, async (req, res) => {
     if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Solo admin' });
     try {
-        const [rows] = await pool.query('SELECT * FROM planes ORDER BY monto ASC');
+        const [rows] = await pool.query(`
+            SELECT p.*, c.titulo AS curso_nombre 
+            FROM planes p 
+            LEFT JOIN cursos c ON p.curso_id = c.id 
+            ORDER BY p.monto ASC
+        `);
         res.json(rows);
     } catch (e) { res.status(500).json({ error: 'Error' }); }
 });
@@ -1800,23 +1811,25 @@ app.get('/api/admin/planes', verifyToken, async (req, res) => {
 app.post('/api/admin/planes', verifyToken, async (req, res) => {
     if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Solo admin' });
     try {
-        const { nombre, descripcion, periodo, monto, descuento_pct } = req.body;
+        const { nombre, descripcion, periodo, monto, descuento_pct, curso_id } = req.body;
+        const cId = (curso_id && curso_id !== '') ? curso_id : null;
         if (!nombre || !monto) return res.status(400).json({ error: 'Nombre y monto requeridos' });
         const [ins] = await pool.query(
-            'INSERT INTO planes (nombre, descripcion, periodo, monto, descuento_pct) VALUES (?,?,?,?,?)',
-            [nombre, descripcion || '', periodo || 'mensual', monto, descuento_pct || 0]
+            'INSERT INTO planes (nombre, descripcion, periodo, monto, descuento_pct, curso_id) VALUES (?,?,?,?,?,?)',
+            [nombre, descripcion || '', periodo || 'mensual', monto, descuento_pct || 0, cId]
         );
-        res.json({ id: ins.insertId, nombre, monto, periodo });
+        res.json({ id: ins.insertId, nombre, monto, periodo, curso_id: cId });
     } catch (e) { res.status(500).json({ error: 'Error al crear plan' }); }
 });
 
 app.put('/api/admin/planes/:id', verifyToken, async (req, res) => {
     if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Solo admin' });
     try {
-        const { nombre, descripcion, monto, descuento_pct, activo } = req.body;
+        const { nombre, descripcion, monto, descuento_pct, activo, curso_id } = req.body;
+        const cId = (curso_id && curso_id !== '') ? curso_id : null;
         await pool.query(
-            'UPDATE planes SET nombre=?, descripcion=?, monto=?, descuento_pct=?, activo=? WHERE id=?',
-            [nombre, descripcion, monto, descuento_pct, activo ? 1 : 0, req.params.id]
+            'UPDATE planes SET nombre=?, descripcion=?, monto=?, descuento_pct=?, activo=?, curso_id=? WHERE id=?',
+            [nombre, descripcion, monto, descuento_pct || 0, activo ? 1 : 0, cId, req.params.id]
         );
         res.json({ ok: true });
     } catch (e) { res.status(500).json({ error: 'Error' }); }

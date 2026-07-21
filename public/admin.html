@@ -1043,6 +1043,12 @@ ORDER BY u.user_registered;</pre>
         <input type="hidden" id="planId">
         <div class="fg"><label class="fl">Nombre del plan <span style="color:#EF4444">*</span></label><input class="fc" id="planNombre" type="text" placeholder="Ej: Mensualidad, Suscripción Anual, Matrícula"></div>
         <div class="fg"><label class="fl">Descripción</label><textarea class="fc" id="planDesc" style="height:70px;resize:vertical" placeholder="¿Qué incluye este plan?"></textarea></div>
+        <div class="fg"><label class="fl">Asociar a un Curso (Opcional)</label>
+            <select class="fc" id="planCursoId">
+                <option value="">Ninguno (Plan Global para todos los cursos)</option>
+            </select>
+            <p style="font-size:.75rem;color:var(--l);margin-top:.25rem">Si seleccionas un curso, este plan solo dará acceso a ese curso específico.</p>
+        </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
             <div class="fg"><label class="fl">Período</label>
                 <select class="fc" id="planPeriodo">
@@ -1886,6 +1892,7 @@ function paintPlanes(planes) {
                 <div>
                     <div style="font-weight:700;font-size:1rem">${p.nombre}</div>
                     <div style="font-size:.78rem;color:var(--l)">${p.descripcion||''}</div>
+                    ${p.curso_nombre ? `<div style="font-size:.72rem;color:var(--p);font-weight:600;margin-top:.25rem"><i class="ph ph-link"></i> Aplica a: ${p.curso_nombre}</div>` : `<div style="font-size:.72rem;color:var(--l);margin-top:.25rem"><i class="ph ph-globe"></i> Plan Global (Todo acceso)</div>`}
                 </div>
                 <span style="background:${p.activo?'#DCFCE7':'#F1F5F9'};color:${p.activo?'#16A34A':'#94A3B8'};padding:.15rem .6rem;border-radius:20px;font-size:.7rem;font-weight:600">${p.activo?'Activo':'Inactivo'}</span>
             </div>
@@ -1898,7 +1905,7 @@ function paintPlanes(planes) {
         </div>`).join('');
 }
 
-function openPlanModal(id) {
+async function openPlanModal(id) {
     const plan = id ? allPlanes.find(p=>p.id===id) : null;
     document.getElementById('planModalTitle').textContent = plan ? 'Editar Plan' : 'Nuevo Plan';
     document.getElementById('planId').value      = plan ? plan.id : '';
@@ -1907,6 +1914,18 @@ function openPlanModal(id) {
     document.getElementById('planPeriodo').value = plan ? plan.periodo : 'mensual';
     document.getElementById('planMonto').value   = plan ? plan.monto : '';
     document.getElementById('planDescPct').value = plan ? (plan.descuento_pct||0) : 0;
+    
+    // Cargar cursos
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/admin/cursos', { headers: { 'Authorization': 'Bearer ' + token } });
+        const cursos = await res.json();
+        const sel = document.getElementById('planCursoId');
+        sel.innerHTML = '<option value="">Ninguno (Plan Global para todos los cursos)</option>' + 
+                        cursos.map(c => `<option value="${c.id}">${c.titulo}</option>`).join('');
+        sel.value = plan ? (plan.curso_id || '') : '';
+    } catch(e) {}
+
     document.getElementById('planModalBg').classList.add('open');
 }
 function closePlanModal() { document.getElementById('planModalBg').classList.remove('open'); }
@@ -1920,6 +1939,7 @@ async function guardarPlan() {
         periodo:      document.getElementById('planPeriodo').value,
         monto:        parseInt(document.getElementById('planMonto').value)||0,
         descuento_pct:parseInt(document.getElementById('planDescPct').value)||0,
+        curso_id:     document.getElementById('planCursoId').value,
         activo: 1
     };
     if (!body.nombre || !body.monto) { showT('Nombre y monto son obligatorios'); return; }

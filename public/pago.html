@@ -98,9 +98,12 @@ async function init() {
             }
             const resCurso = await fetch(`/api/cursos/${id}`, { headers:{ Authorization:'Bearer '+token } });
             const curso = await resCurso.json();
-            body.innerHTML = buildCursoView(curso);
+            const resPlanes = await fetch('/api/planes');
+            let planes = await resPlanes.json();
+            planes = planes.filter(p => String(p.curso_id) === String(id));
+            body.innerHTML = buildCursoView(curso, planes);
         } catch(e) {
-            body.innerHTML = `<div class="error-box">Error al cargar el curso.</div>`;
+            body.innerHTML = `<div class="error-box">Error al cargar el curso o sus planes asociados.</div>`;
         }
 
     } else if (tipo === 'suscripcion') {
@@ -147,13 +150,43 @@ function buildMatriculaView() {
     `;
 }
 
-function buildCursoView(curso) {
+function buildCursoView(curso, planes = []) {
     const price = fmt(curso.precio || 0);
+    
+    let planesHtml = '';
+    if (planes.length > 0) {
+        planesHtml = `
+            <div style="margin: 1.5rem 0 1rem;font-weight:600;color:var(--pd);font-size:.9rem">Opciones de Pago</div>
+            <label class="plan-card selected" onclick="selectCursoPlan(this, 'unico')">
+                <input type="radio" name="curso_plan_sel" value="unico" checked>
+                <div style="display:flex;justify-content:space-between;align-items:center;width:100%">
+                    <div style="font-weight:600;color:var(--pd)">Pago único</div>
+                    <div style="font-weight:700;color:var(--p)">${price}</div>
+                </div>
+            </label>
+        `;
+        planes.forEach(p => {
+            const pFmt = fmt(p.monto);
+            const pLabel = p.periodo === 'mensual' ? '/mes' : p.periodo === 'anual' ? '/año' : '';
+            planesHtml += `
+                <label class="plan-card" onclick="selectCursoPlan(this, ${p.id})">
+                    <input type="radio" name="curso_plan_sel" value="${p.id}">
+                    <div style="display:flex;justify-content:space-between;align-items:center;width:100%">
+                        <div style="font-weight:600;color:var(--pd)">${p.nombre}</div>
+                        <div style="font-weight:700;color:var(--p)">${pFmt}<span style="font-size:.75rem;color:var(--l);font-weight:400">${pLabel}</span></div>
+                    </div>
+                </label>
+            `;
+        });
+        planesHtml += `<hr class="divider">`;
+    }
+
     return `
         <div class="item">
             <span class="item-label"><i class="ph ph-book-open"></i> Curso</span>
             <span class="item-val">${curso.titulo}</span>
         </div>
+        ${ planes.length === 0 ? `
         <div class="item">
             <span class="item-label"><i class="ph ph-infinity"></i> Tipo de acceso</span>
             <span class="item-val"><span class="badge-tipo">Pago único</span></span>
@@ -162,14 +195,38 @@ function buildCursoView(curso) {
         <div class="total-row">
             <span class="total-label">Total a pagar</span>
             <span class="total-val">${price}</span>
-        </div>
+        </div>` : '' }
+        
+        ${planesHtml}
+        
         <div id="errBox"></div>
-        <button class="btn-flow" id="btnPagar" onclick="pagarCurso(${curso.id})">
+        <button class="btn-flow" id="btnPagar" onclick="pagarCursoMixto(${curso.id})">
             <i class="ph ph-lock"></i> Pagar con Flow
         </button>
         <button class="btn-back" onclick="history.back()">Volver</button>
         <p class="flow-info"><i class="ph ph-shield-check"></i> Pago seguro procesado por Flow · Encriptado 256-bit</p>
     `;
+}
+
+let selectedCursoPlanId = 'unico';
+window.selectCursoPlan = function(el, planId) {
+    document.querySelectorAll('input[name="curso_plan_sel"]').forEach(r => {
+        r.checked = false;
+        r.closest('.plan-card').classList.remove('selected');
+    });
+    const radio = el.querySelector('input');
+    radio.checked = true;
+    el.classList.add('selected');
+    selectedCursoPlanId = planId;
+}
+
+window.pagarCursoMixto = async function(cursoId) {
+    if (selectedCursoPlanId === 'unico') {
+        pagarCurso(cursoId);
+    } else {
+        selectedPlanId = selectedCursoPlanId;
+        iniciarSuscripcion();
+    }
 }
 
 function buildSuscripcionView(planes, subActiva, planPreselect) {
