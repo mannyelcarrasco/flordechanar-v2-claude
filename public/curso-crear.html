@@ -1214,7 +1214,8 @@ async function generateSalesCopy() {
         btn.disabled = false;
     }
 }
-\nfunction getVentasMeta() {
+
+function getVentasMeta() {
     const testimoniosNodes = document.querySelectorAll('.testimonio-item');
     const testimonios = Array.from(testimoniosNodes).map(node => ({
         nombre: node.querySelector('.t-nombre').value,
