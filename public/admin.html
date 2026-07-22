@@ -450,9 +450,9 @@
     <div id="tc" class="tp">
         <div class="tw">
             <table>
-                <thead><tr><th>Curso</th><th>Profesor</th><th>Estudiantes</th><th>Estado</th><th>Fecha creación</th><th>Acciones</th></tr></thead>
+                <thead><tr><th>Curso</th><th>Profesor</th><th>Modalidad</th><th>Estudiantes</th><th>Estado</th><th>Fecha creación</th><th>Acciones</th></tr></thead>
                 <tbody id="adminCoursesBody">
-                    <tr><td colspan="6" style="text-align:center; padding: 2rem;">Cargando cursos desde la base de datos...</td></tr>
+                    <tr><td colspan="7" style="text-align:center; padding: 2rem;">Cargando cursos desde la base de datos...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -2287,7 +2287,7 @@ async function renderAdminCourses() {
         const cursos = await res.json();
         
         if (cursos.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem;">No hay cursos creados.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 2rem;">No hay cursos creados.</td></tr>';
             return;
         }
 
@@ -2308,6 +2308,7 @@ async function renderAdminCourses() {
                 <tr>
                     <td><div class="tn">${c.titulo}</div><div class="ts">${priceFmt}</div></td>
                     <td>${c.profesor || 'Admin'}</td>
+                    <td><span style="font-size:0.85rem;color:var(--sec);background:#f1f5f9;padding:0.2rem 0.5rem;border-radius:4px">${c.modalidad || 'N/A'}</span></td>
                     <td>${c.alumnos || 0}</td>
                     <td>${estadoHTML}</td>
                     <td class="ts">${fecha}</td>
