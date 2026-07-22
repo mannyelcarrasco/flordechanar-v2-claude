@@ -176,6 +176,15 @@
         <div class="steps-bar">
             <div class="step"><div class="step-num active" id="sn1">1</div><div class="step-label active">Info básica</div></div>
             <i class="ph ph-caret-right step-arrow"></i>
+            <div class="step"><div class="step-num pending" id="sn2">2</div><div class="step-label">Responsable</div></div>
+            <i class="ph ph-caret-right step-arrow"></i>
+            <div class="step"><div class="step-num pending" id="sn3">3</div><div class="step-label">Currículum</div></div>
+            <i class="ph ph-caret-right step-arrow"></i>
+            <div class="step"><div class="step-num pending" id="sn4">4</div><div class="step-label">Precios</div></div>
+            <i class="ph ph-caret-right step-arrow"></i>
+            <div class="step"><div class="step-num pending" id="sn5">5</div><div class="step-label">Ventas</div></div>
+        </div><div class="step-label active">Info básica</div></div>
+            <i class="ph ph-caret-right step-arrow"></i>
             <div class="step"><div class="step-num pending" id="sn2">2</div><div class="step-label">Ventas</div></div>
             <i class="ph ph-caret-right step-arrow"></i>
             <div class="step"><div class="step-num pending" id="sn3">3</div><div class="step-label">Responsable</div></div>
@@ -247,62 +256,7 @@
             </div>
         </div>
 
-        <!-- SECTION 2: Landing Page -->
-        <div class="sec">
-            <div class="sec-hdr">
-                <div class="sec-icon b"><i class="ph ph-layout"></i></div>
-                <h3>Página de Ventas (Landing)</h3>
-            </div>
-            
-            <div class="fg"><label class="fl">Video VSL (URL YouTube/Vimeo)</label><input class="fc" type="url" id="courseVsl" placeholder="Ej: https://www.youtube.com/watch?v=..."></div>
-            
-            <div class="fg">
-                <label class="fl" style="margin-bottom:0.5rem;">Texto de Ventas (Descripción larga)</label>
-                
-                <details class="ai-box" style="margin-bottom:1rem; border:1px solid #E2E8F0; border-radius:8px; overflow:hidden;">
-                    <summary style="background:#F8FAFC; padding:0.8rem 1rem; cursor:pointer; font-weight:600; color:var(--color-primary); font-size:0.85rem; display:flex; align-items:center; gap:0.5rem; user-select:none;">
-                        <i class="ph ph-magic-wand"></i> Asistente de IA (Generar texto automático)
-                    </summary>
-                    <div style="padding:1rem; background:#fff; border-top:1px solid #E2E8F0;">
-                        <p style="font-size:0.8rem; color:var(--l); margin-bottom:1rem;">Sube un PDF, pega texto extra o usa la URL de tu sitio web anterior para darle contexto a la IA.</p>
-                        
-                        <div class="two" style="margin-bottom:0.8rem;">
-                            <div class="fg">
-                                <label class="fl">Documento (PDF Opcional)</label>
-                                <input type="file" id="aiFile" class="fc" accept=".pdf">
-                            </div>
-                            <div class="fg">
-                                <label class="fl">Contexto Web (URL Opcional)</label>
-                                <input type="url" id="aiUrl" class="fc" placeholder="Ej: https://misitio.com/curso">
-                            </div>
-                        </div>
-                        <div class="fg">
-                            <label class="fl">Instrucciones o texto adicional</label>
-                            <textarea class="fc" id="aiExtraText" rows="2" placeholder="Ej: Menciona que no se requieren conocimientos previos..."></textarea>
-                        </div>
-                        
-                        <div style="text-align:right;">
-                            <button type="button" class="btn" id="btnGenerateAi" style="background:var(--color-primary); color:white; font-size:0.8rem; padding:0.4rem 1rem; border-radius:6px; cursor:pointer;" onclick="generateSalesCopy()">
-                                <i class="ph ph-sparkle"></i> Generar Texto
-                            </button>
-                        </div>
-                    </div>
-                </details>
-                <textarea class="fc" id="courseDescVentas" rows="6" placeholder="Texto persuasivo para tu página de ventas..."></textarea>
-            </div>
-            
-            <div class="fg">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
-                    <label class="fl" style="margin:0;">Testimonios</label>
-                    <button type="button" class="btn" style="font-size:0.75rem; padding:0.2rem 0.6rem; border:1px solid #D1D5DB; background:white; border-radius:6px; cursor:pointer;" onclick="addTestimonio()">
-                        <i class="ph ph-plus"></i> Añadir Testimonio
-                    </button>
-                </div>
-                <div id="testimonioList" style="display:flex; flex-direction:column; gap:0.75rem;"></div>
-            </div>
-        </div>
-
-        <!-- SECTION 3: Responsable del Curso — KEY FEATURE -->
+        <!-- SECTION 2: Responsable del Curso — KEY FEATURE -->
         <div class="sec">
             <div class="sec-hdr">
                 <div class="sec-icon a"><i class="ph ph-chalkboard-teacher"></i></div>
@@ -403,7 +357,62 @@
             </div>
         </div>
 
-    </div>
+    <!-- SECTION 5: Landing Page (Ventas) -->
+        <div class="sec">
+            <div class="sec-hdr">
+                <div class="sec-icon b"><i class="ph ph-layout"></i></div>
+                <h3>Página de Ventas (Landing)</h3>
+            </div>
+            
+            <div class="fg"><label class="fl">Video VSL (URL YouTube/Vimeo)</label><input class="fc" type="url" id="courseVsl" placeholder="Ej: https://www.youtube.com/watch?v=..."></div>
+            
+            <div class="fg">
+                <label class="fl" style="margin-bottom:0.5rem;">Texto de Ventas (Descripción larga)</label>
+                
+                <div class="ai-box" style="margin-bottom:1rem; border:1px solid #E2E8F0; border-radius:8px; overflow:hidden; background:#F8FAFC;">
+                    <div style="padding:0.8rem 1rem; font-weight:600; color:var(--color-primary); font-size:0.9rem; display:flex; align-items:center; gap:0.5rem; border-bottom:1px solid #E2E8F0;">
+                        <i class="ph ph-magic-wand"></i> Asistente de IA (Generar texto automático)
+                    </div>
+                    <div style="padding:1rem; background:#fff;">
+                        <p style="font-size:0.8rem; color:var(--l); margin-bottom:1rem;">Sube un PDF, pega texto extra o usa la URL de tu sitio web anterior para darle contexto a la IA.</p>
+                        
+                        <div class="two" style="margin-bottom:0.8rem;">
+                            <div class="fg">
+                                <label class="fl">Documento (PDF Opcional)</label>
+                                <input type="file" id="aiFile" class="fc" accept=".pdf">
+                            </div>
+                            <div class="fg">
+                                <label class="fl">Contexto Web (URL Opcional)</label>
+                                <input type="url" id="aiUrl" class="fc" placeholder="Ej: https://misitio.com/curso">
+                            </div>
+                        </div>
+                        <div class="fg">
+                            <label class="fl">Instrucciones o texto adicional</label>
+                            <textarea class="fc" id="aiExtraText" rows="2" placeholder="Ej: Menciona que no se requieren conocimientos previos..."></textarea>
+                        </div>
+                        
+                        <div style="text-align:right;">
+                            <button type="button" class="btn" id="btnGenerateAi" style="background:var(--color-primary); color:white; font-size:0.9rem; font-weight:600; padding:0.6rem 1.5rem; border-radius:6px; cursor:pointer; width:100%; display:flex; justify-content:center; align-items:center; gap:0.5rem;" onclick="generateSalesCopy()">
+                                <i class="ph ph-sparkle"></i> Generar Texto
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <textarea class="fc" id="courseDescVentas" rows="6" placeholder="Texto persuasivo para tu página de ventas..."></textarea>
+            </div>
+            
+            <div class="fg">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
+                    <label class="fl" style="margin:0;">Testimonios</label>
+                    <button type="button" class="btn" style="font-size:0.75rem; padding:0.2rem 0.6rem; border:1px solid #D1D5DB; background:white; border-radius:6px; cursor:pointer;" onclick="addTestimonio()">
+                        <i class="ph ph-plus"></i> Añadir Testimonio
+                    </button>
+                </div>
+                <div id="testimonioList" style="display:flex; flex-direction:column; gap:0.75rem;"></div>
+            </div>
+        </div>
+
+        \n        </div>
 
     <!-- RIGHT: Sidebar -->
     <div class="sidebar">
