@@ -708,7 +708,7 @@ app.patch('/api/usuarios/:id/activo', verifyToken, async (req, res) => {
 app.get('/api/cursos', async (req, res) => {
     try {
         if (!pool) return res.status(500).json({ error: 'Database not connected' });
-        const [cursos] = await pool.query('SELECT c.id, c.titulo, c.descripcion, c.precio, c.tipo_acceso, c.portada_url, u.nombre as profesor FROM cursos c LEFT JOIN usuarios u ON c.profesor_id = u.id WHERE c.estado = "publicado"');
+        const [cursos] = await pool.query('SELECT c.id, c.titulo, c.descripcion, c.precio, c.tipo_acceso, c.portada_url, c.modalidad, u.nombre as profesor FROM cursos c LEFT JOIN usuarios u ON c.profesor_id = u.id WHERE c.estado = "publicado"');
         res.json(cursos);
     } catch (e) {
         console.error(e);
