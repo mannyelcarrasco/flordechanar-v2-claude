@@ -6,6 +6,10 @@
 
 ## ✅ Avances completados
 
+### 👨‍🏫 Panel de Profesores y Cursos (NUEVO)
+- [x] **Panel de Edición de Cursos (`curso-crear.html`):**
+  - Corrección de un error tipográfico en el ID del contenedor HTML (`professorsContainer` en lugar de `professorsPanel`) que impedía cargar y mostrar la lista de profesores para asignar a un curso ("Cargando profesores...").
+
 ### 🔒 Seguridad & Dependencias (NUEVO)
 - [x] Corrección de vulnerabilidades de NPM detectadas por Hostinger (`qs`, `ip-address`).
 - [x] Configuración de `overrides` en `package.json` para forzar el uso de versiones seguras en dependencias transitivas.
