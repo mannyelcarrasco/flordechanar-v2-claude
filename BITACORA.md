@@ -1,10 +1,25 @@
 # 📋 Bitácora del Proyecto — Flor de Chañar v2
 **Repositorio:** [mannyelcarrasco/flordechanar-v2-claude](https://github.com/mannyelcarrasco/flordechanar-v2-claude)  
-**Última actualización:** 2026-07-20
+**Última actualización:** 2026-07-22
 
 ---
 
 ## ✅ Avances completados
+
+### 🚀 Integración de Asistente de IA & Landing Builder (NUEVO)
+- [x] **Panel de Creación de Cursos (`curso-crear.html`):**
+  - Reestructuración del orden de pasos: "Página de Ventas" movido al **Paso 5**.
+  - Diseño nativo integrado para la caja del Asistente de IA, eliminando la antigua ventana modal emergente.
+  - Implementación de campos para contexto dinámico: **Documento PDF**, **Contexto Web (URL)** y **Caja de Instrucciones**.
+  - Implementación de campos estructurados para crear Landing Pages: **Video VSL (URL)** y sistema dinámico de **Testimonios**.
+- [x] **Backend & API (`server.js`):**
+  - Actualización del endpoint `POST /api/ai/generar-ventas` para aceptar URL, PDFs y texto.
+  - Implementación de scraping de texto automático desde las URLs proporcionadas por el usuario.
+  - Integración de `pdf-parse@1.1.1` para lectura y extracción de texto de archivos PDF (funcionando de forma local).
+  - Configuración global para usar la API de **Gemini** o **OpenAI** (configurable en `.env`).
+- [x] **Frontend Cliente (`detalle.html`):**
+  - Actualización de la visualización del curso para incrustar automáticamente el Video VSL.
+  - Renderizado dinámico de la grilla de Testimonios del curso extrayendo los datos JSON desde `c.ventas_meta`.
 
 ### 🔧 Infraestructura & Deploy
 - [x] Repositorio GitHub configurado y sincronizado con local
@@ -45,7 +60,14 @@
 
 ## 📎 Anexos
 
-### Anexo A — Tarjetas de Terapias (ocultas)
+### Anexo A — Variables de Entorno (.env)
+Para activar la Inteligencia Artificial, es necesario proveer la API Key correspondiente en el archivo `.env` en la raíz del proyecto:
+```env
+GEMINI_API_KEY=tu_clave_de_gemini
+OPENAI_API_KEY=tu_clave_de_openai
+```
+
+### Anexo B — Tarjetas de Terapias (ocultas)
 Las tarjetas de servicio (Biomagnetismo Clínico, Terapia Floral, Reiki y Canalización, Masoterapia Integral) están **ocultas visualmente pero presentes en el código**.
 
 **Archivo:** `public/terapias.html` — línea ~189
@@ -62,7 +84,7 @@ Las tarjetas de servicio (Biomagnetismo Clínico, Terapia Floral, Reiki y Canali
 
 ---
 
-### Anexo B — Estructura de Branches
+### Anexo C — Estructura de Branches
 | Branch | Propósito | Estado |
 |--------|-----------|--------|
 | `main` | Producción — conectado a Hostinger | ✅ Activo |
@@ -70,7 +92,7 @@ Las tarjetas de servicio (Biomagnetismo Clínico, Terapia Floral, Reiki y Canali
 
 ---
 
-### Anexo C — Widget AtendIA
+### Anexo D — Widget AtendIA
 | Parámetro | Valor |
 |-----------|-------|
 | `data-company` | `3` |
@@ -80,7 +102,7 @@ Las tarjetas de servicio (Biomagnetismo Clínico, Terapia Floral, Reiki y Canali
 
 ---
 
-### Anexo D — GitHub Actions Deploy
+### Anexo E — GitHub Actions Deploy
 | Elemento | Detalle |
 |----------|---------|
 | Workflow | `.github/workflows/deploy.yml` |
