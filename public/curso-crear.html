@@ -332,6 +332,16 @@
                     <div class="hint">Ingresa el valor en pesos chilenos sin puntos</div>
                 </div>
             </div>
+            
+            <div class="fg">
+                <label class="toggle-switch" style="display:flex;align-items:center;gap:1rem;cursor:pointer">
+                    <input type="checkbox" id="courseCiclico" style="width:1.2rem;height:1.2rem;cursor:pointer">
+                    <div>
+                        <div class="fl" style="margin-bottom:0">Curso Cíclico / Admisión Continua</div>
+                        <div class="hint" style="margin-top:0.2rem">Activa esto si los alumnos pueden entrar en cualquier momento y verán las clases a partir de su fecha de compra en su "Ruta de Aprendizaje".</div>
+                    </div>
+                </label>
+            </div>
 
             <div class="two">
                 <div class="fg"><label class="fl">Fecha de inicio de ventas</label><input class="fc" type="date"></div>
@@ -1116,6 +1126,7 @@ window.addEventListener('load', async () => {
                         } catch(e){}
                     }
                     document.getElementById('coursePrice').value = c.precio || '';
+                    document.getElementById('courseCiclico').checked = !!c.es_ciclico;
                     document.getElementById('courseCategory').value = c.categoria || '';
                     document.getElementById('courseLevel').value = c.nivel || 'Principiante';
                     document.getElementById('courseDuration').value = c.duracion_total || '';
@@ -1258,6 +1269,7 @@ async function saveDraft() {
             descripcion: desc,
             descripcion_ventas: document.getElementById('courseDescVentas').value,
             precio: price,
+            es_ciclico: document.getElementById('courseCiclico').checked,
             tipo_acceso: document.getElementById('accessType').value,
             portada_url: currentCoverUrl || null,
             estado: 'borrador',
@@ -1323,6 +1335,7 @@ async function publishCourse(estadoFinal = 'publicado') {
             descripcion: desc,
             descripcion_ventas: document.getElementById('courseDescVentas').value,
             precio: price,
+            es_ciclico: document.getElementById('courseCiclico').checked,
             tipo_acceso: document.getElementById('accessType').value,
             portada_url: portada_url,
             estado: estadoFinal,

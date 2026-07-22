@@ -303,18 +303,51 @@
 
     async function cargarCurso() {
         try {
-            const [cursoRes, curriculumRes] = await Promise.all([
-                fetch(`/api/cursos/${cursoId}`, { headers: { 'Authorization': 'Bearer ' + token } }),
-                fetch(`/api/cursos/${cursoId}/curriculum`)
-            ]);
-
-            if (!cursoRes.ok) { location.href = 'dashboard.html'; return; }
-
-            const curso = await cursoRes.json();
-            const modulos = await curriculumRes.json();
+            const panelRes = await fetch(`/api/cursos/${cursoId}/panel-alumno`, { headers: { 'Authorization': 'Bearer ' + token } });
+            if (!panelRes.ok) { location.href = 'dashboard.html'; return; }
+            
+            const panelData = await panelRes.json();
+            const curso = panelData.curso;
+            let modulos = panelData.modulos;
+            const fechaInscripcion = panelData.fecha_inscripcion ? new Date(panelData.fecha_inscripcion) : null;
 
             document.title = curso.titulo + ' | Flor de Chañar';
             document.getElementById('tbTitle').textContent = curso.titulo;
+
+            if (curso.es_ciclico && fechaInscripcion) {
+                try {
+                    const clasesRes = await fetch('/api/clases-vivo', { headers: { 'Authorization': 'Bearer ' + token } });
+                    const clasesVivo = await clasesRes.json();
+                    
+                    const rutaLecciones = [];
+                    const anterioresLecciones = [];
+                    
+                    modulos.forEach(m => {
+                        (m.lecciones || []).forEach(l => {
+                            let fClase = null;
+                            if (l.tipo === 'clase_vivo' || (l.video_url || '').startsWith('clase_vivo:')) {
+                                const cid = (l.video_url || '').split(':')[1] || l.video_url;
+                                const cv = clasesVivo.find(c => String(c.id) === String(cid));
+                                if (cv) fClase = new Date(cv.fecha_inicio.replace(' ','T'));
+                            }
+                            if (fClase) l.fecha_clase = fClase;
+                            
+                            if (!fClase || fClase >= fechaInscripcion) {
+                                rutaLecciones.push({...l, titulo: l.titulo + ' (' + m.titulo + ')'});
+                            } else {
+                                anterioresLecciones.push({...l, titulo: l.titulo + ' (' + m.titulo + ')'});
+                            }
+                        });
+                    });
+                    
+                    rutaLecciones.sort((a,b) => (a.fecha_clase || 0) - (b.fecha_clase || 0));
+                    anterioresLecciones.sort((a,b) => (a.fecha_clase || 0) - (b.fecha_clase || 0));
+
+                    modulos = [];
+                    if (rutaLecciones.length > 0) modulos.push({ id: 'ruta', titulo: 'Mi Ruta de Aprendizaje', lecciones: rutaLecciones });
+                    if (anterioresLecciones.length > 0) modulos.push({ id: 'anteriores', titulo: 'Biblioteca (Clases Anteriores)', lecciones: anterioresLecciones });
+                } catch(e) { console.error("Error estructurando curso cíclico", e); }
+            }
 
             // Flatten all lessons
             allLecciones = [];

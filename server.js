@@ -82,6 +82,7 @@ async function initDB() {
                 descripcion TEXT,
                 precio INT DEFAULT 0,
                 portada_url VARCHAR(500),
+                es_ciclico BOOLEAN DEFAULT FALSE,
                 estado ENUM('borrador','publicado','archivado') DEFAULT 'borrador',
                 profesor_id INT,
                 creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -206,9 +207,11 @@ async function initDB() {
                 youtube_id VARCHAR(50),
                 estado ENUM('programada','en_vivo','finalizada') DEFAULT 'programada',
                 curso_id INT DEFAULT NULL,
+                modulo_id INT DEFAULT NULL,
                 creado_por INT NOT NULL,
                 creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (curso_id) REFERENCES cursos(id) ON DELETE SET NULL,
+                FOREIGN KEY (modulo_id) REFERENCES modulos(id) ON DELETE SET NULL,
                 FOREIGN KEY (creado_por) REFERENCES usuarios(id) ON DELETE CASCADE
             )
         `);
@@ -365,6 +368,14 @@ async function initDB() {
                 actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             )
         `);
+
+        try {
+            await pool.query('ALTER TABLE cursos ADD COLUMN es_ciclico BOOLEAN DEFAULT FALSE');
+        } catch (e) { /* Ignorar si ya existe */ }
+        try {
+            await pool.query('ALTER TABLE clases_vivo ADD COLUMN modulo_id INT DEFAULT NULL');
+            await pool.query('ALTER TABLE clases_vivo ADD CONSTRAINT fk_clases_vivo_modulo FOREIGN KEY (modulo_id) REFERENCES modulos(id) ON DELETE SET NULL');
+        } catch (e) { /* Ignorar si ya existe */ }
 
         console.log('Tables checked/created: usuarios, cursos, inscripciones, modulos, lecciones, progreso_lecciones.');
 
@@ -699,7 +710,7 @@ app.get('/api/cursos', async (req, res) => {
 app.post('/api/cursos', verifyToken, async (req, res) => {
     if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
     try {
-        const { titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas, ventas_meta } = req.body;
+        const { titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas, ventas_meta, es_ciclico } = req.body;
         if (!validStr(titulo, 3, 300)) return res.status(400).json({ error: 'Título del curso requerido (3-300 caracteres)' });
         const estadosPermitidos = ['borrador', 'publicado', 'archivado', 'interno'];
         if (estado && !estadosPermitidos.includes(estado)) return res.status(400).json({ error: 'Estado inválido' });
@@ -711,8 +722,8 @@ app.post('/api/cursos', verifyToken, async (req, res) => {
         }
 
         const [result] = await pool.query(
-            'INSERT INTO cursos (titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas, ventas_meta) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [titulo, descripcion, precio, tipo_acceso || 'gratis', portada_url, estado, profAsignado, categoria||null, nivel||null, duracion_total||null, idioma||null, certificacion ? 1 : 0, modalidad||'Online (Grabado)', descripcion_ventas||null, vMetaStr]
+            'INSERT INTO cursos (titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas, ventas_meta, es_ciclico) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [titulo, descripcion, precio, tipo_acceso || 'gratis', portada_url, estado, profAsignado, categoria||null, nivel||null, duracion_total||null, idioma||null, certificacion ? 1 : 0, modalidad||'Online (Grabado)', descripcion_ventas||null, vMetaStr, es_ciclico ? 1 : 0]
         );
         res.json({ success: true, id: result.insertId });
     } catch (e) {
@@ -871,7 +882,7 @@ app.get('/api/cursos/:id', verifyToken, async (req, res) => {
 app.put('/api/cursos/:id', verifyToken, async (req, res) => {
     if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
     try {
-        const { titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas, ventas_meta } = req.body;
+        const { titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas, ventas_meta, es_ciclico } = req.body;
         let profAsignado = req.usuario.rol === 'admin' ? (profesor_id || req.usuario.id) : req.usuario.id;
 
         let vMetaStr = null;
@@ -880,8 +891,8 @@ app.put('/api/cursos/:id', verifyToken, async (req, res) => {
         }
 
         await pool.query(
-            'UPDATE cursos SET titulo=?, descripcion=?, precio=?, tipo_acceso=?, portada_url=?, estado=?, profesor_id=?, categoria=?, nivel=?, duracion_total=?, idioma=?, certificacion=?, modalidad=?, descripcion_ventas=?, ventas_meta=? WHERE id=?',
-            [titulo, descripcion, precio, tipo_acceso || 'gratis', portada_url, estado, profAsignado, categoria||null, nivel||null, duracion_total||null, idioma||null, certificacion ? 1 : 0, modalidad||'Online (Grabado)', descripcion_ventas||null, vMetaStr, req.params.id]
+            'UPDATE cursos SET titulo=?, descripcion=?, precio=?, tipo_acceso=?, portada_url=?, estado=?, profesor_id=?, categoria=?, nivel=?, duracion_total=?, idioma=?, certificacion=?, modalidad=?, descripcion_ventas=?, ventas_meta=?, es_ciclico=? WHERE id=?',
+            [titulo, descripcion, precio, tipo_acceso || 'gratis', portada_url, estado, profAsignado, categoria||null, nivel||null, duracion_total||null, idioma||null, certificacion ? 1 : 0, modalidad||'Online (Grabado)', descripcion_ventas||null, vMetaStr, es_ciclico ? 1 : 0, req.params.id]
         );
         res.json({ success: true, message: 'Curso actualizado con éxito' });
     } catch (e) {
@@ -929,6 +940,32 @@ app.get('/api/cursos/:id/curriculum', async (req, res) => {
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: 'Error al obtener curriculum' });
+    }
+});
+
+app.get('/api/cursos/:id/panel-alumno', verifyToken, async (req, res) => {
+    try {
+        const [cursos] = await pool.query('SELECT * FROM cursos WHERE id = ?', [req.params.id]);
+        if (cursos.length === 0) return res.status(404).json({ error: 'Curso no encontrado' });
+        const curso = cursos[0];
+
+        const [inscripciones] = await pool.query('SELECT creado_en FROM inscripciones WHERE usuario_id = ? AND curso_id = ?', [req.usuario.id, curso.id]);
+        const fecha_inscripcion = inscripciones.length > 0 ? inscripciones[0].creado_en : null;
+
+        const [modulos] = await pool.query('SELECT * FROM modulos WHERE curso_id = ? ORDER BY orden ASC', [curso.id]);
+        for (let m of modulos) {
+            const [lecciones] = await pool.query('SELECT * FROM lecciones WHERE modulo_id = ? ORDER BY orden ASC', [m.id]);
+            m.lecciones = lecciones;
+        }
+
+        res.json({
+            curso: curso,
+            modulos: modulos,
+            fecha_inscripcion: fecha_inscripcion
+        });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error al obtener panel de alumno' });
     }
 });
 
