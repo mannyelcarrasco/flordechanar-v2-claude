@@ -1901,6 +1901,7 @@ function paintPlanes(planes) {
             <div style="display:flex;gap:.5rem;margin-top:.9rem">
                 <button class="btn bo btn-sm" onclick="openPlanModal(${p.id})"><i class="ph ph-pencil"></i> Editar</button>
                 <button class="btn bo btn-sm" style="color:${p.activo?'#DC2626':'#16A34A'}" onclick="togglePlan(${p.id},${p.activo?0:1})">${p.activo?'Desactivar':'Activar'}</button>
+                <button class="btn bo btn-sm" style="color:#DC2626" onclick="deletePlan(${p.id})" title="Borrar"><i class="ph ph-trash"></i></button>
             </div>
         </div>`).join('');
 }
@@ -1961,6 +1962,26 @@ async function togglePlan(id, nuevoActivo) {
         body: JSON.stringify({ ...plan, activo: nuevoActivo })
     });
     fetchAdminPlanes();
+}
+
+async function deletePlan(id) {
+    if (!confirm('¿Estás seguro que deseas eliminar este plan? Esta acción no se puede deshacer.')) return;
+    const token = localStorage.getItem('token');
+    try {
+        const res = await fetch(`/api/admin/planes/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) { 
+            const d = await res.json(); 
+            showT(d.error || 'Error al eliminar el plan'); 
+            return; 
+        }
+        showT('✅ Plan eliminado');
+        fetchAdminPlanes();
+    } catch (e) {
+        showT('Error al eliminar el plan');
+    }
 }
 
 // Init admin name from JWT

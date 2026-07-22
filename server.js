@@ -2072,6 +2072,19 @@ app.put('/api/admin/planes/:id', verifyToken, async (req, res) => {
     } catch (e) { res.status(500).json({ error: 'Error' }); }
 });
 
+app.delete('/api/admin/planes/:id', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Solo admin' });
+    try {
+        await pool.query('DELETE FROM planes WHERE id = ?', [req.params.id]);
+        res.json({ ok: true });
+    } catch (e) { 
+        if (e.code === 'ER_ROW_IS_REFERENCED_2') {
+            return res.status(400).json({ error: 'No se puede borrar el plan porque ya tiene suscripciones/compras asociadas. Te sugerimos desactivarlo.' });
+        }
+        res.status(500).json({ error: 'Error al eliminar el plan' }); 
+    }
+});
+
 // ── Configuración pública (WhatsApp, etc.) ─────────────────────────────────
 // GET /api/config/publica — sin autenticación, retorna wa_numero y wa_mensaje
 app.get('/api/config/publica', async (req, res) => {
