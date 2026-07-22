@@ -365,7 +365,7 @@
                         <i class="ph ph-magic-wand"></i> Asistente de IA (Generar texto automático)
                     </div>
                     <div style="padding:1rem; background:#fff;">
-                        <p style="font-size:0.8rem; color:var(--l); margin-bottom:1rem;">Sube un PDF, pega texto extra o usa la URL de tu sitio web anterior para darle contexto a la IA.</p>
+                        <p style="font-size:0.8rem; color:var(--l); margin-bottom:1rem;">Sube un PDF, pega texto extra o usa la URL de tu sitio web anterior para darle contexto a la IA.<br><br><strong style="color:var(--p)">💡 Tip de uso:</strong> Es mejor llenar todos los campos que puedas (PDF + URL + Texto extra) de una sola vez antes de generar. La IA los leerá todos combinados. Cada vez que haces clic en "Generar Texto", se borra la versión anterior.</p>
                         
                         <div class="two" style="margin-bottom:0.8rem;">
                             <div class="fg">
@@ -379,7 +379,7 @@
                         </div>
                         <div class="fg">
                             <label class="fl">Instrucciones o texto adicional</label>
-                            <textarea class="fc" id="aiExtraText" rows="2" placeholder="Ej: Menciona que no se requieren conocimientos previos..."></textarea>
+                            <textarea class="fc" id="aiExtraText" rows="4" placeholder="Ej: Menciona que no se requieren conocimientos previos...">Hola, aquí tienes el título del curso, aquí tienes los módulos que el profesor ya escribió, aquí tienes el texto de la página web antigua que descargué, aquí está todo el texto que extraje del PDF, y aquí están las instrucciones extra del profesor. Ahora, lee TODO esto junto y redacta una única página de ventas persuasiva.</textarea>
                         </div>
                         
                         <div style="text-align:right;">
@@ -1200,7 +1200,7 @@ async function generateSalesCopy() {
             showToast('⚠️ Error IA: ' + err.error);
         } else {
             const data = await res.json();
-            document.getElementById('courseDescVentas').value = data.texto;
+            document.getElementById('courseDescVentas').value = data.result;
             showToast('✨ Texto de ventas generado con éxito');
             // Close details if it exists
             const aiBox = document.querySelector('.ai-box');
