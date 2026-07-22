@@ -342,6 +342,12 @@
                     </div>
                 </label>
             </div>
+            
+            <div class="fg">
+                <label class="fl">Enlace de Sala Virtual (Meet / Zoom por defecto)</label>
+                <input class="fc" type="url" id="courseMeetUrl" placeholder="Ej: https://meet.google.com/abc-defg-hij">
+                <div class="hint">Las clases en vivo heredarán este enlace automáticamente a menos que les asocies uno distinto.</div>
+            </div>
 
             <div class="two">
                 <div class="fg"><label class="fl">Fecha de inicio de ventas</label><input class="fc" type="date"></div>
@@ -1127,6 +1133,7 @@ window.addEventListener('load', async () => {
                     }
                     document.getElementById('coursePrice').value = c.precio || '';
                     document.getElementById('courseCiclico').checked = !!c.es_ciclico;
+                    document.getElementById('courseMeetUrl').value = c.meet_url || '';
                     document.getElementById('courseCategory').value = c.categoria || '';
                     document.getElementById('courseLevel').value = c.nivel || 'Principiante';
                     document.getElementById('courseDuration').value = c.duracion_total || '';
@@ -1270,6 +1277,7 @@ async function saveDraft() {
             descripcion_ventas: document.getElementById('courseDescVentas').value,
             precio: price,
             es_ciclico: document.getElementById('courseCiclico').checked,
+            meet_url: document.getElementById('courseMeetUrl').value,
             tipo_acceso: document.getElementById('accessType').value,
             portada_url: currentCoverUrl || null,
             estado: 'borrador',
@@ -1336,6 +1344,7 @@ async function publishCourse(estadoFinal = 'publicado') {
             descripcion_ventas: document.getElementById('courseDescVentas').value,
             precio: price,
             es_ciclico: document.getElementById('courseCiclico').checked,
+            meet_url: document.getElementById('courseMeetUrl').value,
             tipo_acceso: document.getElementById('accessType').value,
             portada_url: portada_url,
             estado: estadoFinal,

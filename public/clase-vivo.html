@@ -221,7 +221,7 @@ async function cargarClases() {
              ahora - ld(c.fecha_inicio) < 3 * 3600000));
         const proximas = clases.filter(c => c.estado === 'programada' && ld(c.fecha_inicio) > ahora)
                                .sort((a,b) => ld(a.fecha_inicio) - ld(b.fecha_inicio));
-        const grabaciones = clases.filter(c => c.youtube_id)
+        const grabaciones = clases.filter(c => c.youtube_id || (esAdmin && c.estado === 'finalizada'))
                                   .sort((a,b) => ld(b.fecha_inicio) - ld(a.fecha_inicio));
 
         renderLiveBanner(enVivo || null);
@@ -236,10 +236,73 @@ async function cargarClases() {
 function configBtn(clase) {
     if (!esAdmin) return '';
     const hasMeet = clase.meet_url && clase.meet_url.startsWith('http');
-    return `<button onclick="openMeetModal(${clase.id},'${(clase.meet_url||'').replace(/'/g,"\\'")}','${clase.titulo.replace(/'/g,"\\'")}')"
-        class="btn-config-meet ${hasMeet ? '' : 'sin-sala'}">
-        <i class="ph ph-${hasMeet ? 'pencil' : 'plus'}"></i> ${hasMeet ? 'Sala Meet' : 'Agregar sala'}
-    </button>`;
+    
+    let actionBtn = '';
+    if (clase.estado === 'programada' || (clase.estado !== 'finalizada' && clase.estado !== 'en_vivo')) {
+        actionBtn = `<button onclick="cambiarEstadoClase(${clase.id}, 'iniciar')" class="btn-config-meet" style="background:var(--flordechanar);color:white;border-color:var(--flordechanar)">
+            <i class="ph ph-play-circle"></i> Iniciar
+        </button>`;
+    } else if (clase.estado === 'en_vivo') {
+        actionBtn = `<button onclick="cambiarEstadoClase(${clase.id}, 'finalizar')" class="btn-config-meet" style="background:#dc3545;color:white;border-color:#dc3545">
+            <i class="ph ph-stop-circle"></i> Finalizar
+        </button>`;
+    }
+
+    return `<div style="display:inline-flex; align-items:center; flex-wrap:wrap; margin-top:0.5rem; gap:0.5rem">
+        <button onclick="openMeetModal(${clase.id},'${(clase.meet_url||'').replace(/'/g,"\\'")}','${clase.titulo.replace(/'/g,"\\'")}')"
+            class="btn-config-meet ${hasMeet ? '' : 'sin-sala'}">
+            <i class="ph ph-${hasMeet ? 'pencil' : 'plus'}"></i> ${hasMeet ? 'Sala Meet' : 'Agregar sala'}
+        </button>
+        ${actionBtn}
+    </div>`;
+}
+
+async function cambiarEstadoClase(id, action) {
+    if (!confirm(`¿Estás seguro de ${action} esta clase?`)) return;
+    try {
+        const res = await fetch(`/api/clases-vivo/${id}/${action}`, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + getToken() }
+        });
+        if (res.ok) {
+            await cargarClases();
+        } else {
+            alert('Error al cambiar el estado de la clase');
+        }
+    } catch(e) { alert('Error de conexión'); }
+}
+
+function openRecModal(claseId, titulo) {
+    document.getElementById('recModalClaseId').value = claseId;
+    document.getElementById('recModalTitle').textContent = `Grabación: ${titulo}`;
+    document.getElementById('recYoutubeId').value = '';
+    document.getElementById('recModalBg').classList.add('open');
+}
+
+async function saveRecording() {
+    const id = document.getElementById('recModalClaseId').value;
+    let ytid = document.getElementById('recYoutubeId').value.trim();
+    if (!ytid) return alert('Ingresa un ID o enlace');
+
+    // Extraer ID si pegó la URL completa
+    if (ytid.includes('youtube.com/') || ytid.includes('youtu.be/')) {
+        const m = ytid.match(/(?:v=|youtu\.be\/)([^&]+)/);
+        if (m && m[1]) ytid = m[1];
+    }
+
+    try {
+        const res = await fetch(`/api/clases-vivo/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+            body: JSON.stringify({ youtube_id: ytid })
+        });
+        if (res.ok) {
+            document.getElementById('recModalBg').classList.remove('open');
+            await cargarClases();
+        } else {
+            alert('Error al guardar grabación');
+        }
+    } catch(e) { alert('Error de conexión'); }
 }
 
 function renderLiveBanner(clase) {
@@ -326,9 +389,10 @@ function renderGrabaciones(lista) {
 
     grid.innerHTML = lista.map(c => {
         const fecha = fmtDate(c.fecha_inicio, { day:'numeric', month:'short', year:'numeric' });
-        return `
-        <div class="rec-card">
-            <div class="video-wrapper">
+        
+        let videoContent = '';
+        if (c.youtube_id) {
+            videoContent = `
                 <iframe
                     src="https://www.youtube.com/embed/${c.youtube_id}?rel=0&modestbranding=1&color=white"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -337,7 +401,23 @@ function renderGrabaciones(lista) {
                 ></iframe>
                 <div class="wm-overlay" oncontextmenu="return false">
                     <div class="wm-text">${wmItems}</div>
+                </div>`;
+        } else if (esAdmin) {
+            videoContent = `
+                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;background:rgba(0,0,0,0.05);color:var(--secondary);text-align:center;padding:1rem;">
+                    <i class="ph ph-upload-simple" style="font-size:2rem;margin-bottom:0.5rem"></i>
+                    <p style="font-size:0.9rem;margin-bottom:1rem">Falta grabación</p>
+                    <button onclick="openRecModal(${c.id}, '${c.titulo.replace(/'/g,"\\'")}')" class="btn-config-meet" style="background:var(--flordechanar);border:none;color:white;width:auto">
+                        Subir Enlace
+                    </button>
                 </div>
+            `;
+        }
+
+        return `
+        <div class="rec-card">
+            <div class="video-wrapper">
+                ${videoContent}
             </div>
             <div class="rec-info">
                 <div class="rec-title">${c.titulo}</div>
