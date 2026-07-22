@@ -310,7 +310,22 @@
             </div>
         </div>
 
-        <!-- SECTION 4: Precio y Acceso -->
+        <!-- SECTION 4: Integraciones y Salas Virtuales -->
+        <div class="sec" id="sec-integraciones">
+            <div class="sec-hdr">
+                <div class="sec-icon p" style="background:#F5F3FF;color:#7C3AED"><i class="ph ph-video-camera"></i></div>
+                <h3>Integraciones y Salas Virtuales</h3>
+            </div>
+            <p style="font-size:.84rem;color:var(--l);margin-bottom:1.1rem">Configura los enlaces de Google Meet o Zoom que usarás para las clases en vivo. Podrás seleccionarlos al programar cada clase.</p>
+            
+            <div id="salasVirtualesList" style="display:flex;flex-direction:column;gap:.75rem;margin-bottom:1rem">
+                <!-- Salas virtuales renderizadas aquí -->
+            </div>
+            
+            <button class="btn btn-sec btn-sm" onclick="agregarSalaUI()" style="margin-bottom:1.5rem"><i class="ph ph-plus"></i> Agregar nueva sala</button>
+        </div>
+
+        <!-- SECTION 5: Precio y Acceso -->
         <div class="sec">
             <div class="sec-hdr">
                 <div class="sec-icon r"><i class="ph ph-currency-circle-dollar"></i></div>
@@ -504,8 +519,10 @@
             <div class="hint">Vincula esta lección a una clase del calendario. Las alumnas verán el link de Meet o la grabación según el estado.</div>
             <div id="claseVivoDetails" style="display:none;margin-top:.75rem;padding:.9rem;background:#F8FAFC;border-radius:8px;border:1px solid #E2E8F0">
                 <div style="font-size:.75rem;font-weight:700;color:var(--p);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.65rem"><i class="ph ph-video-camera"></i> Configurar esta clase</div>
-                <label class="fl" style="font-size:.82rem;margin-bottom:.3rem">Sala Google Meet (URL)</label>
-                <input class="fc" id="lecMeetUrl" type="url" placeholder="https://meet.google.com/xxx-xxxx-xxx" style="margin-bottom:.6rem">
+                <label class="fl" style="font-size:.82rem;margin-bottom:.3rem">Sala Virtual (Meet/Zoom)</label>
+                <select class="fc" id="lecMeetUrl" style="margin-bottom:.6rem">
+                    <option value="">— Seleccionar sala —</option>
+                </select>
                 <label class="fl" style="font-size:.82rem;margin-bottom:.3rem">YouTube ID (grabación post-clase)</label>
                 <input class="fc" id="lecYoutubeId" type="text" placeholder="Ej: dQw4w9WgXcQ">
                 <div style="font-size:.74rem;color:var(--l);margin-top:.5rem"><i class="ph ph-info"></i> Se sincroniza con la clase al guardar.</div>
@@ -517,8 +534,10 @@
                 <input class="fc" id="nuevaClaseTitulo" type="text" placeholder="Ej: Clase 3 — Introducción" style="margin-bottom:.6rem">
                 <label class="fl" style="font-size:.82rem;margin-bottom:.3rem">Fecha y hora <span style="color:#EF4444">*</span></label>
                 <input class="fc" id="nuevaClaseFecha" type="datetime-local" style="margin-bottom:.6rem">
-                <label class="fl" style="font-size:.82rem;margin-bottom:.3rem">Sala Google Meet (URL)</label>
-                <input class="fc" id="nuevaClaseMeet" type="url" placeholder="https://meet.google.com/xxx-xxxx-xxx" style="margin-bottom:.75rem">
+                <label class="fl" style="font-size:.82rem;margin-bottom:.3rem">Sala Virtual (Meet/Zoom)</label>
+                <select class="fc" id="nuevaClaseMeet" style="margin-bottom:.75rem">
+                    <option value="">— Seleccionar sala —</option>
+                </select>
                 <div style="display:flex;gap:.5rem">
                     <button type="button" class="btn btn-p" style="flex:1;font-size:.85rem" onclick="crearNuevaClaseInline()"><i class="ph ph-check"></i> Crear clase</button>
                     <button type="button" class="btn" style="font-size:.85rem;background:#F1F5F9;color:#64748B" onclick="cancelarNuevaClase()">Cancelar</button>
@@ -594,6 +613,7 @@ let currentMode = 'admin';
 let selectedProfId = null;
 let currentCourseId = null;
 let currentCoverUrl = null;
+let salasVirtualesData = [];
 
 function selectMode(mode) {
     currentMode = mode;
@@ -622,6 +642,39 @@ function selectProfReal(id, name) {
     document.getElementById('permPanel').style.display = 'block';
     updateChecklist();
     showToast(`${name} seleccionada(o) como responsable`);
+}
+
+// Salas Virtuales UI Logic
+function renderSalasVirtuales() {
+    const list = document.getElementById('salasVirtualesList');
+    if (!list) return;
+    if (salasVirtualesData.length === 0) {
+        list.innerHTML = '<div style="font-size:.85rem;color:var(--l);font-style:italic">No hay salas configuradas.</div>';
+        return;
+    }
+    list.innerHTML = salasVirtualesData.map((sala, i) => `
+        <div style="background:#fff;border:1px solid #E5E7EB;padding:1rem;border-radius:8px;display:flex;gap:1rem;align-items:center">
+            <div style="flex:1">
+                <label style="font-size:.75rem;color:var(--l);margin-bottom:.3rem;display:block">Nombre de la sala (Ej: Clase Teórica)</label>
+                <input type="text" class="fc" value="${sala.nombre || ''}" onchange="salasVirtualesData[${i}].nombre=this.value" placeholder="Nombre identificador">
+            </div>
+            <div style="flex:2">
+                <label style="font-size:.75rem;color:var(--l);margin-bottom:.3rem;display:block">URL de la sala (Google Meet, Zoom, etc)</label>
+                <input type="url" class="fc" value="${sala.url || ''}" onchange="salasVirtualesData[${i}].url=this.value" placeholder="https://...">
+            </div>
+            <button class="btn btn-sm" style="background:#FEE2E2;color:#EF4444;align-self:flex-end" onclick="eliminarSala(${i})"><i class="ph ph-trash"></i></button>
+        </div>
+    `).join('');
+}
+
+function agregarSalaUI() {
+    salasVirtualesData.push({ id: 'sala_' + Date.now(), nombre: '', url: '' });
+    renderSalasVirtuales();
+}
+
+function eliminarSala(i) {
+    salasVirtualesData.splice(i, 1);
+    renderSalasVirtuales();
 }
 
 // Curriculum UI Logic
@@ -809,6 +862,13 @@ async function cargarClasesParaSelector(valorActual) {
     }
 }
 
+function popularSalasSelector(selectId, selectedUrl = '') {
+    const sel = document.getElementById(selectId);
+    if (!sel) return;
+    sel.innerHTML = '<option value="">— Seleccionar sala —</option>' + 
+        salasVirtualesData.map(s => `<option value="${s.url}" ${s.url === selectedUrl ? 'selected' : ''}>${s.nombre || s.url}</option>`).join('');
+}
+
 function onClaseVivoChange() {
     const claseId = document.getElementById('lecClaseVivo').value;
     const details = document.getElementById('claseVivoDetails');
@@ -816,13 +876,14 @@ function onClaseVivoChange() {
     if (claseId === '__new__') {
         details.style.display = 'none';
         nuevaForm.style.display = 'block';
+        popularSalasSelector('nuevaClaseMeet');
         return;
     }
     nuevaForm.style.display = 'none';
     if (!claseId) { details.style.display = 'none'; return; }
     const clase = _clasesCache.find(c => String(c.id) === String(claseId));
     details.style.display = 'block';
-    document.getElementById('lecMeetUrl').value = (clase && clase.meet_url) ? clase.meet_url : '';
+    popularSalasSelector('lecMeetUrl', (clase && clase.meet_url) ? clase.meet_url : '');
     document.getElementById('lecYoutubeId').value = (clase && clase.youtube_id) ? clase.youtube_id : '';
 }
 
@@ -841,7 +902,7 @@ async function crearNuevaClaseInline() {
         const res = await fetch('/api/clases-vivo', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-            body: JSON.stringify({ titulo, fecha_inicio: fecha, meet_url: meetUrl || null })
+            body: JSON.stringify({ titulo, fecha_inicio: fecha, meet_url: meetUrl || null, curso_id: currentCourseId, modulo_id: currentLessonState.moduloId })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Error al crear');
@@ -934,21 +995,17 @@ async function saveLesson() {
             else { const d = await r.json(); showToast('⚠️ ' + (d.error || 'Error al crear')); return; }
         }
 
-        // Si es clase_vivo, sincronizar meet_url y youtube_id con la clase
+        // Si es clase_vivo, sincronizar meet_url, youtube_id y asociación con la clase
         if (ok && tipo === 'clase_vivo') {
             const claseId = document.getElementById('lecClaseVivo').value;
             const meetUrl = document.getElementById('lecMeetUrl').value.trim() || null;
             const youtubeId = document.getElementById('lecYoutubeId').value.trim() || null;
-            const clase = _clasesCache.find(c => String(c.id) === String(claseId));
-            const meetChanged = meetUrl !== (clase?.meet_url || null);
-            const ytChanged = youtubeId !== (clase?.youtube_id || null);
-            if (meetChanged || ytChanged) {
-                await fetch('/api/clases-vivo/' + claseId, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-                    body: JSON.stringify({ meet_url: meetUrl, youtube_id: youtubeId })
-                });
-            }
+            
+            await fetch('/api/clases-vivo/' + claseId, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify({ meet_url: meetUrl, youtube_id: youtubeId, curso_id: currentCourseId, modulo_id: currentLessonState.moduloId })
+            });
         }
 
         closeLessonModal();
@@ -1133,7 +1190,17 @@ window.addEventListener('load', async () => {
                     }
                     document.getElementById('coursePrice').value = c.precio || '';
                     document.getElementById('courseCiclico').checked = !!c.es_ciclico;
-                    document.getElementById('courseMeetUrl').value = c.meet_url || '';
+                    
+                    if (c.salas_virtuales) {
+                        try {
+                            salasVirtualesData = typeof c.salas_virtuales === 'string' ? JSON.parse(c.salas_virtuales) : c.salas_virtuales;
+                        } catch(e){}
+                    } else if (c.meet_url) {
+                        // Fallback legacy
+                        salasVirtualesData = [{ id: 'sala_legacy', nombre: 'Sala Principal', url: c.meet_url }];
+                    }
+                    renderSalasVirtuales();
+
                     document.getElementById('courseCategory').value = c.categoria || '';
                     document.getElementById('courseLevel').value = c.nivel || 'Principiante';
                     document.getElementById('courseDuration').value = c.duracion_total || '';
@@ -1277,7 +1344,7 @@ async function saveDraft() {
             descripcion_ventas: document.getElementById('courseDescVentas').value,
             precio: price,
             es_ciclico: document.getElementById('courseCiclico').checked,
-            meet_url: document.getElementById('courseMeetUrl').value,
+            salas_virtuales: salasVirtualesData,
             tipo_acceso: document.getElementById('accessType').value,
             portada_url: currentCoverUrl || null,
             estado: 'borrador',
@@ -1344,7 +1411,7 @@ async function publishCourse(estadoFinal = 'publicado') {
             descripcion_ventas: document.getElementById('courseDescVentas').value,
             precio: price,
             es_ciclico: document.getElementById('courseCiclico').checked,
-            meet_url: document.getElementById('courseMeetUrl').value,
+            salas_virtuales: salasVirtualesData,
             tipo_acceso: document.getElementById('accessType').value,
             portada_url: portada_url,
             estado: estadoFinal,

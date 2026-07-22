@@ -377,6 +377,10 @@ async function initDB() {
         try {
             await pool.query('ALTER TABLE cursos ADD COLUMN meet_url VARCHAR(500)');
         } catch (e) { /* Ignorar si ya existe */ }
+
+        try {
+            await pool.query('ALTER TABLE cursos ADD COLUMN salas_virtuales TEXT');
+        } catch (e) { /* Ignorar si ya existe */ }
         try {
             await pool.query('ALTER TABLE clases_vivo ADD COLUMN modulo_id INT DEFAULT NULL');
             await pool.query('ALTER TABLE clases_vivo ADD CONSTRAINT fk_clases_vivo_modulo FOREIGN KEY (modulo_id) REFERENCES modulos(id) ON DELETE SET NULL');
@@ -715,7 +719,7 @@ app.get('/api/cursos', async (req, res) => {
 app.post('/api/cursos', verifyToken, async (req, res) => {
     if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
     try {
-        const { titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas, ventas_meta, es_ciclico, meet_url } = req.body;
+        const { titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas, ventas_meta, es_ciclico, meet_url, salas_virtuales } = req.body;
         if (!validStr(titulo, 3, 300)) return res.status(400).json({ error: 'Título del curso requerido (3-300 caracteres)' });
         const estadosPermitidos = ['borrador', 'publicado', 'archivado', 'interno'];
         if (estado && !estadosPermitidos.includes(estado)) return res.status(400).json({ error: 'Estado inválido' });
@@ -725,10 +729,14 @@ app.post('/api/cursos', verifyToken, async (req, res) => {
         if(ventas_meta) {
             vMetaStr = typeof ventas_meta === 'object' ? JSON.stringify(ventas_meta) : ventas_meta;
         }
+        let salasStr = null;
+        if(salas_virtuales) {
+            salasStr = typeof salas_virtuales === 'object' ? JSON.stringify(salas_virtuales) : salas_virtuales;
+        }
 
         const [result] = await pool.query(
-            'INSERT INTO cursos (titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas, ventas_meta, es_ciclico, meet_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [titulo, descripcion, precio, tipo_acceso || 'gratis', portada_url, estado, profAsignado, categoria||null, nivel||null, duracion_total||null, idioma||null, certificacion ? 1 : 0, modalidad||'Online (Grabado)', descripcion_ventas||null, vMetaStr, es_ciclico ? 1 : 0, meet_url || null]
+            'INSERT INTO cursos (titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas, ventas_meta, es_ciclico, meet_url, salas_virtuales) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [titulo, descripcion, precio, tipo_acceso || 'gratis', portada_url, estado, profAsignado, categoria||null, nivel||null, duracion_total||null, idioma||null, certificacion ? 1 : 0, modalidad||'Online (Grabado)', descripcion_ventas||null, vMetaStr, es_ciclico ? 1 : 0, meet_url || null, salasStr]
         );
         res.json({ success: true, id: result.insertId });
     } catch (e) {
@@ -887,17 +895,21 @@ app.get('/api/cursos/:id', verifyToken, async (req, res) => {
 app.put('/api/cursos/:id', verifyToken, async (req, res) => {
     if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
     try {
-        const { titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas, ventas_meta, es_ciclico, meet_url } = req.body;
+        const { titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas, ventas_meta, es_ciclico, meet_url, salas_virtuales } = req.body;
         let profAsignado = req.usuario.rol === 'admin' ? (profesor_id || req.usuario.id) : req.usuario.id;
 
         let vMetaStr = null;
         if(ventas_meta) {
             vMetaStr = typeof ventas_meta === 'object' ? JSON.stringify(ventas_meta) : ventas_meta;
         }
+        let salasStr = null;
+        if(salas_virtuales) {
+            salasStr = typeof salas_virtuales === 'object' ? JSON.stringify(salas_virtuales) : salas_virtuales;
+        }
 
         await pool.query(
-            'UPDATE cursos SET titulo=?, descripcion=?, precio=?, tipo_acceso=?, portada_url=?, estado=?, profesor_id=?, categoria=?, nivel=?, duracion_total=?, idioma=?, certificacion=?, modalidad=?, descripcion_ventas=?, ventas_meta=?, es_ciclico=?, meet_url=? WHERE id=?',
-            [titulo, descripcion, precio, tipo_acceso || 'gratis', portada_url, estado, profAsignado, categoria||null, nivel||null, duracion_total||null, idioma||null, certificacion ? 1 : 0, modalidad||'Online (Grabado)', descripcion_ventas||null, vMetaStr, es_ciclico ? 1 : 0, meet_url || null, req.params.id]
+            'UPDATE cursos SET titulo = ?, descripcion = ?, precio = ?, tipo_acceso = ?, portada_url = ?, estado = ?, profesor_id = ?, categoria = ?, nivel = ?, duracion_total = ?, idioma = ?, certificacion = ?, modalidad = ?, descripcion_ventas = ?, ventas_meta = ?, es_ciclico = ?, meet_url = ?, salas_virtuales = ? WHERE id = ?',
+            [titulo, descripcion, precio, tipo_acceso || 'gratis', portada_url, estado, profAsignado, categoria||null, nivel||null, duracion_total||null, idioma||null, certificacion ? 1 : 0, modalidad||'Online (Grabado)', descripcion_ventas||null, vMetaStr, es_ciclico ? 1 : 0, meet_url || null, salasStr, req.params.id]
         );
         res.json({ success: true, message: 'Curso actualizado con éxito' });
     } catch (e) {
@@ -1482,7 +1494,8 @@ app.get('/api/clases-vivo', verifyToken, async (req, res) => {
         const [rows] = await pool.query(`
             SELECT cv.*, u.nombre as profesor_nombre,
                    c.titulo as curso_titulo,
-                   c.meet_url as curso_meet_url
+                   c.meet_url as curso_meet_url,
+                   c.salas_virtuales as curso_salas_virtuales
             FROM clases_vivo cv
             JOIN usuarios u ON cv.creado_por = u.id
             LEFT JOIN cursos c ON cv.curso_id = c.id

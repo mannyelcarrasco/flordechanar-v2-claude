@@ -249,7 +249,7 @@ function configBtn(clase) {
     }
 
     return `<div style="display:inline-flex; align-items:center; flex-wrap:wrap; margin-top:0.5rem; gap:0.5rem">
-        <button onclick="openMeetModal(${clase.id},'${(clase.meet_url||'').replace(/'/g,"\\'")}','${clase.titulo.replace(/'/g,"\\'")}')"
+        <button onclick="openMeetModal(${clase.id},'${(clase.meet_url||'').replace(/'/g,"\\'")}','${clase.titulo.replace(/'/g,"\\'")}','${(clase.curso_salas_virtuales||'').replace(/'/g,"\\'").replace(/"/g,"&quot;")}')"
             class="btn-config-meet ${hasMeet ? '' : 'sin-sala'}">
             <i class="ph ph-${hasMeet ? 'pencil' : 'plus'}"></i> ${hasMeet ? 'Sala Meet' : 'Agregar sala'}
         </button>
@@ -324,6 +324,7 @@ function renderLiveBanner(clase) {
                 <span><i class="ph ph-clock"></i> ${fmtDate(clase.fecha_inicio,{hour:'2-digit',minute:'2-digit'})}</span>
                 ${clase.curso_titulo ? `<span class="badge-curso"><i class="ph ph-books"></i> ${clase.curso_titulo}</span>` : ''}
             </div>
+            ${clase.meet_url && clase.meet_url.startsWith('http') ? `<div style="margin-top:0.3rem"><a href="${clase.meet_url}" target="_blank" style="color:rgba(255,255,255,0.9);font-size:0.85rem;text-decoration:underline">${clase.meet_url}</a></div>` : ''}
             ${configBtn(clase)}
         </div>
         ${clase.meet_url && clase.meet_url.startsWith('http')
@@ -366,6 +367,7 @@ function renderProximas(lista) {
                     <span><i class="ph ph-user"></i> ${c.profesor_nombre}</span>
                     ${c.curso_titulo ? `<span class="badge-curso">${c.curso_titulo}</span>` : ''}
                 </div>
+                ${c.meet_url && c.meet_url.startsWith('http') ? `<div style="margin-top:0.3rem"><a href="${c.meet_url}" target="_blank" style="color:var(--p);font-size:0.85rem;text-decoration:underline">${c.meet_url}</a></div>` : ''}
                 ${configBtn(c)}
             </div>
             ${c.meet_url && c.meet_url.startsWith('http')
@@ -437,12 +439,26 @@ function getGmeetRooms() {
     try { return JSON.parse(localStorage.getItem('gmeet_rooms') || '[]'); } catch { return []; }
 }
 
-function openMeetModal(claseId, currentUrl, titulo) {
+function openMeetModal(claseId, currentUrl, titulo, salasVirtualesStr = '') {
     document.getElementById('meetModalClaseId').value = claseId;
     const sel = document.getElementById('meetRoomSel');
-    const rooms = getGmeetRooms();
+    let rooms = getGmeetRooms(); // Salas globales (admin)
+    
+    // Salas del curso si existen
+    if (salasVirtualesStr) {
+        try {
+            const courseRooms = JSON.parse(salasVirtualesStr.replace(/&quot;/g, '"'));
+            if (Array.isArray(courseRooms) && courseRooms.length > 0) {
+                rooms = [...courseRooms, ...rooms];
+            }
+        } catch(e) {}
+    }
+
+    // Remover duplicados (por url)
+    rooms = rooms.filter((r, index, self) => index === self.findIndex((t) => t.url === r.url));
+
     sel.innerHTML = '<option value="">— Sin sala —</option>' +
-        rooms.map(r => `<option value="${r.url}" ${r.url === currentUrl ? 'selected' : ''}>${r.nombre}</option>`).join('') +
+        rooms.map(r => `<option value="${r.url}" ${r.url === currentUrl ? 'selected' : ''}>${r.nombre || r.url}</option>`).join('') +
         '<option value="__custom__">✏️ URL personalizada...</option>';
     const customInput = document.getElementById('meetCustomUrl');
     customInput.style.display = 'none';
