@@ -6,6 +6,10 @@
 
 ## ✅ Avances completados
 
+### 🔒 Seguridad & Dependencias (NUEVO)
+- [x] Corrección de vulnerabilidades de NPM detectadas por Hostinger (`qs`, `ip-address`).
+- [x] Configuración de `overrides` en `package.json` para forzar el uso de versiones seguras en dependencias transitivas.
+
 ### 🚀 Integración de Asistente de IA & Landing Builder (NUEVO)
 - [x] **Panel de Creación de Cursos (`curso-crear.html`):**
   - Reestructuración del orden de pasos: "Página de Ventas" movido al **Paso 5**.
