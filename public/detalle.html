@@ -255,6 +255,22 @@
             if(c.nivel) badges += `<span>${c.nivel}</span>`;
             if(c.modalidad) badges += `<span>${c.modalidad}</span>`;
             document.getElementById('cMeta').innerHTML = badges;
+            
+            // Extra info
+            let extraInfo = '';
+            if (c.dias_clase) extraInfo += `<div style="display:flex;align-items:center;gap:.5rem"><i class="ph ph-calendar-blank"></i> ${c.dias_clase}</div>`;
+            if (c.horario_clase) extraInfo += `<div style="display:flex;align-items:center;gap:.5rem"><i class="ph ph-clock"></i> ${c.horario_clase}</div>`;
+            if (c.sede) extraInfo += `<div style="display:flex;align-items:center;gap:.5rem"><i class="ph ph-map-pin"></i> ${c.sede}</div>`;
+            if (c.texto_opciones_extra) extraInfo += `<div style="color:var(--color-primary);font-weight:600;margin-top:.5rem">Consulta por más opciones</div>`;
+            
+            if (extraInfo) {
+                const eiDiv = document.createElement('div');
+                eiDiv.style.marginTop = '1rem';
+                eiDiv.style.fontSize = '0.95rem';
+                eiDiv.style.color = 'var(--color-text-light)';
+                eiDiv.innerHTML = extraInfo;
+                document.getElementById('cMeta').parentNode.insertBefore(eiDiv, document.getElementById('cMeta').nextSibling);
+            }
 
             // Ventas Meta (VSL, Testimonials)
             let vslUrl = '';

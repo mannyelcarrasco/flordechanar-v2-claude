@@ -358,10 +358,24 @@
                 </label>
             </div>
             
+            <div class="two" id="presencialFields">
+                <div class="fg"><label class="fl">Días de clase</label><input class="fc" type="text" id="courseDias" placeholder="Ej: Lunes y Miércoles"></div>
+                <div class="fg"><label class="fl">Horario</label><input class="fc" type="text" id="courseHorario" placeholder="Ej: 19:00 a 21:00 hrs"></div>
+            </div>
+            
+            <div class="fg" id="sedeField">
+                <label class="fl">Sede / Ubicación Física</label>
+                <select class="fc" id="courseSede">
+                    <option value="">— Seleccionar sede —</option>
+                </select>
+                <div class="hint">Configura las sedes globales en el panel de administrador.</div>
+            </div>
+            
             <div class="fg">
-                <label class="fl">Enlace de Sala Virtual (Meet / Zoom por defecto)</label>
-                <input class="fc" type="url" id="courseMeetUrl" placeholder="Ej: https://meet.google.com/abc-defg-hij">
-                <div class="hint">Las clases en vivo heredarán este enlace automáticamente a menos que les asocies uno distinto.</div>
+                <label class="fl" style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-weight:400;margin-top:.5rem">
+                    <input type="checkbox" id="courseOpcionesExtra" style="width:16px;height:16px">
+                    Añadir mensaje "Consulta por más opciones"
+                </label>
             </div>
 
             <div class="two">
@@ -1190,6 +1204,12 @@ window.addEventListener('load', async () => {
                     }
                     document.getElementById('coursePrice').value = c.precio || '';
                     document.getElementById('courseCiclico').checked = !!c.es_ciclico;
+                    document.getElementById('courseDias').value = c.dias_clase || '';
+                    document.getElementById('courseHorario').value = c.horario_clase || '';
+                    document.getElementById('courseOpcionesExtra').checked = !!c.texto_opciones_extra;
+                    
+                    // La sede se seleccionará después de que carguen las sedes globales, guardamos el valor
+                    window._savedSede = c.sede || '';
                     
                     if (c.salas_virtuales) {
                         try {
@@ -1344,6 +1364,10 @@ async function saveDraft() {
             descripcion_ventas: document.getElementById('courseDescVentas').value,
             precio: price,
             es_ciclico: document.getElementById('courseCiclico').checked,
+            dias_clase: document.getElementById('courseDias').value,
+            horario_clase: document.getElementById('courseHorario').value,
+            sede: document.getElementById('courseSede').value,
+            texto_opciones_extra: document.getElementById('courseOpcionesExtra').checked,
             salas_virtuales: salasVirtualesData,
             tipo_acceso: document.getElementById('accessType').value,
             portada_url: currentCoverUrl || null,
@@ -1411,6 +1435,10 @@ async function publishCourse(estadoFinal = 'publicado') {
             descripcion_ventas: document.getElementById('courseDescVentas').value,
             precio: price,
             es_ciclico: document.getElementById('courseCiclico').checked,
+            dias_clase: document.getElementById('courseDias').value,
+            horario_clase: document.getElementById('courseHorario').value,
+            sede: document.getElementById('courseSede').value,
+            texto_opciones_extra: document.getElementById('courseOpcionesExtra').checked,
             salas_virtuales: salasVirtualesData,
             tipo_acceso: document.getElementById('accessType').value,
             portada_url: portada_url,
@@ -1483,6 +1511,37 @@ function goBack() {
     else window.location.href = 'admin.html?tab=cursos';
 }
 
+async function loadSedesGlobales() {
+    try {
+        const res = await fetch('/api/configuracion/sedes');
+        if(res.ok) {
+            const sedes = await res.json();
+            const select = document.getElementById('courseSede');
+            sedes.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.nombre;
+                opt.textContent = s.nombre + (s.direccion ? ` (${s.direccion})` : '');
+                select.appendChild(opt);
+            });
+            if (window._savedSede) {
+                select.value = window._savedSede;
+            }
+        }
+    } catch(e) { console.error('Error cargando sedes', e); }
+}
+
+function handleModalidadChange() {
+    const m = document.getElementById('courseModalidad').value;
+    const isPresencial = m === 'Presencial' || m === 'Híbrido (Online y Presencial)';
+    document.getElementById('presencialFields').style.display = isPresencial ? 'flex' : 'none';
+    document.getElementById('sedeField').style.display = isPresencial ? 'block' : 'none';
+}
+
+document.getElementById('courseModalidad').addEventListener('change', handleModalidadChange);
+
+// Iniciar
+loadSedesGlobales();
+handleModalidadChange();
 </script>
 </body>
 </html>

@@ -263,6 +263,18 @@
                     const ctaLabel = 'Ver detalles';
                     const ctaOnclick = `location.href='detalle.html?id=${curso.id}'`;
 
+                    let extraInfoHtml = '';
+                    if (curso.dias_clase || curso.horario_clase || curso.sede) {
+                        extraInfoHtml = `
+                            <div style="font-size:0.8rem;color:var(--color-text-light);margin-top:0.5rem;display:flex;flex-direction:column;gap:0.25rem;">
+                                ${curso.dias_clase ? `<span><i class="ph ph-calendar-blank"></i> ${curso.dias_clase}</span>` : ''}
+                                ${curso.horario_clase ? `<span><i class="ph ph-clock"></i> ${curso.horario_clase}</span>` : ''}
+                                ${curso.sede ? `<span><i class="ph ph-map-pin"></i> ${curso.sede}</span>` : ''}
+                                ${curso.texto_opciones_extra ? `<span style="color:var(--color-primary);font-weight:600;margin-top:0.2rem;">Consulta por más opciones</span>` : ''}
+                            </div>
+                        `;
+                    }
+
                     grid.innerHTML += `
                         <div class="course-card">
                             <div class="c-image" style="background-image: url('${cover}')"></div>
@@ -273,7 +285,8 @@
                                 </div>
                                 <h3>${curso.titulo}</h3>
                                 <p>${curso.descripcion}</p>
-                                <div class="c-footer">
+                                ${extraInfoHtml}
+                                <div class="c-footer" style="margin-top:1rem">
                                     <div>${priceBadge}</div>
                                     <a href="javascript:void(0)" onclick="${ctaOnclick}" style="color: var(--color-primary); font-weight: 600;">${ctaLabel} <i class="ph ph-arrow-right"></i></a>
                                 </div>
