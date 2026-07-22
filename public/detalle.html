@@ -157,8 +157,14 @@
         <div class="landing-layout">
             <!-- Left: Description & Curriculum -->
             <div class="l-content">
+                <div id="vslContainer" style="display:none; margin-bottom:2rem; width:100%; border-radius:12px; overflow:hidden; aspect-ratio:16/9; background:#000; box-shadow:0 10px 30px rgba(0,0,0,0.15);"></div>
                 <div id="cLongDesc" style="margin-bottom: 3rem;">
                     <!-- AI Generated Sales Copy -->
+                </div>
+                
+                <div id="testimoniosContainer" style="display:none; margin-bottom: 3rem;">
+                    <h2 style="font-size:1.8rem; margin-bottom:1.5rem; color:var(--color-secondary); text-align:center;">Lo que dicen nuestros alumnos</h2>
+                    <div id="testimoniosGrid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:1.5rem;"></div>
                 </div>
 
                 <h2>Temario del Curso</h2>
@@ -250,11 +256,59 @@
             if(c.modalidad) badges += `<span>${c.modalidad}</span>`;
             document.getElementById('cMeta').innerHTML = badges;
 
+            // Ventas Meta (VSL, Testimonials)
+            let vslUrl = '';
+            let testimonios = [];
+            if (c.ventas_meta) {
+                try {
+                    const vm = typeof c.ventas_meta === 'string' ? JSON.parse(c.ventas_meta) : c.ventas_meta;
+                    if(vm.vsl_url) vslUrl = vm.vsl_url;
+                    if(vm.testimonios && vm.testimonios.length) testimonios = vm.testimonios;
+                } catch(e){}
+            }
+
+            // Render VSL
+            if (vslUrl) {
+                // Convert youtube/vimeo link to embed
+                let embedUrl = vslUrl;
+                if(vslUrl.includes('youtube.com/watch?v=')) {
+                    embedUrl = vslUrl.replace('watch?v=', 'embed/');
+                } else if(vslUrl.includes('youtu.be/')) {
+                    embedUrl = vslUrl.replace('youtu.be/', 'youtube.com/embed/');
+                }
+                const vsl = document.getElementById('vslContainer');
+                vsl.style.display = 'block';
+                vsl.innerHTML = `<iframe src="${embedUrl}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
+            } else {
+                document.getElementById('vslContainer').style.display = 'none';
+            }
+
             // Description
             if (c.descripcion_ventas && c.descripcion_ventas.trim() !== '') {
                 document.getElementById('cLongDesc').innerHTML = c.descripcion_ventas;
             } else {
                 document.getElementById('cLongDesc').innerHTML = `<p>${c.descripcion}</p><p>Próximamente más información detallada de este curso.</p>`;
+            }
+
+            // Testimonials
+            if (testimonios.length > 0) {
+                const tCont = document.getElementById('testimoniosContainer');
+                const tGrid = document.getElementById('testimoniosGrid');
+                tCont.style.display = 'block';
+                tGrid.innerHTML = '';
+                testimonios.forEach(t => {
+                    let stars = '';
+                    for(let i=0; i<5; i++) {
+                        stars += i < t.estrellas ? '<i class="ph-fill ph-star" style="color:#F59E0B"></i>' : '<i class="ph ph-star" style="color:#D1D5DB"></i>';
+                    }
+                    tGrid.innerHTML += `<div style="background:var(--color-white); padding:1.5rem; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.05); border:1px solid #F1F5F9;">
+                        <div style="display:flex; gap:0.2rem; margin-bottom:0.8rem; font-size:1.1rem;">${stars}</div>
+                        <p style="font-size:0.95rem; color:var(--color-text-main); font-style:italic; margin-bottom:1rem; line-height:1.6;">"${t.texto}"</p>
+                        <h4 style="font-size:0.9rem; color:var(--color-secondary); font-weight:700;">— ${t.nombre}</h4>
+                    </div>`;
+                });
+            } else {
+                document.getElementById('testimoniosContainer').style.display = 'none';
             }
 
             // Buy Box

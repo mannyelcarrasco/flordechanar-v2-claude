@@ -174,15 +174,15 @@
 
         <!-- Progress Steps -->
         <div class="steps-bar">
-            <div class="step"><div class="step-num active" id="sn1">1</div><div class="step-label active">Información básica</div></div>
+            <div class="step"><div class="step-num active" id="sn1">1</div><div class="step-label active">Info básica</div></div>
             <i class="ph ph-caret-right step-arrow"></i>
-            <div class="step"><div class="step-num pending" id="sn2">2</div><div class="step-label">Responsable</div></div>
+            <div class="step"><div class="step-num pending" id="sn2">2</div><div class="step-label">Ventas</div></div>
             <i class="ph ph-caret-right step-arrow"></i>
-            <div class="step"><div class="step-num pending" id="sn3">3</div><div class="step-label">Currículum</div></div>
+            <div class="step"><div class="step-num pending" id="sn3">3</div><div class="step-label">Responsable</div></div>
             <i class="ph ph-caret-right step-arrow"></i>
-            <div class="step"><div class="step-num pending" id="sn4">4</div><div class="step-label">Precios y acceso</div></div>
+            <div class="step"><div class="step-num pending" id="sn4">4</div><div class="step-label">Currículum</div></div>
             <i class="ph ph-caret-right step-arrow"></i>
-            <div class="step"><div class="step-num pending" id="sn5">5</div><div class="step-label">Publicación</div></div>
+            <div class="step"><div class="step-num pending" id="sn5">5</div><div class="step-label">Precios</div></div>
         </div>
 
         <!-- SECTION 1: Información básica -->
@@ -195,15 +195,7 @@
             <div class="fg"><label class="fl">Título del curso <span style="color:var(--err)">*</span></label><input class="fc" type="text" id="courseTitle" placeholder="Ej: Diplomado en Biomagnetismo Clínico Integral" oninput="updateChecklist()"></div>
             <div class="fg"><label class="fl">Subtítulo / descripción corta</label><input class="fc" type="text" placeholder="Ej: Aprende a dominar los pares biomagnéticos desde cero hasta nivel clínico"></div>
             <div class="fg"><label class="fl">Descripción corta (Tarjeta)</label><textarea class="fc" id="courseDesc" rows="2" placeholder="Describe brevemente el curso..."></textarea></div>
-            <div class="fg">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
-                    <label class="fl" style="margin:0;">Página de Ventas (Landing Page HTML)</label>
-                    <button class="btn" style="background:var(--color-primary); color:white; font-size:0.75rem; padding:0.2rem 0.6rem; border-radius:6px; cursor:pointer;" onclick="openAiModal()">
-                        <i class="ph ph-magic-wand"></i> Generar con IA
-                    </button>
-                </div>
-                <textarea class="fc" id="courseDescVentas" rows="6" placeholder="Texto persuasivo y estructurado en HTML para tu página de ventas..."></textarea>
-            </div>
+
 
             <div class="three">
                 <div class="fg">
@@ -255,7 +247,37 @@
             </div>
         </div>
 
-        <!-- SECTION 2: Responsable del Curso — KEY FEATURE -->
+        <!-- SECTION 2: Landing Page -->
+        <div class="sec">
+            <div class="sec-hdr">
+                <div class="sec-icon b"><i class="ph ph-layout"></i></div>
+                <h3>Página de Ventas (Landing)</h3>
+            </div>
+            
+            <div class="fg"><label class="fl">Video VSL (URL YouTube/Vimeo)</label><input class="fc" type="url" id="courseVsl" placeholder="Ej: https://www.youtube.com/watch?v=..."></div>
+            
+            <div class="fg">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
+                    <label class="fl" style="margin:0;">Texto de Ventas (Descripción larga)</label>
+                    <button type="button" class="btn" style="background:var(--color-primary); color:white; font-size:0.75rem; padding:0.2rem 0.6rem; border-radius:6px; cursor:pointer;" onclick="openAiModal()">
+                        <i class="ph ph-magic-wand"></i> Generar con IA
+                    </button>
+                </div>
+                <textarea class="fc" id="courseDescVentas" rows="6" placeholder="Texto persuasivo para tu página de ventas..."></textarea>
+            </div>
+            
+            <div class="fg">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
+                    <label class="fl" style="margin:0;">Testimonios</label>
+                    <button type="button" class="btn" style="font-size:0.75rem; padding:0.2rem 0.6rem; border:1px solid #D1D5DB; background:white; border-radius:6px; cursor:pointer;" onclick="addTestimonio()">
+                        <i class="ph ph-plus"></i> Añadir Testimonio
+                    </button>
+                </div>
+                <div id="testimonioList" style="display:flex; flex-direction:column; gap:0.75rem;"></div>
+            </div>
+        </div>
+
+        <!-- SECTION 3: Responsable del Curso — KEY FEATURE -->
         <div class="sec">
             <div class="sec-hdr">
                 <div class="sec-icon a"><i class="ph ph-chalkboard-teacher"></i></div>
@@ -1079,6 +1101,16 @@ window.addEventListener('load', async () => {
                     document.getElementById('courseTitle').value = c.titulo || '';
                     document.getElementById('courseDesc').value = c.descripcion || '';
                     document.getElementById('courseDescVentas').value = c.descripcion_ventas || '';
+                    if (c.ventas_meta) {
+                        try {
+                            const vm = typeof c.ventas_meta === 'string' ? JSON.parse(c.ventas_meta) : c.ventas_meta;
+                            if(vm.vsl_url) document.getElementById('courseVsl').value = vm.vsl_url;
+                            if(vm.testimonios && vm.testimonios.length) {
+                                document.getElementById('testimonioList').innerHTML = ''; // clear any empty default
+                                vm.testimonios.forEach(t => addTestimonio(t));
+                            }
+                        } catch(e){}
+                    }
                     document.getElementById('coursePrice').value = c.precio || '';
                     document.getElementById('courseCategory').value = c.categoria || '';
                     document.getElementById('courseLevel').value = c.nivel || 'Principiante';
@@ -1121,6 +1153,32 @@ window.addEventListener('load', async () => {
     });
 });
 
+function getVentasMeta() {
+    const testimoniosNodes = document.querySelectorAll('.testimonio-item');
+    const testimonios = Array.from(testimoniosNodes).map(node => ({
+        nombre: node.querySelector('.t-nombre').value,
+        estrellas: parseInt(node.querySelector('.t-estrellas').value),
+        texto: node.querySelector('.t-texto').value
+    }));
+    return {
+        vsl_url: document.getElementById('courseVsl') ? document.getElementById('courseVsl').value : '',
+        testimonios: testimonios
+    };
+}
+
+function addTestimonio(t = {nombre:'', texto:'', estrellas:5}) {
+  const div = document.createElement('div');
+  div.className = 'testimonio-item two';
+  div.style.background = '#F8FAFC'; div.style.padding = '1rem'; div.style.borderRadius = '8px'; div.style.border = '1px solid #E2E8F0';
+  div.innerHTML = `
+    <div class="fg"><label class="fl">Nombre del alumno</label><input type="text" class="fc t-nombre" value="${t.nombre}" placeholder="Ej: María P."></div>
+    <div class="fg"><label class="fl">Calificación (1-5)</label><input type="number" class="fc t-estrellas" value="${t.estrellas}" min="1" max="5"></div>
+    <div class="fg" style="grid-column:1/-1"><label class="fl">Comentario</label><textarea class="fc t-texto" rows="2" placeholder="El curso me pareció excelente...">${t.texto}</textarea></div>
+    <div style="grid-column:1/-1; text-align:right;"><button type="button" class="btn" style="color:var(--err); border:1px solid #FECACA; background:#FEF2F2; font-size:0.75rem; padding:0.3rem 0.6rem;" onclick="this.parentElement.parentElement.remove()">Eliminar</button></div>
+  `;
+  document.getElementById('testimonioList').appendChild(div);
+}
+
 async function saveDraft() {
     const title = document.getElementById('courseTitle').value.trim();
     if(!title) { showToast('⚠️ Agrega un título antes de guardar'); return; }
@@ -1147,7 +1205,8 @@ async function saveDraft() {
             duracion_total: document.getElementById('courseDuration').value,
             idioma: document.getElementById('courseLanguage').value,
             certificacion: document.getElementById('courseCert').value === "1",
-            modalidad: document.getElementById('courseModalidad').value
+            modalidad: document.getElementById('courseModalidad').value,
+            ventas_meta: getVentasMeta()
         };
 
         if (currentMode === 'profesor' && selectedProfId) {
@@ -1211,7 +1270,8 @@ async function publishCourse(estadoFinal = 'publicado') {
             duracion_total: document.getElementById('courseDuration').value,
             idioma: document.getElementById('courseLanguage').value,
             certificacion: document.getElementById('courseCert').value === "1",
-            modalidad: document.getElementById('courseModalidad').value
+            modalidad: document.getElementById('courseModalidad').value,
+            ventas_meta: getVentasMeta()
         };
 
         if (currentMode === 'profesor' && selectedProfId) {

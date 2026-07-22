@@ -288,6 +288,7 @@ async function initDB() {
             `ALTER TABLE cursos ADD COLUMN duracion_total VARCHAR(100)`,
             `ALTER TABLE cursos ADD COLUMN idioma VARCHAR(50)`,
             `ALTER TABLE cursos ADD COLUMN descripcion_ventas LONGTEXT`,
+            `ALTER TABLE cursos ADD COLUMN ventas_meta JSON`,
             `ALTER TABLE cursos ADD COLUMN certificacion BOOLEAN DEFAULT FALSE`,
             `ALTER TABLE cursos ADD COLUMN modalidad VARCHAR(50) DEFAULT 'Online (Grabado)'`,
             `ALTER TABLE usuarios ADD COLUMN matriculado BOOLEAN DEFAULT FALSE`,
@@ -683,16 +684,22 @@ app.get('/api/cursos', async (req, res) => {
 app.post('/api/cursos', verifyToken, async (req, res) => {
     if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
     try {
-        const { titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas } = req.body;
+        const { titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas, ventas_meta } = req.body;
         if (!validStr(titulo, 3, 300)) return res.status(400).json({ error: 'Título del curso requerido (3-300 caracteres)' });
         const estadosPermitidos = ['borrador', 'publicado', 'archivado', 'interno'];
         if (estado && !estadosPermitidos.includes(estado)) return res.status(400).json({ error: 'Estado inválido' });
-        const profAsignado = profesor_id || req.usuario.id;
-        const result = await pool.query(
-            'INSERT INTO cursos (titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [titulo, descripcion, precio, tipo_acceso || 'gratis', portada_url, estado, profAsignado, categoria||null, nivel||null, duracion_total||null, idioma||null, certificacion ? 1 : 0, modalidad||'Online (Grabado)', descripcion_ventas||null]
+        
+        let profAsignado = req.usuario.rol === 'admin' ? (profesor_id || req.usuario.id) : req.usuario.id;
+        let vMetaStr = null;
+        if(ventas_meta) {
+            vMetaStr = typeof ventas_meta === 'object' ? JSON.stringify(ventas_meta) : ventas_meta;
+        }
+
+        const [result] = await pool.query(
+            'INSERT INTO cursos (titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas, ventas_meta) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [titulo, descripcion, precio, tipo_acceso || 'gratis', portada_url, estado, profAsignado, categoria||null, nivel||null, duracion_total||null, idioma||null, certificacion ? 1 : 0, modalidad||'Online (Grabado)', descripcion_ventas||null, vMetaStr]
         );
-        res.json({ success: true, id: result[0].insertId });
+        res.json({ success: true, id: result.insertId });
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: 'Error al crear curso' });
@@ -849,11 +856,17 @@ app.get('/api/cursos/:id', verifyToken, async (req, res) => {
 app.put('/api/cursos/:id', verifyToken, async (req, res) => {
     if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
     try {
-        const { titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas } = req.body;
-        const profAsignado = profesor_id || req.usuario.id;
+        const { titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas, ventas_meta } = req.body;
+        let profAsignado = req.usuario.rol === 'admin' ? (profesor_id || req.usuario.id) : req.usuario.id;
+
+        let vMetaStr = null;
+        if(ventas_meta) {
+            vMetaStr = typeof ventas_meta === 'object' ? JSON.stringify(ventas_meta) : ventas_meta;
+        }
+
         await pool.query(
-            'UPDATE cursos SET titulo=?, descripcion=?, precio=?, tipo_acceso=?, portada_url=?, estado=?, profesor_id=?, categoria=?, nivel=?, duracion_total=?, idioma=?, certificacion=?, modalidad=?, descripcion_ventas=? WHERE id=?',
-            [titulo, descripcion, precio, tipo_acceso || 'gratis', portada_url, estado, profAsignado, categoria||null, nivel||null, duracion_total||null, idioma||null, certificacion ? 1 : 0, modalidad||'Online (Grabado)', descripcion_ventas||null, req.params.id]
+            'UPDATE cursos SET titulo=?, descripcion=?, precio=?, tipo_acceso=?, portada_url=?, estado=?, profesor_id=?, categoria=?, nivel=?, duracion_total=?, idioma=?, certificacion=?, modalidad=?, descripcion_ventas=?, ventas_meta=? WHERE id=?',
+            [titulo, descripcion, precio, tipo_acceso || 'gratis', portada_url, estado, profAsignado, categoria||null, nivel||null, duracion_total||null, idioma||null, certificacion ? 1 : 0, modalidad||'Online (Grabado)', descripcion_ventas||null, vMetaStr, req.params.id]
         );
         res.json({ success: true, message: 'Curso actualizado con éxito' });
     } catch (e) {
