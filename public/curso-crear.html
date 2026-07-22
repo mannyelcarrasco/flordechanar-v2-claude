@@ -257,12 +257,37 @@
             <div class="fg"><label class="fl">Video VSL (URL YouTube/Vimeo)</label><input class="fc" type="url" id="courseVsl" placeholder="Ej: https://www.youtube.com/watch?v=..."></div>
             
             <div class="fg">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
-                    <label class="fl" style="margin:0;">Texto de Ventas (Descripción larga)</label>
-                    <button type="button" class="btn" style="background:var(--color-primary); color:white; font-size:0.75rem; padding:0.2rem 0.6rem; border-radius:6px; cursor:pointer;" onclick="openAiModal()">
-                        <i class="ph ph-magic-wand"></i> Generar con IA
-                    </button>
-                </div>
+                <label class="fl" style="margin-bottom:0.5rem;">Texto de Ventas (Descripción larga)</label>
+                
+                <details class="ai-box" style="margin-bottom:1rem; border:1px solid #E2E8F0; border-radius:8px; overflow:hidden;">
+                    <summary style="background:#F8FAFC; padding:0.8rem 1rem; cursor:pointer; font-weight:600; color:var(--color-primary); font-size:0.85rem; display:flex; align-items:center; gap:0.5rem; user-select:none;">
+                        <i class="ph ph-magic-wand"></i> Asistente de IA (Generar texto automático)
+                    </summary>
+                    <div style="padding:1rem; background:#fff; border-top:1px solid #E2E8F0;">
+                        <p style="font-size:0.8rem; color:var(--l); margin-bottom:1rem;">Sube un PDF, pega texto extra o usa la URL de tu sitio web anterior para darle contexto a la IA.</p>
+                        
+                        <div class="two" style="margin-bottom:0.8rem;">
+                            <div class="fg">
+                                <label class="fl">Documento (PDF Opcional)</label>
+                                <input type="file" id="aiFile" class="fc" accept=".pdf">
+                            </div>
+                            <div class="fg">
+                                <label class="fl">Contexto Web (URL Opcional)</label>
+                                <input type="url" id="aiUrl" class="fc" placeholder="Ej: https://misitio.com/curso">
+                            </div>
+                        </div>
+                        <div class="fg">
+                            <label class="fl">Instrucciones o texto adicional</label>
+                            <textarea class="fc" id="aiExtraText" rows="2" placeholder="Ej: Menciona que no se requieren conocimientos previos..."></textarea>
+                        </div>
+                        
+                        <div style="text-align:right;">
+                            <button type="button" class="btn" id="btnGenerateAi" style="background:var(--color-primary); color:white; font-size:0.8rem; padding:0.4rem 1rem; border-radius:6px; cursor:pointer;" onclick="generateSalesCopy()">
+                                <i class="ph ph-sparkle"></i> Generar Texto
+                            </button>
+                        </div>
+                    </div>
+                </details>
                 <textarea class="fc" id="courseDescVentas" rows="6" placeholder="Texto persuasivo para tu página de ventas..."></textarea>
             </div>
             
@@ -419,27 +444,7 @@
     </div>
 </div>
 
-<!-- Modal: Generar con IA -->
-<div class="modal-overlay" id="aiModalBg" onclick="closeAiModal()">
-    <div class="modal-card" onclick="event.stopPropagation()">
-        <h3 style="margin-bottom:1rem"><i class="ph ph-magic-wand" style="color:var(--color-primary)"></i> Asistente de IA para Ventas</h3>
-        <p style="font-size:0.85rem; color:var(--l); margin-bottom:1rem;">Sube un documento o pega texto con información de tu curso. La IA leerá tu temario y este contexto para redactar una página de ventas persuasiva.</p>
-        
-        <div class="fg">
-            <label class="fl">Documento de contexto (PDF Opcional)</label>
-            <input type="file" id="aiFile" class="fc" accept=".pdf">
-        </div>
-        <div class="fg">
-            <label class="fl">Instrucciones o texto adicional</label>
-            <textarea class="fc" id="aiExtraText" rows="4" placeholder="Ej: Menciona que no se requieren conocimientos previos y que el enfoque es 100% práctico..."></textarea>
-        </div>
-        
-        <div style="display:flex;justify-content:flex-end;gap:.5rem;margin-top:1rem">
-            <button class="btn bo" onclick="closeAiModal()">Cancelar</button>
-            <button class="btn bp" id="btnGenerateAi" onclick="generateSalesCopy()"><i class="ph ph-sparkle"></i> Generar Texto</button>
-        </div>
-    </div>
-</div>
+
 
 <!-- Panel Lateral: Editor de Lección (Drawer) -->
 <div class="lesson-drawer-overlay" id="lessonModalBg" onclick="handleOverlayClick(event)"></div>
@@ -1153,7 +1158,63 @@ window.addEventListener('load', async () => {
     });
 });
 
-function getVentasMeta() {
+
+async function generateSalesCopy() {
+    const btn = document.getElementById('btnGenerateAi');
+    const aiFile = document.getElementById('aiFile') ? document.getElementById('aiFile').files[0] : null;
+    const aiUrl = document.getElementById('aiUrl') ? document.getElementById('aiUrl').value : '';
+    const extra = document.getElementById('aiExtraText') ? document.getElementById('aiExtraText').value : '';
+    const title = document.getElementById('courseTitle').value.trim();
+
+    if (!title && !aiFile && !aiUrl && !extra) {
+        showToast('⚠️ Proporciona al menos el título o algo de contexto.');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('titulo', title);
+    if(aiUrl) formData.append('urlContext', aiUrl);
+    if(extra) formData.append('extraContext', extra);
+    
+    // Gather modules
+    let modulosText = '';
+    document.querySelectorAll('.module-row').forEach(m => {
+        modulosText += '- ' + m.querySelector('.module-name').textContent + '\n';
+    });
+    if(modulosText) formData.append('modulosText', modulosText);
+    if(aiFile) formData.append('file', aiFile);
+
+    const oldHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Generando...';
+    btn.disabled = true;
+
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/ai/generar-ventas', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token },
+            body: formData
+        });
+
+        if(!res.ok) {
+            const err = await res.json();
+            showToast('⚠️ Error IA: ' + err.error);
+        } else {
+            const data = await res.json();
+            document.getElementById('courseDescVentas').value = data.texto;
+            showToast('✨ Texto de ventas generado con éxito');
+            // Close details if it exists
+            const aiBox = document.querySelector('.ai-box');
+            if (aiBox) aiBox.removeAttribute('open');
+        }
+    } catch(e) {
+        showToast('⚠️ Error de conexión al generar texto');
+    } finally {
+        btn.innerHTML = oldHtml;
+        btn.disabled = false;
+    }
+}
+\nfunction getVentasMeta() {
     const testimoniosNodes = document.querySelectorAll('.testimonio-item');
     const testimonios = Array.from(testimoniosNodes).map(node => ({
         nombre: node.querySelector('.t-nombre').value,

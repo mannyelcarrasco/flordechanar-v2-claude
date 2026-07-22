@@ -429,13 +429,28 @@ app.post('/api/ai/generar-ventas', verifyToken, (req, res) => {
         if (err) return res.status(400).json({ error: err.message });
         
         try {
-            const { titulo, modulosText, extraContext } = req.body;
+            const { titulo, modulosText, extraContext, urlContext } = req.body;
             let fullContext = `Título del curso: ${titulo || 'Sin título'}\n\n`;
             if (modulosText) {
                 fullContext += `Temario (Módulos):\n${modulosText}\n\n`;
             }
             if (extraContext) {
                 fullContext += `Contexto Adicional:\n${extraContext}\n\n`;
+            }
+
+            // Fetch from external URL if provided
+            if (urlContext) {
+                try {
+                    const urlRes = await fetch(urlContext);
+                    if (urlRes.ok) {
+                        const html = await urlRes.text();
+                        // Simple HTML tag strip and normalize whitespace
+                        const cleanText = html.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
+                        fullContext += `Contenido extraído de la web anterior (${urlContext}):\n${cleanText.substring(0, 15000)}\n\n`;
+                    }
+                } catch(e) {
+                    console.error("Error fetching urlContext:", e);
+                }
             }
 
             // Procesar PDF si existe
