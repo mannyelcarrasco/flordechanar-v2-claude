@@ -372,6 +372,9 @@ async function initDB() {
 
         try {
             await pool.query('ALTER TABLE cursos ADD COLUMN es_ciclico BOOLEAN DEFAULT FALSE');
+        } catch (e) { /* Ignorar si ya existe */ }
+        
+        try {
             await pool.query('ALTER TABLE cursos ADD COLUMN meet_url VARCHAR(500)');
         } catch (e) { /* Ignorar si ya existe */ }
         try {
