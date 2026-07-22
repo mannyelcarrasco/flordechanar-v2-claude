@@ -10,6 +10,16 @@
 - [x] Corrección de vulnerabilidades de NPM detectadas por Hostinger (`qs`, `ip-address`).
 - [x] Configuración de `overrides` en `package.json` para forzar el uso de versiones seguras en dependencias transitivas.
 
+### 💳 Integración de Pasarela de Pagos (Flow) (NUEVO)
+- [x] **Frontend (`pago.html`):**
+  - Corrección visual del layout de las opciones de pago usando `.plan-grid`.
+  - Diagnóstico de persistencia de caché del token JWT en el navegador para usuarios deslogueados.
+- [x] **Backend & API (`server.js`):**
+  - Creación del endpoint de diagnóstico `/api/debug/env` para verificar inyección de variables de entorno en producción.
+  - Resolución del conflicto de credenciales Sandbox vs Producción (`FLOW_SANDBOX=false`).
+  - **Fix crítico JWT:** Inclusión del campo `email` en la generación del token JWT en `/api/auth/login` para evitar el error `1620` de Flow (`The userEmail: undefined is not valid`).
+  - **Fix crítico Suscripciones:** Corrección del parámetro de retorno a `url_return` (con guion bajo) en el endpoint `customer/register` de Flow para evitar el error `104` (`Missing service params: url_return`).
+
 ### 🚀 Integración de Asistente de IA & Landing Builder (NUEVO)
 - [x] **Panel de Creación de Cursos (`curso-crear.html`):**
   - Reestructuración del orden de pasos: "Página de Ventas" movido al **Paso 5**.
