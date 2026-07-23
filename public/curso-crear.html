@@ -248,8 +248,8 @@
                 </div>
 
                 <div id="onlineConfigContainer" style="display:none;border:1px solid #E5E7EB;padding:1rem;border-radius:8px;margin-top:1.5rem;background:#fff">
-                    <h5 style="font-size:.9rem;margin-bottom:.5rem;color:var(--color-primary)"><i class="ph ph-laptop"></i> Clases Online (Teoría)</h5>
-                    <p style="font-size:.75rem;color:var(--l);margin-bottom:.75rem">Configura los horarios para las clases virtuales de este curso híbrido.</p>
+                    <h5 id="onlineConfigTitle" style="font-size:.9rem;margin-bottom:.5rem;color:var(--color-primary)"><i class="ph ph-laptop"></i> Clases Online</h5>
+                    <p id="onlineConfigDesc" style="font-size:.75rem;color:var(--l);margin-bottom:.75rem">Configura los horarios para las clases virtuales de este curso híbrido.</p>
                     <div id="onlineHorariosList" style="display:flex;flex-direction:column;gap:.5rem;margin-bottom:.75rem"></div>
                     <button type="button" class="btn btn-sec btn-sm" onclick="addOnlineHorario()"><i class="ph ph-plus"></i> Añadir Horario Online</button>
                 </div>
@@ -1644,12 +1644,21 @@ function handleModalidadChange() {
             document.getElementById('onlineConfigContainer').style.background = 'transparent';
             document.getElementById('onlineConfigContainer').style.border = 'none';
             document.getElementById('onlineConfigContainer').style.padding = '0';
+            if(document.getElementById('onlineConfigTitle')) document.getElementById('onlineConfigTitle').style.display = 'none'; // hide because the main title says it all
+            if(document.getElementById('onlineConfigDesc')) document.getElementById('onlineConfigDesc').style.display = 'none';
         } else {
             document.getElementById('gestorHorariosTitle').innerHTML = '<i class="ph ph-calendar-check"></i> Sedes y Horarios';
             document.getElementById('gestorHorariosDesc').textContent = 'Añade los horarios correspondientes para cada sede donde se impartirá el curso.';
             document.getElementById('onlineConfigContainer').style.background = '#fff';
             document.getElementById('onlineConfigContainer').style.border = '1px solid #E5E7EB';
             document.getElementById('onlineConfigContainer').style.padding = '1rem';
+            if(document.getElementById('onlineConfigTitle')) {
+                document.getElementById('onlineConfigTitle').style.display = 'block';
+                document.getElementById('onlineConfigTitle').innerHTML = '<i class="ph ph-laptop"></i> Clases Online';
+            }
+            if(document.getElementById('onlineConfigDesc')) {
+                document.getElementById('onlineConfigDesc').style.display = 'block';
+            }
         }
     }
 }
