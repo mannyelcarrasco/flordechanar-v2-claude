@@ -364,10 +364,10 @@
             </div>
             
             <div class="fg" id="sedeField">
-                <label class="fl">Sede / Ubicación Física</label>
-                <select class="fc" id="courseSede">
-                    <option value="">— Seleccionar sede —</option>
-                </select>
+                <label class="fl">Sedes / Ubicación Física</label>
+                <div id="courseSedesContainer" class="fc" style="display:flex;flex-direction:column;gap:0.5rem;padding:0.75rem;height:auto;max-height:150px;overflow-y:auto">
+                    <!-- Checkboxes de sedes aquí -->
+                </div>
                 <div class="hint">Configura las sedes globales en el panel de administrador.</div>
             </div>
             
@@ -1353,6 +1353,16 @@ async function saveDraft() {
     const priceRaw = document.getElementById('coursePrice').value;
     const price = priceRaw ? parseInt(priceRaw) : 0;
 
+    let sedesArr = [];
+    const sedesContainer = document.getElementById('courseSedesContainer');
+    if (sedesContainer) {
+        if (document.getElementById('courseSedeTodas') && document.getElementById('courseSedeTodas').checked) {
+            sedesArr.push('Todas las sedes');
+        } else {
+            document.querySelectorAll('.course-sede-cb:checked').forEach(cb => sedesArr.push(cb.value));
+        }
+    }
+
     try {
         const token = localStorage.getItem('token');
         const url = currentCourseId ? '/api/cursos/' + currentCourseId : '/api/cursos';
@@ -1366,7 +1376,7 @@ async function saveDraft() {
             es_ciclico: document.getElementById('courseCiclico').checked,
             dias_clase: document.getElementById('courseDias').value,
             horario_clase: document.getElementById('courseHorario').value,
-            sede: document.getElementById('courseSede').value,
+            sede: sedesArr.join(', '),
             texto_opciones_extra: document.getElementById('courseOpcionesExtra').checked,
             salas_virtuales: salasVirtualesData,
             tipo_acceso: document.getElementById('accessType').value,
@@ -1516,18 +1526,54 @@ async function loadSedesGlobales() {
         const res = await fetch('/api/configuracion/sedes');
         if(res.ok) {
             const sedes = await res.json();
-            const select = document.getElementById('courseSede');
-            sedes.forEach(s => {
-                const opt = document.createElement('option');
-                opt.value = s.nombre;
-                opt.textContent = s.nombre + (s.direccion ? ` (${s.direccion})` : '');
-                select.appendChild(opt);
-            });
-            if (window._savedSede) {
-                select.value = window._savedSede;
+            const container = document.getElementById('courseSedesContainer');
+            if (sedes.length === 0) {
+                container.innerHTML = '<div style="color:var(--l);font-size:.8rem">No hay sedes creadas.</div>';
+            } else {
+                let html = `
+                    <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-weight:600">
+                        <input type="checkbox" id="courseSedeTodas" onchange="toggleAllSedes(this.checked)" style="width:16px;height:16px"> Todas las sedes
+                    </label>
+                    <hr style="border:none;border-top:1px solid #e2e8f0;margin:.25rem 0">
+                `;
+                sedes.forEach(s => {
+                    html += `
+                    <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;">
+                        <input type="checkbox" class="course-sede-cb" value="${s.nombre}" style="width:16px;height:16px" onchange="checkTodasSedes()"> ${s.nombre} ${s.direccion ? `<span style="color:var(--l);font-size:.8rem">(${s.direccion})</span>` : ''}
+                    </label>`;
+                });
+                container.innerHTML = html;
+                
+                if (window._savedSede) {
+                    const savedArr = window._savedSede.split(', ');
+                    if (savedArr.includes('Todas las sedes')) {
+                        document.getElementById('courseSedeTodas').checked = true;
+                        toggleAllSedes(true);
+                    } else {
+                        document.querySelectorAll('.course-sede-cb').forEach(cb => {
+                            if (savedArr.includes(cb.value)) cb.checked = true;
+                        });
+                        checkTodasSedes();
+                    }
+                }
             }
         }
     } catch(e) { console.error('Error cargando sedes', e); }
+}
+
+function toggleAllSedes(checked) {
+    document.querySelectorAll('.course-sede-cb').forEach(cb => {
+        cb.checked = checked;
+    });
+}
+
+function checkTodasSedes() {
+    const allCbs = document.querySelectorAll('.course-sede-cb');
+    const checkedCbs = document.querySelectorAll('.course-sede-cb:checked');
+    const cbTodas = document.getElementById('courseSedeTodas');
+    if(cbTodas) {
+        cbTodas.checked = (allCbs.length > 0 && allCbs.length === checkedCbs.length);
+    }
 }
 
 function handleModalidadChange() {
