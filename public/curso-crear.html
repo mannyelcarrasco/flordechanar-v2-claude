@@ -379,16 +379,16 @@
             </div>
 
             <div class="two">
-                <div class="fg"><label class="fl">Fecha de inicio de ventas</label><input class="fc" type="date"></div>
-                <div class="fg"><label class="fl">Cupos disponibles</label><input class="fc" type="number" placeholder="0 = sin límite"></div>
+                <div class="fg"><label class="fl">Fecha de inicio de ventas</label><input class="fc" id="courseFechaVentas" type="date"></div>
+                <div class="fg"><label class="fl">Cupos disponibles</label><input class="fc" id="courseCupos" type="number" placeholder="0 = sin límite"></div>
             </div>
 
             <div class="fg">
                 <label class="fl">Lecciones de muestra gratuita</label>
-                <select class="fc">
-                    <option>Ninguna (requiere inscripción)</option>
-                    <option>Primera lección gratuita</option>
-                    <option>Primer módulo gratuito</option>
+                <select class="fc" id="courseMuestra">
+                    <option value="ninguna">Ninguna (requiere inscripción)</option>
+                    <option value="primera_leccion">Primera lección gratuita</option>
+                    <option value="primer_modulo">Primer módulo gratuito</option>
                 </select>
             </div>
         </div>
@@ -1192,6 +1192,9 @@ window.addEventListener('load', async () => {
                     document.getElementById('courseTitle').value = c.titulo || '';
                     document.getElementById('courseDesc').value = c.descripcion || '';
                     document.getElementById('courseDescVentas').value = c.descripcion_ventas || '';
+                    document.getElementById('courseFechaVentas').value = c.fecha_inicio_ventas ? c.fecha_inicio_ventas.split('T')[0] : '';
+                    document.getElementById('courseCupos').value = c.cupos || '';
+                    document.getElementById('courseMuestra').value = c.muestra_gratuita || '';
                     if (c.ventas_meta) {
                         try {
                             const vm = typeof c.ventas_meta === 'string' ? JSON.parse(c.ventas_meta) : c.ventas_meta;
@@ -1378,6 +1381,9 @@ async function saveDraft() {
             horario_clase: document.getElementById('courseHorario').value,
             sede: sedesArr.join(', '),
             texto_opciones_extra: document.getElementById('courseOpcionesExtra').checked,
+            fecha_inicio_ventas: document.getElementById('courseFechaVentas').value,
+            cupos: document.getElementById('courseCupos').value ? parseInt(document.getElementById('courseCupos').value) : 0,
+            muestra_gratuita: document.getElementById('courseMuestra').value,
             salas_virtuales: salasVirtualesData,
             tipo_acceso: document.getElementById('accessType').value,
             portada_url: currentCoverUrl || null,
