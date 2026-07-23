@@ -362,12 +362,12 @@
                 const mainPlan = c.planes[0];
                 document.getElementById('cPrice').innerHTML = `${fmt(mainPlan.monto)} <span style="font-size:1rem;color:var(--color-text-light);font-weight:400">/ ${mainPlan.periodo}</span>`;
                 
-                container.innerHTML += `<a href="pago.html?tipo=suscripcion" class="btn btn-primary" style="margin-bottom:0.5rem; padding: 1rem;">Suscribirme Ahora</a>`;
+                container.innerHTML += `<a href="pago.html?tipo=suscripcion&id=${c.id}" class="btn btn-primary" style="margin-bottom:0.5rem; padding: 1rem;">Suscribirme Ahora</a>`;
                 
                 if (c.planes.length > 1) {
                     for (let i = 1; i < c.planes.length; i++) {
                         let p = c.planes[i];
-                        container.innerHTML += `<a href="pago.html?tipo=suscripcion" class="btn" style="background:#E2E8F0;color:var(--color-secondary);margin-bottom:0.5rem;font-size:0.85rem">Plan ${p.nombre}: ${fmt(p.monto)} / ${p.periodo}</a>`;
+                        container.innerHTML += `<a href="pago.html?tipo=suscripcion&id=${c.id}" class="btn" style="background:#E2E8F0;color:var(--color-secondary);margin-bottom:0.5rem;font-size:0.85rem">Plan ${p.nombre}: ${fmt(p.monto)} / ${p.periodo}</a>`;
                     }
                 }
 
