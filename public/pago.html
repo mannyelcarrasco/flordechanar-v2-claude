@@ -112,7 +112,10 @@ async function init() {
         body.innerHTML = '<div class="loading-box"><i class="ph ph-circle-notch" style="font-size:2rem;animation:spin .7s linear infinite"></i></div>';
         try {
             const res   = await fetch('/api/planes');
-            const planes = await res.json();
+            let planes = await res.json();
+            if (id) {
+                planes = planes.filter(p => String(p.curso_id) === String(id));
+            }
             // Check existing subscription
             const resSub = await fetch('/api/suscripciones/mi-estado', { headers:{ Authorization:'Bearer '+token } });
             const subActiva = await resSub.json();
