@@ -258,10 +258,34 @@
             
             // Extra info
             let extraInfo = '';
-            if (c.dias_clase) extraInfo += `<div style="display:flex;align-items:center;gap:.5rem"><i class="ph ph-calendar-blank"></i> ${c.dias_clase}</div>`;
-            if (c.horario_clase) extraInfo += `<div style="display:flex;align-items:center;gap:.5rem"><i class="ph ph-clock"></i> ${c.horario_clase}</div>`;
-            if (c.sede) extraInfo += `<div style="display:flex;align-items:center;gap:.5rem"><i class="ph ph-map-pin"></i> ${c.sede}</div>`;
-            if (c.texto_opciones_extra) extraInfo += `<div style="color:var(--color-primary);font-weight:600;margin-top:.5rem">Consulta por más opciones</div>`;
+            if (c.horarios_sedes) {
+                try {
+                    const hs = typeof c.horarios_sedes === 'string' ? JSON.parse(c.horarios_sedes) : c.horarios_sedes;
+                    if (hs.sedes && hs.sedes.length > 0) {
+                        hs.sedes.forEach(sede => {
+                            extraInfo += `<div style="font-weight:600;color:var(--color-primary);margin-top:.5rem"><i class="ph ph-map-pin"></i> ${sede.nombre}</div>`;
+                            sede.horarios.forEach(h => {
+                                extraInfo += `<div style="display:flex;align-items:center;gap:.5rem;padding-left:1.5rem;margin-top:.25rem"><i class="ph ph-calendar-blank"></i> ${h.dias} <span style="color:#D1D5DB">|</span> <i class="ph ph-clock"></i> ${h.horas}</div>`;
+                            });
+                        });
+                    }
+                    if (hs.online && hs.online.length > 0) {
+                        extraInfo += `<div style="font-weight:600;color:var(--color-primary);margin-top:.5rem"><i class="ph ph-laptop"></i> Clases Online</div>`;
+                        hs.online.forEach(h => {
+                            extraInfo += `<div style="display:flex;align-items:center;gap:.5rem;padding-left:1.5rem;margin-top:.25rem"><i class="ph ph-calendar-blank"></i> ${h.dias} <span style="color:#D1D5DB">|</span> <i class="ph ph-clock"></i> ${h.horas}</div>`;
+                        });
+                    }
+                    if (c.texto_opciones_extra) {
+                        extraInfo += `<div style="color:var(--color-primary);font-weight:600;margin-top:.75rem">Consulta por más opciones</div>`;
+                    }
+                } catch(e) {}
+            } else {
+                // Legacy
+                if (c.dias_clase) extraInfo += `<div style="display:flex;align-items:center;gap:.5rem"><i class="ph ph-calendar-blank"></i> ${c.dias_clase}</div>`;
+                if (c.horario_clase) extraInfo += `<div style="display:flex;align-items:center;gap:.5rem"><i class="ph ph-clock"></i> ${c.horario_clase}</div>`;
+                if (c.sede) extraInfo += `<div style="display:flex;align-items:center;gap:.5rem"><i class="ph ph-map-pin"></i> ${c.sede}</div>`;
+                if (c.texto_opciones_extra) extraInfo += `<div style="color:var(--color-primary);font-weight:600;margin-top:.5rem">Consulta por más opciones</div>`;
+            }
             
             if (extraInfo) {
                 const eiDiv = document.createElement('div');

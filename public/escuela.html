@@ -264,7 +264,33 @@
                     const ctaOnclick = `location.href='detalle.html?id=${curso.id}'`;
 
                     let extraInfoHtml = '';
-                    if (curso.dias_clase || curso.horario_clase || curso.sede) {
+                    if (curso.horarios_sedes) {
+                        try {
+                            const hs = typeof curso.horarios_sedes === 'string' ? JSON.parse(curso.horarios_sedes) : curso.horarios_sedes;
+                            let html = '<div style="font-size:0.8rem;color:var(--color-text-light);margin-top:0.5rem;display:flex;flex-direction:column;gap:0.4rem;">';
+                            if (hs.sedes && hs.sedes.length > 0) {
+                                hs.sedes.forEach(sede => {
+                                    html += `<div><div style="font-weight:600;color:var(--color-primary)"><i class="ph ph-map-pin"></i> ${sede.nombre}</div>`;
+                                    sede.horarios.forEach(h => {
+                                        html += `<div style="padding-left:1.2rem;font-size:0.75rem">${h.dias} • ${h.horas}</div>`;
+                                    });
+                                    html += `</div>`;
+                                });
+                            }
+                            if (hs.online && hs.online.length > 0) {
+                                html += `<div><div style="font-weight:600;color:var(--color-primary)"><i class="ph ph-laptop"></i> Clases Online</div>`;
+                                hs.online.forEach(h => {
+                                    html += `<div style="padding-left:1.2rem;font-size:0.75rem">${h.dias} • ${h.horas}</div>`;
+                                });
+                                html += `</div>`;
+                            }
+                            if (curso.texto_opciones_extra) {
+                                html += `<div style="color:var(--color-primary);font-weight:600;margin-top:0.2rem;">Consulta por más opciones</div>`;
+                            }
+                            html += '</div>';
+                            extraInfoHtml = html;
+                        } catch(e) {}
+                    } else if (curso.dias_clase || curso.horario_clase || curso.sede) {
                         extraInfoHtml = `
                             <div style="font-size:0.8rem;color:var(--color-text-light);margin-top:0.5rem;display:flex;flex-direction:column;gap:0.25rem;">
                                 ${curso.dias_clase ? `<span><i class="ph ph-calendar-blank"></i> ${curso.dias_clase}</span>` : ''}
