@@ -371,14 +371,14 @@
                     <select id="nuevaSedeSelect" class="fc" style="width:250px">
                         <option value="">— Elegir sede a añadir —</option>
                     </select>
-                    <button type="button" class="btn bo btn-sm" onclick="addSedeConfig()"><i class="ph ph-plus"></i> Añadir Sede</button>
+                    <button type="button" class="btn btn-sec btn-sm" onclick="addSedeConfig()"><i class="ph ph-plus"></i> Añadir Sede</button>
                 </div>
 
                 <div id="onlineConfigContainer" style="display:none;border:1px solid #E5E7EB;padding:1rem;border-radius:8px;margin-top:1.5rem;background:#F9FAFB">
                     <h5 style="font-size:.9rem;margin-bottom:.5rem;color:var(--color-primary)"><i class="ph ph-laptop"></i> Clases Online (Teoría)</h5>
                     <p style="font-size:.75rem;color:var(--l);margin-bottom:.75rem">Configura los horarios para las clases virtuales de este curso híbrido.</p>
                     <div id="onlineHorariosList" style="display:flex;flex-direction:column;gap:.5rem;margin-bottom:.75rem"></div>
-                    <button type="button" class="btn bo btn-sm" onclick="addOnlineHorario()"><i class="ph ph-plus"></i> Añadir Horario Online</button>
+                    <button type="button" class="btn btn-sec btn-sm" onclick="addOnlineHorario()"><i class="ph ph-plus"></i> Añadir Horario Online</button>
                 </div>
             </div>
             
@@ -1597,7 +1597,7 @@ function renderSedesConfig() {
                 <button type="button" class="btn btn-sm" style="color:var(--color-primary);background:transparent" onclick="removeSedeConfig(${sIndex})">Quitar Sede</button>
             </div>
             ${hHtml}
-            <button type="button" class="btn bo btn-sm" onclick="addSedeHorario(${sIndex})"><i class="ph ph-plus"></i> Añadir Horario</button>
+            <button type="button" class="btn btn-sec btn-sm" onclick="addSedeHorario(${sIndex})"><i class="ph ph-plus"></i> Añadir Horario</button>
         </div>
         `;
     }).join('');
@@ -1627,8 +1627,8 @@ function renderOnlineHorarios() {
 
 function handleModalidadChange() {
     const m = document.getElementById('courseModalidad').value;
-    const isPresencial = m === 'Presencial' || m === 'Híbrido (Online y Presencial)';
-    const isHibrido = m === 'Híbrido (Online y Presencial)';
+    const isPresencial = m === 'Presencial' || m === 'Híbrido';
+    const isHibrido = m === 'Híbrido';
     
     document.getElementById('gestorHorariosSedes').style.display = isPresencial ? 'block' : 'none';
     document.getElementById('onlineConfigContainer').style.display = isHibrido ? 'block' : 'none';
