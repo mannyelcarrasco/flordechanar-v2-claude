@@ -747,6 +747,12 @@ app.get('/api/cursos', async (req, res) => {
     try {
         if (!pool) return res.status(500).json({ error: 'Database not connected' });
         const [cursos] = await pool.query('SELECT c.id, c.titulo, c.descripcion, c.precio, c.tipo_acceso, c.portada_url, c.modalidad, c.dias_clase, c.horario_clase, c.sede, c.horarios_sedes, c.texto_opciones_extra, u.nombre as profesor FROM cursos c LEFT JOIN usuarios u ON c.profesor_id = u.id WHERE c.estado = "publicado"');
+        
+        const [planes] = await pool.query("SELECT * FROM planes WHERE activo = 1 AND nombre != 'matricula'");
+        for (let c of cursos) {
+            c.planes = planes.filter(p => p.curso_id === c.id);
+        }
+
         res.json(cursos);
     } catch (e) {
         console.error(e);

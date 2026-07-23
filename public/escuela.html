@@ -255,11 +255,24 @@
                     const cover = curso.portada_url || 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=600&q=80';
                     const tipo = curso.tipo_acceso || 'gratis';
                     const isGratis = tipo === 'gratis' || !curso.precio;
-                    const priceBadge = isGratis
-                        ? `<span style="background:#DCFCE7;color:#16A34A;padding:.2rem .7rem;border-radius:20px;font-size:.75rem;font-weight:700">Gratis</span>`
+                    let bestPriceHtml = `<span style="font-weight:800;color:var(--color-primary);font-size:1rem">${fmt(curso.precio)}</span>`;
+                    
+                    if (curso.planes && curso.planes.length > 0) {
+                        const planMensual = curso.planes.find(p => p.periodo === 'mensual');
+                        if (planMensual) {
+                            bestPriceHtml = `<span style="font-weight:800;color:var(--color-primary);font-size:1rem">${fmt(planMensual.monto)}<span style="font-size:0.75rem;font-weight:600;color:var(--color-text-light)"> /mes</span></span>`;
+                        } else {
+                             const plan = curso.planes[0];
+                             const perText = plan.periodo === 'unico' ? 'pago único' : `/${plan.periodo}`;
+                             bestPriceHtml = `<span style="font-weight:800;color:var(--color-primary);font-size:1rem">${fmt(plan.monto)}<span style="font-size:0.75rem;font-weight:600;color:var(--color-text-light)"> ${perText}</span></span>`;
+                        }
+                    }
+
+                    const priceHtml = isGratis 
+                        ? `<span style="font-weight:800;color:#10B981;font-size:1.1rem">Gratis</span>` 
                         : tipo === 'suscripcion'
                             ? `<span style="background:#EFF6FF;color:#2563EB;padding:.2rem .7rem;border-radius:20px;font-size:.75rem;font-weight:700">Con suscripción</span>`
-                            : `<span style="font-weight:800;color:var(--color-primary);font-size:1rem">${fmt(curso.precio)}</span>`;
+                            : bestPriceHtml;
                     const ctaLabel = 'Ver detalles';
                     const ctaOnclick = `location.href='detalle.html?id=${curso.id}'`;
 
