@@ -600,6 +600,9 @@
             <button id="stab-whatsapp" class="stab" onclick="switchStab('whatsapp')">
                 <i class="ph ph-whatsapp-logo"></i> WhatsApp
             </button>
+            <button id="stab-sedes" class="stab" onclick="switchStab('sedes')">
+                <i class="ph ph-map-pin"></i> Sedes Físicas
+            </button>
         </div>
 
         <!-- SUB-PANEL: General -->
@@ -674,6 +677,23 @@
                 <button class="btn bp" onclick="saveWaApi()"><i class="ph ph-floppy-disk"></i> Guardar credenciales</button>
                 <div style="margin-top:1.2rem;padding:1rem;background:#F0FDF4;border-radius:10px;border:1px solid #86EFAC;font-size:.82rem;color:#15803D;display:none" id="wa-api-ok">
                     <i class="ph ph-check-circle"></i> <strong>API conectada.</strong> Las notificaciones automáticas están activas.
+                </div>
+            </div>
+        </div>
+
+        </div>
+
+        <!-- SUB-PANEL: Sedes Físicas -->
+        <div id="spanel-sedes" style="display:none;max-width:680px">
+            <div class="tw" style="padding:1.5rem">
+                <h3 style="font-size:1.05rem;margin-bottom:.35rem">Sedes Físicas / Locales</h3>
+                <p style="font-size:.82rem;color:var(--l);margin-bottom:1.1rem">Configura las ubicaciones presenciales para tus cursos y terapias.</p>
+                <div id="sedesGlobalesList" style="display:flex;flex-direction:column;gap:.75rem;margin-bottom:1.25rem">
+                    <!-- Sedes renderizadas aquí -->
+                </div>
+                <button class="btn btn-sec btn-sm" onclick="agregarSedeGlobalUI()"><i class="ph ph-plus"></i> Añadir Sede</button>
+                <div style="margin-top:1.5rem;text-align:right">
+                    <button class="btn bp" onclick="guardarSedesGlobales()"><i class="ph ph-floppy-disk"></i> Guardar Sedes</button>
                 </div>
             </div>
         </div>
@@ -3775,6 +3795,71 @@ async function migrarCompleto() {
         btn.innerHTML = '<i class="ph ph-magic-wand"></i> Reintentar';
     }
 }
+// ======== GESTIÓN DE SEDES GLOBALES ========
+let sedesGlobalesData = [];
+
+async function loadSedesGlobales() {
+    try {
+        const res = await fetch('/api/configuracion/sedes');
+        if (res.ok) {
+            sedesGlobalesData = await res.json();
+        }
+    } catch(e) {}
+    renderSedesGlobales();
+}
+
+function renderSedesGlobales() {
+    const list = document.getElementById('sedesGlobalesList');
+    if (!list) return;
+    if (sedesGlobalesData.length === 0) {
+        list.innerHTML = '<div style="font-size:.85rem;color:var(--l);font-style:italic">No hay sedes configuradas.</div>';
+        return;
+    }
+    list.innerHTML = sedesGlobalesData.map((sede, i) => `
+        <div style="background:#fff;border:1px solid #E5E7EB;padding:1rem;border-radius:8px;display:flex;gap:1rem;align-items:center">
+            <div style="flex:1">
+                <label style="font-size:.75rem;color:var(--l);margin-bottom:.3rem;display:block">Nombre de la Sede</label>
+                <input type="text" class="fc" value="${sede.nombre || ''}" onchange="sedesGlobalesData[${i}].nombre=this.value" placeholder="Ej: Sede Providencia">
+            </div>
+            <div style="flex:2">
+                <label style="font-size:.75rem;color:var(--l);margin-bottom:.3rem;display:block">Dirección (Opcional)</label>
+                <input type="text" class="fc" value="${sede.direccion || ''}" onchange="sedesGlobalesData[${i}].direccion=this.value" placeholder="Calle, Número, Ciudad">
+            </div>
+            <button class="btn btn-sm" style="background:#FEE2E2;color:#EF4444;align-self:flex-end" onclick="eliminarSedeGlobal(${i})"><i class="ph ph-trash"></i></button>
+        </div>
+    `).join('');
+}
+
+function agregarSedeGlobalUI() {
+    sedesGlobalesData.push({ id: 'sede_' + Date.now(), nombre: '', direccion: '' });
+    renderSedesGlobales();
+}
+
+function eliminarSedeGlobal(i) {
+    sedesGlobalesData.splice(i, 1);
+    renderSedesGlobales();
+}
+
+async function guardarSedesGlobales() {
+    const btn = event.currentTarget;
+    btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Guardando...';
+    try {
+        const res = await fetch('/api/configuracion/sedes', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+            body: JSON.stringify({ sedes: sedesGlobalesData })
+        });
+        if (!res.ok) throw new Error();
+        showToast('✅ Sedes guardadas exitosamente');
+    } catch(e) {
+        showToast('⚠️ Error al guardar sedes');
+    } finally {
+        btn.innerHTML = '<i class="ph ph-floppy-disk"></i> Guardar Sedes';
+    }
+}
+
+loadSedesGlobales();
+
 </script>
 </body>
 </html>
