@@ -232,17 +232,19 @@
 
             <!-- GESTOR AVANZADO DE HORARIOS Y SEDES -->
             <div id="gestorHorariosSedes" style="display:none;margin-top:1rem;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:8px;padding:1.5rem">
-                <h4 style="font-size:1.1rem;margin-bottom:.5rem;color:var(--color-primary)"><i class="ph ph-calendar-check"></i> Sedes y Horarios</h4>
-                <p style="font-size:.85rem;color:var(--l);margin-bottom:1rem">Añade los horarios correspondientes para cada sede donde se impartirá el curso.</p>
+                <h4 id="gestorHorariosTitle" style="font-size:1.1rem;margin-bottom:.5rem;color:var(--color-primary)"><i class="ph ph-calendar-check"></i> Sedes y Horarios</h4>
+                <p id="gestorHorariosDesc" style="font-size:.85rem;color:var(--l);margin-bottom:1rem">Añade los horarios correspondientes para cada sede donde se impartirá el curso.</p>
                 
-                <div id="sedesConfigContainer" style="display:flex;flex-direction:column;gap:1rem;margin-bottom:1rem">
-                    <!-- Sedes renderizadas dinámicamente -->
-                </div>
-                <div style="display:flex;gap:0.5rem;align-items:center">
-                    <select id="nuevaSedeSelect" class="fc" style="width:250px">
-                        <option value="">— Elegir sede a añadir —</option>
-                    </select>
-                    <button type="button" class="btn btn-sec btn-sm" onclick="addSedeConfig()"><i class="ph ph-plus"></i> Añadir Sede</button>
+                <div id="sedesWrapper">
+                    <div id="sedesConfigContainer" style="display:flex;flex-direction:column;gap:1rem;margin-bottom:1rem">
+                        <!-- Sedes renderizadas dinámicamente -->
+                    </div>
+                    <div style="display:flex;gap:0.5rem;align-items:center">
+                        <select id="nuevaSedeSelect" class="fc" style="width:250px">
+                            <option value="">— Elegir sede a añadir —</option>
+                        </select>
+                        <button type="button" class="btn btn-sec btn-sm" onclick="addSedeConfig()"><i class="ph ph-plus"></i> Añadir Sede</button>
+                    </div>
                 </div>
 
                 <div id="onlineConfigContainer" style="display:none;border:1px solid #E5E7EB;padding:1rem;border-radius:8px;margin-top:1.5rem;background:#fff">
@@ -1628,10 +1630,28 @@ function renderOnlineHorarios() {
 function handleModalidadChange() {
     const m = document.getElementById('courseModalidad').value;
     const isPresencial = m === 'Presencial' || m === 'Híbrido';
+    const isOnlineVivo = m === 'Online (En vivo)';
     const isHibrido = m === 'Híbrido';
     
-    document.getElementById('gestorHorariosSedes').style.display = isPresencial ? 'block' : 'none';
-    document.getElementById('onlineConfigContainer').style.display = isHibrido ? 'block' : 'none';
+    document.getElementById('gestorHorariosSedes').style.display = (isPresencial || isOnlineVivo) ? 'block' : 'none';
+    document.getElementById('sedesWrapper').style.display = isPresencial ? 'block' : 'none';
+    document.getElementById('onlineConfigContainer').style.display = (isHibrido || isOnlineVivo) ? 'block' : 'none';
+    
+    if (document.getElementById('gestorHorariosTitle') && document.getElementById('gestorHorariosDesc')) {
+        if (isOnlineVivo) {
+            document.getElementById('gestorHorariosTitle').innerHTML = '<i class="ph ph-calendar-check"></i> Horarios de Clases Online';
+            document.getElementById('gestorHorariosDesc').textContent = 'Configura los días y horas de las sesiones virtuales en vivo.';
+            document.getElementById('onlineConfigContainer').style.background = 'transparent';
+            document.getElementById('onlineConfigContainer').style.border = 'none';
+            document.getElementById('onlineConfigContainer').style.padding = '0';
+        } else {
+            document.getElementById('gestorHorariosTitle').innerHTML = '<i class="ph ph-calendar-check"></i> Sedes y Horarios';
+            document.getElementById('gestorHorariosDesc').textContent = 'Añade los horarios correspondientes para cada sede donde se impartirá el curso.';
+            document.getElementById('onlineConfigContainer').style.background = '#fff';
+            document.getElementById('onlineConfigContainer').style.border = '1px solid #E5E7EB';
+            document.getElementById('onlineConfigContainer').style.padding = '1rem';
+        }
+    }
 }
 
 document.getElementById('courseModalidad').addEventListener('change', handleModalidadChange);

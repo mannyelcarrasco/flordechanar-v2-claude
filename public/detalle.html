@@ -258,7 +258,9 @@
             
             // Extra info
             let extraInfo = '';
-            if (c.horarios_sedes) {
+            if (c.modalidad === 'Online (Grabado)') {
+                extraInfo = `<div style="font-weight:600;color:var(--color-primary);margin-top:.5rem"><i class="ph ph-laptop"></i> Clases Grabadas</div><div style="display:flex;align-items:center;gap:.5rem;padding-left:1.5rem;margin-top:.25rem">Disponible 24/7</div>`;
+            } else if (c.horarios_sedes) {
                 try {
                     const hs = typeof c.horarios_sedes === 'string' ? JSON.parse(c.horarios_sedes) : c.horarios_sedes;
                     if (hs.sedes && hs.sedes.length > 0) {
