@@ -7,7 +7,7 @@
     function aplicarNumero(num, msgGlobal) {
         if (!num) return;
 
-        const links = document.querySelectorAll('a[href*="wa.me"]');
+        const links = document.querySelectorAll('a[href*="wa.me"]:not([data-wa-ignore="true"])');
         links.forEach(function (a) {
             let texto = msgGlobal || '';
             try {

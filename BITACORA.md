@@ -50,6 +50,7 @@
 - [x] Script del widget: `https://funnelstudio.click/AtendIA_dev/embed.js`
 - [x] Texto corregido: "Selecciona tu ciudad" → **"Selecciona tu servicio"**
 - [x] Contenedor del widget con altura controlada (`min-height:600px`, `max-height:90vh`) para evitar crecimiento excesivo de espacio en blanco
+- [x] Botón flotante de WhatsApp de Reservas incrustado (`56984281226`) protegido con `data-wa-ignore="true"` para no ser sobrescrito por el número general/escuela
 
 ### 🌟 Muro de Testimonios & Prueba Social de Fresha (NUEVO)
 - [x] **Curación y Sistema de Testimonios (`public/testimonios-data.js`):**
@@ -74,7 +75,7 @@
 
 ### Media prioridad
 - [ ] Evaluar si las tarjetas de terapias deben reactivarse o reemplazarse por contenido dinámico desde el panel admin
-- [ ] Revisar los números de WhatsApp en los botones flotantes (actualmente usan `56912345678` de ejemplo)
+- [/] Revisar los números de WhatsApp en los botones flotantes (actualizado número de reservas a `56984281226`; escuela/general mantiene su número independiente)
 - [ ] Decidir si se mantiene la sección `booking-integration` con su diseño oscuro o se adapta al tema claro del widget
 
 ### Baja prioridad
