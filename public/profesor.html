@@ -147,7 +147,7 @@
                         <option value="">Selecciona primero un curso</option>
                     </select>
                 </div>
-                <div class="fg"><label class="fl">Título de la Lección</label><input type="text" class="fc" id="uploadLecTitulo" placeholder="Ej: Pares del Sistema Hepático"></div>
+                <div class="fg"><label class="fl">Título de la Lección</label><input type="text" class="fc" id="uploadLecTitulo" placeholder="Ej: Centros Energéticos y Chakras"></div>
                 <div class="fg"><label class="fl">Descripción</label><textarea class="fc" id="uploadLecDesc" placeholder="Qué aprende el estudiante en esta lección..."></textarea></div>
                 <div class="fg"><label class="fl">Enlace de Video (YouTube / Vimeo)</label><input type="url" class="fc" id="uploadLecVideo" placeholder="https://youtube.com/watch?v=..."></div>
                 <button class="btn btn-p" style="width:100%" onclick="subirLeccion()"><i class="ph ph-upload-simple"></i> Guardar Lección</button>
@@ -155,11 +155,11 @@
             <div>
                 <div class="uc" style="margin-bottom:1.4rem">
                     <h3><i class="ph ph-file-arrow-up" style="color:var(--accent)"></i> Materiales Descargables</h3>
-                    <div class="fg"><label class="fl">Asociar a curso</label><select class="fc"><option>Diplomado Biomagnetismo</option><option>Reiki Nivel 1 y 2</option></select></div>
+                    <div class="fg"><label class="fl">Asociar a curso</label><select class="fc"><option>Diplomado en Terapia Energética</option><option>Hipnosis y Regresión</option></select></div>
                     <div class="dz" style="margin-bottom:.75rem" onclick="document.getElementById('mIn').click()"><i class="ph ph-paperclip" style="font-size:1.4rem"></i><p>PDF, Word, Excel, PPT <span>· seleccionar</span></p></div>
                     <input type="file" id="mIn" style="display:none" multiple onchange="addFiles(this,'mList')">
                     <div class="fl-list" id="mList">
-                        <div class="fr"><i class="ph ph-file-pdf"></i><span class="fn">Mapa_Pares_Biomag.pdf</span><span class="fs">2.4 MB</span><i class="ph ph-trash fd" onclick="this.parentNode.remove()"></i></div>
+                        <div class="fr"><i class="ph ph-file-pdf"></i><span class="fn">Guía_Terapia_Energética.pdf</span><span class="fs">2.4 MB</span><i class="ph ph-trash fd" onclick="this.parentNode.remove()"></i></div>
                         <div class="fr"><i class="ph ph-file-xls"></i><span class="fn">Protocolo_Sesión.xlsx</span><span class="fs">340 KB</span><i class="ph ph-trash fd" onclick="this.parentNode.remove()"></i></div>
                     </div>
                     <button class="btn btn-o" style="width:100%;margin-top:.85rem;justify-content:center" onclick="showT('Materiales cargados','ph-paperclip')"><i class="ph ph-upload-simple"></i> Subir Materiales</button>

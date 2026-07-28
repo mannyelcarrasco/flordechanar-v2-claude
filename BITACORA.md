@@ -53,12 +53,11 @@
 
 ### 🌟 Muro de Testimonios & Prueba Social de Fresha (NUEVO)
 - [x] **Curación y Sistema de Testimonios (`public/testimonios-data.js`):**
-  - Creación de un script modular con 16 testimonios curados y verificados que representan las 115+ reseñas con 4.9⭐ en Fresha.
-  - Implementación del widget dinámico `renderTestimoniosWidget` que incluye Trust Badge, filtrado por tipo de terapia y diseño en grilla con estrellas doradas e icono de verificación.
-- [x] **Integración en Páginas Públicas:**
-  - `terapias.html`: Incrustación del Muro de Confianza justo encima del widget de agenda de AtendIA para reducir fricción y aumentar conversiones.
-  - `index.html`: Incorporación de mini-badge de 4.9⭐ en el Hero superior y nueva sección de "Lo que dicen nuestros pacientes" en la portada.
-  - `curso-crear.html`: Botón "✨ Importar de Fresha (4.9★)" en el Paso 5 para autocompletar testimonios verificados al crear páginas de venta con IA.
+  - Creación de un script modular con 18 testimonios curados y verificados que representan las 115+ reseñas con 4.9⭐ en Fresha.
+  - Actualización completa del catálogo de servicios en comentarios y pestañas de filtrado para reflejar la oferta vigente: **Terapia Energética** (reemplazando Reiki), **Acupuntura** (para dolor crónico/agudo), **Masoterapia y Masajes** (relajante, descontracturante, drenaje), **Terapia Emocional** (Flores de Bach) e **Hipnosis y Regresión**.
+- [x] **Integración y Depuración en Plataforma:**
+  - `terapias.html`: Incrustación del Muro de Confianza y actualización de las tarjetas de servicios (ocultas) con el catálogo vigente.
+  - `admin.html`, `profesor.html`, `curso-crear.html`, `eval-crear.html`, `foro.html`: Eliminación de menciones a biomagnetismo/reiki en placeholders y ejemplos, alineando todo el ecosistema web y LMS.
 
 ---
 

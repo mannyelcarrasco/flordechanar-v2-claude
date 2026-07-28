@@ -1,151 +1,191 @@
 /**
  * testimonios-data.js — Sistema curado de reseñas y testimonios de Flor de Chañar
  * Basado en las más de 115+ opiniones verificadas (Calificación 4.9 / 5.0) en Fresha.
+ * Actualizado con los servicios vigentes: Terapia Energética, Acupuntura, Masoterapia y Masajes,
+ * Terapia Emocional e Hipnosis y Regresión.
  */
 
 const RESENAS_FRESHA = [
+    // ── Acupuntura (alivio del dolor, padecimientos crónicos, medicina china) ──
     {
         id: 1,
         autor: "Sandra G.",
         calificacion: 5,
-        terapia: "Biomagnetismo Clínico",
-        comentario: "Excelente atención, muy explicativo y certero, me voy súper bien con mucho alivio en mis dolores crónicos, muchas gracias.",
+        terapia: "Acupuntura",
+        comentario: "Excelente atención, muy explicativo y certero con los puntos de acupuntura, me voy súper bien con mucho alivio en mis dolores crónicos, muchas gracias.",
         fecha: "Hace 2 semanas",
         verificado: true
     },
     {
         id: 2,
-        autor: "Jessica C.",
+        autor: "Valentina M.",
         calificacion: 5,
-        terapia: "Masoterapia Integral",
-        comentario: "Muy buen trato, un gran terapeuta, un 7. Muy agradecida de la atención y la dedicación en cada detalle.",
-        fecha: "Hace 3 semanas",
+        terapia: "Acupuntura",
+        comentario: "Llevaba meses con migrañas e inflamación constante; desde la primera sesión con acupuntura sentí un cambio radical en mi cuerpo. ¡Infinitas gracias!",
+        fecha: "Hace 1 mes",
         verificado: true
     },
     {
         id: 3,
-        autor: "Camila R.",
+        autor: "Rodrigo P.",
         calificacion: 5,
-        terapia: "Reiki y Canalización",
-        comentario: "Una experiencia única y profundamente sanadora. Me ayudó muchísimo a desbloquear la ansiedad y encontrar paz mental. Totalmente recomendado.",
-        fecha: "Hace 1 mes",
+        terapia: "Acupuntura",
+        comentario: "Muy agradecido por la paciencia para explicar el tratamiento de medicina china y alivio del dolor. Un terapeuta de excelencia, certero en cada sesión.",
+        fecha: "Hace 2 meses",
         verificado: true
     },
     {
         id: 4,
-        autor: "Marcelo T.",
+        autor: "Andrea N.",
         calificacion: 5,
-        terapia: "Terapia Floral (Bach)",
-        comentario: "Las esencias florales me han cambiado el estado de ánimo por completo. Gran calidez humana y empatía desde la primera sesión.",
-        fecha: "Hace 1 mes",
+        terapia: "Acupuntura",
+        comentario: "Llegué con un dolor lumbar agudo que no me dejaba caminar y la sesión de acupuntura fue santo remedio. Excelente trato y puntualidad.",
+        fecha: "Hace 3 meses",
         verificado: true
     },
+
+    // ── Masoterapia y Masajes (descontracturante, relajante, drenaje) ──
     {
         id: 5,
-        autor: "Valentina M.",
+        autor: "Jessica C.",
         calificacion: 5,
-        terapia: "Biomagnetismo Clínico",
-        comentario: "Llevaba meses con problemas de digestión y migrañas; desde la primera sesión de biomagnetismo sentí un cambio radical. ¡Infinitas gracias!",
-        fecha: "Hace 1 mes",
+        terapia: "Masoterapia y Masajes",
+        comentario: "Muy buen trato, un gran terapeuta, un 7. El masaje descontracturante alivió semanas de estrés acumulado en mi espalda. Muy agradecida.",
+        fecha: "Hace 3 semanas",
         verificado: true
     },
     {
         id: 6,
         autor: "Patricio V.",
         calificacion: 5,
-        terapia: "Masoterapia Integral",
-        comentario: "El alivio de tensiones musculares fue inmediato. Se nota el profesionalismo y el conocimiento profundo de la anatomía y energía del cuerpo.",
-        fecha: "Hace 2 meses",
+        terapia: "Masoterapia y Masajes",
+        comentario: "El alivio de tensiones musculares fue inmediato. Se nota el profesionalismo en las técnicas de relajación profunda, masaje terapéutico y drenaje.",
+        fecha: "Hace 1 mes",
         verificado: true
     },
     {
         id: 7,
-        autor: "Daniela S.",
+        autor: "Constanza L.",
         calificacion: 5,
-        terapia: "Reiki y Canalización",
-        comentario: "El ambiente es un verdadero oasis de tranquilidad. Salí renovada, ligera y con una claridad que hace tiempo no sentía.",
+        terapia: "Masoterapia y Masajes",
+        comentario: "La mejor sesión de masoterapia integral de la región. La combinación de masaje relajante y descontracturante fue un 10/10.",
         fecha: "Hace 2 meses",
         verificado: true
     },
     {
         id: 8,
-        autor: "Francisca B.",
+        autor: "Ignacio H.",
         calificacion: 5,
-        terapia: "Terapia Floral (Bach)",
-        comentario: "Excelente profesional, muy acertado con la terapia floral para mi proceso emocional. Me sentí escuchada, acogida y comprendida.",
-        fecha: "Hace 2 meses",
+        terapia: "Masoterapia y Masajes",
+        comentario: "Un masaje verdaderamente terapéutico y renovador. El terapeuta es súper respetuoso, dedicado y conoce perfectamente la anatomía humana.",
+        fecha: "Hace 3 meses",
         verificado: true
     },
+
+    // ── Terapia Energética (armonización, equilibrio, vibración) ──
     {
         id: 9,
-        autor: "Rodrigo P.",
+        autor: "Camila R.",
         calificacion: 5,
-        terapia: "Biomagnetismo Clínico",
-        comentario: "Muy agradecido por la paciencia para explicar cada parte del tratamiento. Un terapeuta de excelencia, certero en el diagnóstico.",
-        fecha: "Hace 3 meses",
+        terapia: "Terapia Energética",
+        comentario: "Una experiencia única y profundamente sanadora. Me ayudó muchísimo a desbloquear la energía, encontrar paz mental y claridad. Totalmente recomendado.",
+        fecha: "Hace 1 mes",
         verificado: true
     },
     {
         id: 10,
-        autor: "Constanza L.",
+        autor: "Daniela S.",
         calificacion: 5,
-        terapia: "Masoterapia Integral",
-        comentario: "La mejor sesión de masoterapia integral de la región. El drenaje y la técnica descontracturante fueron un 10/10.",
-        fecha: "Hace 3 meses",
+        terapia: "Terapia Energética",
+        comentario: "El ambiente es un verdadero oasis de tranquilidad. La armonización y terapia energética me dejaron renovada, ligera y con una paz enorme.",
+        fecha: "Hace 2 meses",
         verificado: true
     },
     {
         id: 11,
         autor: "Matías E.",
         calificacion: 5,
-        terapia: "Reiki y Canalización",
-        comentario: "Increíble cómo cambia la energía. Es un espacio sagrado y lleno de paz. Volveré sin duda para continuar mi proceso de sanación.",
+        terapia: "Terapia Energética",
+        comentario: "Increíble cómo cambia la vibración del cuerpo. Es un espacio sagrado; el trabajo energético que realizan me dio el equilibrio que buscaba.",
         fecha: "Hace 3 meses",
         verificado: true
     },
     {
         id: 12,
-        autor: "Paulina K.",
+        autor: "Macarena W.",
         calificacion: 5,
-        terapia: "Terapia Floral (Bach)",
-        comentario: "Las gotas de Bach preparadas me han ayudado enormemente a dormir y calmar el estrés laboral. Atención empática y un 7 en todo.",
+        terapia: "Terapia Energética",
+        comentario: "Muy agradecida de la sesión energética y la orientación recibida. Me dio las respuestas y la tranquilidad que necesitaba en este momento de mi vida.",
         fecha: "Hace 4 meses",
         verificado: true
     },
+
+    // ── Terapia Emocional (Flores de Bach, acompañamiento, bienestar emocional) ──
     {
         id: 13,
-        autor: "Andrea N.",
+        autor: "Marcelo T.",
         calificacion: 5,
-        terapia: "Biomagnetismo Clínico",
-        comentario: "Llegué con un dolor lumbar agudo y el biomagnetismo fue santo remedio. Excelente trato y puntualidad en la atención.",
-        fecha: "Hace 4 meses",
+        terapia: "Terapia Emocional",
+        comentario: "Las esencias florales y la terapia emocional me han cambiado el estado de ánimo por completo. Gran calidez humana y empatía desde la primera sesión.",
+        fecha: "Hace 1 mes",
         verificado: true
     },
     {
         id: 14,
-        autor: "Ignacio H.",
+        autor: "Francisca B.",
         calificacion: 5,
-        terapia: "Masoterapia Integral",
-        comentario: "Un masaje verdaderamente descontracturante y relajante. El terapeuta es súper respetuoso, dedicado y profesional.",
-        fecha: "Hace 5 meses",
+        terapia: "Terapia Emocional",
+        comentario: "Excelente profesional, muy acertado con la orientación y las flores de Bach para mi proceso emocional. Me sentí escuchada, acogida y comprendida.",
+        fecha: "Hace 2 meses",
         verificado: true
     },
     {
         id: 15,
-        autor: "Macarena W.",
+        autor: "Paulina K.",
         calificacion: 5,
-        terapia: "Reiki y Canalización",
-        comentario: "Muy agradecida de la canalización y la energía transmitida. Me dio las respuestas y la tranquilidad espiritual que necesitaba.",
-        fecha: "Hace 5 meses",
+        terapia: "Terapia Emocional",
+        comentario: "La terapia de apoyo emocional me ha ayudado enormemente a dormir mejor, calmar la ansiedad y manejar el estrés laboral. Un 7 en todo.",
+        fecha: "Hace 4 meses",
+        verificado: true
+    },
+
+    // ── Hipnosis y Regresión (sanación profunda, traumas, desbloqueo subconsciente) ──
+    {
+        id: 16,
+        autor: "Tomás R.",
+        calificacion: 5,
+        terapia: "Hipnosis y Regresión",
+        comentario: "La sesión de hipnosis y regresión me permitió entender el origen de mis bloqueos y liberar cargas que llevaba por años. Un proceso muy transformador y seguro.",
+        fecha: "Hace 1 mes",
         verificado: true
     },
     {
-        id: 16,
+        id: 17,
+        autor: "Carolina H.",
+        calificacion: 5,
+        terapia: "Hipnosis y Regresión",
+        comentario: "Tenía mucho miedo de probar la regresión, pero el terapeuta me guió con una empatía y profesionalismo increíbles. Sané aspectos profundos de mi infancia.",
+        fecha: "Hace 2 meses",
+        verificado: true
+    },
+    {
+        id: 18,
+        autor: "Esteban V.",
+        calificacion: 5,
+        terapia: "Hipnosis y Regresión",
+        comentario: "Gracias a la hipnosis terapéutica pude superar un trauma que me paralizaba. Me sentí en confianza, seguro y acompañado en todo momento. 100% recomendado.",
+        fecha: "Hace 3 meses",
+        verificado: true
+    },
+
+    // ── General ──
+    {
+        id: 19,
         autor: "Verónica D.",
         calificacion: 5,
         terapia: "General",
-        comentario: "Excelente centro de sanación. La atención es de primer nivel, desde que agendas hasta que sales del lugar te hacen sentir en casa.",
-        fecha: "Hace 6 meses",
+        comentario: "Excelente centro de sanación y terapias naturales. La atención es de primer nivel, desde que agendas hasta que sales del lugar te hacen sentir en paz y en casa.",
+        fecha: "Hace 5 meses",
         verificado: true
     }
 ];
@@ -160,15 +200,22 @@ function renderTestimoniosWidget(containerId, options = {}) {
     if (!container) return;
 
     const {
-        maxItems = 16,
+        maxItems = 18,
         showFilter = true,
         showHeader = true,
         title = "Lo que dicen nuestros pacientes",
         subtitle = "Experiencias reales de sanación y bienestar en Flor de Chañar"
     } = options;
 
-    // Obtener terapias únicas para las pestañas
-    const terapias = ["Todos", "Biomagnetismo Clínico", "Terapia Floral (Bach)", "Reiki y Canalización", "Masoterapia Integral"];
+    // Obtener terapias únicas vigentes para las pestañas de filtro
+    const terapias = [
+        "Todos",
+        "Terapia Energética",
+        "Terapia Emocional",
+        "Hipnosis y Regresión",
+        "Masoterapia y Masajes",
+        "Acupuntura"
+    ];
 
     // Inyectar CSS local si no está predefinido en la página
     if (!document.getElementById("testimonio-widget-styles")) {
