@@ -228,6 +228,11 @@
         </div>
     </section>
 
+    <!-- Muro de Confianza y Testimonios Fresha -->
+    <div class="container">
+        <section id="muro-testimonios-terapias"></section>
+    </div>
+
     <!-- Seamless Booking Prototype -->
     <div class="container">
         <section class="booking-integration" id="agendar">
@@ -280,6 +285,19 @@
                 }
             });
         })();
+    </script>
+    <script src="testimonios-data.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            if (window.renderTestimoniosWidget) {
+                window.renderTestimoniosWidget("muro-testimonios-terapias", {
+                    maxItems: 9,
+                    showFilter: true,
+                    title: "Lo que dicen nuestros pacientes en Fresha",
+                    subtitle: "Opiniones reales verificadas de pacientes que ya han vivido una experiencia de sanación con nosotros."
+                });
+            }
+        });
     </script>
 </body>
 </html>

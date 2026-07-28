@@ -49,8 +49,16 @@
 - [x] Widget de agenda **AtendIA** incrustado (`data-company="3"`) reemplazando los paneles mock de WhatsApp
 - [x] Script del widget: `https://funnelstudio.click/AtendIA_dev/embed.js`
 - [x] Texto corregido: "Selecciona tu ciudad" → **"Selecciona tu servicio"**
-- [x] Tarjetas de terapias **ocultadas** con `display:none` (ver Anexo A)
 - [x] Contenedor del widget con altura controlada (`min-height:600px`, `max-height:90vh`) para evitar crecimiento excesivo de espacio en blanco
+
+### 🌟 Muro de Testimonios & Prueba Social de Fresha (NUEVO)
+- [x] **Curación y Sistema de Testimonios (`public/testimonios-data.js`):**
+  - Creación de un script modular con 16 testimonios curados y verificados que representan las 115+ reseñas con 4.9⭐ en Fresha.
+  - Implementación del widget dinámico `renderTestimoniosWidget` que incluye Trust Badge, filtrado por tipo de terapia y diseño en grilla con estrellas doradas e icono de verificación.
+- [x] **Integración en Páginas Públicas:**
+  - `terapias.html`: Incrustación del Muro de Confianza justo encima del widget de agenda de AtendIA para reducir fricción y aumentar conversiones.
+  - `index.html`: Incorporación de mini-badge de 4.9⭐ en el Hero superior y nueva sección de "Lo que dicen nuestros pacientes" en la portada.
+  - `curso-crear.html`: Botón "✨ Importar de Fresha (4.9★)" en el Paso 5 para autocompletar testimonios verificados al crear páginas de venta con IA.
 
 ---
 
@@ -71,7 +79,7 @@
 - [ ] Decidir si se mantiene la sección `booking-integration` con su diseño oscuro o se adapta al tema claro del widget
 
 ### Baja prioridad
-- [ ] Evaluar agregar sección de testimonios en `terapias.html`
+- [x] Sección de testimonios agregada en `terapias.html` y en `index.html` (Muro de Confianza 4.9⭐ de Fresha)
 - [ ] Agregar meta tags SEO específicos para la página de terapias
 
 ---

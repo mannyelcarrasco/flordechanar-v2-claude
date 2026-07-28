@@ -661,6 +661,11 @@
                         Explorar Cursos <i class="ph ph-book-open"></i>
                     </a>
                 </div>
+                <div style="margin-top: 2.2rem; display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.75rem; background: rgba(255, 255, 255, 0.9); padding: 0.65rem 1.4rem; border-radius: 9999px; box-shadow: 0 8px 25px rgba(0,0,0,0.06); border: 1px solid rgba(212, 163, 115, 0.4);" class="fade-in-up delay-2">
+                    <span style="color: #F59E0B; font-size: 1.15rem; letter-spacing: 2px;">★★★★★</span>
+                    <span style="font-size: 0.92rem; color: var(--color-secondary); font-weight: 700;">4.9 / 5.0</span>
+                    <span style="font-size: 0.84rem; color: #555; border-left: 1.5px solid #CBD5E1; padding-left: 0.75rem;">+115 Opiniones Verificadas en Fresha</span>
+                </div>
             </div>
         </div>
     </section>
@@ -700,6 +705,11 @@
             </div>
         </div>
     </section>
+
+    <!-- Muro de Testimonios en Portada -->
+    <div class="container" style="margin: 4rem auto 2rem;">
+        <section id="muro-testimonios-home"></section>
+    </div>
 
     <!-- Locations Section: Scheduling friction-less -->
     <section class="locations" id="sedes">
@@ -863,6 +873,19 @@
                 }
             });
         })();
+    </script>
+    <script src="testimonios-data.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            if (window.renderTestimoniosWidget) {
+                window.renderTestimoniosWidget("muro-testimonios-home", {
+                    maxItems: 6,
+                    showFilter: false,
+                    title: "Lo que dicen nuestros pacientes",
+                    subtitle: "Experiencias reales de bienestar integral en Flor de Chañar respaldadas por más de 115+ reseñas."
+                });
+            }
+        });
     </script>
 </body>
 </html>
