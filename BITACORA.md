@@ -56,7 +56,7 @@
   - Creación de un script modular con 18 testimonios curados y verificados que representan las 115+ reseñas con 4.9⭐ en Fresha.
   - Actualización completa del catálogo de servicios en comentarios y pestañas de filtrado para reflejar la oferta vigente: **Terapia Energética** (reemplazando Reiki), **Acupuntura** (para dolor crónico/agudo), **Masoterapia y Masajes** (relajante, descontracturante, drenaje), **Terapia Emocional** (Flores de Bach) e **Hipnosis y Regresión**.
 - [x] **Integración y Depuración en Plataforma:**
-  - `terapias.html`: Incrustación del Muro de Confianza y actualización de las tarjetas de servicios (ocultas) con el catálogo vigente.
+  - `terapias.html`: Incrustación del Muro de Confianza, botón de llamada a la acción en la cabecera ("Ir directo a Reservar Hora ↓") con scroll suave hacia el widget de AtendIA, y actualización de tarjetas de servicios con el catálogo vigente.
   - `admin.html`, `profesor.html`, `curso-crear.html`, `eval-crear.html`, `foro.html`: Eliminación de menciones a biomagnetismo/reiki en placeholders y ejemplos, alineando todo el ecosistema web y LMS.
 
 ---
