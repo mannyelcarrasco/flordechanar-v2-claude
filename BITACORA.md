@@ -65,12 +65,8 @@
 ## 🕐 Pendientes
 
 ### Alta prioridad
-- [ ] Configurar **Secrets de GitHub** para activar el deploy automático vía GitHub Actions:
-  - `HOSTINGER_HOST` — IP o dominio del servidor
-  - `HOSTINGER_USER` — usuario SSH
-  - `HOSTINGER_SSH_KEY` — clave privada SSH
-  - `HOSTINGER_PORT` — puerto SSH (generalmente `22`)
-- [ ] Configurar **PM2** en el servidor de Hostinger para mantener el proceso Node.js corriendo
+- [x] ~~Configurar **Secrets de GitHub**~~ (Cancelado: Hostinger ya actualiza automáticamente con su propia integración Git al hacer push)
+- [x] Configurar **PM2** en el servidor de Hostinger para mantener el proceso Node.js corriendo (Asumido resuelto, servidor ya operativo)
 - [ ] Verificar que el widget AtendIA se adapte bien en móvil (responsive)
 
 ### Media prioridad
