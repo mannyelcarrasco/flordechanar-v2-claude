@@ -12,6 +12,7 @@
 
 ### 🔒 Seguridad & Dependencias (NUEVO)
 - [x] Corrección de vulnerabilidades de NPM detectadas por Hostinger (`qs`, `ip-address`).
+- [x] Corrección final de vulnerabilidades restantes: actualización manual de `multer` a la versión `2.2.0` y `body-parser` a `2.3.0` (se descartó el PR automático de Hostinger porque eliminaba endpoints críticos del `server.js`).
 - [x] Configuración de `overrides` en `package.json` para forzar el uso de versiones seguras en dependencias transitivas.
 
 ### 💳 Integración de Pasarela de Pagos (Flow) (NUEVO)
