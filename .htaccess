@@ -1,0 +1,9 @@
+RewriteEngine On
+
+# Si el archivo solicitado existe dentro de la carpeta /public, se sirve desde ahí.
+# Esto soluciona el error 404 en Hostinger (LiteSpeed) para archivos estáticos (.html, .css, .js)
+RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -f
+RewriteRule ^(.*)$ public/$1 [L]
+
+RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -d
+RewriteRule ^(.*)$ public/$1/ [L]
