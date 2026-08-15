@@ -21,6 +21,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
+// Redireccionar accesos a /mi-cuenta al sitio antiguo (WordPress en web1)
+app.use('/mi-cuenta', (req, res) => {
+    res.redirect(301, 'https://web1.flordechanar.cl' + req.originalUrl);
+});
+
 // Serve static frontend files from 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
 
