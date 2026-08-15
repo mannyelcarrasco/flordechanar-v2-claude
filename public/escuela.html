@@ -163,11 +163,11 @@
                 <a href="escuela.html" class="active">Escuela</a>
                 <a href="index.html#sedes">Sedes</a>
                 <a href="index.html#contacto">Contacto</a>
-                <a href="login.html" class="mob-cta"><i class="ph ph-user"></i> Acceder al Aula</a>
+                <a href="https://web1.flordechanar.cl/mi-cuenta/" class="mob-cta" target="_blank"><i class="ph ph-user"></i> Acceder al Aula</a>
             </nav>
             <div class="header-actions">
                 <!-- Student Portal Access -->
-                <a href="login.html" class="btn btn-primary" style="font-size:0.9rem; padding: 0.6rem 1.4rem;">
+                <a href="https://web1.flordechanar.cl/mi-cuenta/" class="btn btn-primary" style="font-size:0.9rem; padding: 0.6rem 1.4rem;" target="_blank">
                     <i class="ph ph-user"></i> Acceder al Aula
                 </a>
                 <button class="mobile-menu-btn"><i class="ph ph-list"></i></button>
@@ -344,7 +344,7 @@
             const token = localStorage.getItem('token');
             if (!token) {
                 // Not logged in -> Redirect to login
-                window.location.href = 'login.html';
+                window.open('https://web1.flordechanar.cl/mi-cuenta/', '_blank');
                 return;
             }
 
