@@ -1,8 +1,5 @@
 RewriteEngine On
 
-# Redireccion de la antigua ruta de mi-cuenta a web1
-RewriteRule ^mi-cuenta/?(.*)$ https://web1.flordechanar.cl/mi-cuenta/$1 [R=301,L]
-
 # Si el archivo solicitado existe dentro de la carpeta /public, se sirve desde ahí.
 # Esto soluciona el error 404 en Hostinger (LiteSpeed) para archivos estáticos (.html, .css, .js)
 RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -f
