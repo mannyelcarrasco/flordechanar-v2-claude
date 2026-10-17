@@ -26,6 +26,14 @@ app.use('/mi-cuenta', (req, res) => {
     res.redirect(301, 'https://web1.flordechanar.cl' + req.originalUrl);
 });
 
+// Asegurar barra final y soporte mayúsculas/minúsculas para la landing /TerapiaEmocionalEvolutiva/
+app.use((req, res, next) => {
+    if (req.path.replace(/\/+$/, '').toLowerCase() === '/terapiaemocionalevolutiva' && !req.originalUrl.startsWith('/TerapiaEmocionalEvolutiva/')) {
+        return res.redirect(301, '/TerapiaEmocionalEvolutiva/');
+    }
+    next();
+});
+
 // Serve static frontend files from 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
 

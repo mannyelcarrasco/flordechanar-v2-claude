@@ -1,10 +1,15 @@
 # 📋 Bitácora del Proyecto — Flor de Chañar v2
 **Repositorio:** [mannyelcarrasco/flordechanar-v2-claude](https://github.com/mannyelcarrasco/flordechanar-v2-claude)  
-**Última actualización:** 2026-07-22
+**Última actualización:** 2026-10-17
 
 ---
 
 ## ✅ Avances completados
+
+### 🌿 Landing de Terapia Emocional Evolutiva (`/TerapiaEmocionalEvolutiva`) (NUEVO)
+- [x] Integración de la landing page de **Terapia Emocional Evolutiva (T.E.E.)** en `public/TerapiaEmocionalEvolutiva/` (`index.html`, `css/styles.css`, `js/main.js`, `assets/img/`).
+- [x] Enlace en tiempo real (*Windows Directory Junction* `mklink /J`) entre `C:\Users\manny\OneDrive\Documents\TerapiaEmocionalEvolutiva` y `public/TerapiaEmocionalEvolutiva` para sincronización instantánea entre ambos proyectos.
+- [x] Middleware en `server.js` para asegurar redirección limpia con barra final (`/TerapiaEmocionalEvolutiva/`) e insensibilidad a mayúsculas/minúsculas en Linux/Hostinger.
 
 ### 👨‍🏫 Panel de Profesores y Cursos (NUEVO)
 - [x] **Panel de Edición de Cursos (`curso-crear.html`):**
