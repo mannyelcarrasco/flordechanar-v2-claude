@@ -510,8 +510,8 @@
                             </div>
                             <div class="fg" style="margin-bottom:0.4rem;">
                                 <label class="fl" style="font-size:0.75rem;">ID Empresa AtendIA</label>
-                                <input type="number" class="fc" id="funnelCompanyId" value="3" placeholder="3 = Flor de Chañar">
-                                <div class="hint">Empresa en AtendIA (3 = EyCT)</div>
+                                <input type="number" class="fc" id="funnelCompanyId" value="8" placeholder="8 = Escuela Flor de Chañar">
+                                <div class="hint">Empresa en AtendIA (8 = Escuela)</div>
                             </div>
                             <div class="fg" style="margin-bottom:0.4rem;">
                                 <label class="fl" style="font-size:0.75rem;">Identificador Funnel (AtendIA)</label>
@@ -1722,7 +1722,7 @@ function getFunnelConfig() {
         subtitulo_modal: document.getElementById('funnelModalSub')?.value.trim() || '',
         atendia_enabled: document.getElementById('funnelAtendiaEnabled') ? document.getElementById('funnelAtendiaEnabled').checked : true,
         atendia_wa_phone: document.getElementById('funnelWaPhone')?.value.trim() || '56984281226',
-        atendia_company_id: parseInt(document.getElementById('funnelCompanyId')?.value) || 3,
+        atendia_company_id: parseInt(document.getElementById('funnelCompanyId')?.value) || 8,
         atendia_funnel_title: document.getElementById('funnelTitleKey')?.value.trim() || 'escuela_flordechanar',
         atendia_template: document.getElementById('funnelWaTemplate')?.value.trim() || '',
         auto_open_wa: document.getElementById('funnelAutoOpenWa') ? document.getElementById('funnelAutoOpenWa').checked : true,
@@ -1738,7 +1738,9 @@ function loadFunnelConfig(fc) {
     if (fc.subtitulo_modal !== undefined && document.getElementById('funnelModalSub')) document.getElementById('funnelModalSub').value = fc.subtitulo_modal;
     if (fc.atendia_enabled !== undefined && document.getElementById('funnelAtendiaEnabled')) document.getElementById('funnelAtendiaEnabled').checked = !!fc.atendia_enabled;
     if (fc.atendia_wa_phone && document.getElementById('funnelWaPhone')) document.getElementById('funnelWaPhone').value = fc.atendia_wa_phone;
-    if (fc.atendia_company_id && document.getElementById('funnelCompanyId')) document.getElementById('funnelCompanyId').value = fc.atendia_company_id;
+    if (fc.atendia_company_id && document.getElementById('funnelCompanyId')) {
+        document.getElementById('funnelCompanyId').value = (fc.atendia_company_id === 3) ? 8 : fc.atendia_company_id;
+    }
     if (fc.atendia_funnel_title && document.getElementById('funnelTitleKey')) document.getElementById('funnelTitleKey').value = fc.atendia_funnel_title;
     if (fc.atendia_template !== undefined && document.getElementById('funnelWaTemplate')) document.getElementById('funnelWaTemplate').value = fc.atendia_template;
     if (fc.auto_open_wa !== undefined && document.getElementById('funnelAutoOpenWa')) document.getElementById('funnelAutoOpenWa').checked = !!fc.auto_open_wa;

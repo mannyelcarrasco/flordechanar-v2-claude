@@ -2971,7 +2971,8 @@ function normalizeClPhone(raw) {
 }
 
 async function syncLeadToAtendIA({ curso, funnelCfg, nombre, phoneNorm, email, sede_modalidad, respuestas }) {
-    const companyId = parseInt(funnelCfg?.atendia_company_id) || parseInt(process.env.ATENDIA_COMPANY_ID) || 3;
+    const rawCid = parseInt(funnelCfg?.atendia_company_id);
+    const companyId = (rawCid && rawCid !== 3) ? rawCid : (parseInt(process.env.ATENDIA_COMPANY_ID) || 8);
     const funnelTitle = (funnelCfg?.atendia_funnel_title || 'escuela_flordechanar').trim();
     const atendiaBase = (process.env.ATENDIA_API_URL || 'https://funnelstudio.click/AtendIA_dev/api/index.php').replace(/\/+$/, '');
     const atendiaToken = process.env.ATENDIA_N8N_TOKEN || 'atendia2026xK9456';
@@ -3031,7 +3032,7 @@ async function syncLeadToAtendIA({ curso, funnelCfg, nombre, phoneNorm, email, s
         const profJson = await profRes.json().catch(() => ({}));
         if (profRes.ok && profJson.ok) {
             syncedOk = true;
-            logs.push(`AtendIA Profile OK (contact_id=${profJson.contact_id || '?'})`);
+            logs.push(`AtendIA Profile OK (company_id=${companyId}, contact_id=${profJson.contact_id || '?'})`);
         } else {
             logs.push(`AtendIA Profile HTTP ${profRes.status}: ${profJson.error || 'sin detalle'}`);
         }
@@ -3102,7 +3103,13 @@ async function syncLeadToAtendIA({ curso, funnelCfg, nombre, phoneNorm, email, s
 app.post('/api/prospectos', async (req, res) => {
     try {
         if (!pool) return res.status(500).json({ error: 'Database not connected' });
-        const { curso_id, nombre, whatsapp, email, sede_modalidad, respuestas } = req.body || {};
+        const body = req.body || {};
+        const curso_id = body.curso_id;
+        const nombre = body.nombre;
+        const whatsapp = body.whatsapp || body.telefono;
+        const email = body.email;
+        const sede_modalidad = body.sede_modalidad || body.sede_interes || body.modalidad_interes;
+        const respuestas = body.respuestas;
 
         if (!curso_id) return res.status(400).json({ error: 'Curso requerido' });
         if (!nombre || String(nombre).trim().length < 2) return res.status(400).json({ error: 'Por favor ingresa tu nombre' });

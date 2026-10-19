@@ -457,7 +457,7 @@
             const container = document.getElementById('buyButtonsContainer');
             const isGratis = c.tipo_acceso === 'gratis' || !c.precio;
             const modoInscripcion = (funnelConfig && funnelConfig.modo_inscripcion) ? funnelConfig.modo_inscripcion : 'pago';
-            const btnFunnelTexto = (funnelConfig && funnelConfig.boton_texto) ? funnelConfig.boton_texto : 'Solicitar Admisión y Más Información';
+            const btnFunnelTexto = (funnelConfig && (funnelConfig.texto_boton || funnelConfig.boton_texto)) ? (funnelConfig.texto_boton || funnelConfig.boton_texto) : 'Solicitar Admisión y Más Información';
             
             container.innerHTML = '';
             let payButtonsHtml = '';
@@ -905,6 +905,7 @@
             }));
 
             try {
+                const sedeDetectada = funnelDetectedSede || (currentCourse ? (currentCourse.sede || currentCourse.modalidad) : '');
                 const res = await fetch('/api/prospectos', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -912,9 +913,11 @@
                         curso_id: currentCourse ? currentCourse.id : null,
                         curso_titulo: currentCourse ? currentCourse.titulo : 'Programa Flor de Chañar',
                         nombre,
+                        whatsapp: telefono,
                         telefono,
                         email,
-                        sede_interes: funnelDetectedSede || (currentCourse ? currentCourse.sede : ''),
+                        sede_modalidad: sedeDetectada,
+                        sede_interes: sedeDetectada,
                         modalidad_interes: currentCourse ? currentCourse.modalidad : '',
                         respuestas: structuredRespuestas,
                         origen: 'detalle_curso'

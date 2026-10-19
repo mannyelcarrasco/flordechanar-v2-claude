@@ -17,7 +17,8 @@
   - Incluye botones de **Plantilla Rápida en 1 clic** para *Programas de 1 a 2 Años* y *Cursos Cortos*.
 - [x] **Integración Directa por API con AtendIA (`server.js`):**
   - Nueva tabla `prospectos_cursos` y endpoints `POST /api/prospectos`, `GET /api/prospectos`, `PUT /api/prospectos/:id`, `POST /api/prospectos/:id/resync` y `DELETE /api/prospectos/:id`.
-  - Al completar el formulario en `detalle.html`, el backend sincroniza automáticamente al interesado con **AtendIA** (`POST /n8n/save-profile` con header `X-Atendia-Token` y `POST /api/submit-form.php`), creando el contacto en la empresa correspondiente (`company_id = 3`), asignando su sede (*Sede Calama*, *Sede La Serena*, *Online*) e inyectando todas sus respuestas en `personal_notes` dentro de la memoria del **Bot de IA de WhatsApp** (más disparo opcional de plantilla vía `/n8n/send`).
+  - Al completar el formulario en `detalle.html`, el backend sincroniza automáticamente al interesado con **AtendIA** (`POST /n8n/save-profile` con header `X-Atendia-Token` y `POST /api/submit-form.php`), creando el contacto en la empresa correspondiente (`company_id = 8`), asignando su sede (*Sede Calama*, *Sede La Serena*, *Online*) e inyectando todas sus respuestas en `personal_notes` dentro de la memoria del **Bot de IA de WhatsApp** (más disparo opcional de plantilla vía `/n8n/send`).
+  - Corrección de compatibilidad en `POST /api/prospectos` para recibir indistintamente `whatsapp` o `telefono` y `sede_modalidad` o `sede_interes`.
 - [x] **Gestión de Prospectos en Panel de Administración (`admin.html`):**
   - Nueva pestaña **🎯 Prospectos / Funnel** para visualizar todos los interesados, sus respuestas del cuestionario, estado de sincronización con la memoria del Bot de AtendIA (con botón de re-sincronización manual), cambio de estado (*Nuevo*, *En conversación*, *Inscrito*, *Descartado*) y acceso directo a WhatsApp.
 
