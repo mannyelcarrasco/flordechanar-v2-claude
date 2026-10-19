@@ -45,6 +45,20 @@
     @keyframes spin{to{transform:rotate(360deg)}}
     .error-box{background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:1rem;color:#DC2626;font-size:.87rem;margin-bottom:1rem}
     .loading-box{text-align:center;padding:3rem 1rem;color:#64748B}
+    .auth-box{background:#F8FAFC;border:1.5px solid #CBD5E1;border-radius:12px;padding:1.15rem;margin-bottom:1.2rem}
+    .auth-box-hd{margin-bottom:.85rem}
+    .auth-step-pill{display:inline-flex;align-items:center;gap:.3rem;background:#DCFCE7;color:#15803D;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:.2rem .6rem;border-radius:20px;margin-bottom:.35rem}
+    .auth-box-hd h3{font-size:.98rem;color:#1E293B;font-weight:700;margin-bottom:.2rem}
+    .auth-box-hd p{font-size:.8rem;color:#64748B;line-height:1.4}
+    .auth-tabs{display:flex;background:#E2E8F0;border-radius:8px;padding:3px;margin-bottom:.9rem}
+    .auth-tab{flex:1;padding:.48rem;border:none;background:none;border-radius:6px;font-size:.8rem;font-weight:600;color:#475569;cursor:pointer;transition:all .2s}
+    .auth-tab.active{background:#fff;color:#1E293B;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+    .auth-field{margin-bottom:.75rem}
+    .auth-field label{display:block;font-size:.78rem;font-weight:600;color:#334155;margin-bottom:.25rem}
+    .auth-field input{width:100%;padding:.65rem .8rem;border:1.5px solid #CBD5E1;border-radius:8px;font-size:.88rem;outline:none;background:#fff}
+    .auth-field input:focus{border-color:#3B6B4A;box-shadow:0 0 0 3px rgba(59,107,74,.12)}
+    .user-logged-bar{display:flex;justify-content:space-between;align-items:center;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:.65rem .9rem;margin-bottom:1.1rem;font-size:.82rem;color:#166534}
+    .user-logged-bar a{color:#15803D;font-weight:600;text-decoration:underline;cursor:pointer;font-size:.78rem}
 </style>
 </head>
 <body>
@@ -70,18 +84,136 @@ const params = new URLSearchParams(location.search);
 const tipo   = params.get('tipo');   // matricula | curso | suscripcion
 const id     = params.get('id');     // curso_id or plan_id
 const planIdParam = params.get('plan_id'); // explicit plan_id when coming from detalle.html
-const token  = localStorage.getItem('token');
+let token    = localStorage.getItem('token');
+let authMode = 'register'; // 'register' | 'login'
 
 const fmt = n => new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP'}).format(n);
 
-if (!token) {
-    location.href = 'login.html?redirect=' + encodeURIComponent(location.pathname + location.search);
-}
-
 let selectedPlanId = planIdParam || null;
 
+function buildAuthSection() {
+    if (token) {
+        const nombre = localStorage.getItem('nombre') || 'Alumno/a';
+        return `
+            <div class="user-logged-bar" id="authSectionWrap">
+                <span><i class="ph ph-user-check"></i> Conectado como <strong>${nombre}</strong></span>
+                <a onclick="cambiarCuenta()">Cambiar cuenta</a>
+            </div>
+        `;
+    }
+    return `
+        <div class="auth-box" id="authSectionWrap">
+            <div class="auth-box-hd">
+                <div class="auth-step-pill"><i class="ph ph-user-plus"></i> Paso 1 · Tus datos de alumno</div>
+                <h3>Identifícate para continuar al pago</h3>
+                <p>Para activar tu suscripción y darte acceso al Aula Virtual, crea tu cuenta rápida o inicia sesión:</p>
+            </div>
+            <div class="auth-tabs">
+                <button type="button" class="auth-tab ${authMode==='register'?'active':''}" id="chkTabReg" onclick="switchChkAuth('register')">Soy nuevo/a (Crear cuenta)</button>
+                <button type="button" class="auth-tab ${authMode==='login'?'active':''}" id="chkTabLog" onclick="switchChkAuth('login')">Ya tengo cuenta</button>
+            </div>
+            <div id="chkFieldsReg" style="display:${authMode==='register'?'block':'none'}">
+                <div class="auth-field">
+                    <label>Nombre completo</label>
+                    <input type="text" id="chkRegNombre" placeholder="Ej: María González">
+                </div>
+                <div class="auth-field">
+                    <label>Correo electrónico</label>
+                    <input type="email" id="chkRegEmail" placeholder="tu@correo.cl">
+                </div>
+                <div class="auth-field" style="margin-bottom:0">
+                    <label>Crea una contraseña (mín. 6 caracteres)</label>
+                    <input type="password" id="chkRegPass" placeholder="••••••••">
+                </div>
+            </div>
+            <div id="chkFieldsLog" style="display:${authMode==='login'?'block':'none'}">
+                <div class="auth-field">
+                    <label>Correo electrónico</label>
+                    <input type="email" id="chkLogEmail" placeholder="tu@correo.cl">
+                </div>
+                <div class="auth-field" style="margin-bottom:0">
+                    <label>Contraseña</label>
+                    <input type="password" id="chkLogPass" placeholder="••••••••">
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+window.switchChkAuth = function(mode) {
+    authMode = mode;
+    const isReg = mode === 'register';
+    const tReg = document.getElementById('chkTabReg');
+    const tLog = document.getElementById('chkTabLog');
+    const fReg = document.getElementById('chkFieldsReg');
+    const fLog = document.getElementById('chkFieldsLog');
+    if (tReg) tReg.classList.toggle('active', isReg);
+    if (tLog) tLog.classList.toggle('active', !isReg);
+    if (fReg) fReg.style.display = isReg ? 'block' : 'none';
+    if (fLog) fLog.style.display = isReg ? 'none' : 'block';
+    const box = document.getElementById('errBox');
+    if (box) box.innerHTML = '';
+};
+
+window.cambiarCuenta = function() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('nombre');
+    localStorage.removeItem('rol');
+    token = null;
+    init();
+};
+
+async function ensureAuthenticated() {
+    if (token) return true;
+    try {
+        let res, data;
+        if (authMode === 'register') {
+            const nombre = (document.getElementById('chkRegNombre')?.value || '').trim();
+            const email = (document.getElementById('chkRegEmail')?.value || '').trim();
+            const password = document.getElementById('chkRegPass')?.value || '';
+            if (!nombre || !email || !password) {
+                showErr('Completa tu nombre, correo y contraseña para continuar al pago.');
+                return false;
+            }
+            if (password.length < 6) {
+                showErr('La contraseña debe tener al menos 6 caracteres.');
+                return false;
+            }
+            res = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre, email, password })
+            });
+        } else {
+            const email = (document.getElementById('chkLogEmail')?.value || '').trim();
+            const password = document.getElementById('chkLogPass')?.value || '';
+            if (!email || !password) {
+                showErr('Ingresa tu correo y contraseña para iniciar sesión y continuar.');
+                return false;
+            }
+            res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+        }
+        data = await res.json();
+        if (!res.ok) {
+            showErr(data.error || 'No se pudo autenticar. Verifica tus datos.');
+            return false;
+        }
+        token = data.token;
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('rol', data.rol);
+        localStorage.setItem('nombre', data.nombre);
+        return true;
+    } catch (e) {
+        showErr('Error de conexión al verificar tu cuenta.');
+        return false;
+    }
+}
+
 async function init() {
-    if (!token) return;
     const body = document.getElementById('cardBody');
     const title = document.getElementById('cardTitle');
     const sub   = document.getElementById('cardSubtitle');
@@ -96,13 +228,20 @@ async function init() {
         sub.textContent   = 'Pago único — acceso de por vida';
         body.innerHTML = '<div class="loading-box"><i class="ph ph-circle-notch" style="font-size:2rem;animation:spin .7s linear infinite"></i></div>';
         try {
-            const res = await fetch(`/api/cursos/${id}/acceso`, { headers:{ Authorization:'Bearer '+token } });
-            const acc = await res.json();
-            if (acc.acceso) {
-                body.innerHTML = `<div class="error-box">✅ Ya tienes acceso a este curso.</div><button class="btn-back" onclick="location.href='dashboard.html'">Ir al dashboard</button>`;
-                return;
+            if (token) {
+                const res = await fetch(`/api/cursos/${id}/acceso`, { headers:{ Authorization:'Bearer '+token } });
+                if (res.status === 401 || res.status === 403) {
+                    localStorage.removeItem('token');
+                    token = null;
+                } else if (res.ok) {
+                    const acc = await res.json();
+                    if (acc.acceso) {
+                        body.innerHTML = `<div class="error-box">✅ Ya tienes acceso a este curso.</div><button class="btn-back" onclick="location.href='dashboard.html'">Ir al dashboard</button>`;
+                        return;
+                    }
+                }
             }
-            const resCurso = await fetch(`/api/cursos/${id}`, { headers:{ Authorization:'Bearer '+token } });
+            const resCurso = await fetch(`/api/cursos/publico/${id}`);
             const curso = await resCurso.json();
             const resPlanes = await fetch('/api/planes');
             let planes = await resPlanes.json();
@@ -113,7 +252,7 @@ async function init() {
         }
 
     } else if (tipo === 'suscripcion') {
-        title.textContent = 'Elegir Plan';
+        title.textContent = 'Suscripción al Programa';
         sub.textContent   = 'Suscripción con cobro automático en Flow';
         body.innerHTML = '<div class="loading-box"><i class="ph ph-circle-notch" style="font-size:2rem;animation:spin .7s linear infinite"></i></div>';
         try {
@@ -151,14 +290,22 @@ async function init() {
             }
             selectedPlanId = preselect;
 
-            // Check existing subscription
-            const resSub = await fetch('/api/suscripciones/mi-estado', { headers:{ Authorization:'Bearer '+token } });
-            const subActiva = resSub.ok ? await resSub.json() : null;
-            const aplicaSubActiva = subActiva && (
-                !targetCursoId ||
-                !subActiva.curso_id ||
-                String(subActiva.curso_id) === String(targetCursoId)
-            ) ? subActiva : null;
+            // Check existing subscription only if logged in
+            let aplicaSubActiva = null;
+            if (token) {
+                const resSub = await fetch('/api/suscripciones/mi-estado', { headers:{ Authorization:'Bearer '+token } });
+                if (resSub.status === 401 || resSub.status === 403) {
+                    localStorage.removeItem('token');
+                    token = null;
+                } else if (resSub.ok) {
+                    const subActiva = await resSub.json();
+                    aplicaSubActiva = subActiva && (
+                        !targetCursoId ||
+                        !subActiva.curso_id ||
+                        String(subActiva.curso_id) === String(targetCursoId)
+                    ) ? subActiva : null;
+                }
+            }
 
             body.innerHTML = buildSuscripcionView(planes, aplicaSubActiva, preselect);
         } catch(e) {
@@ -185,6 +332,7 @@ function buildMatriculaView() {
             <span class="total-label">Total a pagar</span>
             <span class="total-val" id="matriculaTotal">Cargando...</span>
         </div>
+        ${buildAuthSection()}
         <div id="errBox"></div>
         <button class="btn-flow" id="btnPagar" onclick="pagarMatricula()">
             <i class="ph ph-lock"></i> Pagar con Flow
@@ -243,7 +391,7 @@ function buildCursoView(curso, planes = []) {
         </div>` : '' }
         
         ${planesHtml}
-        
+        ${buildAuthSection()}
         <div id="errBox"></div>
         <button class="btn-flow" id="btnPagar" onclick="pagarCursoMixto(${curso.id})">
             <i class="ph ph-lock"></i> Pagar con Flow
@@ -314,6 +462,7 @@ function buildSuscripcionView(planes, subActiva, planPreselect) {
 
     return `
         <div class="plan-grid">${planCards}</div>
+        ${buildAuthSection()}
         <div id="errBox"></div>
         <button class="btn-flow" id="btnPagar" onclick="iniciarSuscripcion()">
             <i class="ph ph-credit-card"></i> Registrar tarjeta y suscribirme
@@ -349,9 +498,13 @@ function setLoading(loading) {
 
 // Load matrícula amount async
 async function loadMatriculaTotal() {
+    if (!token) {
+        const el = document.getElementById('matriculaTotal');
+        if (el) el.textContent = 'Ver al confirmar';
+        return;
+    }
     try {
-        const res = await fetch('/api/admin/planes', { headers:{ Authorization:'Bearer '+token } });
-        // Fallback: just show the request price from backend on initiation
+        await fetch('/api/admin/planes', { headers:{ Authorization:'Bearer '+token } });
     } catch(e) {}
     const el = document.getElementById('matriculaTotal');
     if (el) el.textContent = 'Ver al confirmar';
@@ -360,14 +513,22 @@ async function loadMatriculaTotal() {
 function handleAuthExpired(res) {
     if (res.status === 401 || res.status === 403) {
         localStorage.removeItem('token');
-        location.href = 'login.html?redirect=' + encodeURIComponent(location.pathname + location.search);
+        token = null;
+        const wrap = document.getElementById('authSectionWrap');
+        if (wrap) wrap.outerHTML = buildAuthSection();
+        showErr('Tu sesión anterior había expirado. Ingresa tus datos arriba para continuar al pago.');
+        setLoading(false);
         return true;
     }
     return false;
 }
 
 async function pagarMatricula() {
+    const box = document.getElementById('errBox');
+    if (box) box.innerHTML = '';
     setLoading(true);
+    const okAuth = await ensureAuthenticated();
+    if (!okAuth) { setLoading(false); return; }
     try {
         const res = await fetch('/api/pagos/matricula/iniciar', {
             method:'POST', headers:{ Authorization:'Bearer '+token, 'Content-Type':'application/json' }
@@ -380,7 +541,11 @@ async function pagarMatricula() {
 }
 
 async function pagarCurso(cursoId) {
+    const box = document.getElementById('errBox');
+    if (box) box.innerHTML = '';
     setLoading(true);
+    const okAuth = await ensureAuthenticated();
+    if (!okAuth) { setLoading(false); return; }
     try {
         const res = await fetch('/api/pagos/curso/iniciar', {
             method:'POST', headers:{ Authorization:'Bearer '+token, 'Content-Type':'application/json' },
@@ -395,7 +560,11 @@ async function pagarCurso(cursoId) {
 
 async function iniciarSuscripcion() {
     if (!selectedPlanId) { showErr('Selecciona un plan primero'); return; }
+    const box = document.getElementById('errBox');
+    if (box) box.innerHTML = '';
     setLoading(true);
+    const okAuth = await ensureAuthenticated();
+    if (!okAuth) { setLoading(false); return; }
     try {
         const res = await fetch('/api/suscripciones/iniciar', {
             method:'POST', headers:{ Authorization:'Bearer '+token, 'Content-Type':'application/json' },

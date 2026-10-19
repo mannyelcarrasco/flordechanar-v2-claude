@@ -111,6 +111,79 @@
             .landing-layout { grid-template-columns: 1fr; padding: 30px 1.5rem; }
             .inner-hero h1 { font-size: 2.5rem; }
         }
+
+        /* Floating Auth Modal for Subscription / Checkout */
+        .auth-modal-overlay {
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(5px); z-index: 3000;
+            display: none; align-items: center; justify-content: center; padding: 1rem;
+        }
+        .auth-modal-overlay.open { display: flex; }
+        .auth-modal-card {
+            background: var(--color-white); border-radius: 18px; width: 100%; max-width: 460px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35); overflow: hidden;
+            animation: modalPop 0.25s ease-out; position: relative; max-height: 92vh; overflow-y: auto;
+        }
+        @keyframes modalPop {
+            from { opacity: 0; transform: translateY(12px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .auth-modal-hd {
+            background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary));
+            color: #fff; padding: 1.4rem 1.6rem; position: relative;
+        }
+        .auth-modal-close {
+            position: absolute; top: 1rem; right: 1rem; width: 32px; height: 32px;
+            border-radius: 50%; border: none; background: rgba(255,255,255,0.18);
+            color: #fff; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        .auth-modal-close:hover { background: rgba(255,255,255,0.3); }
+        .auth-step-badge {
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            background: rgba(255,255,255,0.2); color: #FEF3C7;
+            font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.8px; padding: 0.22rem 0.65rem; border-radius: 20px; margin-bottom: 0.5rem;
+        }
+        .auth-modal-hd h3 { color: #fff; font-size: 1.3rem; margin-bottom: 0.3rem; font-family: var(--font-serif); }
+        .auth-modal-hd p { color: rgba(255,255,255,0.9); font-size: 0.84rem; line-height: 1.45; }
+        .auth-modal-bd { padding: 1.5rem 1.6rem 1.75rem; }
+        .auth-course-summary {
+            background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px;
+            padding: 0.75rem 1rem; margin-bottom: 1.2rem; display: flex; justify-content: space-between; align-items: center; gap: 0.75rem;
+        }
+        .auth-course-summary .cs-title { font-size: 0.85rem; font-weight: 600; color: var(--color-secondary); line-height: 1.3; }
+        .auth-course-summary .cs-price { font-size: 0.9rem; font-weight: 700; color: var(--color-primary-dark); white-space: nowrap; }
+        .auth-tabs {
+            display: flex; background: #F1F5F9; border-radius: 10px; padding: 4px; margin-bottom: 1.2rem;
+        }
+        .auth-tab {
+            flex: 1; padding: 0.55rem 0.5rem; border: none; background: none; border-radius: 8px;
+            font-size: 0.85rem; font-weight: 600; color: #64748B; cursor: pointer; transition: all 0.2s;
+        }
+        .auth-tab.active { background: #fff; color: var(--color-secondary); box-shadow: 0 2px 6px rgba(0,0,0,0.07); }
+        .auth-field { margin-bottom: 0.9rem; text-align: left; }
+        .auth-field label { display: block; font-size: 0.8rem; font-weight: 600; color: #374151; margin-bottom: 0.3rem; }
+        .auth-field input {
+            width: 100%; padding: 0.72rem 0.9rem; border: 1.5px solid #CBD5E1; border-radius: 9px;
+            font-size: 0.9rem; font-family: var(--font-sans); outline: none; transition: border-color 0.2s;
+        }
+        .auth-field input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(104,122,97,0.12); }
+        .auth-err {
+            background: #FEF2F2; border: 1px solid #FECACA; color: #DC2626;
+            padding: 0.65rem 0.85rem; border-radius: 8px; font-size: 0.82rem; margin-bottom: 0.9rem; display: none;
+        }
+        .auth-submit-btn {
+            width: 100%; padding: 0.9rem 1rem; background: var(--color-primary); color: #fff;
+            border: none; border-radius: 10px; font-size: 0.95rem; font-weight: 700;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+            transition: background 0.2s;
+        }
+        .auth-submit-btn:hover { background: var(--color-primary-dark); }
+        .auth-submit-btn:disabled { opacity: 0.65; cursor: not-allowed; }
+        .auth-note {
+            text-align: center; font-size: 0.76rem; color: #64748B; margin-top: 0.9rem;
+            display: flex; align-items: center; justify-content: center; gap: 0.35rem;
+        }
     </style>
 </head>
 <body>
@@ -387,12 +460,16 @@
                 const mainPlan = c.planes[0];
                 document.getElementById('cPrice').innerHTML = `${fmt(mainPlan.monto)} <span style="font-size:1rem;color:var(--color-text-light);font-weight:400">/ ${mainPlan.periodo}</span>`;
                 
-                container.innerHTML += `<a href="pago.html?tipo=suscripcion&id=${c.id}&plan_id=${mainPlan.id}" class="btn btn-primary" style="margin-bottom:0.5rem; padding: 1rem;">Suscribirme Ahora</a>`;
+                const mainUrl = `pago.html?tipo=suscripcion&id=${c.id}&plan_id=${mainPlan.id}`;
+                const mainLabel = `Suscripción ${fmt(mainPlan.monto)} / ${mainPlan.periodo}`;
+                container.innerHTML += `<a href="${mainUrl}" onclick="startCheckoutFlow(event, '${mainUrl}', '${mainLabel.replace(/'/g, "\\'")}', false)" class="btn btn-primary" style="margin-bottom:0.5rem; padding: 1rem;">Suscribirme Ahora</a>`;
                 
                 if (c.planes.length > 1) {
                     for (let i = 1; i < c.planes.length; i++) {
                         let p = c.planes[i];
-                        container.innerHTML += `<a href="pago.html?tipo=suscripcion&id=${c.id}&plan_id=${p.id}" class="btn" style="background:#E2E8F0;color:var(--color-secondary);margin-bottom:0.5rem;font-size:0.85rem">Plan ${p.nombre}: ${fmt(p.monto)} / ${p.periodo}</a>`;
+                        const pUrl = `pago.html?tipo=suscripcion&id=${c.id}&plan_id=${p.id}`;
+                        const pLabel = `Plan ${p.nombre}: ${fmt(p.monto)} / ${p.periodo}`;
+                        container.innerHTML += `<a href="${pUrl}" onclick="startCheckoutFlow(event, '${pUrl}', '${pLabel.replace(/'/g, "\\'")}', false)" class="btn" style="background:#E2E8F0;color:var(--color-secondary);margin-bottom:0.5rem;font-size:0.85rem">${pLabel}</a>`;
                     }
                 }
 
@@ -408,7 +485,8 @@
                     container.innerHTML = `<a href="#" class="btn btn-primary" onclick="handleBuy(event)">Inscribirme Gratis</a>`;
                 } else if (c.tipo_acceso === 'suscripcion') {
                     document.getElementById('cPrice').textContent = 'Suscripción';
-                    container.innerHTML = `<a href="pago.html?tipo=suscripcion&id=${c.id}" class="btn btn-primary">Ver Planes</a>`;
+                    const subUrl = `pago.html?tipo=suscripcion&id=${c.id}`;
+                    container.innerHTML = `<a href="${subUrl}" onclick="startCheckoutFlow(event, '${subUrl}', 'Suscripción al curso', false)" class="btn btn-primary">Ver Planes</a>`;
                 } else {
                     document.getElementById('cPrice').textContent = fmt(c.precio);
                     container.innerHTML = `<a href="#" class="btn btn-primary" onclick="handleBuy(event)">Comprar Ahora</a>`;
@@ -462,37 +540,196 @@
             bdy.classList.toggle('open');
         }
 
+        let pendingCheckoutUrl = null;
+        let pendingIsFreeCourse = false;
+
+        async function enrollFreeCourse() {
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch('/api/cursos/inscribir', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ curso_id: currentCourse.id })
+                });
+                if (res.ok) {
+                    window.location.href = 'dashboard.html';
+                } else {
+                    const data = await res.json();
+                    alert(data.error || 'Error al intentar inscribirse.');
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        function startCheckoutFlow(e, targetUrl, priceLabel, isFree) {
+            if (e) e.preventDefault();
+            const token = localStorage.getItem('token');
+            if (token) {
+                if (isFree) {
+                    enrollFreeCourse();
+                } else {
+                    window.location.href = targetUrl;
+                }
+                return;
+            }
+            // Usuario sin sesión: abrir ventana flotante explicando el paso 1
+            pendingCheckoutUrl = targetUrl;
+            pendingIsFreeCourse = !!isFree;
+            document.getElementById('modalCourseTitle').textContent = currentCourse ? currentCourse.titulo : 'Programa Flor de Chañar';
+            document.getElementById('modalCoursePrice').textContent = priceLabel || '';
+            document.getElementById('modalSubtitleText').textContent = isFree
+                ? 'Crea tu cuenta gratuita o inicia sesión para habilitar tu acceso inmediato al Aula Virtual.'
+                : 'Para activar tu suscripción o inscripción y asociar el curso a tu Aula Virtual, crea tu cuenta de alumno o inicia sesión. En el siguiente paso irás directo al pago seguro.';
+            document.getElementById('authModalOverlay').classList.add('open');
+        }
+
+        function closeAuthModal() {
+            document.getElementById('authModalOverlay').classList.remove('open');
+        }
+
+        function switchModalTab(mode) {
+            const isReg = mode === 'register';
+            document.getElementById('mTabReg').classList.toggle('active', isReg);
+            document.getElementById('mTabLog').classList.toggle('active', !isReg);
+            document.getElementById('mFormReg').style.display = isReg ? 'block' : 'none';
+            document.getElementById('mFormLog').style.display = isReg ? 'none' : 'block';
+            document.getElementById('mAuthErr').style.display = 'none';
+        }
+
+        async function submitModalAuth(e, mode) {
+            e.preventDefault();
+            const errBox = document.getElementById('mAuthErr');
+            errBox.style.display = 'none';
+            const btn = document.getElementById(mode === 'register' ? 'mBtnReg' : 'mBtnLog');
+            const origHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Procesando...';
+
+            try {
+                let res, data;
+                if (mode === 'register') {
+                    const nombre = document.getElementById('mRegNombre').value.trim();
+                    const email = document.getElementById('mRegEmail').value.trim();
+                    const password = document.getElementById('mRegPass').value;
+                    res = await fetch('/api/auth/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ nombre, email, password })
+                    });
+                } else {
+                    const email = document.getElementById('mLogEmail').value.trim();
+                    const password = document.getElementById('mLogPass').value;
+                    res = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
+                }
+                data = await res.json();
+                if (!res.ok) {
+                    errBox.textContent = data.error || 'No se pudo autenticar. Verifica tus datos.';
+                    errBox.style.display = 'block';
+                    btn.disabled = false;
+                    btn.innerHTML = origHtml;
+                    return;
+                }
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('rol', data.rol);
+                localStorage.setItem('nombre', data.nombre);
+
+                if (pendingIsFreeCourse) {
+                    await enrollFreeCourse();
+                } else if (pendingCheckoutUrl) {
+                    window.location.href = pendingCheckoutUrl;
+                } else {
+                    window.location.reload();
+                }
+            } catch (err) {
+                errBox.textContent = 'Error de conexión con el servidor.';
+                errBox.style.display = 'block';
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+            }
+        }
+
         async function handleBuy(e) {
             e.preventDefault();
             if(!currentCourse) return;
-            
+            const fmt = n => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(n);
             const isGratis = currentCourse.tipo_acceso === 'gratis' || !currentCourse.precio;
             if (isGratis) {
-                // Inscribir directo
-                const token = localStorage.getItem('token');
-                if (!token) {
-                    window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
-                    return;
-                }
-                try {
-                    const res = await fetch('/api/cursos/inscribir', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-                        body: JSON.stringify({ curso_id: currentCourse.id })
-                    });
-                    if (res.ok) {
-                        window.location.href = 'dashboard.html';
-                    } else {
-                        const data = await res.json();
-                        alert(data.error || 'Error al intentar inscribirse.');
-                    }
-                } catch(e) { console.error(e); }
+                startCheckoutFlow(e, null, 'Gratis', true);
             } else if (currentCourse.tipo_acceso === 'suscripcion') {
-                window.location.href = 'pago.html?tipo=suscripcion&id=' + currentCourse.id;
+                const subUrl = 'pago.html?tipo=suscripcion&id=' + currentCourse.id;
+                startCheckoutFlow(e, subUrl, 'Suscripción', false);
             } else {
-                window.location.href = 'pago.html?tipo=curso&id=' + currentCourse.id;
+                const buyUrl = 'pago.html?tipo=curso&id=' + currentCourse.id;
+                startCheckoutFlow(e, buyUrl, `Pago único ${fmt(currentCourse.precio)}`, false);
             }
         }
     </script>
+
+    <!-- Ventana Flotante (Modal) de Identificación para Suscripción / Compra -->
+    <div class="auth-modal-overlay" id="authModalOverlay" onclick="if(event.target===this) closeAuthModal()">
+        <div class="auth-modal-card">
+            <div class="auth-modal-hd">
+                <button class="auth-modal-close" onclick="closeAuthModal()" title="Cerrar"><i class="ph ph-x"></i></button>
+                <div class="auth-step-badge"><i class="ph ph-lock-key-open"></i> Paso 1 de 2 · Tus datos de alumno</div>
+                <h3>Continúa con tu inscripción</h3>
+                <p id="modalSubtitleText">Para activar tu suscripción y asociar el curso a tu Aula Virtual, crea tu cuenta de alumno o inicia sesión.</p>
+            </div>
+            <div class="auth-modal-bd">
+                <div class="auth-course-summary">
+                    <div class="cs-title" id="modalCourseTitle">Curso</div>
+                    <div class="cs-price" id="modalCoursePrice"></div>
+                </div>
+
+                <div class="auth-tabs">
+                    <button type="button" class="auth-tab active" id="mTabReg" onclick="switchModalTab('register')">Soy nuevo/a (Crear cuenta)</button>
+                    <button type="button" class="auth-tab" id="mTabLog" onclick="switchModalTab('login')">Ya tengo cuenta</button>
+                </div>
+
+                <div class="auth-err" id="mAuthErr"></div>
+
+                <!-- Formulario Registro Rápido -->
+                <form id="mFormReg" onsubmit="submitModalAuth(event, 'register')">
+                    <div class="auth-field">
+                        <label>Nombre completo</label>
+                        <input type="text" id="mRegNombre" placeholder="Ej: María González" required>
+                    </div>
+                    <div class="auth-field">
+                        <label>Correo electrónico (para tu acceso al Aula)</label>
+                        <input type="email" id="mRegEmail" placeholder="tu@correo.cl" required>
+                    </div>
+                    <div class="auth-field">
+                        <label>Crea una contraseña</label>
+                        <input type="password" id="mRegPass" placeholder="Mínimo 6 caracteres" minlength="6" required>
+                    </div>
+                    <button type="submit" class="auth-submit-btn" id="mBtnReg">
+                        Crear cuenta y continuar al pago <i class="ph ph-arrow-right"></i>
+                    </button>
+                </form>
+
+                <!-- Formulario Login Rápido -->
+                <form id="mFormLog" style="display:none" onsubmit="submitModalAuth(event, 'login')">
+                    <div class="auth-field">
+                        <label>Correo electrónico</label>
+                        <input type="email" id="mLogEmail" placeholder="tu@correo.cl" required>
+                    </div>
+                    <div class="auth-field">
+                        <label>Contraseña</label>
+                        <input type="password" id="mLogPass" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="auth-submit-btn" id="mBtnLog">
+                        Iniciar sesión y continuar al pago <i class="ph ph-arrow-right"></i>
+                    </button>
+                </form>
+
+                <div class="auth-note">
+                    <i class="ph ph-shield-check" style="color:var(--color-primary);font-size:1rem"></i>
+                    Paso siguiente: Pago 100% seguro procesado por Flow
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

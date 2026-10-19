@@ -36,8 +36,9 @@
 
 ### 💳 Integración de Pasarela de Pagos y Suscripciones (Flow) (NUEVO)
 - [x] **Frontend (`detalle.html`, `pago.html`, `login.html`, `suscripcion.html`):**
+  - **Ventana flotante (Modal) en `detalle.html`:** Si el visitante no tiene sesión iniciada al apretar *"Suscribirme Ahora"* o *"Comprar"*, se despliega un modal de **"Paso 1 de 2: Tus datos de alumno"** con el resumen del programa y pestañas para crear cuenta rápida o iniciar sesión sin salir de la página.
+  - **Checkout integrado sin rebote en `pago.html` (estilo Hotmart/Udemy):** `pago.html` ya no expulsa al usuario hacia `login.html` si no tiene sesión o si su token expiró; muestra el bloque de registro/login integrado dentro de la misma tarjeta de pago y en un solo clic registra/autentica al alumno y lo redirige a Flow.
   - Corrección del envío y preselección automática de `plan_id` y `curso_id` al pasar de `detalle.html` o `suscripcion.html` a `pago.html` (evitando que se envíe el ID del curso como `plan_id`).
-  - Redirección inteligente con `?redirect=` hacia `login.html` cuando el usuario no ha iniciado sesión o su token expiró, regresándolo automáticamente al checkout tras iniciar sesión o registrarse.
   - Mensajes de confirmación y error claros en `suscripcion.html` al volver del enrolamiento de tarjeta en Flow.
 - [x] **Backend & API (`server.js`):**
   - Corrección del endpoint oficial de Flow a `plans/create` (en plural) con `interval: 3` (mensual) / `4` (anual), `interval_count: 1`, `trial_period_days: 0` y `urlCallback`, además de verificación automática mediante `plans/get` para reparar planes previos con IDs inválidos.
