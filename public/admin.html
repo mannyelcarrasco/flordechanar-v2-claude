@@ -384,6 +384,7 @@
         <li><a href="#" class="active" onclick="st(event,'tu')"><i class="ph ph-house"></i> Dashboard</a></li>
         <li><a href="#" onclick="st(event,'tu')"><i class="ph ph-users-three"></i> Usuarios <span class="sb-b">12</span></a></li>
         <li><a href="#" onclick="st(event,'tc')"><i class="ph ph-books"></i> Cursos</a></li>
+        <li><a href="#" onclick="st(event,'tprospectos')"><i class="ph ph-funnel"></i> Prospectos Funnel</a></li>
         <li><a href="#" onclick="st(event,'ta')"><i class="ph ph-lock-key"></i> Accesos</a></li>
         <li><a href="#" onclick="st(event,'tpag')"><i class="ph ph-files"></i> Páginas</a></li>
     </ul>
@@ -419,6 +420,7 @@
     <div class="tabs">
         <button class="tab active" onclick="st(event,'tu')">Usuarios</button>
         <button class="tab" onclick="st(event,'tc')">Cursos</button>
+        <button class="tab" onclick="st(event,'tprospectos')" style="color:#059669;font-weight:700">🎯 Prospectos / Funnel</button>
         <button class="tab" onclick="st(event,'ti')">Inscripciones</button>
         <button class="tab" onclick="st(event,'ta')">Acceso Profesores</button>
         <button class="tab" onclick="st(event,'tv')">Clases en Vivo</button>
@@ -449,7 +451,7 @@
     <!-- TAB Cursos -->
     <div id="tc" class="tp">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
-            <div style="font-size:.85rem;color:var(--l)">Administra el catálogo de programas, su modalidad y sus sedes asignadas.</div>
+            <div style="font-size:.85rem;color:var(--l)">Administra el catálogo de programas, su modalidad, sedes y su flujo de entrada (Pasarela de Pago vs Formulario Interactivo AtendIA).</div>
             <div style="display:flex;gap:.5rem">
                 <button class="btn bo btn-sm" onclick="st(null,'ts');switchStab('sedes')"><i class="ph ph-map-pin"></i> Configurar Sedes Físicas</button>
                 <a href="curso-crear.html" class="btn bp btn-sm"><i class="ph ph-plus"></i> Crear Curso</a>
@@ -457,9 +459,48 @@
         </div>
         <div class="tw">
             <table>
-                <thead><tr><th>Curso</th><th>Profesor</th><th>Modalidad / Sede</th><th>Estudiantes</th><th>Estado</th><th>Fecha creación</th><th>Acciones</th></tr></thead>
+                <thead><tr><th>Curso</th><th>Profesor</th><th>Modalidad / Sede / Flujo</th><th>Estudiantes</th><th>Estado</th><th>Fecha creación</th><th>Acciones</th></tr></thead>
                 <tbody id="adminCoursesBody">
                     <tr><td colspan="7" style="text-align:center; padding: 2rem;">Cargando cursos desde la base de datos...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB Prospectos / Funnel AtendIA -->
+    <div id="tprospectos" class="tp">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.75rem">
+            <div>
+                <h3 style="font-size:1.05rem;margin:0;display:flex;align-items:center;gap:.45rem"><i class="ph-fill ph-funnel" style="color:#059669"></i> Prospectos del Formulario Interactivo (Conectado a AtendIA)</h3>
+                <p style="font-size:.82rem;color:var(--l);margin:.2rem 0 0">Interesados que completaron el cuestionario de admisión/orientación en los programas. Sus respuestas se inyectan automáticamente en la memoria del Bot de WhatsApp de AtendIA.</p>
+            </div>
+            <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+                <input type="text" id="prospectoSearch" oninput="filterProspectos()" placeholder="🔍 Buscar nombre, teléfono o curso..." style="padding:.5rem .85rem;border:1.5px solid #E5E7EB;border-radius:var(--rf);font-family:var(--f);font-size:.84rem;outline:none;width:250px">
+                <select id="prospectoEstadoFilter" onchange="filterProspectos()" style="padding:.5rem .75rem;border:1.5px solid #E5E7EB;border-radius:var(--rf);font-family:var(--f);font-size:.84rem;background:var(--w);outline:none">
+                    <option value="">Todos los estados</option>
+                    <option value="nuevo">🟢 Nuevos</option>
+                    <option value="contactado">💬 En conversación</option>
+                    <option value="inscrito">🎓 Inscritos</option>
+                    <option value="descartado">⚪ Descartados</option>
+                </select>
+                <button class="btn bo btn-sm" onclick="fetchProspectos()"><i class="ph ph-arrows-clockwise"></i> Actualizar</button>
+            </div>
+        </div>
+        <div class="tw">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Prospecto / Contacto</th>
+                        <th>Programa / Sede</th>
+                        <th>Respuestas del Formulario</th>
+                        <th>Bot AtendIA</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="prospectosBody">
+                    <tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--l)">Cargando prospectos...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -1403,6 +1444,7 @@ function st(e, id) {
     if (id === 'ti') fetchInscripciones();
     if (id === 'tpagos')  fetchAdminPagos();
     if (id === 'tplanes') fetchAdminPlanes();
+    if (id === 'tprospectos') fetchProspectos();
 
     // Header button
     const btn = document.getElementById('headerActionBtn');
@@ -2366,6 +2408,22 @@ async function renderAdminCourses() {
                 ? `<div style="margin-top:.3rem;font-size:.75rem;color:#B45309;font-weight:600"><i class="ph ph-map-pin"></i> ${sedesList.join(', ')}</div>`
                 : '';
 
+            let flujoModo = 'pago';
+            if (c.ventas_meta) {
+                try {
+                    const vm = typeof c.ventas_meta === 'string' ? JSON.parse(c.ventas_meta) : c.ventas_meta;
+                    if (vm && vm.funnel_config && vm.funnel_config.modo_inscripcion) {
+                        flujoModo = vm.funnel_config.modo_inscripcion;
+                    }
+                } catch(e) {}
+            }
+            let flujoBadge = '<div style="margin-top:.25rem;font-size:.7rem;color:#475569;font-weight:600"><i class="ph ph-credit-card"></i> Flujo: Solo Pago</div>';
+            if (flujoModo === 'formulario') {
+                flujoBadge = '<div style="margin-top:.25rem;font-size:.7rem;color:#059669;font-weight:700"><i class="ph-fill ph-chats-circle"></i> Flujo: Formulario AtendIA</div>';
+            } else if (flujoModo === 'ambos') {
+                flujoBadge = '<div style="margin-top:.25rem;font-size:.7rem;color:#0284C7;font-weight:700"><i class="ph-fill ph-arrows-split"></i> Flujo: Pago + Formulario</div>';
+            }
+
             tbody.innerHTML += `
                 <tr>
                     <td><div class="tn">${c.titulo}</div><div class="ts">${priceFmt}</div></td>
@@ -2373,6 +2431,7 @@ async function renderAdminCourses() {
                     <td>
                         <span style="font-size:0.82rem;color:var(--sec);background:#f1f5f9;padding:0.2rem 0.5rem;border-radius:4px;display:inline-block">${c.modalidad || 'N/A'}</span>
                         ${sedesHTML}
+                        ${flujoBadge}
                     </td>
                     <td>${c.alumnos || 0}</td>
                     <td>${estadoHTML}</td>
@@ -3884,11 +3943,163 @@ async function guardarSedesGlobales() {
 
 loadSedesGlobales();
 
+// ======== GESTIÓN DE PROSPECTOS DEL FUNNEL (ATENDIA) ========
+let allProspectos = [];
+
+async function fetchProspectos() {
+    const tbody = document.getElementById('prospectosBody');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--l)">Cargando prospectos...</td></tr>';
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/prospectos', { headers: { 'Authorization': 'Bearer ' + token } });
+        if (!res.ok) throw new Error('Error al cargar');
+        allProspectos = await res.json();
+        filterProspectos();
+    } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--err)">Error al cargar prospectos del embudo</td></tr>';
+    }
+}
+
+function filterProspectos() {
+    const q = (document.getElementById('prospectoSearch')?.value || '').toLowerCase();
+    const est = document.getElementById('prospectoEstadoFilter')?.value || '';
+    const filtered = allProspectos.filter(p => {
+        if (est && p.estado !== est) return false;
+        if (!q) return true;
+        const hay = `${p.nombre || ''} ${p.telefono || ''} ${p.email || ''} ${p.curso_titulo || ''} ${p.sede_interes || ''}`.toLowerCase();
+        return hay.includes(q);
+    });
+    paintProspectos(filtered);
+}
+
+function paintProspectos(list) {
+    const tbody = document.getElementById('prospectosBody');
+    if (!tbody) return;
+    if (!list || list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2.5rem;color:var(--l)">Aún no hay prospectos registrados en este filtro.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = list.map(p => {
+        const fecha = p.creado_en ? new Date(p.creado_en).toLocaleDateString('es-CL', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : '—';
+        let respArr = [];
+        if (p.respuestas_json) {
+            try {
+                respArr = typeof p.respuestas_json === 'string' ? JSON.parse(p.respuestas_json) : p.respuestas_json;
+            } catch(e) {}
+        }
+        const respuestasHtml = Array.isArray(respArr) && respArr.length > 0
+            ? respArr.map(r => `<div style="font-size:.75rem;margin-bottom:.25rem;line-height:1.35"><span style="color:#64748B;font-weight:600">${r.pregunta}:</span> <strong style="color:#1E293B">${r.respuesta}</strong></div>`).join('')
+            : '<span style="font-size:.75rem;color:#94A3B8">Sin respuestas adicionales</span>';
+
+        const syncBadge = p.atendia_sync
+            ? `<span style="display:inline-flex;align-items:center;gap:.25rem;background:#DCFCE7;color:#166534;padding:.2rem .55rem;border-radius:99px;font-size:.7rem;font-weight:700"><i class="ph-fill ph-check-circle"></i> En Memoria Bot</span>`
+            : `<span style="display:inline-flex;align-items:center;gap:.25rem;background:#FEF3C7;color:#92400E;padding:.2rem .55rem;border-radius:99px;font-size:.7rem;font-weight:700"><i class="ph ph-warning-circle"></i> Pendiente Sync</span>`;
+
+        const cleanPhone = String(p.telefono || '').replace(/\D/g, '');
+        const waDirectUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(`Hola ${p.nombre}, te escribimos de Escuela Flor de Chañar por tu consulta sobre "${p.curso_titulo || 'nuestros programas'}" 🌿`)}`;
+
+        return `
+            <tr>
+                <td class="ts" style="white-space:nowrap">${fecha}</td>
+                <td>
+                    <div class="tn">${p.nombre}</div>
+                    <div style="font-size:.78rem;color:#059669;font-weight:600;margin-top:.1rem"><i class="ph-fill ph-whatsapp-logo"></i> +${cleanPhone}</div>
+                    ${p.email ? `<div class="ts">${p.email}</div>` : ''}
+                </td>
+                <td>
+                    <div style="font-weight:700;font-size:.82rem;color:var(--s)">${p.curso_titulo || 'General'}</div>
+                    ${p.sede_interes ? `<div style="font-size:.73rem;color:#B45309;font-weight:600;margin-top:.15rem"><i class="ph ph-map-pin"></i> ${p.sede_interes}</div>` : ''}
+                </td>
+                <td style="max-width:300px">${respuestasHtml}</td>
+                <td>
+                    ${syncBadge}
+                    <div style="margin-top:.3rem">
+                        <button class="btn bo btn-sm" style="font-size:.68rem;padding:.18rem .45rem" onclick="resyncProspectoAtendIA(${p.id})" title="Reenviar perfil y respuestas a la memoria del Bot de AtendIA">
+                            <i class="ph ph-arrows-clockwise"></i> Sincronizar Bot
+                        </button>
+                    </div>
+                </td>
+                <td>
+                    <select class="role-select" onchange="cambiarEstadoProspecto(${p.id}, this.value)">
+                        <option value="nuevo" ${p.estado === 'nuevo' ? 'selected' : ''}>🟢 Nuevo</option>
+                        <option value="contactado" ${p.estado === 'contactado' ? 'selected' : ''}>💬 En conversación</option>
+                        <option value="inscrito" ${p.estado === 'inscrito' ? 'selected' : ''}>🎓 Inscrito</option>
+                        <option value="descartado" ${p.estado === 'descartado' ? 'selected' : ''}>⚪ Descartado</option>
+                    </select>
+                </td>
+                <td>
+                    <div style="display:flex;gap:.35rem">
+                        <a href="${waDirectUrl}" target="_blank" class="btn btn-sm" style="background:#DCFCE7;color:#166534;text-decoration:none" title="Escribir por WhatsApp"><i class="ph-fill ph-whatsapp-logo"></i></a>
+                        <button class="btn bo btn-sm" style="border-color:#EF4444;color:#EF4444" onclick="eliminarProspecto(${p.id})" title="Eliminar"><i class="ph ph-trash"></i></button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+async function cambiarEstadoProspecto(id, estado) {
+    try {
+        const res = await fetch(`/api/prospectos/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+            body: JSON.stringify({ estado })
+        });
+        if (res.ok) {
+            const item = allProspectos.find(x => x.id === id);
+            if (item) item.estado = estado;
+            showT('✅ Estado del prospecto actualizado');
+        } else {
+            showT('⚠️ Error al actualizar estado');
+        }
+    } catch (e) {
+        showT('⚠️ Error de conexión');
+    }
+}
+
+async function resyncProspectoAtendIA(id) {
+    showT('⏳ Sincronizando con el Bot de AtendIA...');
+    try {
+        const res = await fetch(`/api/prospectos/${id}/resync`, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        const data = await res.json();
+        if (res.ok && data.atendia_sync) {
+            showT('✅ Sincronizado con la memoria de AtendIA Bot');
+            fetchProspectos();
+        } else {
+            showT('⚠️ Respuesta de AtendIA: ' + (data.atendia_response || 'Verificar conexión'));
+        }
+    } catch (e) {
+        showT('⚠️ Error al conectar con AtendIA');
+    }
+}
+
+async function eliminarProspecto(id) {
+    if (!confirm('¿Eliminar este prospecto del registro?')) return;
+    try {
+        const res = await fetch(`/api/prospectos/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        if (res.ok) {
+            showT('Prospecto eliminado');
+            fetchProspectos();
+        }
+    } catch (e) {
+        showT('⚠️ Error al eliminar');
+    }
+}
+
 (function handleUrlTabParams() {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
     const stab = params.get('stab');
     if (tab === 'cursos' || tab === 'tc') st(null, 'tc');
+    else if (tab === 'prospectos' || tab === 'tprospectos') st(null, 'tprospectos');
     else if (tab === 'ajustes' || tab === 'ts') {
         st(null, 'ts');
         if (stab) switchStab(stab);

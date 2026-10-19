@@ -6,6 +6,21 @@
 
 ## ✅ Avances completados
 
+### 🎯 Embudo Interactivo de Admisión (Funnel Editable) + Integración API con Bot AtendIA (NUEVO)
+- [x] **3 Modos de Flujo de Entrada por Programa (`curso-crear.html` & `detalle.html`):**
+  - En el editor de cursos (*Precio y Acceso*), ahora se puede elegir entre **3 opciones de flujo** para cada programa o curso:
+    1. **`pago` (Solo Pasarela de Pago):** Envía directo al checkout/suscripción en Flow (ideal para cursos cortos grabados).
+    2. **`formulario` (Solo Formulario Interactivo / Funnel):** Reemplaza el botón de compra por un cuestionario interactivo paso a paso de postulación/orientación (ideal para programas de 1 o 2 años).
+    3. **`ambos` (Ambos flujos):** Muestra el botón de inscripción/pago directo y debajo el botón del formulario interactivo para quienes prefieren orientación previa.
+- [x] **Constructor Editable de Preguntas y Plantillas Rápidas (`curso-crear.html`):**
+  - Permite personalizar el texto del botón, título/subtítulo de la ventana interactiva y agregar/editar/eliminar preguntas (de alternativas clicables o respuesta abierta).
+  - Incluye botones de **Plantilla Rápida en 1 clic** para *Programas de 1 a 2 Años* y *Cursos Cortos*.
+- [x] **Integración Directa por API con AtendIA (`server.js`):**
+  - Nueva tabla `prospectos_cursos` y endpoints `POST /api/prospectos`, `GET /api/prospectos`, `PUT /api/prospectos/:id`, `POST /api/prospectos/:id/resync` y `DELETE /api/prospectos/:id`.
+  - Al completar el formulario en `detalle.html`, el backend sincroniza automáticamente al interesado con **AtendIA** (`POST /n8n/save-profile` con header `X-Atendia-Token` y `POST /api/submit-form.php`), creando el contacto en la empresa correspondiente (`company_id = 3`), asignando su sede (*Sede Calama*, *Sede La Serena*, *Online*) e inyectando todas sus respuestas en `personal_notes` dentro de la memoria del **Bot de IA de WhatsApp** (más disparo opcional de plantilla vía `/n8n/send`).
+- [x] **Gestión de Prospectos en Panel de Administración (`admin.html`):**
+  - Nueva pestaña **🎯 Prospectos / Funnel** para visualizar todos los interesados, sus respuestas del cuestionario, estado de sincronización con la memoria del Bot de AtendIA (con botón de re-sincronización manual), cambio de estado (*Nuevo*, *En conversación*, *Inscrito*, *Descartado*) y acceso directo a WhatsApp.
+
 ### 📍 Gestión y Visualización de Sedes en Programas (NUEVO)
 - [x] **Panel de Edición de Cursos (`curso-crear.html`):**
   - El bloque **Sedes y Horarios del Programa** en el Paso 1 (*Información Básica*) ahora está siempre visible para que sea fácil de encontrar en cualquier modalidad.

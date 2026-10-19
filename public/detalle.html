@@ -394,16 +394,19 @@
                 document.getElementById('cMeta').parentNode.insertBefore(eiDiv, document.getElementById('cMeta').nextSibling);
             }
 
-            // Ventas Meta (VSL, Testimonials)
+            // Ventas Meta (VSL, Testimonials, Funnel Config)
             let vslUrl = '';
             let testimonios = [];
+            let funnelConfig = { modo_inscripcion: 'pago' };
             if (c.ventas_meta) {
                 try {
                     const vm = typeof c.ventas_meta === 'string' ? JSON.parse(c.ventas_meta) : c.ventas_meta;
                     if(vm.vsl_url) vslUrl = vm.vsl_url;
                     if(vm.testimonios && vm.testimonios.length) testimonios = vm.testimonios;
+                    if(vm.funnel_config) funnelConfig = vm.funnel_config;
                 } catch(e){}
             }
+            window.currentFunnelConfig = funnelConfig;
 
             // Render VSL
             if (vslUrl) {
@@ -449,12 +452,15 @@
                 document.getElementById('testimoniosContainer').style.display = 'none';
             }
 
-            // Buy Box
+            // Buy Box (Soporta los 3 modos: 'pago', 'formulario', 'ambos')
             const fmt = n => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(n);
             const container = document.getElementById('buyButtonsContainer');
             const isGratis = c.tipo_acceso === 'gratis' || !c.precio;
+            const modoInscripcion = (funnelConfig && funnelConfig.modo_inscripcion) ? funnelConfig.modo_inscripcion : 'pago';
+            const btnFunnelTexto = (funnelConfig && funnelConfig.boton_texto) ? funnelConfig.boton_texto : 'Solicitar Admisión y Más Información';
             
             container.innerHTML = '';
+            let payButtonsHtml = '';
             
             if (c.planes && c.planes.length > 0) {
                 const mainPlan = c.planes[0];
@@ -462,35 +468,60 @@
                 
                 const mainUrl = `pago.html?tipo=suscripcion&id=${c.id}&plan_id=${mainPlan.id}`;
                 const mainLabel = `Suscripción ${fmt(mainPlan.monto)} / ${mainPlan.periodo}`;
-                container.innerHTML += `<a href="${mainUrl}" onclick="startCheckoutFlow(event, '${mainUrl}', '${mainLabel.replace(/'/g, "\\'")}', false)" class="btn btn-primary" style="margin-bottom:0.5rem; padding: 1rem;">Suscribirme Ahora</a>`;
+                payButtonsHtml += `<a href="${mainUrl}" onclick="startCheckoutFlow(event, '${mainUrl}', '${mainLabel.replace(/'/g, "\\'")}', false)" class="btn btn-primary" style="margin-bottom:0.5rem; padding: 1rem;">Suscribirme Ahora</a>`;
                 
                 if (c.planes.length > 1) {
                     for (let i = 1; i < c.planes.length; i++) {
                         let p = c.planes[i];
                         const pUrl = `pago.html?tipo=suscripcion&id=${c.id}&plan_id=${p.id}`;
                         const pLabel = `Plan ${p.nombre}: ${fmt(p.monto)} / ${p.periodo}`;
-                        container.innerHTML += `<a href="${pUrl}" onclick="startCheckoutFlow(event, '${pUrl}', '${pLabel.replace(/'/g, "\\'")}', false)" class="btn" style="background:#E2E8F0;color:var(--color-secondary);margin-bottom:0.5rem;font-size:0.85rem">${pLabel}</a>`;
+                        payButtonsHtml += `<a href="${pUrl}" onclick="startCheckoutFlow(event, '${pUrl}', '${pLabel.replace(/'/g, "\\'")}', false)" class="btn" style="background:#E2E8F0;color:var(--color-secondary);margin-bottom:0.5rem;font-size:0.85rem">${pLabel}</a>`;
                     }
                 }
 
                 if (c.precio > 0 && c.tipo_acceso !== 'suscripcion') {
-                    container.innerHTML += `<div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #E2E8F0; font-size: 0.9rem; color: var(--color-text-main);">
+                    payButtonsHtml += `<div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #E2E8F0; font-size: 0.9rem; color: var(--color-text-main);">
                         ¿Prefieres un solo pago?<br>
                         <a href="#" onclick="handleBuy(event)" style="display:inline-block; margin-top:0.5rem; color:var(--color-primary); font-weight:600; text-decoration:underline;">Pagar total de ${fmt(c.precio)}</a>
                     </div>`;
                 }
             } else {
                 if (isGratis) {
-                    document.getElementById('cPrice').textContent = 'Gratis';
-                    container.innerHTML = `<a href="#" class="btn btn-primary" onclick="handleBuy(event)">Inscribirme Gratis</a>`;
+                    document.getElementById('cPrice').textContent = modoInscripcion === 'formulario' ? 'Admisión Abierta' : 'Gratis';
+                    payButtonsHtml = `<a href="#" class="btn btn-primary" onclick="handleBuy(event)">Inscribirme Gratis</a>`;
                 } else if (c.tipo_acceso === 'suscripcion') {
                     document.getElementById('cPrice').textContent = 'Suscripción';
                     const subUrl = `pago.html?tipo=suscripcion&id=${c.id}`;
-                    container.innerHTML = `<a href="${subUrl}" onclick="startCheckoutFlow(event, '${subUrl}', 'Suscripción al curso', false)" class="btn btn-primary">Ver Planes</a>`;
+                    payButtonsHtml = `<a href="${subUrl}" onclick="startCheckoutFlow(event, '${subUrl}', 'Suscripción al curso', false)" class="btn btn-primary">Ver Planes</a>`;
                 } else {
                     document.getElementById('cPrice').textContent = fmt(c.precio);
-                    container.innerHTML = `<a href="#" class="btn btn-primary" onclick="handleBuy(event)">Comprar Ahora</a>`;
+                    payButtonsHtml = `<a href="#" class="btn btn-primary" onclick="handleBuy(event)">Comprar Ahora</a>`;
                 }
+            }
+
+            if (modoInscripcion === 'formulario') {
+                // Solo Formulario Interactivo (reemplaza botones de pago por el embudo)
+                container.innerHTML = `
+                    <button type="button" onclick="openFunnelModal(event)" class="btn btn-primary" style="padding:1rem; font-size:1.02rem; display:flex; align-items:center; justify-content:center; gap:.5rem; box-shadow:0 8px 20px rgba(45,106,79,0.25);">
+                        <i class="ph-fill ph-chats-circle" style="font-size:1.25rem"></i> ${btnFunnelTexto}
+                    </button>
+                    <div style="margin-top:.65rem; font-size:.8rem; color:var(--color-text-light); display:flex; align-items:center; justify-content:center; gap:.35rem;">
+                        <i class="ph-fill ph-whatsapp-logo" style="color:#16A34A;font-size:1rem"></i> Evaluación rápida en 1 minuto + Asesoría directa
+                    </div>
+                `;
+            } else if (modoInscripcion === 'ambos') {
+                // Ambos: Pasarela de Pago + Botón de Formulario Interactivo
+                container.innerHTML = payButtonsHtml + `
+                    <div style="margin-top:0.85rem; padding-top:0.85rem; border-top:1px dashed #CBD5E1;">
+                        <div style="font-size:0.78rem; color:#64748B; margin-bottom:0.45rem; font-weight:600;">¿Tienes dudas o prefieres orientación antes de inscribirte?</div>
+                        <button type="button" onclick="openFunnelModal(event)" class="btn" style="background:#ECFDF5; color:#065F46; border:1.5px solid #10B981; padding:0.85rem; font-size:0.92rem; display:flex; align-items:center; justify-content:center; gap:.45rem; font-weight:700;">
+                            <i class="ph-fill ph-whatsapp-logo" style="color:#16A34A;font-size:1.15rem"></i> ${btnFunnelTexto}
+                        </button>
+                    </div>
+                `;
+            } else {
+                // Solo Pasarela de Pago ('pago')
+                container.innerHTML = payButtonsHtml;
             }
 
             document.getElementById('lblMod').textContent = c.modalidad || 'Online';
@@ -666,7 +697,360 @@
                 startCheckoutFlow(e, buyUrl, `Pago único ${fmt(currentCourse.precio)}`, false);
             }
         }
+
+        // ============================================================
+        // EMBUDO INTERACTIVO (FUNNEL STEP-BY-STEP + ATENDIA BOT)
+        // ============================================================
+        let funnelSteps = [];
+        let funnelCurrentStepIdx = 0;
+        let funnelAnswers = [];
+        let funnelDetectedSede = '';
+
+        function buildFunnelQuestions() {
+            const fc = window.currentFunnelConfig || {};
+            let rawQuestions = Array.isArray(fc.preguntas) && fc.preguntas.length > 0 ? fc.preguntas : [
+                {
+                    id: 'experiencia',
+                    pregunta: '¿Cuál es tu nivel de experiencia actual en esta área?',
+                    tipo: 'opciones',
+                    opciones: ['Empiezo desde cero (quiero aprender)', 'Tengo conocimientos básicos o talleres previos', 'Ya soy terapeuta o profesional de la salud']
+                },
+                {
+                    id: 'modalidad_sede',
+                    pregunta: '¿En qué modalidad o sede te interesa cursar este programa?',
+                    tipo: 'opciones',
+                    opciones: ['Sede Calama (Semipresencial)', 'Sede La Serena (Semipresencial)', '100% Online / A mi ritmo']
+                },
+                {
+                    id: 'objetivo',
+                    pregunta: '¿Qué te motiva principalmente a ingresar a este programa?',
+                    tipo: 'opciones',
+                    opciones: ['Formarme profesionalmente para atender pacientes', 'Crecimiento personal y sanación propia', 'Complementar mis terapias actuales', 'Recibir malla curricular, fechas y valores detallados']
+                }
+            ];
+            return rawQuestions;
+        }
+
+        function openFunnelModal(e) {
+            if (e) e.preventDefault();
+            const fc = window.currentFunnelConfig || {};
+            funnelSteps = buildFunnelQuestions();
+            funnelCurrentStepIdx = 0;
+            funnelAnswers = new Array(funnelSteps.length).fill('');
+            funnelDetectedSede = (currentCourse && currentCourse.sede) ? currentCourse.sede : '';
+
+            document.getElementById('fModalTitle').textContent = fc.titulo_modal || (currentCourse ? `Admisión y Orientación · ${currentCourse.titulo}` : 'Postulación y Orientación del Programa');
+            document.getElementById('fModalSubtitle').textContent = fc.subtitulo_modal || 'Responde estas breves preguntas para personalizar tu información y conectarte con nuestra asesora en WhatsApp.';
+            document.getElementById('funnelQuizView').style.display = 'block';
+            document.getElementById('funnelSuccessView').style.display = 'none';
+            document.getElementById('funnelErrBox').style.display = 'none';
+
+            renderFunnelStep();
+            document.getElementById('funnelModalOverlay').classList.add('open');
+        }
+
+        function closeFunnelModal() {
+            document.getElementById('funnelModalOverlay').classList.remove('open');
+        }
+
+        function renderFunnelStep() {
+            const totalSteps = funnelSteps.length + 1; // +1 paso final de datos de contacto
+            const currentHumanStep = funnelCurrentStepIdx + 1;
+            const pct = Math.round((currentHumanStep / totalSteps) * 100);
+
+            document.getElementById('fStepBadge').innerHTML = `<i class="ph-fill ph-sparkle"></i> Paso ${currentHumanStep} de ${totalSteps}`;
+            document.getElementById('fProgressFill').style.width = pct + '%';
+            document.getElementById('funnelErrBox').style.display = 'none';
+
+            const container = document.getElementById('funnelStepContent');
+
+            // Si estamos en una pregunta del quiz
+            if (funnelCurrentStepIdx < funnelSteps.length) {
+                const q = funnelSteps[funnelCurrentStepIdx];
+                const currentVal = funnelAnswers[funnelCurrentStepIdx] || '';
+
+                if (q.tipo === 'texto') {
+                    container.innerHTML = `
+                        <div style="margin-bottom:1rem;">
+                            <div style="font-size:1.08rem; font-weight:700; color:#1E293B; margin-bottom:.75rem; line-height:1.4;">${q.pregunta}</div>
+                            <textarea id="fTextAnswer" rows="3" placeholder="Escribe tu respuesta aquí..." style="width:100%; padding:.85rem; border:1.5px solid #CBD5E1; border-radius:10px; font-family:inherit; font-size:.95rem;">${currentVal}</textarea>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; gap:.75rem; margin-top:1.25rem;">
+                            ${funnelCurrentStepIdx > 0 ? `<button type="button" onclick="prevFunnelStep()" class="btn" style="background:#F1F5F9; color:#475569; width:auto; padding:.75rem 1.2rem;"><i class="ph ph-arrow-left"></i> Anterior</button>` : '<div></div>'}
+                            <button type="button" onclick="confirmTextStep()" class="btn btn-primary" style="width:auto; padding:.75rem 1.5rem;">Siguiente <i class="ph ph-arrow-right"></i></button>
+                        </div>
+                    `;
+                } else {
+                    const opts = Array.isArray(q.opciones) && q.opciones.length ? q.opciones : ['Sí, me interesa', 'Quiero más detalles'];
+                    let optsHtml = opts.map((opt, oIdx) => {
+                        const isSel = currentVal === opt;
+                        const safeOpt = String(opt).replace(/"/g, '&quot;');
+                        return `
+                            <button type="button" class="funnel-opt-btn ${isSel ? 'selected' : ''}" data-opt="${safeOpt}" onclick="selectFunnelOption(this.getAttribute('data-opt'))">
+                                <span class="funnel-opt-letter">${String.fromCharCode(65 + oIdx)}</span>
+                                <span style="flex:1; text-align:left;">${opt}</span>
+                                <i class="ph-fill ph-check-circle" style="font-size:1.25rem; color:${isSel ? '#059669' : '#CBD5E1'}"></i>
+                            </button>
+                        `;
+                    }).join('');
+
+                    container.innerHTML = `
+                        <div style="font-size:1.08rem; font-weight:700; color:#1E293B; margin-bottom:.9rem; line-height:1.4;">${q.pregunta}</div>
+                        <div style="display:flex; flex-direction:column; gap:.6rem;">
+                            ${optsHtml}
+                        </div>
+                        ${funnelCurrentStepIdx > 0 ? `
+                        <div style="margin-top:1rem;">
+                            <button type="button" onclick="prevFunnelStep()" class="btn" style="background:#F1F5F9; color:#475569; width:auto; padding:.55rem 1rem; font-size:.85rem;"><i class="ph ph-arrow-left"></i> Volver a la pregunta anterior</button>
+                        </div>` : ''}
+                    `;
+                }
+            } else {
+                // Paso final: Datos de contacto para enviar a AtendIA
+                const summaryChips = funnelSteps.map((q, idx) => {
+                    const ans = funnelAnswers[idx];
+                    return ans ? `<span style="background:#F0FDF4; color:#166534; border:1px solid #BBF7D0; padding:.2rem .55rem; border-radius:99px; font-size:.73rem; font-weight:600;">✓ ${ans}</span>` : '';
+                }).join(' ');
+
+                container.innerHTML = `
+                    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:.75rem .9rem; margin-bottom:1rem;">
+                        <div style="font-size:.74rem; text-transform:uppercase; letter-spacing:.04em; color:#64748B; font-weight:700; margin-bottom:.35rem;">Tus respuestas seleccionadas:</div>
+                        <div style="display:flex; flex-wrap:wrap; gap:.35rem;">${summaryChips || '<span style="font-size:.8rem;color:#64748B">Listo para enviarte la información</span>'}</div>
+                    </div>
+                    <div style="font-size:1.05rem; font-weight:700; color:#1E293B; margin-bottom:.3rem;">¡Último paso! ¿Dónde te enviamos la información del programa?</div>
+                    <p style="font-size:.84rem; color:#64748B; margin-bottom:1rem;">Nuestra asistente de admisión <strong>AtendIA</strong> tomará tus respuestas para orientarte de inmediato por WhatsApp sin hacerte repetir tus datos.</p>
+                    
+                    <form id="funnelContactForm" onsubmit="submitFunnelLead(event)">
+                        <div class="auth-field">
+                            <label>Tu Nombre y Apellido *</label>
+                            <input type="text" id="fLeadNombre" placeholder="Ej: Carolina Rojas" required>
+                        </div>
+                        <div class="auth-field">
+                            <label>Tu WhatsApp (con código o 9 dígitos) *</label>
+                            <input type="tel" id="fLeadTelefono" placeholder="Ej: +56 9 8765 4321" required>
+                        </div>
+                        <div class="auth-field">
+                            <label>Tu Correo Electrónico (opcional, para enviarte el dossier)</label>
+                            <input type="email" id="fLeadEmail" placeholder="tu@correo.cl">
+                        </div>
+                        <div style="display:flex; gap:.65rem; margin-top:1.1rem;">
+                            ${funnelSteps.length > 0 ? `<button type="button" onclick="prevFunnelStep()" class="btn" style="background:#F1F5F9; color:#475569; width:auto; padding:.85rem 1rem;"><i class="ph ph-arrow-left"></i></button>` : ''}
+                            <button type="submit" id="fBtnSubmitLead" class="auth-submit-btn" style="flex:1; background:linear-gradient(135deg,#16A34A,#059669); margin-top:0;">
+                                <i class="ph-fill ph-whatsapp-logo" style="font-size:1.2rem"></i> Recibir Información y Continuar en WhatsApp
+                            </button>
+                        </div>
+                    </form>
+                `;
+            }
+        }
+
+        function selectFunnelOption(val) {
+            funnelAnswers[funnelCurrentStepIdx] = val;
+            // Detectar si mencionó sede
+            const low = String(val).toLowerCase();
+            if (low.includes('calama')) funnelDetectedSede = 'Sede Calama';
+            else if (low.includes('serena')) funnelDetectedSede = 'Sede La Serena';
+            else if (low.includes('online')) funnelDetectedSede = 'Online';
+
+            setTimeout(() => {
+                funnelCurrentStepIdx++;
+                renderFunnelStep();
+            }, 160);
+        }
+
+        function confirmTextStep() {
+            const txtEl = document.getElementById('fTextAnswer');
+            const val = txtEl ? txtEl.value.trim() : '';
+            if (!val) {
+                const err = document.getElementById('funnelErrBox');
+                err.textContent = 'Por favor escribe una breve respuesta para continuar.';
+                err.style.display = 'block';
+                return;
+            }
+            funnelAnswers[funnelCurrentStepIdx] = val;
+            funnelCurrentStepIdx++;
+            renderFunnelStep();
+        }
+
+        function prevFunnelStep() {
+            if (funnelCurrentStepIdx > 0) {
+                funnelCurrentStepIdx--;
+                renderFunnelStep();
+            }
+        }
+
+        async function submitFunnelLead(e) {
+            e.preventDefault();
+            const errBox = document.getElementById('funnelErrBox');
+            errBox.style.display = 'none';
+
+            const nombre = document.getElementById('fLeadNombre').value.trim();
+            const telefono = document.getElementById('fLeadTelefono').value.trim();
+            const email = document.getElementById('fLeadEmail').value.trim();
+
+            if (!nombre || !telefono) {
+                errBox.textContent = 'Por favor ingresa tu nombre y número de WhatsApp.';
+                errBox.style.display = 'block';
+                return;
+            }
+
+            const btn = document.getElementById('fBtnSubmitLead');
+            const origHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Conectando con Admisión AtendIA...';
+
+            const structuredRespuestas = funnelSteps.map((q, idx) => ({
+                pregunta: q.pregunta,
+                respuesta: funnelAnswers[idx] || ''
+            }));
+
+            try {
+                const res = await fetch('/api/prospectos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        curso_id: currentCourse ? currentCourse.id : null,
+                        curso_titulo: currentCourse ? currentCourse.titulo : 'Programa Flor de Chañar',
+                        nombre,
+                        telefono,
+                        email,
+                        sede_interes: funnelDetectedSede || (currentCourse ? currentCourse.sede : ''),
+                        modalidad_interes: currentCourse ? currentCourse.modalidad : '',
+                        respuestas: structuredRespuestas,
+                        origen: 'detalle_curso'
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    errBox.textContent = data.error || 'Ocurrió un error al registrar tus datos.';
+                    errBox.style.display = 'block';
+                    btn.disabled = false;
+                    btn.innerHTML = origHtml;
+                    return;
+                }
+
+                // Mostrar vista de éxito
+                const fc = window.currentFunnelConfig || {};
+                document.getElementById('funnelQuizView').style.display = 'none';
+                const sView = document.getElementById('funnelSuccessView');
+                sView.style.display = 'block';
+
+                const waLinkBtn = document.getElementById('fSuccessWaBtn');
+                waLinkBtn.href = data.wa_url || 'https://wa.me/56984281226';
+
+                // Si el admin activó mostrar link directo al pago al finalizar el formulario
+                const directPayBox = document.getElementById('fSuccessPayBox');
+                if (fc.mostrar_link_pago_final !== false && currentCourse) {
+                    directPayBox.style.display = 'block';
+                } else {
+                    directPayBox.style.display = 'none';
+                }
+
+                // Si el admin activó abrir WhatsApp automáticamente
+                if (fc.auto_open_wa !== false && data.wa_url) {
+                    setTimeout(() => {
+                        window.open(data.wa_url, '_blank');
+                    }, 900);
+                }
+            } catch (err) {
+                errBox.textContent = 'Error de conexión. Intenta nuevamente.';
+                errBox.style.display = 'block';
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+            }
+        }
     </script>
+
+    <style>
+        .funnel-opt-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            width: 100%;
+            padding: 0.85rem 1rem;
+            background: #FFFFFF;
+            border: 1.5px solid #E2E8F0;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 0.94rem;
+            font-weight: 600;
+            color: #1E293B;
+            cursor: pointer;
+            transition: all 0.18s ease;
+        }
+        .funnel-opt-btn:hover {
+            border-color: var(--color-primary);
+            background: #F0FDF4;
+            transform: translateY(-1px);
+        }
+        .funnel-opt-btn.selected {
+            border-color: #059669;
+            background: #ECFDF5;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+        }
+        .funnel-opt-letter {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: #F1F5F9;
+            color: #475569;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+        .funnel-opt-btn:hover .funnel-opt-letter,
+        .funnel-opt-btn.selected .funnel-opt-letter {
+            background: #059669;
+            color: #FFFFFF;
+        }
+    </style>
+
+    <!-- Ventana Flotante (Modal) de Embudo Interactivo + Integración AtendIA -->
+    <div class="auth-modal-overlay" id="funnelModalOverlay" onclick="if(event.target===this) closeFunnelModal()">
+        <div class="auth-modal-card" style="max-width: 540px;">
+            <div class="auth-modal-hd" style="background: linear-gradient(135deg, #1B4332 0%, #0F291E 100%);">
+                <button class="auth-modal-close" onclick="closeFunnelModal()" title="Cerrar"><i class="ph ph-x"></i></button>
+                <div class="auth-step-badge" id="fStepBadge"><i class="ph-fill ph-sparkle"></i> Paso 1 de 4</div>
+                <h3 id="fModalTitle">Postulación y Orientación del Programa</h3>
+                <p id="fModalSubtitle">Responde estas breves preguntas para personalizar tu información y conectarte con nuestra asesora en WhatsApp.</p>
+                <div style="margin-top: 0.85rem; background: rgba(255,255,255,0.15); height: 6px; border-radius: 99px; overflow: hidden;">
+                    <div id="fProgressFill" style="height: 100%; width: 25%; background: #4ADE80; transition: width 0.3s ease;"></div>
+                </div>
+            </div>
+            <div class="auth-modal-bd">
+                <div class="auth-err" id="funnelErrBox"></div>
+
+                <!-- Vista del Quiz Paso a Paso -->
+                <div id="funnelQuizView">
+                    <div id="funnelStepContent"></div>
+                </div>
+
+                <!-- Vista de Confirmación y Enlace con Bot AtendIA -->
+                <div id="funnelSuccessView" style="display:none; text-align:center; padding: 0.75rem 0.25rem;">
+                    <div style="width:64px; height:64px; border-radius:50%; background:#DCFCE7; color:#16A34A; display:inline-flex; align-items:center; justify-content:center; font-size:2.2rem; margin-bottom:0.85rem;">
+                        <i class="ph-fill ph-check-circle"></i>
+                    </div>
+                    <h4 style="font-size:1.25rem; color:#1E293B; margin-bottom:0.4rem;">¡Tus respuestas fueron registradas!</h4>
+                    <p style="font-size:0.9rem; color:#475569; margin-bottom:1.2rem; line-height:1.5;">
+                        Ya enviamos tu perfil e intereses a nuestro sistema de admisión <strong>AtendIA</strong>. Haz clic abajo para abrir WhatsApp y conversar directamente con nuestra asistente (ya conoce tus respuestas).
+                    </p>
+                    <a id="fSuccessWaBtn" href="https://wa.me/56984281226" target="_blank" class="auth-submit-btn" style="display:inline-flex; background:linear-gradient(135deg,#16A34A,#059669); text-decoration:none; margin-bottom:1rem;">
+                        <i class="ph-fill ph-whatsapp-logo" style="font-size:1.3rem"></i> Continuar Conversación en WhatsApp
+                    </a>
+
+                    <div id="fSuccessPayBox" style="margin-top:0.75rem; padding-top:0.9rem; border-top:1px solid #E2E8F0; font-size:0.84rem; color:#64748B;">
+                        ¿Ya lo tienes claro y quieres asegurar tu cupo de inmediato?<br>
+                        <a href="#" onclick="closeFunnelModal(); handleBuy(event);" style="display:inline-block; margin-top:0.4rem; color:var(--color-primary); font-weight:700; text-decoration:underline;">
+                            Ir directo a la pasarela de inscripción y pago →
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Ventana Flotante (Modal) de Identificación para Suscripción / Compra -->
     <div class="auth-modal-overlay" id="authModalOverlay" onclick="if(event.target===this) closeAuthModal()">

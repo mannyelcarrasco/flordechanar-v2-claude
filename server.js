@@ -412,7 +412,24 @@ async function initDB() {
             await pool.query('ALTER TABLE clases_vivo ADD CONSTRAINT fk_clases_vivo_modulo FOREIGN KEY (modulo_id) REFERENCES modulos(id) ON DELETE SET NULL');
         } catch (e) { /* Ignorar si ya existe */ }
 
-        console.log('Tables checked/created: usuarios, cursos, inscripciones, modulos, lecciones, progreso_lecciones.');
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS prospectos_cursos (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                curso_id INT NOT NULL,
+                curso_titulo VARCHAR(300) NOT NULL,
+                nombre VARCHAR(150) NOT NULL,
+                whatsapp VARCHAR(50) NOT NULL,
+                email VARCHAR(200) DEFAULT NULL,
+                sede_modalidad VARCHAR(150) DEFAULT NULL,
+                respuestas JSON DEFAULT NULL,
+                estado ENUM('nuevo','contactado','inscrito','descartado') DEFAULT 'nuevo',
+                atendia_sync BOOLEAN DEFAULT FALSE,
+                atendia_detalle TEXT DEFAULT NULL,
+                creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        console.log('Tables checked/created: usuarios, cursos, inscripciones, modulos, lecciones, progreso_lecciones, prospectos_cursos.');
 
         const [rows] = await pool.query('SELECT * FROM usuarios WHERE email = "admin@flordechanar.cl"');
         const hash = await bcrypt.hash('admin123', 10);
@@ -771,7 +788,7 @@ app.patch('/api/usuarios/:id/activo', verifyToken, async (req, res) => {
 app.get('/api/cursos', async (req, res) => {
     try {
         if (!pool) return res.status(500).json({ error: 'Database not connected' });
-        const [cursos] = await pool.query('SELECT c.id, c.titulo, c.descripcion, c.precio, c.tipo_acceso, c.portada_url, c.modalidad, c.dias_clase, c.horario_clase, c.sede, c.horarios_sedes, c.texto_opciones_extra, u.nombre as profesor FROM cursos c LEFT JOIN usuarios u ON c.profesor_id = u.id WHERE c.estado = "publicado"');
+        const [cursos] = await pool.query('SELECT c.id, c.titulo, c.descripcion, c.precio, c.tipo_acceso, c.portada_url, c.modalidad, c.dias_clase, c.horario_clase, c.sede, c.horarios_sedes, c.texto_opciones_extra, c.ventas_meta, c.duracion_total, c.categoria, u.nombre as profesor FROM cursos c LEFT JOIN usuarios u ON c.profesor_id = u.id WHERE c.estado = "publicado"');
         
         const [planes] = await pool.query("SELECT * FROM planes WHERE activo = 1 AND nombre != 'matricula'");
         for (let c of cursos) {
@@ -2937,6 +2954,311 @@ INSTRUCCIÓN: ${prompt}`;
 
     } catch (e) {
         res.status(500).json({ error: e.message });
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  FUNNEL DE PROSPECTOS POR PROGRAMA + INTEGRACIÓN API ATENDIA
+// ═══════════════════════════════════════════════════════════════════════════
+
+function normalizeClPhone(raw) {
+    let d = String(raw || '').replace(/\D+/g, '').replace(/^0+/, '');
+    if (!d) return '';
+    if (d.length === 11 && d.startsWith('56')) return d;
+    if (d.length === 9 && d.startsWith('9')) return '56' + d;
+    if (d.length === 8) return '569' + d;
+    return d;
+}
+
+async function syncLeadToAtendIA({ curso, funnelCfg, nombre, phoneNorm, email, sede_modalidad, respuestas }) {
+    const companyId = parseInt(funnelCfg?.atendia_company_id) || parseInt(process.env.ATENDIA_COMPANY_ID) || 3;
+    const funnelTitle = (funnelCfg?.atendia_funnel_title || 'escuela_flordechanar').trim();
+    const atendiaBase = (process.env.ATENDIA_API_URL || 'https://funnelstudio.click/AtendIA_dev/api/index.php').replace(/\/+$/, '');
+    const atendiaToken = process.env.ATENDIA_N8N_TOKEN || 'atendia2026xK9456';
+
+    const flatFields = {
+        nombre: nombre,
+        whatsapp: phoneNorm,
+        telefono: phoneNorm,
+        email: email || '',
+        programa: curso.titulo,
+        curso_id: String(curso.id),
+        modalidad_sede: sede_modalidad || curso.modalidad || ''
+    };
+
+    const notasPartes = [`Programa: ${curso.titulo}`];
+    if (sede_modalidad) notasPartes.push(`Modalidad/Sede: ${sede_modalidad}`);
+
+    if (Array.isArray(respuestas)) {
+        respuestas.forEach((r, idx) => {
+            if (r && r.pregunta && r.respuesta) {
+                const key = r.id || `pregunta_${idx + 1}`;
+                flatFields[key] = String(r.respuesta);
+                notasPartes.push(`${r.pregunta}: ${r.respuesta}`);
+            }
+        });
+    } else if (respuestas && typeof respuestas === 'object') {
+        Object.entries(respuestas).forEach(([k, v]) => {
+            if (v) {
+                flatFields[k] = String(v);
+                notasPartes.push(`${k}: ${v}`);
+            }
+        });
+    }
+
+    const resumenNotas = notasPartes.join(' | ').substring(0, 900);
+    const logs = [];
+    let syncedOk = false;
+
+    // 1) Guardar ficha y contexto para el Bot de IA en AtendIA (/n8n/save-profile)
+    try {
+        const profRes = await fetch(`${atendiaBase}/n8n/save-profile`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Atendia-Token': atendiaToken
+            },
+            body: JSON.stringify({
+                company_id: companyId,
+                phone: phoneNorm,
+                name: nombre,
+                email: email || '',
+                sede: sede_modalidad || '',
+                personal_notes: resumenNotas
+            }),
+            signal: AbortSignal.timeout(8000)
+        });
+        const profJson = await profRes.json().catch(() => ({}));
+        if (profRes.ok && profJson.ok) {
+            syncedOk = true;
+            logs.push(`AtendIA Profile OK (contact_id=${profJson.contact_id || '?'})`);
+        } else {
+            logs.push(`AtendIA Profile HTTP ${profRes.status}: ${profJson.error || 'sin detalle'}`);
+        }
+    } catch (err) {
+        logs.push(`AtendIA Profile Error: ${err.message}`);
+    }
+
+    // 2) Registrar submission en FunnelStudio / AtendIA Lead-Intake (submit-form.php)
+    try {
+        const subRes = await fetch('https://funnelstudio.click/api/submit-form.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                formId: `curso_${curso.id}`,
+                pageId: `detalle_curso_${curso.id}`,
+                funnelId: funnelTitle,
+                funnelTitle: funnelTitle,
+                fields: flatFields
+            }),
+            signal: AbortSignal.timeout(8000)
+        });
+        const subJson = await subRes.json().catch(() => ({}));
+        if (subRes.ok && (subJson.success || subJson.submission_id)) {
+            syncedOk = true;
+            logs.push(`FunnelStudio Submission OK (id=${subJson.submission_id || '?'})`);
+        } else {
+            logs.push(`FunnelStudio HTTP ${subRes.status}`);
+        }
+    } catch (err) {
+        logs.push(`FunnelStudio Error: ${err.message}`);
+    }
+
+    // 3) Si el curso tiene configurada una plantilla Meta de WhatsApp para disparo automático (/n8n/send)
+    const tplName = (funnelCfg?.atendia_template || '').trim();
+    if (tplName) {
+        try {
+            const sendRes = await fetch(`${atendiaBase}/n8n/send`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Atendia-Token': atendiaToken
+                },
+                body: JSON.stringify({
+                    company_id: companyId,
+                    to: phoneNorm,
+                    type: 'template',
+                    template_name: tplName,
+                    language: funnelCfg?.atendia_template_lang || 'es',
+                    variables: [nombre, curso.titulo]
+                }),
+                signal: AbortSignal.timeout(8000)
+            });
+            const sendJson = await sendRes.json().catch(() => ({}));
+            if (sendRes.ok && sendJson.sent) {
+                logs.push(`WA Template '${tplName}' enviada OK`);
+            } else {
+                logs.push(`WA Template '${tplName}': ${sendJson.error || sendRes.status}`);
+            }
+        } catch (err) {
+            logs.push(`WA Template Error: ${err.message}`);
+        }
+    }
+
+    return { synced: syncedOk, detail: logs.join(' · ') };
+}
+
+// POST /api/prospectos — Público: recibe el formulario interactivo de un curso y sincroniza con AtendIA
+app.post('/api/prospectos', async (req, res) => {
+    try {
+        if (!pool) return res.status(500).json({ error: 'Database not connected' });
+        const { curso_id, nombre, whatsapp, email, sede_modalidad, respuestas } = req.body || {};
+
+        if (!curso_id) return res.status(400).json({ error: 'Curso requerido' });
+        if (!nombre || String(nombre).trim().length < 2) return res.status(400).json({ error: 'Por favor ingresa tu nombre' });
+        const phoneNorm = normalizeClPhone(whatsapp);
+        if (!phoneNorm || phoneNorm.length < 9) return res.status(400).json({ error: 'Por favor ingresa un número de WhatsApp válido' });
+
+        const [cursos] = await pool.query('SELECT id, titulo, modalidad, sede, ventas_meta FROM cursos WHERE id = ?', [curso_id]);
+        if (!cursos.length) return res.status(404).json({ error: 'Programa no encontrado' });
+        const curso = cursos[0];
+
+        let vm = {};
+        try {
+            vm = typeof curso.ventas_meta === 'string' ? JSON.parse(curso.ventas_meta) : (curso.ventas_meta || {});
+        } catch (e) { vm = {}; }
+        const funnelCfg = vm.funnel_config || {};
+
+        const [ins] = await pool.query(
+            `INSERT INTO prospectos_cursos (curso_id, curso_titulo, nombre, whatsapp, email, sede_modalidad, respuestas, estado)
+             VALUES (?, ?, ?, ?, ?, ?, ?, 'nuevo')`,
+            [
+                curso.id,
+                curso.titulo,
+                String(nombre).trim(),
+                phoneNorm,
+                email ? String(email).trim() : null,
+                sede_modalidad ? String(sede_modalidad).trim() : (curso.sede || curso.modalidad || null),
+                respuestas ? JSON.stringify(respuestas) : null
+            ]
+        );
+        const prospectoId = ins.insertId;
+
+        // Sincronizar con AtendIA si está habilitado (por defecto habilitado)
+        let syncResult = { synced: false, detail: 'Desactivado para este curso' };
+        if (funnelCfg.atendia_enabled !== false) {
+            syncResult = await syncLeadToAtendIA({
+                curso,
+                funnelCfg,
+                nombre: String(nombre).trim(),
+                phoneNorm,
+                email: email ? String(email).trim() : '',
+                sede_modalidad: sede_modalidad ? String(sede_modalidad).trim() : '',
+                respuestas
+            });
+            await pool.query(
+                'UPDATE prospectos_cursos SET atendia_sync = ?, atendia_detalle = ? WHERE id = ?',
+                [syncResult.synced ? 1 : 0, syncResult.detail, prospectoId]
+            );
+        }
+
+        // Construir URL de WhatsApp hacia el número del Bot de AtendIA
+        let waPhone = normalizeClPhone(funnelCfg.atendia_wa_phone || '');
+        if (!waPhone) {
+            try {
+                const [cfgRows] = await pool.query("SELECT valor FROM configuracion WHERE clave = 'wa_numero' LIMIT 1");
+                if (cfgRows.length && cfgRows[0].valor) waPhone = normalizeClPhone(cfgRows[0].valor);
+            } catch (e) {}
+        }
+        if (!waPhone) waPhone = '56984281226';
+
+        // Resumen breve para el mensaje inicial del usuario al abrir WhatsApp con el bot
+        let msgLines = [
+            `Hola! Soy *${String(nombre).trim()}* 👋`,
+            `Acabo de completar el formulario de admisión/información para el programa *${curso.titulo}*.`
+        ];
+        if (sede_modalidad) msgLines.push(`📍 Modalidad/Sede de interés: *${sede_modalidad}*`);
+        if (Array.isArray(respuestas) && respuestas.length > 0) {
+            respuestas.forEach(r => {
+                if (r && r.pregunta && r.respuesta) {
+                    msgLines.push(`• ${r.pregunta}: ${r.respuesta}`);
+                }
+            });
+        }
+        msgLines.push(`¿Me podrías orientar con los siguientes pasos y detalles del programa?`);
+
+        const waUrl = `https://wa.me/${waPhone}?text=${encodeURIComponent(msgLines.join('\n'))}`;
+
+        res.json({
+            ok: true,
+            id: prospectoId,
+            atendia_sync: syncResult.synced,
+            wa_url: waUrl,
+            wa_phone: waPhone
+        });
+    } catch (e) {
+        console.error('Error en POST /api/prospectos:', e);
+        res.status(500).json({ error: 'No se pudo procesar tu solicitud. Intenta nuevamente.' });
+    }
+});
+
+// GET /api/prospectos — Admin / Profesor: lista los prospectos capturados en los funnels
+app.get('/api/prospectos', verifyToken, async (req, res) => {
+    if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Sin permisos' });
+    try {
+        const [rows] = await pool.query('SELECT * FROM prospectos_cursos ORDER BY creado_en DESC LIMIT 500');
+        res.json(rows);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Error al obtener prospectos' });
+    }
+});
+
+// PUT /api/prospectos/:id — Actualizar estado de un prospecto
+app.put('/api/prospectos/:id', verifyToken, async (req, res) => {
+    if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Sin permisos' });
+    try {
+        const { estado } = req.body || {};
+        const validos = ['nuevo', 'contactado', 'inscrito', 'descartado'];
+        if (!validos.includes(estado)) return res.status(400).json({ error: 'Estado inválido' });
+        await pool.query('UPDATE prospectos_cursos SET estado = ? WHERE id = ?', [estado, req.params.id]);
+        res.json({ ok: true });
+    } catch (e) {
+        res.status(500).json({ error: 'Error al actualizar estado' });
+    }
+});
+
+// POST /api/prospectos/:id/resync — Re-sincronizar manualmente un prospecto con AtendIA
+app.post('/api/prospectos/:id/resync', verifyToken, async (req, res) => {
+    if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Sin permisos' });
+    try {
+        const [rows] = await pool.query('SELECT * FROM prospectos_cursos WHERE id = ?', [req.params.id]);
+        if (!rows.length) return res.status(404).json({ error: 'Prospecto no encontrado' });
+        const p = rows[0];
+        const [cursos] = await pool.query('SELECT id, titulo, modalidad, sede, ventas_meta FROM cursos WHERE id = ?', [p.curso_id]);
+        const curso = cursos[0] || { id: p.curso_id, titulo: p.curso_titulo };
+        let vm = {};
+        try { vm = typeof curso.ventas_meta === 'string' ? JSON.parse(curso.ventas_meta) : (curso.ventas_meta || {}); } catch (e) {}
+        let respParsed = [];
+        try { respParsed = typeof p.respuestas === 'string' ? JSON.parse(p.respuestas) : (p.respuestas || []); } catch (e) {}
+
+        const syncResult = await syncLeadToAtendIA({
+            curso,
+            funnelCfg: vm.funnel_config || {},
+            nombre: p.nombre,
+            phoneNorm: p.whatsapp,
+            email: p.email || '',
+            sede_modalidad: p.sede_modalidad || '',
+            respuestas: respParsed
+        });
+        await pool.query(
+            'UPDATE prospectos_cursos SET atendia_sync = ?, atendia_detalle = ? WHERE id = ?',
+            [syncResult.synced ? 1 : 0, syncResult.detail, p.id]
+        );
+        res.json({ ok: true, atendia_sync: syncResult.synced, detail: syncResult.detail });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// DELETE /api/prospectos/:id — Eliminar prospecto
+app.delete('/api/prospectos/:id', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Solo admin' });
+    try {
+        await pool.query('DELETE FROM prospectos_cursos WHERE id = ?', [req.params.id]);
+        res.json({ ok: true });
+    } catch (e) {
+        res.status(500).json({ error: 'Error al eliminar prospecto' });
     }
 });
 

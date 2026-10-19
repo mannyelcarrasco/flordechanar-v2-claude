@@ -420,6 +420,142 @@
                     <option value="primer_modulo">Primer módulo gratuito</option>
                 </select>
             </div>
+
+            <!-- FLUJO DE ENTRADA / FUNNEL INTERACTIVO & ATENDIA -->
+            <div style="margin-top:1.5rem; padding-top:1.5rem; border-top:2px dashed #E2E8F0;">
+                <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.75rem;">
+                    <div>
+                        <h4 style="margin:0; font-size:1rem; color:var(--s); display:flex; align-items:center; gap:0.45rem;">
+                            <i class="ph ph-funnel" style="color:var(--p); font-size:1.2rem;"></i> Flujo de Entrada al Programa (Checkout vs Funnel Interactivo)
+                        </h4>
+                        <p style="margin:0.2rem 0 0; font-size:0.8rem; color:var(--l);">Elige qué ocurre cuando un interesado presiona el botón de inscripción en la página del programa.</p>
+                    </div>
+                </div>
+
+                <!-- Las 3 Opciones -->
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:0.75rem; margin-bottom:1.1rem;" id="funnelModeSelector">
+                    <label id="fmodeCard_pago" onclick="setFunnelMode('pago')" style="border:2px solid var(--p); background:#F0FDF4; border-radius:10px; padding:0.9rem; cursor:pointer; transition:all .2s; display:flex; flex-direction:column; gap:0.3rem;">
+                        <div style="display:flex; align-items:center; gap:0.5rem; font-weight:700; font-size:0.88rem; color:var(--s);">
+                            <input type="radio" name="funnelModo" value="pago" checked onchange="setFunnelMode('pago')" style="accent-color:var(--p);">
+                            <i class="ph ph-credit-card" style="color:var(--p); font-size:1.1rem;"></i> 1. Solo Pasarela de Pago
+                        </div>
+                        <span style="font-size:0.76rem; color:var(--l); line-height:1.35;">Ideal para <strong>cursos cortos grabados</strong>. El botón lleva directo al pago e inscripción inmediata.</span>
+                    </label>
+
+                    <label id="fmodeCard_formulario" onclick="setFunnelMode('formulario')" style="border:1.5px solid #E2E8F0; background:#fff; border-radius:10px; padding:0.9rem; cursor:pointer; transition:all .2s; display:flex; flex-direction:column; gap:0.3rem;">
+                        <div style="display:flex; align-items:center; gap:0.5rem; font-weight:700; font-size:0.88rem; color:var(--s);">
+                            <input type="radio" name="funnelModo" value="formulario" onchange="setFunnelMode('formulario')" style="accent-color:var(--p);">
+                            <i class="ph ph-chats-circle" style="color:#D97706; font-size:1.1rem;"></i> 2. Solo Formulario (Funnel)
+                        </div>
+                        <span style="font-size:0.76rem; color:var(--l); line-height:1.35;">Ideal para <strong>programas de 1 o 2 años</strong>. Captura datos en un formulario interactivo y conecta con el Bot de AtendIA.</span>
+                    </label>
+
+                    <label id="fmodeCard_ambos" onclick="setFunnelMode('ambos')" style="border:1.5px solid #E2E8F0; background:#fff; border-radius:10px; padding:0.9rem; cursor:pointer; transition:all .2s; display:flex; flex-direction:column; gap:0.3rem;">
+                        <div style="display:flex; align-items:center; gap:0.5rem; font-weight:700; font-size:0.88rem; color:var(--s);">
+                            <input type="radio" name="funnelModo" value="ambos" onchange="setFunnelMode('ambos')" style="accent-color:var(--p);">
+                            <i class="ph ph-arrows-split" style="color:#7C3AED; font-size:1.1rem;"></i> 3. Ambos (Pago + Funnel)
+                        </div>
+                        <span style="font-size:0.76rem; color:var(--l); line-height:1.35;">Muestra el botón de <strong>Suscribirme / Comprar</strong> y debajo el botón de <strong>Postular / Más Información</strong>.</span>
+                    </label>
+                </div>
+
+                <!-- Configurador del Formulario Editable y Conexión AtendIA -->
+                <div id="funnelBuilderPanel" style="display:none; background:#F8FAFC; border:1.5px solid #E2E8F0; border-radius:12px; padding:1.25rem;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem; margin-bottom:1rem; padding-bottom:0.75rem; border-bottom:1px solid #E2E8F0;">
+                        <div style="font-weight:700; color:var(--s); font-size:0.92rem; display:flex; align-items:center; gap:0.4rem;">
+                            <i class="ph ph-sliders-horizontal" style="color:var(--p);"></i> Configuración del Formulario Interactivo y Bot AtendIA
+                        </div>
+                        <div style="display:flex; gap:0.45rem; flex-wrap:wrap;">
+                            <button type="button" class="btn btn-sm" style="background:#EDE9FE; color:#5B21B6; border:1px solid #DDD6FE; font-size:0.75rem;" onclick="cargarPlantillaFunnel('programa_largo')">
+                                <i class="ph ph-graduation-cap"></i> Cargar Plantilla Programa 1-2 Años
+                            </button>
+                            <button type="button" class="btn btn-sm" style="background:#FEF3C7; color:#92400E; border:1px solid #FDE68A; font-size:0.75rem;" onclick="cargarPlantillaFunnel('curso_corto')">
+                                <i class="ph ph-lightning"></i> Cargar Plantilla Curso Corto
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="two" style="margin-bottom:0.75rem;">
+                        <div class="fg">
+                            <label class="fl">Texto del Botón en la Página</label>
+                            <input type="text" class="fc" id="funnelBtnText" value="Postular / Solicitar Información" placeholder="Ej: Solicitar Admisión y Más Info">
+                        </div>
+                        <div class="fg">
+                            <label class="fl">Título del Modal Interactivo</label>
+                            <input type="text" class="fc" id="funnelModalTitle" value="Orientación y Admisión al Programa" placeholder="Ej: Descubre si este programa es para ti">
+                        </div>
+                    </div>
+
+                    <div class="fg" style="margin-bottom:1rem;">
+                        <label class="fl">Mensaje de bienvenida del formulario</label>
+                        <input type="text" class="fc" id="funnelModalSub" value="Responde estas breves preguntas para enviarte el programa detallado y atender tus dudas por WhatsApp.">
+                    </div>
+
+                    <!-- Bloque Conexión API AtendIA -->
+                    <div style="background:#fff; border:1px solid #CBD5E1; border-radius:10px; padding:1rem; margin-bottom:1.1rem;">
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+                            <label style="display:flex; align-items:center; gap:0.55rem; font-weight:700; font-size:0.86rem; color:#0F172A; cursor:pointer;">
+                                <input type="checkbox" id="funnelAtendiaEnabled" checked style="width:17px; height:17px; accent-color:#16A34A;">
+                                <i class="ph-fill ph-whatsapp-logo" style="color:#16A34A; font-size:1.15rem;"></i>
+                                Conectar con API de AtendIA (CRM + Seguimiento con Bot IA en WhatsApp)
+                            </label>
+                            <span style="font-size:0.7rem; background:#DCFCE7; color:#166534; padding:0.15rem 0.55rem; border-radius:20px; font-weight:700;">API Activa</span>
+                        </div>
+
+                        <div class="three" style="gap:0.75rem;">
+                            <div class="fg" style="margin-bottom:0.4rem;">
+                                <label class="fl" style="font-size:0.75rem;">WhatsApp del Bot AtendIA</label>
+                                <input type="text" class="fc" id="funnelWaPhone" value="56984281226" placeholder="Ej: 56984281226">
+                                <div class="hint">Número donde el bot continuará la charla</div>
+                            </div>
+                            <div class="fg" style="margin-bottom:0.4rem;">
+                                <label class="fl" style="font-size:0.75rem;">ID Empresa AtendIA</label>
+                                <input type="number" class="fc" id="funnelCompanyId" value="3" placeholder="3 = Flor de Chañar">
+                                <div class="hint">Empresa en AtendIA (3 = EyCT)</div>
+                            </div>
+                            <div class="fg" style="margin-bottom:0.4rem;">
+                                <label class="fl" style="font-size:0.75rem;">Identificador Funnel (AtendIA)</label>
+                                <input type="text" class="fc" id="funnelTitleKey" value="escuela_flordechanar" placeholder="Ej: escuela_flordechanar">
+                                <div class="hint">Tag del funnel en AtendIA / CRM</div>
+                            </div>
+                        </div>
+
+                        <div class="two" style="gap:0.75rem; margin-top:0.5rem;">
+                            <div class="fg" style="margin-bottom:0;">
+                                <label class="fl" style="font-size:0.75rem;">Plantilla Meta WhatsApp (Opcional)</label>
+                                <input type="text" class="fc" id="funnelWaTemplate" value="" placeholder="Dejar vacío para inicio directo por link WA">
+                                <div class="hint">Si tienes una plantilla aprobada en Meta, AtendIA la enviará automáticamente al recibir el formulario.</div>
+                            </div>
+                            <div class="fg" style="margin-bottom:0; display:flex; flex-direction:column; justify-content:center; gap:0.45rem; padding-top:0.4rem;">
+                                <label style="display:flex; align-items:center; gap:0.45rem; font-size:0.8rem; color:var(--s); cursor:pointer;">
+                                    <input type="checkbox" id="funnelAutoOpenWa" checked style="accent-color:var(--p);">
+                                    Abrir WhatsApp automáticamente al enviar el formulario
+                                </label>
+                                <label style="display:flex; align-items:center; gap:0.45rem; font-size:0.8rem; color:var(--s); cursor:pointer;">
+                                    <input type="checkbox" id="funnelShowPayLink" checked style="accent-color:var(--p);">
+                                    Mostrar también opción de ir a pagar en la pantalla final
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Constructor de Preguntas -->
+                    <div>
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.6rem;">
+                            <label class="fl" style="margin:0; font-size:0.86rem;">
+                                <i class="ph ph-list-checks" style="color:var(--p);"></i> Preguntas Interactivas del Programa (Paso a Paso)
+                            </label>
+                            <button type="button" class="btn btn-sm" style="background:var(--p); color:#fff; font-size:0.76rem;" onclick="addFunnelQuestion()">
+                                <i class="ph ph-plus"></i> Añadir Pregunta
+                            </button>
+                        </div>
+                        <div class="hint" style="margin-bottom:0.75rem;">
+                            Nota: Los datos de contacto (<strong>Nombre, WhatsApp, Correo y Sede/Modalidad</strong>) se piden siempre automáticamente en el último paso del formulario. Aquí defines las preguntas previas de perfilamiento.
+                        </div>
+                        <div id="funnelQuestionsList" style="display:flex; flex-direction:column; gap:0.75rem;"></div>
+                    </div>
+                </div>
+            </div>
         </div>
 
     <!-- SECTION 5: Landing Page (Ventas) -->
@@ -1310,6 +1446,9 @@ window.addEventListener('load', async () => {
                                 document.getElementById('testimonioList').innerHTML = ''; // clear any empty default
                                 vm.testimonios.forEach(t => addTestimonio(t));
                             }
+                            if (vm.funnel_config) {
+                                loadFunnelConfig(vm.funnel_config);
+                            }
                         } catch(e){}
                     }
                     document.getElementById('coursePrice').value = c.precio || '';
@@ -1426,6 +1565,193 @@ async function generateSalesCopy() {
     }
 }
 
+// ======== CONSTRUCTOR DE FUNNEL INTERACTIVO & ATENDIA ========
+let currentFunnelMode = 'pago';
+
+function setFunnelMode(mode) {
+    currentFunnelMode = ['pago', 'formulario', 'ambos'].includes(mode) ? mode : 'pago';
+    ['pago', 'formulario', 'ambos'].forEach(m => {
+        const card = document.getElementById('fmodeCard_' + m);
+        const radio = document.querySelector(`input[name="funnelModo"][value="${m}"]`);
+        if (radio) radio.checked = (m === currentFunnelMode);
+        if (card) {
+            if (m === currentFunnelMode) {
+                card.style.border = '2px solid var(--p)';
+                card.style.background = '#F0FDF4';
+            } else {
+                card.style.border = '1.5px solid #E2E8F0';
+                card.style.background = '#fff';
+            }
+        }
+    });
+    const panel = document.getElementById('funnelBuilderPanel');
+    if (panel) {
+        panel.style.display = (currentFunnelMode === 'formulario' || currentFunnelMode === 'ambos') ? 'block' : 'none';
+        // Si se activa por primera vez y no hay preguntas aún, cargar la plantilla de programa largo por defecto
+        const qList = document.getElementById('funnelQuestionsList');
+        if ((currentFunnelMode === 'formulario' || currentFunnelMode === 'ambos') && qList && qList.children.length === 0) {
+            cargarPlantillaFunnel('programa_largo', true);
+        }
+    }
+}
+
+function addFunnelQuestion(q = { id: '', pregunta: '', tipo: 'opciones', opciones: ['Opción 1', 'Opción 2'] }) {
+    const list = document.getElementById('funnelQuestionsList');
+    if (!list) return;
+    const div = document.createElement('div');
+    div.className = 'funnel-q-item';
+    div.style.cssText = 'background:#fff; border:1px solid #E2E8F0; border-radius:10px; padding:0.9rem; position:relative;';
+    const opcionesStr = Array.isArray(q.opciones) ? q.opciones.join('\n') : (q.opciones || '');
+    const tipo = q.tipo === 'texto' ? 'texto' : 'opciones';
+
+    div.innerHTML = `
+        <div style="display:grid; grid-template-columns:1fr 180px auto; gap:0.6rem; align-items:end; margin-bottom:0.6rem;">
+            <div>
+                <label class="fl" style="font-size:0.75rem; margin-bottom:0.2rem;">Pregunta para el interesado</label>
+                <input type="text" class="fc fq-pregunta" value="${(q.pregunta || '').replace(/"/g, '&quot;')}" placeholder="Ej: ¿Cuál es tu experiencia previa en terapias?">
+            </div>
+            <div>
+                <label class="fl" style="font-size:0.75rem; margin-bottom:0.2rem;">Tipo de respuesta</label>
+                <select class="fc fq-tipo" onchange="toggleFqOptions(this)">
+                    <option value="opciones" ${tipo === 'opciones' ? 'selected' : ''}>Alternativas clicables</option>
+                    <option value="texto" ${tipo === 'texto' ? 'selected' : ''}>Texto libre</option>
+                </select>
+            </div>
+            <button type="button" class="btn btn-sm" style="background:#FEF2F2; color:#DC2626; border:1px solid #FECACA; padding:0.55rem 0.7rem;" onclick="this.closest('.funnel-q-item').remove()" title="Eliminar pregunta">
+                <i class="ph ph-trash"></i>
+            </button>
+        </div>
+        <div class="fq-opciones-wrap" style="display:${tipo === 'opciones' ? 'block' : 'none'};">
+            <label class="fl" style="font-size:0.74rem; color:var(--l); margin-bottom:0.2rem;">Alternativas (escribe una por línea)</label>
+            <textarea class="fc fq-opciones" rows="3" style="font-size:0.82rem;" placeholder="Empiezo desde cero\nTengo conocimientos básicos\nYa soy terapeuta">${opcionesStr}</textarea>
+        </div>
+    `;
+    list.appendChild(div);
+}
+
+function toggleFqOptions(selectEl) {
+    const wrap = selectEl.closest('.funnel-q-item').querySelector('.fq-opciones-wrap');
+    if (wrap) wrap.style.display = selectEl.value === 'opciones' ? 'block' : 'none';
+}
+
+function cargarPlantillaFunnel(tipo, silencioso = false) {
+    const list = document.getElementById('funnelQuestionsList');
+    if (!list) return;
+    list.innerHTML = '';
+    if (tipo === 'programa_largo') {
+        document.getElementById('funnelBtnText').value = 'Postular / Solicitar Admisión e Info';
+        document.getElementById('funnelModalTitle').value = 'Admisión y Orientación Personalizada';
+        document.getElementById('funnelModalSub').value = 'Responde estas 3 breves preguntas para enviarte la malla curricular y asesorarte por WhatsApp.';
+        [
+            {
+                pregunta: '¿Cuál es tu nivel de experiencia actual en terapias complementarias?',
+                tipo: 'opciones',
+                opciones: [
+                    'Empiezo desde cero (quiero formarme profesionalmente)',
+                    'Tengo conocimientos o cursos cortos previos',
+                    'Ya atiendo pacientes y busco especializarme'
+                ]
+            },
+            {
+                pregunta: '¿Cuál es tu principal objetivo al estudiar este programa?',
+                tipo: 'opciones',
+                opciones: [
+                    'Ejercer como terapeuta profesional y generar ingresos',
+                    'Crecimiento personal y ayudar a mi entorno familiar',
+                    'Complementar mi profesión actual en el área de la salud/bienestar'
+                ]
+            },
+            {
+                pregunta: '¿Qué te gustaría resolver primero con nuestro equipo de admisión?',
+                tipo: 'opciones',
+                opciones: [
+                    'Conocer horarios, sedes y modalidad de clases prácticas',
+                    'Revisar facilidades de pago, matrícula y mensualidades',
+                    'Recibir la malla completa y hablar con un asesor'
+                ]
+            }
+        ].forEach(q => addFunnelQuestion(q));
+        if (!silencioso && typeof showToast === 'function') showToast('🎓 Plantilla para Programa de 1 a 2 años cargada');
+    } else {
+        document.getElementById('funnelBtnText').value = 'Consultar por este Curso';
+        document.getElementById('funnelModalTitle').value = 'Recibe toda la información del curso';
+        document.getElementById('funnelModalSub').value = 'Cuéntanos qué buscas aprender y te atenderemos de inmediato por WhatsApp.';
+        [
+            {
+                pregunta: '¿Para qué te gustaría aplicar lo aprendido en este curso?',
+                tipo: 'opciones',
+                opciones: [
+                    'Uso personal y bienestar en casa',
+                    'Para sumar una nueva herramienta a mis terapias',
+                    'Quiero explorar si me gusta esta disciplina'
+                ]
+            },
+            {
+                pregunta: '¿Tienes alguna duda específica antes de inscribirte?',
+                tipo: 'opciones',
+                opciones: [
+                    'Saber cómo funciona el acceso a las clases y certificación',
+                    'Consultar por medios de pago',
+                    'Quiero hablar con un asesor por WhatsApp'
+                ]
+            }
+        ].forEach(q => addFunnelQuestion(q));
+        if (!silencioso && typeof showToast === 'function') showToast('⚡ Plantilla para Curso Corto cargada');
+    }
+}
+
+function getFunnelConfig() {
+    const qNodes = document.querySelectorAll('.funnel-q-item');
+    const preguntas = Array.from(qNodes).map((node, idx) => {
+        const pregunta = node.querySelector('.fq-pregunta')?.value.trim() || '';
+        const tipo = node.querySelector('.fq-tipo')?.value || 'opciones';
+        const rawOps = node.querySelector('.fq-opciones')?.value || '';
+        const opciones = rawOps.split('\n').map(s => s.trim()).filter(Boolean);
+        return {
+            id: 'q_' + (idx + 1),
+            pregunta,
+            tipo,
+            opciones
+        };
+    }).filter(q => q.pregunta !== '');
+
+    return {
+        modo_inscripcion: currentFunnelMode,
+        texto_boton: document.getElementById('funnelBtnText')?.value.trim() || 'Postular / Solicitar Información',
+        titulo_modal: document.getElementById('funnelModalTitle')?.value.trim() || 'Orientación y Admisión al Programa',
+        subtitulo_modal: document.getElementById('funnelModalSub')?.value.trim() || '',
+        atendia_enabled: document.getElementById('funnelAtendiaEnabled') ? document.getElementById('funnelAtendiaEnabled').checked : true,
+        atendia_wa_phone: document.getElementById('funnelWaPhone')?.value.trim() || '56984281226',
+        atendia_company_id: parseInt(document.getElementById('funnelCompanyId')?.value) || 3,
+        atendia_funnel_title: document.getElementById('funnelTitleKey')?.value.trim() || 'escuela_flordechanar',
+        atendia_template: document.getElementById('funnelWaTemplate')?.value.trim() || '',
+        auto_open_wa: document.getElementById('funnelAutoOpenWa') ? document.getElementById('funnelAutoOpenWa').checked : true,
+        mostrar_link_pago_final: document.getElementById('funnelShowPayLink') ? document.getElementById('funnelShowPayLink').checked : true,
+        preguntas
+    };
+}
+
+function loadFunnelConfig(fc) {
+    if (!fc) return;
+    if (fc.texto_boton && document.getElementById('funnelBtnText')) document.getElementById('funnelBtnText').value = fc.texto_boton;
+    if (fc.titulo_modal && document.getElementById('funnelModalTitle')) document.getElementById('funnelModalTitle').value = fc.titulo_modal;
+    if (fc.subtitulo_modal !== undefined && document.getElementById('funnelModalSub')) document.getElementById('funnelModalSub').value = fc.subtitulo_modal;
+    if (fc.atendia_enabled !== undefined && document.getElementById('funnelAtendiaEnabled')) document.getElementById('funnelAtendiaEnabled').checked = !!fc.atendia_enabled;
+    if (fc.atendia_wa_phone && document.getElementById('funnelWaPhone')) document.getElementById('funnelWaPhone').value = fc.atendia_wa_phone;
+    if (fc.atendia_company_id && document.getElementById('funnelCompanyId')) document.getElementById('funnelCompanyId').value = fc.atendia_company_id;
+    if (fc.atendia_funnel_title && document.getElementById('funnelTitleKey')) document.getElementById('funnelTitleKey').value = fc.atendia_funnel_title;
+    if (fc.atendia_template !== undefined && document.getElementById('funnelWaTemplate')) document.getElementById('funnelWaTemplate').value = fc.atendia_template;
+    if (fc.auto_open_wa !== undefined && document.getElementById('funnelAutoOpenWa')) document.getElementById('funnelAutoOpenWa').checked = !!fc.auto_open_wa;
+    if (fc.mostrar_link_pago_final !== undefined && document.getElementById('funnelShowPayLink')) document.getElementById('funnelShowPayLink').checked = !!fc.mostrar_link_pago_final;
+
+    const qList = document.getElementById('funnelQuestionsList');
+    if (qList && Array.isArray(fc.preguntas)) {
+        qList.innerHTML = '';
+        fc.preguntas.forEach(q => addFunnelQuestion(q));
+    }
+    setFunnelMode(fc.modo_inscripcion || 'pago');
+}
+
 function getVentasMeta() {
     const testimoniosNodes = document.querySelectorAll('.testimonio-item');
     const testimonios = Array.from(testimoniosNodes).map(node => ({
@@ -1435,7 +1761,8 @@ function getVentasMeta() {
     }));
     return {
         vsl_url: document.getElementById('courseVsl') ? document.getElementById('courseVsl').value : '',
-        testimonios: testimonios
+        testimonios: testimonios,
+        funnel_config: getFunnelConfig()
     };
 }
 
