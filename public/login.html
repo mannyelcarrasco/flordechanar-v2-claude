@@ -232,6 +232,12 @@
             localStorage.setItem('rol', data.rol);
             localStorage.setItem('nombre', data.nombre);
 
+            const redirectParam = new URLSearchParams(window.location.search).get('redirect');
+            if (redirectParam && (redirectParam.startsWith('/') || redirectParam.startsWith('pago.html') || redirectParam.startsWith('detalle.html') || redirectParam.startsWith('suscripcion.html'))) {
+                window.location.href = redirectParam;
+                return;
+            }
+
             const destino = {
                 estudiante: 'dashboard.html',
                 profesor: 'profesor.html',
@@ -274,6 +280,11 @@
             localStorage.setItem('token', data.token);
             localStorage.setItem('rol', data.rol);
             localStorage.setItem('nombre', data.nombre);
+            const redirectParam = new URLSearchParams(window.location.search).get('redirect');
+            if (redirectParam && (redirectParam.startsWith('/') || redirectParam.startsWith('pago.html') || redirectParam.startsWith('detalle.html') || redirectParam.startsWith('suscripcion.html'))) {
+                location.href = redirectParam;
+                return;
+            }
             location.href = 'dashboard.html';
         } catch(err) {
             errEl.textContent = 'Error de conexión con el servidor';

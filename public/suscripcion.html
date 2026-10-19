@@ -132,8 +132,9 @@ if (!token) location.href = 'login.html';
 
 const params = new URLSearchParams(location.search);
 const estado = params.get('estado');
-if (estado === 'ok') {
-    setTimeout(() => location.replace('suscripcion.html'), 100);
+const msgParam = params.get('msg');
+if (estado) {
+    history.replaceState({}, document.title, 'suscripcion.html');
 }
 
 async function load() {
@@ -154,9 +155,23 @@ async function load() {
 
 function renderStatus(sub) {
     const wrap = document.getElementById('statusWrap');
+    let alertBanner = '';
+    if (estado === 'ok') {
+        alertBanner = `
+            <div style="background:#DCFCE7;border:1.5px solid #86EFAC;color:#15803D;padding:1rem 1.25rem;border-radius:12px;margin-bottom:1.25rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+                <div><strong>🎉 ¡Suscripción activada con éxito!</strong> Tu tarjeta fue registrada y tu acceso ya está habilitado.</div>
+                <a href="dashboard.html" class="btn btn-p btn-sm">Ir a Mis Cursos <i class="ph ph-arrow-right"></i></a>
+            </div>`;
+    } else if (estado === 'error') {
+        alertBanner = `
+            <div style="background:#FEE2E2;border:1.5px solid #FECACA;color:#DC2626;padding:1rem 1.25rem;border-radius:12px;margin-bottom:1.25rem">
+                <strong>⚠️ No se pudo completar la suscripción:</strong> ${msgParam || 'El registro de la tarjeta fue cancelado o rechazado por Flow.'}
+            </div>`;
+    }
+
     if (sub && sub.estado === 'activa') {
         const next = sub.proximo_cobro ? new Date(sub.proximo_cobro).toLocaleDateString('es-CL',{day:'numeric',month:'long',year:'numeric'}) : '—';
-        wrap.innerHTML = `
+        wrap.innerHTML = alertBanner + `
             <div class="status-card activa">
                 <div class="status-icon ok"><i class="ph ph-check-circle"></i></div>
                 <div class="status-info">
@@ -164,17 +179,18 @@ function renderStatus(sub) {
                     <p>${fmt(sub.monto)} ${sub.periodo === 'anual' ? '/año' : sub.periodo === 'unico' ? '(pago único)' : '/mes'} · Próximo cobro: ${next}</p>
                 </div>
                 <div class="status-actions">
+                    <a href="dashboard.html" class="btn btn-p btn-sm"><i class="ph ph-books"></i> Mis Cursos</a>
                     <button class="btn btn-danger btn-sm" onclick="openCancelModal()"><i class="ph ph-x"></i> Cancelar</button>
                 </div>
             </div>`;
         document.getElementById('planesSection').style.display = 'none';
     } else {
-        wrap.innerHTML = `
+        wrap.innerHTML = alertBanner + `
             <div class="status-card sin-plan">
                 <div class="status-icon off"><i class="ph ph-credit-card"></i></div>
                 <div class="status-info">
                     <h3>Sin suscripción activa</h3>
-                    <p>Elige un plan para acceder a todos los cursos de la escuela.</p>
+                    <p>Elige un plan para activar tu suscripción con cargo automático.</p>
                 </div>
             </div>`;
     }

@@ -34,15 +34,20 @@
 - [x] Corrección final de vulnerabilidades restantes: actualización manual de `multer` a la versión `2.2.0` y `body-parser` a `2.3.0` (se descartó el PR automático de Hostinger porque eliminaba endpoints críticos del `server.js`).
 - [x] Configuración de `overrides` en `package.json` para forzar el uso de versiones seguras en dependencias transitivas.
 
-### 💳 Integración de Pasarela de Pagos (Flow) (NUEVO)
-- [x] **Frontend (`pago.html`):**
-  - Corrección visual del layout de las opciones de pago usando `.plan-grid`.
-  - Diagnóstico de persistencia de caché del token JWT en el navegador para usuarios deslogueados.
+### 💳 Integración de Pasarela de Pagos y Suscripciones (Flow) (NUEVO)
+- [x] **Frontend (`detalle.html`, `pago.html`, `login.html`, `suscripcion.html`):**
+  - Corrección del envío y preselección automática de `plan_id` y `curso_id` al pasar de `detalle.html` o `suscripcion.html` a `pago.html` (evitando que se envíe el ID del curso como `plan_id`).
+  - Redirección inteligente con `?redirect=` hacia `login.html` cuando el usuario no ha iniciado sesión o su token expiró, regresándolo automáticamente al checkout tras iniciar sesión o registrarse.
+  - Mensajes de confirmación y error claros en `suscripcion.html` al volver del enrolamiento de tarjeta en Flow.
 - [x] **Backend & API (`server.js`):**
-  - Creación del endpoint de diagnóstico `/api/debug/env` para verificar inyección de variables de entorno en producción.
-  - Resolución del conflicto de credenciales Sandbox vs Producción (`FLOW_SANDBOX=false`).
-  - **Fix crítico JWT:** Inclusión del campo `email` en la generación del token JWT en `/api/auth/login` para evitar el error `1620` de Flow (`The userEmail: undefined is not valid`).
-  - **Fix crítico Suscripciones:** Corrección del parámetro de retorno a `url_return` (con guion bajo) en el endpoint `customer/register` de Flow para evitar el error `104` (`Missing service params: url_return`).
+  - Corrección del endpoint oficial de Flow a `plans/create` (en plural) con `interval: 3` (mensual) / `4` (anual), `interval_count: 1`, `trial_period_days: 0` y `urlCallback`, además de verificación automática mediante `plans/get` para reparar planes previos con IDs inválidos.
+  - Auto-recuperación de `flow_customer_id` si un usuario tenía un ID antiguo de Sandbox al operar en Producción.
+  - Configuración de `url_return` en `customer/register` apuntando a `/api/suscripciones/confirmar-registro` (soportando `POST` y `GET`), que verifica `customer/getRegisterStatus`, ejecuta `subscription/create` en Flow, activa la suscripción, inscribe automáticamente al alumno en `inscripciones`, registra el cobro en `pagos` y redirige a `/suscripcion.html?estado=ok`.
+  - Middleware `POST → GET (303)` para páginas `.html` estáticas cuando Flow redirige vía `POST`.
+  - Inclusión de cursos con suscripción activa en `/api/cursos/mis-cursos` para que aparezcan siempre en el Dashboard del estudiante.
+- [x] **Fixes previos de entorno y JWT:**
+  - Creación del endpoint `/api/debug/env` y resolución de credenciales Sandbox vs Producción (`FLOW_SANDBOX=false`).
+  - Inclusión del campo `email` en el token JWT y respaldo desde base de datos en `/api/suscripciones/iniciar`.
 
 ### 🚀 Integración de Asistente de IA & Landing Builder (NUEVO)
 - [x] **Panel de Creación de Cursos (`curso-crear.html`):**

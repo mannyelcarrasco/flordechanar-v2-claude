@@ -69,13 +69,19 @@
 const params = new URLSearchParams(location.search);
 const tipo   = params.get('tipo');   // matricula | curso | suscripcion
 const id     = params.get('id');     // curso_id or plan_id
+const planIdParam = params.get('plan_id'); // explicit plan_id when coming from detalle.html
 const token  = localStorage.getItem('token');
 
 const fmt = n => new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP'}).format(n);
 
-if (!token) { location.href = 'login.html'; }
+if (!token) {
+    location.href = 'login.html?redirect=' + encodeURIComponent(location.pathname + location.search);
+}
+
+let selectedPlanId = planIdParam || null;
 
 async function init() {
+    if (!token) return;
     const body = document.getElementById('cardBody');
     const title = document.getElementById('cardTitle');
     const sub   = document.getElementById('cardSubtitle');
@@ -108,18 +114,53 @@ async function init() {
 
     } else if (tipo === 'suscripcion') {
         title.textContent = 'Elegir Plan';
-        sub.textContent   = 'Acceso completo a todos los cursos';
+        sub.textContent   = 'Suscripción con cobro automático en Flow';
         body.innerHTML = '<div class="loading-box"><i class="ph ph-circle-notch" style="font-size:2rem;animation:spin .7s linear infinite"></i></div>';
         try {
             const res   = await fetch('/api/planes');
-            let planes = await res.json();
+            const allPlanes = await res.json();
+            let planes = allPlanes;
+            let targetCursoId = null;
+
             if (id) {
-                planes = planes.filter(p => String(p.curso_id) === String(id));
+                const byCurso = allPlanes.filter(p => String(p.curso_id) === String(id));
+                if (byCurso.length > 0) {
+                    planes = byCurso;
+                    targetCursoId = id;
+                } else {
+                    const byPlan = allPlanes.find(p => String(p.id) === String(id));
+                    if (byPlan) {
+                        targetCursoId = byPlan.curso_id || null;
+                        planes = targetCursoId
+                            ? allPlanes.filter(p => String(p.curso_id) === String(targetCursoId))
+                            : [byPlan];
+                    } else {
+                        planes = [];
+                    }
+                }
             }
+
+            // Determinar qué plan queda preseleccionado
+            let preselect = null;
+            if (planIdParam && planes.some(p => String(p.id) === String(planIdParam))) {
+                preselect = planIdParam;
+            } else if (id && planes.some(p => String(p.id) === String(id))) {
+                preselect = id;
+            } else if (planes.length > 0) {
+                preselect = planes[0].id;
+            }
+            selectedPlanId = preselect;
+
             // Check existing subscription
             const resSub = await fetch('/api/suscripciones/mi-estado', { headers:{ Authorization:'Bearer '+token } });
-            const subActiva = await resSub.json();
-            body.innerHTML = buildSuscripcionView(planes, subActiva, id);
+            const subActiva = resSub.ok ? await resSub.json() : null;
+            const aplicaSubActiva = subActiva && (
+                !targetCursoId ||
+                !subActiva.curso_id ||
+                String(subActiva.curso_id) === String(targetCursoId)
+            ) ? subActiva : null;
+
+            body.innerHTML = buildSuscripcionView(planes, aplicaSubActiva, preselect);
         } catch(e) {
             body.innerHTML = `<div class="error-box">Error al cargar los planes.</div>`;
         }
@@ -282,10 +323,11 @@ function buildSuscripcionView(planes, subActiva, planPreselect) {
     `;
 }
 
-let selectedPlanId = id;
 function selectPlan(el, planId) {
     document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
     el.classList.add('selected');
+    const radio = el.querySelector('input[type="radio"]');
+    if (radio) radio.checked = true;
     selectedPlanId = planId;
 }
 
@@ -315,12 +357,22 @@ async function loadMatriculaTotal() {
     if (el) el.textContent = 'Ver al confirmar';
 }
 
+function handleAuthExpired(res) {
+    if (res.status === 401 || res.status === 403) {
+        localStorage.removeItem('token');
+        location.href = 'login.html?redirect=' + encodeURIComponent(location.pathname + location.search);
+        return true;
+    }
+    return false;
+}
+
 async function pagarMatricula() {
     setLoading(true);
     try {
         const res = await fetch('/api/pagos/matricula/iniciar', {
             method:'POST', headers:{ Authorization:'Bearer '+token, 'Content-Type':'application/json' }
         });
+        if (handleAuthExpired(res)) return;
         const data = await res.json();
         if (!res.ok) { showErr(data.error || 'Error al iniciar pago'); setLoading(false); return; }
         location.href = data.redirectUrl;
@@ -334,6 +386,7 @@ async function pagarCurso(cursoId) {
             method:'POST', headers:{ Authorization:'Bearer '+token, 'Content-Type':'application/json' },
             body: JSON.stringify({ curso_id: cursoId })
         });
+        if (handleAuthExpired(res)) return;
         const data = await res.json();
         if (!res.ok) { showErr(data.error || 'Error al iniciar pago'); setLoading(false); return; }
         location.href = data.redirectUrl;
@@ -348,6 +401,7 @@ async function iniciarSuscripcion() {
             method:'POST', headers:{ Authorization:'Bearer '+token, 'Content-Type':'application/json' },
             body: JSON.stringify({ plan_id: selectedPlanId })
         });
+        if (handleAuthExpired(res)) return;
         const data = await res.json();
         if (!res.ok) { showErr(data.error || 'Error al iniciar suscripción'); setLoading(false); return; }
         location.href = data.redirectUrl;

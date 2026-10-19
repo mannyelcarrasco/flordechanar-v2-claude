@@ -34,6 +34,11 @@ app.use((req, res, next) => {
     next();
 });
 
+// Si Flow redirige vía POST a una página HTML estática (ej. /pago-exitoso.html), redirigir como GET (303)
+app.post(/^\/[^/]+\.html$/i, (req, res) => {
+    res.redirect(303, req.originalUrl);
+});
+
 // Serve static frontend files from 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -839,10 +844,12 @@ app.get('/api/cursos/dictados', verifyToken, async (req, res) => {
 app.get('/api/cursos/mis-cursos', verifyToken, async (req, res) => {
     try {
         const [cursos] = await pool.query(`
-            SELECT c.* FROM cursos c
-            JOIN inscripciones i ON c.id = i.curso_id
-            WHERE i.usuario_id = ?
-        `, [req.usuario.id]);
+            SELECT DISTINCT c.* FROM cursos c
+            LEFT JOIN inscripciones i ON c.id = i.curso_id AND i.usuario_id = ?
+            LEFT JOIN planes p ON p.curso_id = c.id
+            LEFT JOIN suscripciones s ON s.plan_id = p.id AND s.usuario_id = ? AND s.estado = 'activa'
+            WHERE i.id IS NOT NULL OR s.id IS NOT NULL
+        `, [req.usuario.id, req.usuario.id]);
         res.json(cursos);
     } catch (e) {
         console.error(e);
@@ -1984,13 +1991,24 @@ app.get('/api/suscripciones/mi-estado', verifyToken, async (req, res) => {
     } catch (e) { res.status(500).json({ error: 'Error' }); }
 });
 
-// --- Iniciar suscripción (crea cliente + registra tarjeta) ---
+// --- Iniciar suscripción (crea cliente + plan + registra tarjeta) ---
 app.post('/api/suscripciones/iniciar', verifyToken, async (req, res) => {
     try {
         const { plan_id } = req.body;
         const [planes] = await pool.query("SELECT * FROM planes WHERE id=? AND activo=1 AND nombre!='matricula'", [plan_id]);
         if (!planes.length) return res.status(404).json({ error: 'Plan no encontrado' });
         const plan = planes[0];
+
+        // Asegurar datos de usuario actualizados (por si el JWT es antiguo y no trae email)
+        let userNombre = req.usuario.nombre;
+        let userEmail  = req.usuario.email;
+        if (!userEmail || !userNombre) {
+            const [uRows] = await pool.query('SELECT nombre, email FROM usuarios WHERE id=? LIMIT 1', [req.usuario.id]);
+            if (uRows.length) {
+                userNombre = uRows[0].nombre;
+                userEmail  = uRows[0].email;
+            }
+        }
 
         // Obtener o crear Flow customer
         let flowCustomerId;
@@ -1999,70 +2017,147 @@ app.post('/api/suscripciones/iniciar', verifyToken, async (req, res) => {
             flowCustomerId = fcRows[0].flow_customer_id;
         } else {
             const { data: custData } = await flowPost('customer/create', {
-                name: req.usuario.nombre, email: req.usuario.email, externalId: String(req.usuario.id)
+                name: userNombre, email: userEmail, externalId: String(req.usuario.id)
             });
             if (!custData.customerId) throw new Error('Error creando cliente Flow: ' + JSON.stringify(custData));
             flowCustomerId = custData.customerId;
             await pool.query('INSERT INTO flow_customers (usuario_id, flow_customer_id) VALUES (?,?)', [req.usuario.id, flowCustomerId]);
         }
 
-        // Crear plan en Flow si no existe
+        // Verificar que el plan exista realmente en Flow (corrige planes antiguos guardados con endpoint erróneo)
         let flowPlanId = plan.flow_plan_id;
+        if (flowPlanId) {
+            const { data: checkPlan } = await flowGet('plans/get', { planId: flowPlanId }).catch(() => ({ data: null }));
+            if (!checkPlan || !checkPlan.planId) {
+                flowPlanId = null;
+            }
+        }
+
+        // Crear plan en Flow si no existe
         if (!flowPlanId) {
             const generatedPlanId = `fdc_plan_${plan.id}_${plan.monto}`;
-            const { data: planData } = await flowPost('plan/create', {
-                planId: generatedPlanId, name: plan.nombre,
-                amount: plan.monto, currency: 'CLP',
-                interval: plan.periodo === 'anual' ? 12 : 1,
-                intervalType: 'month', trial: 0
+            const { data: planData } = await flowPost('plans/create', {
+                planId: generatedPlanId,
+                name: plan.nombre,
+                amount: plan.monto,
+                currency: 'CLP',
+                interval: plan.periodo === 'anual' ? 4 : 3, // En Flow: 3 = Mensual, 4 = Anual
+                interval_count: 1,
+                trial_period_days: 0,
+                urlCallback: `${APP_URL}/api/suscripciones/renovacion`
             });
-            flowPlanId = planData.planId || generatedPlanId;
+            if (planData && planData.planId) {
+                flowPlanId = planData.planId;
+            } else {
+                // Si el planId ya existía en Flow de un intento previo, consultarlo con plans/get
+                const { data: existingPlan } = await flowGet('plans/get', { planId: generatedPlanId }).catch(() => ({ data: null }));
+                if (existingPlan && existingPlan.planId) {
+                    flowPlanId = existingPlan.planId;
+                } else {
+                    throw new Error('Error creando plan en Flow: ' + JSON.stringify(planData));
+                }
+            }
             await pool.query('UPDATE planes SET flow_plan_id=? WHERE id=?', [flowPlanId, plan.id]);
         }
 
-        // Guardar suscripción pendiente
-        await pool.query(
-            `INSERT INTO suscripciones (usuario_id, plan_id, flow_customer_id, estado)
-             VALUES (?,?,?,'pendiente')
-             ON DUPLICATE KEY UPDATE flow_customer_id=VALUES(flow_customer_id), estado='pendiente'`,
-            [req.usuario.id, plan.id, flowCustomerId]
-        );
-
-        // Registrar tarjeta
-        const { data: regData } = await flowPost('customer/register', {
+        // Registrar tarjeta en Flow (si el customerId era antiguo de Sandbox y falla, recrear cliente en entorno actual)
+        const returnUrl = `${APP_URL}/api/suscripciones/confirmar-registro`;
+        let { data: regData } = await flowPost('customer/register', {
             customerId: flowCustomerId,
-            url_return: `${APP_URL}/suscripcion.html?estado=ok&plan=${plan.id}`
+            url_return: returnUrl
         });
+        if (!regData.url) {
+            const { data: newCust } = await flowPost('customer/create', {
+                name: userNombre, email: userEmail, externalId: `${req.usuario.id}_${Date.now()}`
+            });
+            if (newCust && newCust.customerId) {
+                flowCustomerId = newCust.customerId;
+                await pool.query('UPDATE flow_customers SET flow_customer_id=? WHERE usuario_id=?', [flowCustomerId, req.usuario.id]);
+                const retryReg = await flowPost('customer/register', {
+                    customerId: flowCustomerId,
+                    url_return: returnUrl
+                });
+                regData = retryReg.data;
+            }
+        }
         if (!regData.url) throw new Error('Error registro tarjeta: ' + JSON.stringify(regData));
+
+        // Guardar suscripción pendiente (reutilizar pendiente previa del mismo usuario o insertar nueva)
+        const [pendRows] = await pool.query(
+            "SELECT id FROM suscripciones WHERE usuario_id=? AND estado='pendiente' ORDER BY id DESC LIMIT 1",
+            [req.usuario.id]
+        );
+        if (pendRows.length) {
+            await pool.query(
+                "UPDATE suscripciones SET plan_id=?, flow_customer_id=?, creado_en=NOW() WHERE id=?",
+                [plan.id, flowCustomerId, pendRows[0].id]
+            );
+        } else {
+            await pool.query(
+                "INSERT INTO suscripciones (usuario_id, plan_id, flow_customer_id, estado) VALUES (?,?,?,'pendiente')",
+                [req.usuario.id, plan.id, flowCustomerId]
+            );
+        }
+
         res.json({ redirectUrl: `${regData.url}?token=${regData.token}` });
     } catch (e) { console.error(e); res.status(500).json({ error: 'Error al iniciar suscripción: ' + e.message }); }
 });
 
-// --- Webhook: confirmación de registro de tarjeta ---
-app.post('/api/suscripciones/confirmar-registro', async (req, res) => {
-    res.sendStatus(200);
-    const { token } = req.body;
-    if (!token) return;
+// --- Retorno y Confirmación de registro de tarjeta desde Flow ---
+app.all('/api/suscripciones/confirmar-registro', async (req, res) => {
+    const token = req.body?.token || req.query?.token;
+    if (!token) {
+        return res.redirect(303, '/suscripcion.html?estado=error&msg=' + encodeURIComponent('No se recibió confirmación desde Flow.'));
+    }
     try {
         const { data } = await flowGet('customer/getRegisterStatus', { token });
-        if (data.status !== 1) return;
+        if (String(data.status) !== '1') {
+            return res.redirect(303, '/suscripcion.html?estado=error&msg=' + encodeURIComponent('El registro de la tarjeta no se completó o fue rechazado.'));
+        }
         const customerId = data.customerId;
         const [subRows] = await pool.query(
-            `SELECT s.*, p.flow_plan_id FROM suscripciones s JOIN planes p ON s.plan_id=p.id
-             WHERE s.flow_customer_id=? AND s.estado='pendiente' LIMIT 1`,
+            `SELECT s.*, p.flow_plan_id, p.curso_id, p.monto, p.nombre AS plan_nombre
+             FROM suscripciones s
+             JOIN planes p ON s.plan_id = p.id
+             WHERE s.flow_customer_id = ? AND s.estado = 'pendiente'
+             ORDER BY s.id DESC LIMIT 1`,
             [customerId]
         );
-        if (!subRows.length) return;
+        if (!subRows.length) {
+            return res.redirect(303, '/suscripcion.html?estado=ok');
+        }
         const sub = subRows[0];
         const { data: subData } = await flowPost('subscription/create', {
-            planId: sub.flow_plan_id, customerId,
-            start: new Date().toISOString().split('T')[0]
+            planId: sub.flow_plan_id,
+            customerId
         });
+        if (!subData || !subData.subscriptionId) {
+            console.error('Error creando suscripción en Flow:', subData);
+            return res.redirect(303, '/suscripcion.html?estado=error&msg=' + encodeURIComponent(subData?.message || 'Error al activar la suscripción en Flow.'));
+        }
+        const nextCobro = subData.next_invoice_date || subData.nextPaymentDate || null;
         await pool.query(
             "UPDATE suscripciones SET estado='activa', flow_subscription_id=?, inicio_en=NOW(), proximo_cobro=? WHERE id=?",
-            [subData.subscriptionId || '', subData.nextPaymentDate || null, sub.id]
+            [subData.subscriptionId, nextCobro, sub.id]
         );
-    } catch (e) { console.error('Sub confirm error:', e.message); }
+        // Si el plan pertenece a un curso específico, inscribir automáticamente al alumno
+        if (sub.curso_id) {
+            await pool.query(
+                'INSERT IGNORE INTO inscripciones (usuario_id, curso_id) VALUES (?, ?)',
+                [sub.usuario_id, sub.curso_id]
+            );
+        }
+        // Registrar el cobro inicial de suscripción en el historial de pagos
+        const co = `S${sub.id}_${Date.now()}`;
+        await pool.query(
+            "INSERT INTO pagos (usuario_id, tipo, referencia_id, monto, estado, commerce_order, flow_token, metodo_pago, confirmado_en) VALUES (?, 'suscripcion', ?, ?, 'aprobado', ?, ?, 'Tarjeta (Suscripción)', NOW())",
+            [sub.usuario_id, sub.curso_id || sub.plan_id, sub.monto, co, token]
+        );
+        return res.redirect(303, `/suscripcion.html?estado=ok&plan=${sub.plan_id}`);
+    } catch (e) {
+        console.error('Sub confirm error:', e.message);
+        return res.redirect(303, '/suscripcion.html?estado=error&msg=' + encodeURIComponent('Error procesando la confirmación de suscripción.'));
+    }
 });
 
 // --- Webhook: renovación periódica ---

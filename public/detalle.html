@@ -387,12 +387,12 @@
                 const mainPlan = c.planes[0];
                 document.getElementById('cPrice').innerHTML = `${fmt(mainPlan.monto)} <span style="font-size:1rem;color:var(--color-text-light);font-weight:400">/ ${mainPlan.periodo}</span>`;
                 
-                container.innerHTML += `<a href="pago.html?tipo=suscripcion&id=${c.id}" class="btn btn-primary" style="margin-bottom:0.5rem; padding: 1rem;">Suscribirme Ahora</a>`;
+                container.innerHTML += `<a href="pago.html?tipo=suscripcion&id=${c.id}&plan_id=${mainPlan.id}" class="btn btn-primary" style="margin-bottom:0.5rem; padding: 1rem;">Suscribirme Ahora</a>`;
                 
                 if (c.planes.length > 1) {
                     for (let i = 1; i < c.planes.length; i++) {
                         let p = c.planes[i];
-                        container.innerHTML += `<a href="pago.html?tipo=suscripcion&id=${c.id}" class="btn" style="background:#E2E8F0;color:var(--color-secondary);margin-bottom:0.5rem;font-size:0.85rem">Plan ${p.nombre}: ${fmt(p.monto)} / ${p.periodo}</a>`;
+                        container.innerHTML += `<a href="pago.html?tipo=suscripcion&id=${c.id}&plan_id=${p.id}" class="btn" style="background:#E2E8F0;color:var(--color-secondary);margin-bottom:0.5rem;font-size:0.85rem">Plan ${p.nombre}: ${fmt(p.monto)} / ${p.periodo}</a>`;
                     }
                 }
 
@@ -408,7 +408,7 @@
                     container.innerHTML = `<a href="#" class="btn btn-primary" onclick="handleBuy(event)">Inscribirme Gratis</a>`;
                 } else if (c.tipo_acceso === 'suscripcion') {
                     document.getElementById('cPrice').textContent = 'Suscripción';
-                    container.innerHTML = `<a href="pago.html?tipo=suscripcion" class="btn btn-primary">Ver Planes</a>`;
+                    container.innerHTML = `<a href="pago.html?tipo=suscripcion&id=${c.id}" class="btn btn-primary">Ver Planes</a>`;
                 } else {
                     document.getElementById('cPrice').textContent = fmt(c.precio);
                     container.innerHTML = `<a href="#" class="btn btn-primary" onclick="handleBuy(event)">Comprar Ahora</a>`;
@@ -471,7 +471,7 @@
                 // Inscribir directo
                 const token = localStorage.getItem('token');
                 if (!token) {
-                    window.open('https://web1.flordechanar.cl/mi-cuenta/', '_blank');
+                    window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
                     return;
                 }
                 try {
@@ -488,7 +488,7 @@
                     }
                 } catch(e) { console.error(e); }
             } else if (currentCourse.tipo_acceso === 'suscripcion') {
-                window.location.href = 'pago.html?tipo=suscripcion';
+                window.location.href = 'pago.html?tipo=suscripcion&id=' + currentCourse.id;
             } else {
                 window.location.href = 'pago.html?tipo=curso&id=' + currentCourse.id;
             }
