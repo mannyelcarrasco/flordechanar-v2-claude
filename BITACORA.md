@@ -1,6 +1,6 @@
 # 📋 Bitácora del Proyecto — Flor de Chañar v2
 **Repositorio:** [mannyelcarrasco/flordechanar-v2-claude](https://github.com/mannyelcarrasco/flordechanar-v2-claude)  
-**Última actualización:** 2026-10-17
+**Última actualización:** 2026-10-18
 
 ---
 
@@ -12,8 +12,10 @@
 - [x] Middleware en `server.js` para asegurar redirección limpia con barra final (`/TerapiaEmocionalEvolutiva/`) e insensibilidad a mayúsculas/minúsculas en Linux/Hostinger.
 
 ### 👨‍🏫 Panel de Profesores y Cursos (NUEVO)
-- [x] **Panel de Edición de Cursos (`curso-crear.html`):**
+- [x] **Panel de Edición de Cursos (`curso-crear.html` & `server.js`):**
   - Corrección de un error tipográfico en el ID del contenedor HTML (`professorsContainer` en lugar de `professorsPanel`) que impedía cargar y mostrar la lista de profesores para asignar a un curso ("Cargando profesores...").
+  - Incorporación del campo **Mensualidad (CLP / mes)** directamente en la sección *Precio y Acceso* de `curso-crear.html`, sincronizado automáticamente con la tabla `planes` en `GET/POST/PUT /api/cursos` (y reinicio de `flow_plan_id` al cambiar el monto).
+  - Corrección de la carga/cambio de **Imagen de portada**: ahora se muestran botones visibles de *Cambiar / Subir nueva imagen* y *Quitar imagen* tanto en Información Básica como directamente en la tarjeta lateral de *Vista Previa*, además de incluir `portada_url` al crear cursos nuevos (`POST /api/cursos`).
 
 ### 🔒 Seguridad & Dependencias (NUEVO)
 - [x] Corrección de vulnerabilidades de NPM detectadas por Hostinger (`qs`, `ip-address`).

@@ -263,10 +263,14 @@
 
             <div class="fg">
                 <label class="fl">Imagen de portada</label>
-                <img id="coverPreview" class="cover-preview" src="" alt="">
+                <img id="coverPreview" class="cover-preview" src="" alt="Portada del curso" style="cursor:pointer" title="Haz clic para cambiar la imagen" onclick="document.getElementById('coverInput').click()">
+                <div id="coverActions" style="display:none;gap:.5rem;margin-bottom:.75rem;flex-wrap:wrap">
+                    <button type="button" class="btn bp btn-sm" onclick="document.getElementById('coverInput').click()"><i class="ph ph-upload-simple"></i> Cambiar / Subir nueva imagen</button>
+                    <button type="button" class="btn btn-sm" style="background:#FEE2E2;color:#EF4444" onclick="removeCoverImage()"><i class="ph ph-trash"></i> Quitar imagen</button>
+                </div>
                 <div class="cover-drop" id="coverDrop" onclick="document.getElementById('coverInput').click()">
                     <i class="ph ph-image"></i>
-                    <p>Arrastra una imagen o <span>selecciona un archivo</span><br><small>JPG, PNG · Recomendado 1280×720 px</small></p>
+                    <p>Arrastra una imagen o <span>selecciona un archivo desde tu equipo</span><br><small>JPG, PNG, WEBP · Recomendado 1280×720 px</small></p>
                 </div>
                 <input type="file" id="coverInput" style="display:none" accept=".jpg,.jpeg,.png,.webp" onchange="uploadCover(this)">
             </div>
@@ -357,7 +361,7 @@
                 <h3>Precio y Acceso</h3>
             </div>
 
-            <div class="two">
+            <div class="three">
                 <div class="fg">
                     <label class="fl">Tipo de acceso</label>
                     <select class="fc" id="accessType" onchange="togglePrice()">
@@ -367,9 +371,14 @@
                     </select>
                 </div>
                 <div class="fg" id="priceField">
-                    <label class="fl">Precio (CLP)</label>
-                    <input class="fc" type="number" id="coursePrice" placeholder="Ej: 150000" oninput="updateChecklist()">
-                    <div class="hint">Ingresa el valor en pesos chilenos sin puntos</div>
+                    <label class="fl">Precio Total / Contado (CLP)</label>
+                    <input class="fc" type="number" id="coursePrice" placeholder="Ej: 1540000" oninput="updateChecklist()">
+                    <div class="hint">Valor total del curso sin puntos</div>
+                </div>
+                <div class="fg" id="monthlyPriceField">
+                    <label class="fl">Mensualidad (CLP / mes)</label>
+                    <input class="fc" type="number" id="courseMonthlyPrice" placeholder="Ej: 175000" oninput="updateChecklist()">
+                    <div class="hint">Aparecerá como <strong>$ /mes</strong> en la tarjeta (0 = solo pago único)</div>
                 </div>
             </div>
             
@@ -482,11 +491,16 @@
 
         <div class="sb-card">
             <h4><i class="ph ph-eye"></i> Vista previa</h4>
-            <div style="border-radius:var(--r);overflow:hidden;margin-bottom:.75rem;background:var(--bg2);height:100px;display:flex;align-items:center;justify-content:center">
+            <div style="border-radius:var(--r);overflow:hidden;margin-bottom:.55rem;background:var(--bg2);height:120px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative" onclick="document.getElementById('coverInput').click()" title="Haz clic para subir o cambiar la imagen de portada">
+                <img id="sidebarPreviewImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover">
                 <i class="ph ph-image" style="font-size:2rem;color:#CBD5E1" id="previewThumb"></i>
             </div>
+            <button type="button" class="btn btn-sm" style="width:100%;justify-content:center;background:#F1F5F9;color:var(--s);border:1px solid #E2E8F0;margin-bottom:.75rem;font-size:.78rem" onclick="document.getElementById('coverInput').click()">
+                <i class="ph ph-upload-simple"></i> Subir / Cambiar imagen
+            </button>
             <div style="font-size:.87rem;font-weight:700;color:var(--s);margin-bottom:.25rem" id="previewTitle">Título del curso</div>
-            <div style="font-size:.76rem;color:var(--l)" id="previewMeta">Categoría · Principiante</div>
+            <div style="font-size:.76rem;color:var(--l);margin-bottom:.35rem" id="previewMeta">Categoría · Principiante</div>
+            <div style="font-size:.88rem;font-weight:800;color:var(--p)" id="previewPrice"></div>
         </div>
 
         <div class="sb-card">
@@ -1074,16 +1088,43 @@ function updateStateBadge(estado) {
     }
 }
 
+function syncCoverUI(url) {
+    const prev = document.getElementById('coverPreview');
+    const actions = document.getElementById('coverActions');
+    const drop = document.getElementById('coverDrop');
+    const sbImg = document.getElementById('sidebarPreviewImg');
+    const sbThumb = document.getElementById('previewThumb');
+
+    if (url) {
+        prev.src = url;
+        prev.style.display = 'block';
+        if (actions) actions.style.display = 'flex';
+        if (drop) drop.style.display = 'none';
+        if (sbImg) { sbImg.src = url; sbImg.style.display = 'block'; }
+        if (sbThumb) sbThumb.style.display = 'none';
+    } else {
+        prev.src = '';
+        prev.style.display = 'none';
+        if (actions) actions.style.display = 'none';
+        if (drop) drop.style.display = 'block';
+        if (sbImg) { sbImg.src = ''; sbImg.style.display = 'none'; }
+        if (sbThumb) sbThumb.style.display = 'block';
+    }
+}
+
+function removeCoverImage() {
+    currentCoverUrl = null;
+    document.getElementById('coverInput').value = '';
+    syncCoverUI(null);
+    updateChecklist();
+}
+
 async function uploadCover(input) {
     if (!input.files[0]) return;
     const file = input.files[0];
 
     // Show local preview immediately
-    const prev = document.getElementById('coverPreview');
-    prev.src = URL.createObjectURL(file);
-    prev.style.display = 'block';
-    document.getElementById('coverDrop').style.display = 'none';
-    document.getElementById('previewThumb').style.display = 'none';
+    syncCoverUI(URL.createObjectURL(file));
 
     showToast('Subiendo imagen...');
     try {
@@ -1098,12 +1139,12 @@ async function uploadCover(input) {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Error al subir');
         currentCoverUrl = data.url;
-        prev.src = data.url;
+        syncCoverUI(data.url);
         updateChecklist();
         showToast('✅ Portada subida correctamente');
     } catch (e) {
         showToast('⚠️ ' + e.message);
-        currentCoverUrl = null;
+        syncCoverUI(currentCoverUrl);
     }
 }
 
@@ -1111,15 +1152,26 @@ function togglePrice() {
     const t = document.getElementById('accessType').value;
     document.getElementById('priceField').style.opacity = t==='gratis' ? '.4' : '1';
     document.getElementById('priceField').style.pointerEvents = t==='gratis' ? 'none' : 'auto';
-    if(t==='gratis') document.getElementById('coursePrice').value = '0';
+    const mpField = document.getElementById('monthlyPriceField');
+    if (mpField) {
+        mpField.style.opacity = t==='gratis' ? '.4' : '1';
+        mpField.style.pointerEvents = t==='gratis' ? 'none' : 'auto';
+    }
+    if(t==='gratis') {
+        document.getElementById('coursePrice').value = '0';
+        if (document.getElementById('courseMonthlyPrice')) document.getElementById('courseMonthlyPrice').value = '0';
+    }
     updateChecklist();
 }
 
 function updateChecklist() {
     const title = document.getElementById('courseTitle').value.trim();
     const cat = document.getElementById('courseCategory').value;
-    const price = document.getElementById('coursePrice').value || document.getElementById('accessType').value==='gratis';
-    const cover = document.getElementById('coverPreview').style.display!=='none';
+    const priceVal = parseInt(document.getElementById('coursePrice').value) || 0;
+    const monthlyVal = document.getElementById('courseMonthlyPrice') ? (parseInt(document.getElementById('courseMonthlyPrice').value) || 0) : 0;
+    const isGratis = document.getElementById('accessType').value === 'gratis';
+    const price = priceVal > 0 || monthlyVal > 0 || isGratis;
+    const cover = document.getElementById('coverPreview').style.display !== 'none';
     const modules = curriculumData.length > 0;
     const assignOk = currentMode==='admin' || (currentMode==='profesor' && selectedProfId !== null);
 
@@ -1132,6 +1184,20 @@ function updateChecklist() {
 
     if(title) { document.getElementById('previewTitle').textContent = title; }
     if(cat) { document.getElementById('previewMeta').textContent = `${cat} · Principiante`; }
+
+    const prevPriceEl = document.getElementById('previewPrice');
+    if (prevPriceEl) {
+        const fmt = n => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(n);
+        if (isGratis) {
+            prevPriceEl.textContent = 'Gratis';
+        } else if (monthlyVal > 0) {
+            prevPriceEl.innerHTML = `${fmt(monthlyVal)} <span style="font-size:.75rem;font-weight:600;color:var(--l)">/mes</span>`;
+        } else if (priceVal > 0) {
+            prevPriceEl.textContent = fmt(priceVal);
+        } else {
+            prevPriceEl.textContent = '';
+        }
+    }
 
     // Update step indicators
     const step1 = title && cat;
@@ -1229,6 +1295,12 @@ window.addEventListener('load', async () => {
                         } catch(e){}
                     }
                     document.getElementById('coursePrice').value = c.precio || '';
+                    if (c.planes && Array.isArray(c.planes)) {
+                        const planMensual = c.planes.find(p => p.periodo === 'mensual' && p.activo);
+                        if (planMensual && document.getElementById('courseMonthlyPrice')) {
+                            document.getElementById('courseMonthlyPrice').value = planMensual.monto || '';
+                        }
+                    }
                     document.getElementById('courseCiclico').checked = !!c.es_ciclico;
                     document.getElementById('courseOpcionesExtra').checked = !!c.texto_opciones_extra;
                     
@@ -1256,10 +1328,8 @@ window.addEventListener('load', async () => {
                         selectMode('admin');
                     }
                     if (c.portada_url) {
-                        document.getElementById('coverPreview').src = c.portada_url;
                         currentCoverUrl = c.portada_url;
-                        document.getElementById('coverPreview').style.display = 'block';
-                        document.getElementById('coverDrop').style.display = 'none';
+                        syncCoverUI(c.portada_url);
                     }
                     if (c.estado) {
                         updateStateBadge(c.estado);
@@ -1382,6 +1452,8 @@ async function saveDraft() {
     const desc = document.getElementById('courseDesc').value;
     const priceRaw = document.getElementById('coursePrice').value;
     const price = priceRaw ? parseInt(priceRaw) : 0;
+    const monthlyRaw = document.getElementById('courseMonthlyPrice') ? document.getElementById('courseMonthlyPrice').value : '';
+    const precio_mensual = monthlyRaw ? parseInt(monthlyRaw) : 0;
 
     try {
         const token = localStorage.getItem('token');
@@ -1393,6 +1465,7 @@ async function saveDraft() {
             descripcion: desc,
             descripcion_ventas: document.getElementById('courseDescVentas').value,
             precio: price,
+            precio_mensual: precio_mensual,
             es_ciclico: document.getElementById('courseCiclico').checked,
             texto_opciones_extra: document.getElementById('courseOpcionesExtra').checked,
             fecha_inicio_ventas: document.getElementById('courseFechaVentas').value,
@@ -1453,6 +1526,8 @@ async function publishCourse(estadoFinal = 'publicado') {
     const desc = document.querySelector('textarea.fc').value;
     const priceRaw = document.getElementById('coursePrice').value;
     const price = priceRaw ? parseInt(priceRaw) : 0;
+    const monthlyRaw = document.getElementById('courseMonthlyPrice') ? document.getElementById('courseMonthlyPrice').value : '';
+    const precio_mensual = monthlyRaw ? parseInt(monthlyRaw) : 0;
     const portada_url = currentCoverUrl || null;
 
     try {
@@ -1465,6 +1540,7 @@ async function publishCourse(estadoFinal = 'publicado') {
             descripcion: desc,
             descripcion_ventas: document.getElementById('courseDescVentas').value,
             precio: price,
+            precio_mensual: precio_mensual,
             es_ciclico: document.getElementById('courseCiclico').checked,
             texto_opciones_extra: document.getElementById('courseOpcionesExtra').checked,
             fecha_inicio_ventas: document.getElementById('courseFechaVentas').value,

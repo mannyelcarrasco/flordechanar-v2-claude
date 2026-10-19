@@ -777,7 +777,7 @@ app.post('/api/cursos', verifyToken, async (req, res) => {
     if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
     try {
         const { 
-            titulo, descripcion, precio, estado, meet_url, es_ciclico, 
+            titulo, descripcion, precio, precio_mensual, portada_url, estado, meet_url, es_ciclico, 
             tipo_acceso, categoria, nivel, duracion_total, idioma, descripcion_ventas, 
             ventas_meta, certificacion, modalidad, profesor_id, dias_clase, horario_clase, sede, texto_opciones_extra, salas_virtuales,
             fecha_inicio_ventas, cupos, muestra_gratuita, horarios_sedes
@@ -788,17 +788,25 @@ app.post('/api/cursos', verifyToken, async (req, res) => {
         
         const [result] = await pool.query(
             `INSERT INTO cursos 
-             (titulo, descripcion, precio, estado, meet_url, es_ciclico, tipo_acceso, categoria, nivel, duracion_total, idioma, descripcion_ventas, ventas_meta, certificacion, modalidad, profesor_id, dias_clase, horario_clase, sede, texto_opciones_extra, salas_virtuales, fecha_inicio_ventas, cupos, muestra_gratuita, horarios_sedes) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             (titulo, descripcion, precio, portada_url, estado, meet_url, es_ciclico, tipo_acceso, categoria, nivel, duracion_total, idioma, descripcion_ventas, ventas_meta, certificacion, modalidad, profesor_id, dias_clase, horario_clase, sede, texto_opciones_extra, salas_virtuales, fecha_inicio_ventas, cupos, muestra_gratuita, horarios_sedes) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-                titulo, descripcion, precio || 0, estado || 'borrador', meet_url || null, es_ciclico ? 1 : 0,
+                titulo, descripcion, precio || 0, portada_url || null, estado || 'borrador', meet_url || null, es_ciclico ? 1 : 0,
                 tipo_acceso || 'gratis', categoria || null, nivel || null, duracion_total || null, idioma || null,
                 descripcion_ventas || null, ventas_meta ? JSON.stringify(ventas_meta) : null, certificacion ? 1 : 0, modalidad || 'Online (Grabado)',
                 profesor_id || req.usuario.id, dias_clase || null, horario_clase || null, sede || null, texto_opciones_extra ? 1 : 0, salas_virtuales ? JSON.stringify(salas_virtuales) : null,
                 fecha_inicio_ventas || null, cupos || 0, muestra_gratuita || 'ninguna', horarios_sedes ? JSON.stringify(horarios_sedes) : null
             ]
         );
-        res.json({ success: true, id: result.insertId });
+        const newCursoId = result.insertId;
+        const montoMensual = parseInt(precio_mensual) || 0;
+        if (montoMensual > 0) {
+            await pool.query(
+                'INSERT INTO planes (nombre, descripcion, periodo, monto, descuento_pct, activo, curso_id) VALUES (?, ?, ?, ?, 0, 1, ?)',
+                [`Mensualidad - ${titulo.substring(0, 100)}`, 'Suscripción mensual al curso', 'mensual', montoMensual, newCursoId]
+            );
+        }
+        res.json({ success: true, id: newCursoId });
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: 'Error al crear curso' });
@@ -945,7 +953,10 @@ app.get('/api/cursos/:id', verifyToken, async (req, res) => {
             [req.params.id]
         );
         if (cursos.length === 0) return res.status(404).json({ error: 'Curso no encontrado' });
-        res.json(cursos[0]);
+        const curso = cursos[0];
+        const [planes] = await pool.query('SELECT * FROM planes WHERE curso_id = ? ORDER BY id ASC', [curso.id]);
+        curso.planes = planes;
+        res.json(curso);
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: 'Error al obtener curso' });
@@ -955,7 +966,7 @@ app.get('/api/cursos/:id', verifyToken, async (req, res) => {
 app.put('/api/cursos/:id', verifyToken, async (req, res) => {
     if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
     try {
-        const { titulo, descripcion, precio, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas, ventas_meta, es_ciclico, meet_url, salas_virtuales, dias_clase, horario_clase, sede, texto_opciones_extra, fecha_inicio_ventas, cupos, muestra_gratuita, horarios_sedes } = req.body;
+        const { titulo, descripcion, precio, precio_mensual, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas, ventas_meta, es_ciclico, meet_url, salas_virtuales, dias_clase, horario_clase, sede, texto_opciones_extra, fecha_inicio_ventas, cupos, muestra_gratuita, horarios_sedes } = req.body;
         let profAsignado = req.usuario.rol === 'admin' ? (profesor_id || req.usuario.id) : req.usuario.id;
 
         let vMetaStr = null;
@@ -975,6 +986,33 @@ app.put('/api/cursos/:id', verifyToken, async (req, res) => {
             'UPDATE cursos SET titulo = ?, descripcion = ?, precio = ?, tipo_acceso = ?, portada_url = ?, estado = ?, profesor_id = ?, categoria = ?, nivel = ?, duracion_total = ?, idioma = ?, certificacion = ?, modalidad = ?, descripcion_ventas = ?, ventas_meta = ?, es_ciclico = ?, meet_url = ?, salas_virtuales = ?, dias_clase = ?, horario_clase = ?, sede = ?, texto_opciones_extra = ?, fecha_inicio_ventas = ?, cupos = ?, muestra_gratuita = ?, horarios_sedes = ? WHERE id = ?',
             [titulo, descripcion, precio, tipo_acceso || 'gratis', portada_url, estado, profAsignado, categoria||null, nivel||null, duracion_total||null, idioma||null, certificacion ? 1 : 0, modalidad||'Online (Grabado)', descripcion_ventas||null, vMetaStr, es_ciclico ? 1 : 0, meet_url || null, salasStr, dias_clase||null, horario_clase||null, sede||null, texto_opciones_extra ? 1 : 0, fecha_inicio_ventas||null, cupos||0, muestra_gratuita||'ninguna', hrSedesStr, req.params.id]
         );
+
+        // Sincronizar plan de mensualidad si viene precio_mensual en el body
+        if (precio_mensual !== undefined) {
+            const montoMensual = parseInt(precio_mensual) || 0;
+            const [existingPlanes] = await pool.query(
+                "SELECT * FROM planes WHERE curso_id = ? AND periodo = 'mensual' ORDER BY activo DESC, id ASC LIMIT 1",
+                [req.params.id]
+            );
+            if (montoMensual > 0) {
+                if (existingPlanes.length > 0) {
+                    const p = existingPlanes[0];
+                    const resetFlowId = Number(p.monto) !== montoMensual ? null : p.flow_plan_id;
+                    await pool.query(
+                        'UPDATE planes SET monto = ?, activo = 1, flow_plan_id = ? WHERE id = ?',
+                        [montoMensual, resetFlowId, p.id]
+                    );
+                } else {
+                    await pool.query(
+                        'INSERT INTO planes (nombre, descripcion, periodo, monto, descuento_pct, activo, curso_id) VALUES (?, ?, ?, ?, 0, 1, ?)',
+                        [`Mensualidad - ${(titulo || 'Curso').substring(0, 100)}`, 'Suscripción mensual al curso', 'mensual', montoMensual, req.params.id]
+                    );
+                }
+            } else if (existingPlanes.length > 0) {
+                await pool.query("UPDATE planes SET activo = 0 WHERE curso_id = ? AND periodo = 'mensual'", [req.params.id]);
+            }
+        }
+
         res.json({ success: true, message: 'Curso actualizado con éxito' });
     } catch (e) {
         console.error(e);
@@ -1964,13 +2002,14 @@ app.post('/api/suscripciones/iniciar', verifyToken, async (req, res) => {
         // Crear plan en Flow si no existe
         let flowPlanId = plan.flow_plan_id;
         if (!flowPlanId) {
+            const generatedPlanId = `fdc_plan_${plan.id}_${plan.monto}`;
             const { data: planData } = await flowPost('plan/create', {
-                planId: `fdc_plan_${plan.id}`, name: plan.nombre,
+                planId: generatedPlanId, name: plan.nombre,
                 amount: plan.monto, currency: 'CLP',
                 interval: plan.periodo === 'anual' ? 12 : 1,
                 intervalType: 'month', trial: 0
             });
-            flowPlanId = planData.planId || `fdc_plan_${plan.id}`;
+            flowPlanId = planData.planId || generatedPlanId;
             await pool.query('UPDATE planes SET flow_plan_id=? WHERE id=?', [flowPlanId, plan.id]);
         }
 
@@ -2126,11 +2165,11 @@ app.post('/api/admin/planes', verifyToken, async (req, res) => {
 app.put('/api/admin/planes/:id', verifyToken, async (req, res) => {
     if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Solo admin' });
     try {
-        const { nombre, descripcion, monto, descuento_pct, activo, curso_id } = req.body;
+        const { nombre, descripcion, periodo, monto, descuento_pct, activo, curso_id } = req.body;
         const cId = (curso_id && curso_id !== '') ? curso_id : null;
         await pool.query(
-            'UPDATE planes SET nombre=?, descripcion=?, monto=?, descuento_pct=?, activo=?, curso_id=? WHERE id=?',
-            [nombre, descripcion, monto, descuento_pct || 0, activo ? 1 : 0, cId, req.params.id]
+            'UPDATE planes SET nombre=?, descripcion=?, periodo=COALESCE(?, periodo), flow_plan_id=CASE WHEN monto != ? THEN NULL ELSE flow_plan_id END, monto=?, descuento_pct=?, activo=?, curso_id=? WHERE id=?',
+            [nombre, descripcion, periodo || null, monto, monto, descuento_pct || 0, activo ? 1 : 0, cId, req.params.id]
         );
         res.json({ ok: true });
     } catch (e) { res.status(500).json({ error: 'Error' }); }
