@@ -448,9 +448,16 @@
 
     <!-- TAB Cursos -->
     <div id="tc" class="tp">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
+            <div style="font-size:.85rem;color:var(--l)">Administra el catálogo de programas, su modalidad y sus sedes asignadas.</div>
+            <div style="display:flex;gap:.5rem">
+                <button class="btn bo btn-sm" onclick="st(null,'ts');switchStab('sedes')"><i class="ph ph-map-pin"></i> Configurar Sedes Físicas</button>
+                <a href="curso-crear.html" class="btn bp btn-sm"><i class="ph ph-plus"></i> Crear Curso</a>
+            </div>
+        </div>
         <div class="tw">
             <table>
-                <thead><tr><th>Curso</th><th>Profesor</th><th>Modalidad</th><th>Estudiantes</th><th>Estado</th><th>Fecha creación</th><th>Acciones</th></tr></thead>
+                <thead><tr><th>Curso</th><th>Profesor</th><th>Modalidad / Sede</th><th>Estudiantes</th><th>Estado</th><th>Fecha creación</th><th>Acciones</th></tr></thead>
                 <tbody id="adminCoursesBody">
                     <tr><td colspan="7" style="text-align:center; padding: 2rem;">Cargando cursos desde la base de datos...</td></tr>
                 </tbody>
@@ -2343,11 +2350,30 @@ async function renderAdminCourses() {
 
             const fecha = c.creado_en ? new Date(c.creado_en).toLocaleDateString('es-CL') : 'N/A';
 
+            let sedesList = [];
+            if (c.horarios_sedes) {
+                try {
+                    const hs = typeof c.horarios_sedes === 'string' ? JSON.parse(c.horarios_sedes) : c.horarios_sedes;
+                    if (hs && Array.isArray(hs.sedes)) {
+                        sedesList = hs.sedes.map(s => s.nombre).filter(Boolean);
+                    }
+                } catch(e) {}
+            }
+            if (sedesList.length === 0 && c.sede) {
+                sedesList = c.sede.split(',').map(s => s.trim()).filter(Boolean);
+            }
+            const sedesHTML = sedesList.length > 0
+                ? `<div style="margin-top:.3rem;font-size:.75rem;color:#B45309;font-weight:600"><i class="ph ph-map-pin"></i> ${sedesList.join(', ')}</div>`
+                : '';
+
             tbody.innerHTML += `
                 <tr>
                     <td><div class="tn">${c.titulo}</div><div class="ts">${priceFmt}</div></td>
                     <td>${c.profesor || 'Admin'}</td>
-                    <td><span style="font-size:0.85rem;color:var(--sec);background:#f1f5f9;padding:0.2rem 0.5rem;border-radius:4px">${c.modalidad || 'N/A'}</span></td>
+                    <td>
+                        <span style="font-size:0.82rem;color:var(--sec);background:#f1f5f9;padding:0.2rem 0.5rem;border-radius:4px;display:inline-block">${c.modalidad || 'N/A'}</span>
+                        ${sedesHTML}
+                    </td>
                     <td>${c.alumnos || 0}</td>
                     <td>${estadoHTML}</td>
                     <td class="ts">${fecha}</td>
@@ -3844,19 +3870,30 @@ async function guardarSedesGlobales() {
     try {
         const res = await fetch('/api/configuracion/sedes', {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
             body: JSON.stringify({ sedes: sedesGlobalesData })
         });
         if (!res.ok) throw new Error();
-        showToast('✅ Sedes guardadas exitosamente');
+        showT('✅ Sedes guardadas exitosamente');
     } catch(e) {
-        showToast('⚠️ Error al guardar sedes');
+        showT('⚠️ Error al guardar sedes');
     } finally {
         btn.innerHTML = '<i class="ph ph-floppy-disk"></i> Guardar Sedes';
     }
 }
 
 loadSedesGlobales();
+
+(function handleUrlTabParams() {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    const stab = params.get('stab');
+    if (tab === 'cursos' || tab === 'tc') st(null, 'tc');
+    else if (tab === 'ajustes' || tab === 'ts') {
+        st(null, 'ts');
+        if (stab) switchStab(stab);
+    }
+})();
 
 </script>
 </body>

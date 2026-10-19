@@ -296,51 +296,70 @@
                     const ctaOnclick = `location.href='detalle.html?id=${curso.id}'`;
 
                     let extraInfoHtml = '';
-                    if (curso.modalidad === 'Online (Grabado)') {
-                        extraInfoHtml = '<div style="font-size:0.8rem;color:var(--color-text-light);margin-top:0.5rem;display:flex;flex-direction:column;gap:0.4rem;"><div><div style="font-weight:600;color:var(--color-primary)"><i class="ph ph-laptop"></i> Clases Grabadas</div><div style="padding-left:1.2rem;font-size:0.75rem">Disponible 24/7</div></div></div>';
-                    } else if (curso.horarios_sedes) {
+                    let sedesBadgesHtml = '';
+                    let parsedHs = null;
+                    if (curso.horarios_sedes) {
                         try {
-                            const hs = typeof curso.horarios_sedes === 'string' ? JSON.parse(curso.horarios_sedes) : curso.horarios_sedes;
-                            let html = '<div style="font-size:0.8rem;color:var(--color-text-light);margin-top:0.5rem;display:flex;flex-direction:column;gap:0.4rem;">';
-                            if (hs.sedes && hs.sedes.length > 0) {
-                                hs.sedes.forEach(sede => {
-                                    html += `<div><div style="font-weight:600;color:var(--color-primary)"><i class="ph ph-map-pin"></i> ${sede.nombre}</div>`;
-                                    sede.horarios.forEach(h => {
-                                        html += `<div style="padding-left:1.2rem;font-size:0.75rem">${h.dias} • ${h.horas}</div>`;
-                                    });
-                                    html += `</div>`;
-                                });
-                            }
-                            if (hs.online && hs.online.length > 0) {
-                                html += `<div><div style="font-weight:600;color:var(--color-primary)"><i class="ph ph-laptop"></i> Clases Online</div>`;
-                                hs.online.forEach(h => {
-                                    html += `<div style="padding-left:1.2rem;font-size:0.75rem">${h.dias} • ${h.horas}</div>`;
-                                });
-                                html += `</div>`;
-                            }
-                            if (curso.texto_opciones_extra) {
-                                html += `<div style="color:var(--color-primary);font-weight:600;margin-top:0.2rem;">Consulta por más opciones</div>`;
-                            }
-                            html += '</div>';
-                            extraInfoHtml = html;
+                            parsedHs = typeof curso.horarios_sedes === 'string' ? JSON.parse(curso.horarios_sedes) : curso.horarios_sedes;
                         } catch(e) {}
+                    }
+                    const sedesNames = (parsedHs && Array.isArray(parsedHs.sedes) && parsedHs.sedes.length > 0)
+                        ? parsedHs.sedes.map(s => s.nombre).filter(Boolean)
+                        : (curso.sede ? curso.sede.split(',').map(s => s.trim()).filter(Boolean) : []);
+
+                    if (sedesNames.length > 0) {
+                        sedesBadgesHtml = sedesNames.map(sName => `<span class="badge" style="background:#FEF3C7;color:#B45309;text-transform:uppercase"><i class="ph ph-map-pin"></i> ${sName}</span>`).join('');
+                    }
+
+                    let blocksHtml = '';
+                    if (curso.modalidad === 'Online (Grabado)') {
+                        blocksHtml += '<div><div style="font-weight:600;color:var(--color-primary)"><i class="ph ph-laptop"></i> Clases Grabadas</div><div style="padding-left:1.2rem;font-size:0.75rem">Disponible 24/7</div></div>';
+                    }
+                    if (parsedHs && ((parsedHs.sedes && parsedHs.sedes.length > 0) || (parsedHs.online && parsedHs.online.length > 0))) {
+                        if (parsedHs.sedes && parsedHs.sedes.length > 0) {
+                            parsedHs.sedes.forEach(sede => {
+                                blocksHtml += `<div><div style="font-weight:600;color:var(--color-primary)"><i class="ph ph-map-pin"></i> ${sede.nombre}</div>`;
+                                (sede.horarios || []).forEach(h => {
+                                    if (h.dias || h.horas) {
+                                        blocksHtml += `<div style="padding-left:1.2rem;font-size:0.75rem">${[h.dias, h.horas].filter(Boolean).join(' • ')}</div>`;
+                                    }
+                                });
+                                blocksHtml += `</div>`;
+                            });
+                        }
+                        if (parsedHs.online && parsedHs.online.length > 0) {
+                            blocksHtml += `<div><div style="font-weight:600;color:var(--color-primary)"><i class="ph ph-laptop"></i> Clases Online</div>`;
+                            parsedHs.online.forEach(h => {
+                                if (h.dias || h.horas) {
+                                    blocksHtml += `<div style="padding-left:1.2rem;font-size:0.75rem">${[h.dias, h.horas].filter(Boolean).join(' • ')}</div>`;
+                                }
+                            });
+                            blocksHtml += `</div>`;
+                        }
+                        if (curso.texto_opciones_extra) {
+                            blocksHtml += `<div style="color:var(--color-primary);font-weight:600;margin-top:0.2rem;">Consulta por más opciones</div>`;
+                        }
                     } else if (curso.dias_clase || curso.horario_clase || curso.sede) {
-                        extraInfoHtml = `
-                            <div style="font-size:0.8rem;color:var(--color-text-light);margin-top:0.5rem;display:flex;flex-direction:column;gap:0.25rem;">
-                                ${curso.dias_clase ? `<span><i class="ph ph-calendar-blank"></i> ${curso.dias_clase}</span>` : ''}
-                                ${curso.horario_clase ? `<span><i class="ph ph-clock"></i> ${curso.horario_clase}</span>` : ''}
-                                ${curso.sede ? `<span><i class="ph ph-map-pin"></i> ${curso.sede}</span>` : ''}
-                                ${curso.texto_opciones_extra ? `<span style="color:var(--color-primary);font-weight:600;margin-top:0.2rem;">Consulta por más opciones</span>` : ''}
-                            </div>
+                        blocksHtml += `
+                            ${curso.dias_clase ? `<span><i class="ph ph-calendar-blank"></i> ${curso.dias_clase}</span>` : ''}
+                            ${curso.horario_clase ? `<span><i class="ph ph-clock"></i> ${curso.horario_clase}</span>` : ''}
+                            ${curso.sede ? `<span style="font-weight:600;color:var(--color-primary)"><i class="ph ph-map-pin"></i> ${curso.sede}</span>` : ''}
+                            ${curso.texto_opciones_extra ? `<span style="color:var(--color-primary);font-weight:600;margin-top:0.2rem;">Consulta por más opciones</span>` : ''}
                         `;
+                    }
+                    if (blocksHtml) {
+                        extraInfoHtml = `<div style="font-size:0.8rem;color:var(--color-text-light);margin-top:0.5rem;display:flex;flex-direction:column;gap:0.4rem;">${blocksHtml}</div>`;
                     }
 
                     grid.innerHTML += `
                         <div class="course-card">
                             <div class="c-image" style="background-image: url('${cover}')"></div>
                             <div class="c-content">
-                                <div class="c-meta">
-                                    <span class="badge" style="text-transform:uppercase">${curso.modalidad || 'ONLINE (GRABADO)'}</span>
+                                <div class="c-meta" style="flex-wrap:wrap;gap:0.35rem">
+                                    <div style="display:flex;gap:0.35rem;flex-wrap:wrap">
+                                        <span class="badge" style="text-transform:uppercase">${curso.modalidad || 'ONLINE (GRABADO)'}</span>
+                                        ${sedesBadgesHtml}
+                                    </div>
                                     <span style="font-size: 0.8rem; color: var(--color-text-light);"><i class="ph ph-chalkboard-teacher"></i> ${curso.profesor || 'Staff'}</span>
                                 </div>
                                 <h3>${curso.titulo}</h3>

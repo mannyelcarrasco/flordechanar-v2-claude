@@ -186,6 +186,7 @@
                         <h4>Este curso incluye:</h4>
                         <ul>
                             <li id="incMod"><i class="ph ph-video-camera"></i> <span id="lblMod">100% Online</span></li>
+                            <li id="incSede" style="display:none"><i class="ph ph-map-pin"></i> <span id="lblSede"></span></li>
                             <li><i class="ph ph-device-mobile"></i> Acceso en cualquier dispositivo</li>
                             <li id="incCert"><i class="ph ph-certificate"></i> Certificado al finalizar</li>
                             <li><i class="ph ph-infinity"></i> Acceso 24/7 de por vida</li>
@@ -250,50 +251,72 @@
             document.getElementById('cTitle').textContent = c.titulo;
             document.getElementById('cDesc').textContent = c.descripcion;
 
+            let parsedHs = null;
+            if (c.horarios_sedes) {
+                try {
+                    parsedHs = typeof c.horarios_sedes === 'string' ? JSON.parse(c.horarios_sedes) : c.horarios_sedes;
+                } catch(e) {}
+            }
+            const sedesNames = (parsedHs && Array.isArray(parsedHs.sedes) && parsedHs.sedes.length > 0)
+                ? parsedHs.sedes.map(s => s.nombre).filter(Boolean)
+                : (c.sede ? c.sede.split(',').map(s => s.trim()).filter(Boolean) : []);
+
             let badges = '';
             if(c.categoria) badges += `<span>${c.categoria}</span>`;
             if(c.nivel) badges += `<span>${c.nivel}</span>`;
             if(c.modalidad) badges += `<span>${c.modalidad}</span>`;
+            if(sedesNames.length > 0) {
+                sedesNames.forEach(sName => {
+                    badges += `<span style="background:rgba(245,158,11,0.28);border:1px solid rgba(251,191,36,0.55);color:#FEF3C7"><i class="ph ph-map-pin"></i> ${sName}</span>`;
+                });
+                const incSedeEl = document.getElementById('incSede');
+                const lblSedeEl = document.getElementById('lblSede');
+                if (incSedeEl && lblSedeEl) {
+                    incSedeEl.style.display = 'flex';
+                    lblSedeEl.textContent = 'Sede: ' + sedesNames.join(', ');
+                }
+            }
             document.getElementById('cMeta').innerHTML = badges;
             
             // Extra info
             let extraInfo = '';
             if (c.modalidad === 'Online (Grabado)') {
-                extraInfo = `<div style="font-weight:600;color:var(--color-primary);margin-top:.5rem"><i class="ph ph-laptop"></i> Clases Grabadas</div><div style="display:flex;align-items:center;gap:.5rem;padding-left:1.5rem;margin-top:.25rem">Disponible 24/7</div>`;
-            } else if (c.horarios_sedes) {
-                try {
-                    const hs = typeof c.horarios_sedes === 'string' ? JSON.parse(c.horarios_sedes) : c.horarios_sedes;
-                    if (hs.sedes && hs.sedes.length > 0) {
-                        hs.sedes.forEach(sede => {
-                            extraInfo += `<div style="font-weight:600;color:var(--color-primary);margin-top:.5rem"><i class="ph ph-map-pin"></i> ${sede.nombre}</div>`;
-                            sede.horarios.forEach(h => {
-                                extraInfo += `<div style="display:flex;align-items:center;gap:.5rem;padding-left:1.5rem;margin-top:.25rem"><i class="ph ph-calendar-blank"></i> ${h.dias} <span style="color:#D1D5DB">|</span> <i class="ph ph-clock"></i> ${h.horas}</div>`;
-                            });
+                extraInfo += `<div style="font-weight:600;color:#FDE68A;margin-top:.5rem"><i class="ph ph-laptop"></i> Clases Grabadas</div><div style="display:flex;align-items:center;gap:.5rem;padding-left:1.5rem;margin-top:.25rem;color:#F1F5F9">Disponible 24/7</div>`;
+            }
+            if (parsedHs && ((parsedHs.sedes && parsedHs.sedes.length > 0) || (parsedHs.online && parsedHs.online.length > 0))) {
+                if (parsedHs.sedes && parsedHs.sedes.length > 0) {
+                    parsedHs.sedes.forEach(sede => {
+                        extraInfo += `<div style="font-weight:600;color:#FDE68A;margin-top:.5rem"><i class="ph ph-map-pin"></i> ${sede.nombre}</div>`;
+                        (sede.horarios || []).forEach(h => {
+                            if (h.dias || h.horas) {
+                                extraInfo += `<div style="display:flex;align-items:center;gap:.5rem;padding-left:1.5rem;margin-top:.25rem;color:#F1F5F9"><i class="ph ph-calendar-blank"></i> ${h.dias || ''} ${h.dias && h.horas ? '<span style="color:rgba(255,255,255,0.4)">|</span>' : ''} ${h.horas ? `<i class="ph ph-clock"></i> ${h.horas}` : ''}</div>`;
+                            }
                         });
-                    }
-                    if (hs.online && hs.online.length > 0) {
-                        extraInfo += `<div style="font-weight:600;color:var(--color-primary);margin-top:.5rem"><i class="ph ph-laptop"></i> Clases Online</div>`;
-                        hs.online.forEach(h => {
-                            extraInfo += `<div style="display:flex;align-items:center;gap:.5rem;padding-left:1.5rem;margin-top:.25rem"><i class="ph ph-calendar-blank"></i> ${h.dias} <span style="color:#D1D5DB">|</span> <i class="ph ph-clock"></i> ${h.horas}</div>`;
-                        });
-                    }
-                    if (c.texto_opciones_extra) {
-                        extraInfo += `<div style="color:var(--color-primary);font-weight:600;margin-top:.75rem">Consulta por más opciones</div>`;
-                    }
-                } catch(e) {}
-            } else {
-                // Legacy
-                if (c.dias_clase) extraInfo += `<div style="display:flex;align-items:center;gap:.5rem"><i class="ph ph-calendar-blank"></i> ${c.dias_clase}</div>`;
-                if (c.horario_clase) extraInfo += `<div style="display:flex;align-items:center;gap:.5rem"><i class="ph ph-clock"></i> ${c.horario_clase}</div>`;
-                if (c.sede) extraInfo += `<div style="display:flex;align-items:center;gap:.5rem"><i class="ph ph-map-pin"></i> ${c.sede}</div>`;
-                if (c.texto_opciones_extra) extraInfo += `<div style="color:var(--color-primary);font-weight:600;margin-top:.5rem">Consulta por más opciones</div>`;
+                    });
+                }
+                if (parsedHs.online && parsedHs.online.length > 0) {
+                    extraInfo += `<div style="font-weight:600;color:#FDE68A;margin-top:.5rem"><i class="ph ph-laptop"></i> Clases Online</div>`;
+                    parsedHs.online.forEach(h => {
+                        if (h.dias || h.horas) {
+                            extraInfo += `<div style="display:flex;align-items:center;gap:.5rem;padding-left:1.5rem;margin-top:.25rem;color:#F1F5F9"><i class="ph ph-calendar-blank"></i> ${h.dias || ''} ${h.dias && h.horas ? '<span style="color:rgba(255,255,255,0.4)">|</span>' : ''} ${h.horas ? `<i class="ph ph-clock"></i> ${h.horas}` : ''}</div>`;
+                        }
+                    });
+                }
+                if (c.texto_opciones_extra) {
+                    extraInfo += `<div style="color:#FDE68A;font-weight:600;margin-top:.75rem">Consulta por más opciones</div>`;
+                }
+            } else if (c.dias_clase || c.horario_clase || c.sede) {
+                if (c.dias_clase) extraInfo += `<div style="display:flex;align-items:center;gap:.5rem;color:#F1F5F9"><i class="ph ph-calendar-blank"></i> ${c.dias_clase}</div>`;
+                if (c.horario_clase) extraInfo += `<div style="display:flex;align-items:center;gap:.5rem;color:#F1F5F9"><i class="ph ph-clock"></i> ${c.horario_clase}</div>`;
+                if (c.sede) extraInfo += `<div style="display:flex;align-items:center;gap:.5rem;color:#FDE68A;font-weight:600"><i class="ph ph-map-pin"></i> ${c.sede}</div>`;
+                if (c.texto_opciones_extra) extraInfo += `<div style="color:#FDE68A;font-weight:600;margin-top:.5rem">Consulta por más opciones</div>`;
             }
             
             if (extraInfo) {
                 const eiDiv = document.createElement('div');
                 eiDiv.style.marginTop = '1rem';
                 eiDiv.style.fontSize = '0.95rem';
-                eiDiv.style.color = 'var(--color-text-light)';
+                eiDiv.style.color = '#F8FAFC';
                 eiDiv.innerHTML = extraInfo;
                 document.getElementById('cMeta').parentNode.insertBefore(eiDiv, document.getElementById('cMeta').nextSibling);
             }

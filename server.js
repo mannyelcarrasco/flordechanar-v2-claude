@@ -655,15 +655,22 @@ app.get('/api/usuarios/profesores', verifyToken, async (req, res) => {
 });
 
 app.get('/api/configuracion/sedes', async (req, res) => {
+    const defaultSedes = [
+        { id: 'sede_calama', nombre: 'Sede Calama', direccion: 'Calama' },
+        { id: 'sede_laserena', nombre: 'Sede La Serena', direccion: 'La Serena' }
+    ];
     try {
         const [rows] = await pool.query('SELECT valor FROM configuracion WHERE clave="sedes_globales"');
         let sedes = [];
         if (rows.length > 0) {
             try { sedes = JSON.parse(rows[0].valor); } catch(e) {}
         }
+        if (!Array.isArray(sedes) || sedes.length === 0) {
+            sedes = defaultSedes;
+        }
         res.json(sedes);
     } catch(e) {
-        res.status(500).json({ error: 'Error del servidor' });
+        res.json(defaultSedes);
     }
 });
 

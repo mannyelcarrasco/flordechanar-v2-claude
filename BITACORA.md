@@ -1,10 +1,22 @@
 # 📋 Bitácora del Proyecto — Flor de Chañar v2
 **Repositorio:** [mannyelcarrasco/flordechanar-v2-claude](https://github.com/mannyelcarrasco/flordechanar-v2-claude)  
-**Última actualización:** 2026-10-18
+**Última actualización:** 2026-10-19
 
 ---
 
 ## ✅ Avances completados
+
+### 📍 Gestión y Visualización de Sedes en Programas (NUEVO)
+- [x] **Panel de Edición de Cursos (`curso-crear.html`):**
+  - El bloque **Sedes y Horarios del Programa** en el Paso 1 (*Información Básica*) ahora está siempre visible para que sea fácil de encontrar en cualquier modalidad.
+  - Corrección de carga asíncrona al editar cursos existentes (`renderSedesConfig()`, `renderOnlineHorarios()`, `handleModalidadChange()`) y sincronización automática con la columna `sede` y `horarios_sedes`.
+  - Posibilidad de elegir una sede existente (*Sede Calama*, *Sede La Serena*, etc.) o **escribir y crear una sede directamente** desde el editor del curso sin salir de la página.
+- [x] **Panel de Administración (`admin.html` & `server.js`):**
+  - Botón directo **Configurar Sedes Físicas** en la pestaña *Cursos* (que redirige a *Ajustes → Sedes Físicas*).
+  - Corrección en `guardarSedesGlobales()` (`localStorage.getItem('token')` y `showT`) y precarga por defecto de *Sede Calama* y *Sede La Serena* en `/api/configuracion/sedes`.
+  - Visualización de la(s) sede(s) asignada(s) en la columna **Modalidad / Sede** de la tabla de cursos del administrador.
+- [x] **Catálogo y Página de Ventas (`escuela.html` & `detalle.html`):**
+  - Visualización de insignias (*badges*) de Sede y sus horarios tanto en las tarjetas de programas (`escuela.html`) como en la cabecera y tarjeta lateral de compra ("Este curso incluye") de `detalle.html`, independientemente de la modalidad del programa.
 
 ### 🌿 Landing de Terapia Emocional Evolutiva (`/TerapiaEmocionalEvolutiva`) (NUEVO)
 - [x] Integración de la landing page de **Terapia Emocional Evolutiva (T.E.E.)** en `public/TerapiaEmocionalEvolutiva/` (`index.html`, `css/styles.css`, `js/main.js`, `assets/img/`).

@@ -231,25 +231,33 @@
             </div>
 
             <!-- GESTOR AVANZADO DE HORARIOS Y SEDES -->
-            <div id="gestorHorariosSedes" style="display:none;margin-top:1rem;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:8px;padding:1.5rem">
-                <h4 id="gestorHorariosTitle" style="font-size:1.1rem;margin-bottom:.5rem;color:var(--color-primary)"><i class="ph ph-calendar-check"></i> Sedes y Horarios</h4>
-                <p id="gestorHorariosDesc" style="font-size:.85rem;color:var(--l);margin-bottom:1rem">Añade los horarios correspondientes para cada sede donde se impartirá el curso.</p>
+            <div id="gestorHorariosSedes" style="margin-top:1rem;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:8px;padding:1.5rem">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;margin-bottom:.75rem">
+                    <div>
+                        <h4 id="gestorHorariosTitle" style="font-size:1.05rem;margin-bottom:.25rem;color:var(--color-primary)"><i class="ph ph-map-pin"></i> Sedes y Horarios del Programa</h4>
+                        <p id="gestorHorariosDesc" style="font-size:.83rem;color:var(--l);margin:0">Selecciona o escribe la(s) sede(s) que se mostrarán en la tarjeta y página del programa, y añade sus horarios si corresponde.</p>
+                    </div>
+                    <a href="admin.html?tab=ajustes&stab=sedes" target="_blank" style="font-size:.78rem;color:var(--p);text-decoration:none;font-weight:600;white-space:nowrap"><i class="ph ph-gear"></i> Gestionar Sedes Globales</a>
+                </div>
                 
                 <div id="sedesWrapper">
                     <div id="sedesConfigContainer" style="display:flex;flex-direction:column;gap:1rem;margin-bottom:1rem">
                         <!-- Sedes renderizadas dinámicamente -->
                     </div>
-                    <div style="display:flex;gap:0.5rem;align-items:center">
-                        <select id="nuevaSedeSelect" class="fc" style="width:250px">
-                            <option value="">— Elegir sede a añadir —</option>
+                    <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
+                        <select id="nuevaSedeSelect" class="fc" style="width:240px">
+                            <option value="">— Elegir sede existente —</option>
                         </select>
                         <button type="button" class="btn btn-sec btn-sm" onclick="addSedeConfig()"><i class="ph ph-plus"></i> Añadir Sede</button>
+                        <span style="font-size:.8rem;color:var(--l);margin:0 .25rem">o</span>
+                        <input type="text" id="nuevaSedeCustomInput" class="fc" placeholder="Escribir otra sede (ej: Sede Calama)" style="width:230px">
+                        <button type="button" class="btn bo btn-sm" onclick="addCustomSedeConfig()"><i class="ph ph-map-pin"></i> Crear y Añadir</button>
                     </div>
                 </div>
 
-                <div id="onlineConfigContainer" style="display:none;border:1px solid #E5E7EB;padding:1rem;border-radius:8px;margin-top:1.5rem;background:#fff">
-                    <h5 id="onlineConfigTitle" style="font-size:.9rem;margin-bottom:.5rem;color:var(--color-primary)"><i class="ph ph-laptop"></i> Clases Online</h5>
-                    <p id="onlineConfigDesc" style="font-size:.75rem;color:var(--l);margin-bottom:.75rem">Configura los horarios para las clases virtuales de este curso híbrido.</p>
+                <div id="onlineConfigContainer" style="display:none;border:1px solid #E5E7EB;padding:1rem;border-radius:8px;margin-top:1.25rem;background:#fff">
+                    <h5 id="onlineConfigTitle" style="font-size:.9rem;margin-bottom:.35rem;color:var(--color-primary)"><i class="ph ph-laptop"></i> Horarios de Clases Online en Vivo</h5>
+                    <p id="onlineConfigDesc" style="font-size:.78rem;color:var(--l);margin-bottom:.75rem">Configura los días y horas de las sesiones virtuales en vivo.</p>
                     <div id="onlineHorariosList" style="display:flex;flex-direction:column;gap:.5rem;margin-bottom:.75rem"></div>
                     <button type="button" class="btn btn-sec btn-sm" onclick="addOnlineHorario()"><i class="ph ph-plus"></i> Añadir Horario Online</button>
                 </div>
@@ -1282,8 +1290,18 @@ window.addEventListener('load', async () => {
                         try {
                             const hs = typeof c.horarios_sedes === 'string' ? JSON.parse(c.horarios_sedes) : c.horarios_sedes;
                             window._savedHorariosSedes = hs;
+                            horariosSedesData = hs || { sedes: [], online: [] };
+                            if (!horariosSedesData.sedes) horariosSedesData.sedes = [];
+                            if (!horariosSedesData.online) horariosSedesData.online = [];
                         } catch(e) {}
                     }
+                    if (c.sede && (!horariosSedesData.sedes || horariosSedesData.sedes.length === 0)) {
+                        c.sede.split(',').map(s => s.trim()).filter(Boolean).forEach(sName => {
+                            horariosSedesData.sedes.push({ nombre: sName, horarios: [] });
+                        });
+                    }
+                    renderSedesConfig();
+                    renderOnlineHorarios();
                     if (c.ventas_meta) {
                         try {
                             const vm = typeof c.ventas_meta === 'string' ? JSON.parse(c.ventas_meta) : c.ventas_meta;
@@ -1317,6 +1335,7 @@ window.addEventListener('load', async () => {
                     document.getElementById('courseLanguage').value = c.idioma || 'Español';
                     document.getElementById('courseCert').value = c.certificacion ? "1" : "0";
                     document.getElementById('courseModalidad').value = c.modalidad || 'Online (Grabado)';
+                    handleModalidadChange();
                     if (c.tipo_acceso) {
                         document.getElementById('accessType').value = c.tipo_acceso;
                         togglePrice();
@@ -1473,6 +1492,7 @@ async function saveDraft() {
             muestra_gratuita: document.getElementById('courseMuestra').value,
             salas_virtuales: salasVirtualesData,
             horarios_sedes: horariosSedesData,
+            sede: (horariosSedesData.sedes && horariosSedesData.sedes.length > 0) ? horariosSedesData.sedes.map(s => s.nombre).join(', ') : null,
             tipo_acceso: document.getElementById('accessType').value,
             portada_url: currentCoverUrl || null,
             estado: 'borrador',
@@ -1548,6 +1568,7 @@ async function publishCourse(estadoFinal = 'publicado') {
             muestra_gratuita: document.getElementById('courseMuestra').value,
             salas_virtuales: salasVirtualesData,
             horarios_sedes: horariosSedesData,
+            sede: (horariosSedesData.sedes && horariosSedesData.sedes.length > 0) ? horariosSedesData.sedes.map(s => s.nombre).join(', ') : null,
             tipo_acceso: document.getElementById('accessType').value,
             portada_url: portada_url,
             estado: estadoFinal,
@@ -1629,12 +1650,15 @@ async function loadSedesGlobales() {
         if(res.ok) {
             todasSedesGlobales = await res.json();
             const select = document.getElementById('nuevaSedeSelect');
-            todasSedesGlobales.forEach(s => {
-                const opt = document.createElement('option');
-                opt.value = s.nombre;
-                opt.textContent = s.nombre + (s.direccion ? ` (${s.direccion})` : '');
-                select.appendChild(opt);
-            });
+            if (select) {
+                select.innerHTML = '<option value="">— Elegir sede existente —</option>';
+                todasSedesGlobales.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.nombre;
+                    opt.textContent = s.nombre + (s.direccion && s.direccion !== s.nombre ? ` (${s.direccion})` : '');
+                    select.appendChild(opt);
+                });
+            }
             
             if (window._savedHorariosSedes) {
                 horariosSedesData = window._savedHorariosSedes;
@@ -1649,13 +1673,50 @@ async function loadSedesGlobales() {
 
 function addSedeConfig() {
     const s = document.getElementById('nuevaSedeSelect').value;
-    if(!s) return;
+    if(!s) {
+        showToast('Selecciona una sede de la lista o escribe una nueva al lado.');
+        return;
+    }
     if(horariosSedesData.sedes.some(x => x.nombre === s)) {
         showToast('Esta sede ya fue añadida.');
         return;
     }
     horariosSedesData.sedes.push({ nombre: s, horarios: [] });
+    document.getElementById('nuevaSedeSelect').value = '';
     renderSedesConfig();
+}
+
+async function addCustomSedeConfig() {
+    const inp = document.getElementById('nuevaSedeCustomInput');
+    const s = inp ? inp.value.trim() : '';
+    if (!s) {
+        showToast('Escribe el nombre de la sede (ej: Sede Calama).');
+        return;
+    }
+    if (!horariosSedesData.sedes.some(x => x.nombre.toLowerCase() === s.toLowerCase())) {
+        horariosSedesData.sedes.push({ nombre: s, horarios: [] });
+        renderSedesConfig();
+    }
+    if (!todasSedesGlobales.some(x => (x.nombre || '').toLowerCase() === s.toLowerCase())) {
+        todasSedesGlobales.push({ id: 'sede_' + Date.now(), nombre: s, direccion: '' });
+        const select = document.getElementById('nuevaSedeSelect');
+        if (select) {
+            const opt = document.createElement('option');
+            opt.value = s;
+            opt.textContent = s;
+            select.appendChild(opt);
+        }
+        try {
+            const token = localStorage.getItem('token');
+            await fetch('/api/configuracion/sedes', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify({ sedes: todasSedesGlobales })
+            });
+        } catch(e) {}
+    }
+    if (inp) inp.value = '';
+    showToast('📍 Sede añadida al programa');
 }
 
 function removeSedeConfig(sIndex) {
@@ -1676,8 +1737,12 @@ function removeSedeHorario(sIndex, hIndex) {
 function renderSedesConfig() {
     const container = document.getElementById('sedesConfigContainer');
     if(!container) return;
+    if (!horariosSedesData.sedes || horariosSedesData.sedes.length === 0) {
+        container.innerHTML = '<div style="font-size:.82rem;color:var(--l);font-style:italic">Ninguna sede asignada a este programa todavía.</div>';
+        return;
+    }
     container.innerHTML = horariosSedesData.sedes.map((sede, sIndex) => {
-        const hHtml = sede.horarios.map((h, hIndex) => `
+        const hHtml = (sede.horarios || []).map((h, hIndex) => `
             <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem">
                 <input type="text" class="fc" placeholder="Días (Ej: Lunes y Miércoles)" value="${h.dias}" onchange="horariosSedesData.sedes[${sIndex}].horarios[${hIndex}].dias = this.value">
                 <input type="text" class="fc" placeholder="Horas (Ej: 19:00 a 21:00 hrs)" value="${h.horas}" onchange="horariosSedesData.sedes[${sIndex}].horarios[${hIndex}].horas = this.value">
@@ -1686,13 +1751,13 @@ function renderSedesConfig() {
         `).join('');
         
         return `
-        <div style="border:1px solid #E5E7EB;padding:1rem;border-radius:8px">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-                <h5 style="margin:0;font-size:.95rem"><i class="ph ph-map-pin"></i> ${sede.nombre}</h5>
-                <button type="button" class="btn btn-sm" style="color:var(--color-primary);background:transparent" onclick="removeSedeConfig(${sIndex})">Quitar Sede</button>
+        <div style="border:1px solid #E5E7EB;padding:1rem;border-radius:8px;background:#fff">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.65rem">
+                <h5 style="margin:0;font-size:.95rem;color:var(--color-primary)"><i class="ph ph-map-pin"></i> ${sede.nombre}</h5>
+                <button type="button" class="btn btn-sm" style="color:#EF4444;background:#FEE2E2" onclick="removeSedeConfig(${sIndex})"><i class="ph ph-trash"></i> Quitar Sede</button>
             </div>
             ${hHtml}
-            <button type="button" class="btn btn-sec btn-sm" onclick="addSedeHorario(${sIndex})"><i class="ph ph-plus"></i> Añadir Horario</button>
+            <button type="button" class="btn btn-sec btn-sm" onclick="addSedeHorario(${sIndex})"><i class="ph ph-plus"></i> Añadir Horario en esta Sede (opcional)</button>
         </div>
         `;
     }).join('');
@@ -1711,7 +1776,7 @@ function removeOnlineHorario(hIndex) {
 function renderOnlineHorarios() {
     const container = document.getElementById('onlineHorariosList');
     if(!container) return;
-    container.innerHTML = horariosSedesData.online.map((h, hIndex) => `
+    container.innerHTML = (horariosSedesData.online || []).map((h, hIndex) => `
         <div style="display:flex;gap:.5rem;align-items:center">
             <input type="text" class="fc" placeholder="Días (Ej: Martes)" value="${h.dias}" onchange="horariosSedesData.online[${hIndex}].dias = this.value">
             <input type="text" class="fc" placeholder="Horas (Ej: 20:00 a 21:00 hrs)" value="${h.horas}" onchange="horariosSedesData.online[${hIndex}].horas = this.value">
@@ -1722,38 +1787,13 @@ function renderOnlineHorarios() {
 
 function handleModalidadChange() {
     const m = document.getElementById('courseModalidad').value;
-    const isPresencial = m === 'Presencial' || m === 'Híbrido';
     const isOnlineVivo = m === 'Online (En vivo)';
     const isHibrido = m === 'Híbrido';
     
-    document.getElementById('gestorHorariosSedes').style.display = (isPresencial || isOnlineVivo) ? 'block' : 'none';
-    document.getElementById('sedesWrapper').style.display = isPresencial ? 'block' : 'none';
-    document.getElementById('onlineConfigContainer').style.display = (isHibrido || isOnlineVivo) ? 'block' : 'none';
-    
-    if (document.getElementById('gestorHorariosTitle') && document.getElementById('gestorHorariosDesc')) {
-        if (isOnlineVivo) {
-            document.getElementById('gestorHorariosTitle').innerHTML = '<i class="ph ph-calendar-check"></i> Horarios de Clases Online';
-            document.getElementById('gestorHorariosDesc').textContent = 'Configura los días y horas de las sesiones virtuales en vivo.';
-            document.getElementById('onlineConfigContainer').style.background = 'transparent';
-            document.getElementById('onlineConfigContainer').style.border = 'none';
-            document.getElementById('onlineConfigContainer').style.padding = '0';
-            if(document.getElementById('onlineConfigTitle')) document.getElementById('onlineConfigTitle').style.display = 'none'; // hide because the main title says it all
-            if(document.getElementById('onlineConfigDesc')) document.getElementById('onlineConfigDesc').style.display = 'none';
-        } else {
-            document.getElementById('gestorHorariosTitle').innerHTML = '<i class="ph ph-calendar-check"></i> Sedes y Horarios';
-            document.getElementById('gestorHorariosDesc').textContent = 'Añade los horarios correspondientes para cada sede donde se impartirá el curso.';
-            document.getElementById('onlineConfigContainer').style.background = '#fff';
-            document.getElementById('onlineConfigContainer').style.border = '1px solid #E5E7EB';
-            document.getElementById('onlineConfigContainer').style.padding = '1rem';
-            if(document.getElementById('onlineConfigTitle')) {
-                document.getElementById('onlineConfigTitle').style.display = 'block';
-                document.getElementById('onlineConfigTitle').innerHTML = '<i class="ph ph-laptop"></i> Clases Online';
-            }
-            if(document.getElementById('onlineConfigDesc')) {
-                document.getElementById('onlineConfigDesc').style.display = 'block';
-            }
-        }
-    }
+    document.getElementById('gestorHorariosSedes').style.display = 'block';
+    document.getElementById('sedesWrapper').style.display = 'block';
+    const hasOnlineSaved = horariosSedesData.online && horariosSedesData.online.length > 0;
+    document.getElementById('onlineConfigContainer').style.display = (isHibrido || isOnlineVivo || hasOnlineSaved) ? 'block' : 'none';
 }
 
 document.getElementById('courseModalidad').addEventListener('change', handleModalidadChange);
