@@ -99,6 +99,14 @@ button { font: inherit; }
 .nav__links { display: flex; align-items: center; gap: 28px; font-size: 13px; font-weight: 500; letter-spacing: .04em; }
 .nav__links a { color: #d8dce6; }
 .nav__links a:hover { color: var(--oro-claro); }
+.nav__links .nav__volver {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--oro-claro); border: 1px solid rgba(201,162,74,.4);
+  padding: 8px 14px; border-radius: 999px; font-weight: 600; font-size: 12.5px;
+}
+.nav__links .nav__volver:hover {
+  background: rgba(201,162,74,.14); border-color: var(--oro-claro); color: var(--blanco);
+}
 .nav__links .nav__cta { background: var(--oro); color: var(--noche); padding: 10px 20px; border-radius: 999px; font-weight: 600; }
 .nav__links .nav__cta:hover { background: var(--oro-claro); color: var(--noche); }
 .nav__toggle {
@@ -262,7 +270,21 @@ button { font: inherit; }
   .revelar { opacity: 1; transform: none; transition: none; }
 }
 
-/* ---------- 15. Responsive ---------- */
+/* ---------- 15. WhatsApp Flotante ---------- */
+.wa-float {
+  position: fixed; bottom: 28px; right: 28px; width: 60px; height: 60px;
+  background: #25D366; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  color: #fff; box-shadow: 0 4px 20px rgba(37,211,102,.45); z-index: 9999;
+  transition: transform .3s ease, box-shadow .3s ease; text-decoration: none;
+  animation: waPulse 2.5s infinite;
+}
+.wa-float:hover { color: #fff; transform: scale(1.1); box-shadow: 0 8px 30px rgba(37,211,102,.65); }
+@keyframes waPulse {
+  0%, 100% { box-shadow: 0 4px 20px rgba(37,211,102,.4); }
+  50% { box-shadow: 0 4px 30px rgba(37,211,102,.78); }
+}
+
+/* ---------- 16. Responsive ---------- */
 @media (max-width: 860px) {
   :root { --pad-seccion: 80px; }
   .nav__toggle { display: inline-flex; align-items: center; justify-content: center; }
@@ -272,10 +294,12 @@ button { font: inherit; }
     background: var(--noche); border-bottom: 1px solid rgba(201,162,74,.18);
   }
   .nav__links a { padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,.06); }
+  .nav__links .nav__volver { margin-bottom: 6px; justify-content: center; border-radius: 10px; }
   .nav__links .nav__cta { margin-top: 12px; text-align: center; border-bottom: 0; }
   .nav.is-abierto .nav__links { display: flex; }
   .hero__velo { background: linear-gradient(90deg, rgba(7,13,26,.94), rgba(7,13,26,.75)); }
   .hero__contenido { padding: 72px 24px 88px; }
   .audiencia__foto { aspect-ratio: 16 / 10; }
   .faq__respuesta p { padding-right: 4px; }
+  .wa-float { bottom: 20px; right: 20px; width: 54px; height: 54px; }
 }
