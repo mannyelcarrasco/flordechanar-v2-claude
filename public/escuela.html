@@ -220,27 +220,46 @@
     <script>
         document.addEventListener("DOMContentLoaded", async () => {
             const grid = document.getElementById('course-grid');
+            const teeCardHtml = `
+                <div class="course-card">
+                    <div class="c-image" style="background-image: url('/TerapiaEmocionalEvolutiva/assets/img/hero-arbol.jpg'); cursor: pointer;" onclick="location.href='/TerapiaEmocionalEvolutiva/'"></div>
+                    <div class="c-content">
+                        <div class="c-meta">
+                            <span class="badge" style="text-transform:uppercase">ONLINE EN VIVO</span>
+                            <span style="font-size: 0.8rem; color: var(--color-text-light);"><i class="ph ph-chalkboard-teacher"></i> Escuela Internacional</span>
+                        </div>
+                        <h3 style="cursor:pointer" onclick="location.href='/TerapiaEmocionalEvolutiva/'">Formación en Terapia Emocional Evolutiva (T.E.E.) 2026</h3>
+                        <p>Formación integral de 2 años (116 clases) que une el Árbol Transgeneracional, Hipnosis Clínica y Bio Correlaciones. Doble certificación: Practitioner T.E.E. y Terapeuta Emocional.</p>
+                        <div style="font-size:0.8rem;color:var(--color-text-light);margin-top:0.5rem;display:flex;flex-direction:column;gap:0.4rem;">
+                            <div>
+                                <div style="font-weight:600;color:var(--color-primary)"><i class="ph ph-video-camera"></i> Clases 100% Online en Vivo</div>
+                                <div style="padding-left:1.2rem;font-size:0.75rem">Vía Google Meet • Grabaciones disponibles 24/7</div>
+                            </div>
+                        </div>
+                        <div class="c-footer" style="margin-top:1rem">
+                            <div><span style="background:#FEF3C7;color:#92400E;padding:.25rem .75rem;border-radius:20px;font-size:.75rem;font-weight:700">Inscripciones Abiertas</span></div>
+                            <a href="/TerapiaEmocionalEvolutiva/" style="color: var(--color-primary); font-weight: 600;">Ver detalles <i class="ph ph-arrow-right"></i></a>
+                        </div>
+                    </div>
+                </div>
+            `;
+
             try {
                 const res = await fetch('/api/cursos');
                 const cursos = await res.json();
-                
-                if (cursos.length === 0) {
-                    grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--color-text-light); padding: 3rem;">Aún no hay cursos publicados en la escuela.</p>';
-                    return;
-                }
 
-                grid.innerHTML = '';
-                
+                grid.innerHTML = teeCardHtml;
+
                 // Dynamic Categories
-                const catCounts = {};
+                const catCounts = { 'Sin Categoría': 1 };
                 cursos.forEach(c => {
                     const cat = c.categoria || 'Sin Categoría';
                     catCounts[cat] = (catCounts[cat] || 0) + 1;
                 });
-                
+
                 const catList = document.getElementById('category-list');
-                document.getElementById('total-courses-count').textContent = cursos.length;
-                
+                document.getElementById('total-courses-count').textContent = cursos.length + 1;
+
                 Object.keys(catCounts).sort().forEach(cat => {
                     if(cat !== 'Sin Categoría') {
                         catList.innerHTML += `<li><a href="#">${cat} <span>${catCounts[cat]}</span></a></li>`;
@@ -336,7 +355,7 @@
                     `;
                 });
             } catch(e) {
-                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: red; padding: 2rem;">Error al cargar los cursos. Contacte soporte.</p>';
+                grid.innerHTML = teeCardHtml;
             }
         });
 
