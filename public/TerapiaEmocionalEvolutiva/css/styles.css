@@ -215,6 +215,63 @@ button { font: inherit; }
 .metodo__item h3 { font-family: var(--f-titulos); font-weight: 500; font-size: 23px; color: var(--noche); }
 .metodo__item p { font-size: 15.5px; line-height: 1.7; color: var(--texto); }
 
+/* ---------- 10.5 Director Académico ---------- */
+.director { display: flex; flex-direction: column; gap: 40px; }
+.director__grid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 52px;
+  align-items: start;
+  background: var(--blanco);
+  border: 1px solid var(--crema-borde);
+  border-radius: 24px;
+  padding: 48px 42px;
+  box-shadow: 0 16px 40px rgba(11,20,38,.04);
+}
+.director__perfil { display: flex; flex-direction: column; gap: 20px; align-items: center; text-align: center; }
+.director__avatar-marco {
+  width: 100%; max-width: 280px; aspect-ratio: 1/1; border-radius: 20px;
+  border: 2px solid var(--oro); padding: 8px; background: linear-gradient(135deg, rgba(201,162,74,.18), rgba(201,162,74,.02));
+}
+.director__avatar-placeholder {
+  width: 100%; height: 100%; border-radius: 14px; background: var(--noche);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--oro-claro);
+  position: relative; overflow: hidden;
+}
+.director__iniciales { font-family: var(--f-titulos); font-size: 52px; font-weight: 600; color: var(--oro); letter-spacing: 2px; }
+.director__badge-docente {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em;
+  padding: 5px 14px; border-radius: 999px; background: rgba(201,162,74,.18); border: 1px solid rgba(201,162,74,.4); color: var(--oro-claro);
+}
+.director__avatar-nota { font-size: 12px; color: #8893a7; font-style: italic; margin-top: -6px; }
+.director__datos-rapidos { width: 100%; display: grid; grid-template-columns: 1fr; gap: 10px; }
+.director__dato {
+  background: var(--marfil); border: 1px solid var(--crema-borde); border-radius: 12px;
+  padding: 12px 14px; display: flex; flex-direction: column; gap: 3px;
+}
+.director__dato-num { font-family: var(--f-titulos); font-size: 22px; font-weight: 600; color: var(--oro-oscuro); line-height: 1.1; }
+.director__dato-txt { font-size: 12.5px; color: var(--texto); line-height: 1.35; font-weight: 500; }
+
+.director__bio { display: flex; flex-direction: column; gap: 20px; }
+.director__texto { display: flex; flex-direction: column; gap: 14px; font-size: 15.5px; line-height: 1.75; color: var(--texto); }
+.director__credenciales {
+  margin-top: 6px; padding: 22px 24px; border-radius: 16px;
+  background: var(--marfil); border: 1px solid var(--crema-borde);
+  display: flex; flex-direction: column; gap: 16px;
+}
+.director__credenciales-titulo { font-family: var(--f-titulos); font-size: 19px; color: var(--noche); font-weight: 500; }
+.director__lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.director__lista li { display: flex; align-items: flex-start; gap: 12px; font-size: 14.5px; line-height: 1.5; color: var(--texto); }
+.director__lista li svg { flex: none; margin-top: 3px; }
+.director__lista li div { display: flex; flex-direction: column; gap: 2px; }
+.director__lista li strong { color: var(--noche); font-weight: 600; }
+.director__lista li span { color: #626c80; font-size: 13.5px; }
+
+.director__cita {
+  margin: 6px 0 0; padding: 18px 22px; border-left: 3px solid var(--oro);
+  background: #fdfbf7; border-radius: 0 12px 12px 0; font-style: italic; font-size: 14.5px; line-height: 1.7; color: #424959;
+}
+
 /* ---------- 11. Proyección laboral ---------- */
 .proyeccion { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 56px 80px; align-items: start; }
 .proyeccion__intro { display: flex; flex-direction: column; gap: 20px; }
@@ -300,6 +357,8 @@ button { font: inherit; }
   .hero__velo { background: linear-gradient(90deg, rgba(7,13,26,.94), rgba(7,13,26,.75)); }
   .hero__contenido { padding: 72px 24px 88px; }
   .audiencia__foto { aspect-ratio: 16 / 10; }
+  .director__grid { grid-template-columns: 1fr; gap: 32px; padding: 32px 20px; }
+  .director__avatar-marco { max-width: 220px; }
   .faq__respuesta p { padding-right: 4px; }
   .wa-float { bottom: 20px; right: 20px; width: 54px; height: 54px; }
 }
