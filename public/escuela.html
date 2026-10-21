@@ -186,24 +186,107 @@
             <h1>Escuela de Terapias</h1>
             <p>Conviértete en un profesional del bienestar con nuestros diplomados y cursos creados con la máxima calidad y usabilidad.</p>
             <div style="margin-top:1.35rem;display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap">
-                <a href="#calendario-actividades" class="btn btn-primary" style="background:#fff;color:var(--color-primary-dark);font-size:.9rem;padding:.65rem 1.35rem;border-radius:99px;font-weight:700;display:inline-flex;align-items:center;gap:.45rem;box-shadow:0 6px 18px rgba(0,0,0,.15)">
-                    <i class="ph-fill ph-calendar-check" style="font-size:1.15rem"></i> Ver Calendario de Actividades y Cupos
+                <a href="javascript:void(0)" onclick="switchSchoolView('catalogo', event)" class="btn btn-primary" style="background:#fff;color:var(--color-primary-dark);font-size:.9rem;padding:.65rem 1.35rem;border-radius:99px;font-weight:700;display:inline-flex;align-items:center;gap:.45rem;box-shadow:0 6px 18px rgba(0,0,0,.15)">
+                    <i class="ph ph-books" style="font-size:1.15rem"></i> Explorar Catálogo de Cursos
                 </a>
-                <a href="#catalogo-cursos" style="color:rgba(255,255,255,.92);border:1.5px solid rgba(255,255,255,.45);padding:.65rem 1.3rem;border-radius:99px;font-size:.9rem;font-weight:600;display:inline-flex;align-items:center;gap:.4rem">
-                    <i class="ph ph-books"></i> Explorar Catálogo
+                <a href="javascript:void(0)" onclick="switchSchoolView('calendario', event)" style="color:rgba(255,255,255,.95);border:1.5px solid rgba(255,255,255,.5);background:rgba(255,255,255,.12);backdrop-filter:blur(4px);padding:.65rem 1.35rem;border-radius:99px;font-size:.9rem;font-weight:700;display:inline-flex;align-items:center;gap:.45rem">
+                    <i class="ph-fill ph-calendar-check" style="font-size:1.15rem"></i> 📅 Calendario de Inicios y Cupos
                 </a>
             </div>
         </div>
     </section>
 
-    <!-- ══ CALENDARIO PÚBLICO Y PROMOCIONAL DE ACTIVIDADES, TALLERES E INICIOS ══ -->
-    <section id="calendario-actividades" class="container" style="margin-top:2.75rem;margin-bottom:1rem">
+    <!-- ══ SELECTOR SUPERIOR DE PESTAÑAS (VISTAS) ══ -->
+    <div class="container" style="margin-top:2rem;margin-bottom:1.5rem">
+        <div style="display:inline-flex;background:#F1F5F9;padding:4px;border-radius:99px;box-shadow:inset 0 1px 3px rgba(0,0,0,.06);gap:4px">
+            <button type="button" id="tabBtnCatalogo" onclick="switchSchoolView('catalogo')" style="border:none;background:var(--color-primary);color:#fff;padding:.6rem 1.35rem;border-radius:99px;font-weight:700;font-size:.88rem;cursor:pointer;display:inline-flex;align-items:center;gap:.45rem;transition:all .2s;box-shadow:0 2px 8px rgba(104,122,97,.25)">
+                <i class="ph ph-books"></i> Catálogo de Cursos
+            </button>
+            <button type="button" id="tabBtnCalendario" onclick="switchSchoolView('calendario')" style="border:none;background:transparent;color:#475569;padding:.6rem 1.35rem;border-radius:99px;font-weight:700;font-size:.88rem;cursor:pointer;display:inline-flex;align-items:center;gap:.45rem;transition:all .2s">
+                <i class="ph ph-calendar-check"></i> 📅 Calendario de Inicios y Talleres
+            </button>
+        </div>
+    </div>
+
+    <!-- ══ 1) VISTA: CATÁLOGO DE CURSOS ══ -->
+    <div class="container" id="catalogo-cursos">
+        <section class="school-layout">
+            <!-- Sidebar -->
+            <aside class="school-sidebar">
+                <div style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:12px;padding:.85rem;margin-bottom:1.5rem">
+                    <div style="font-size:.72rem;font-weight:800;text-transform:uppercase;color:#64748B;letter-spacing:.5px;margin-bottom:.5rem">Modo de Vista</div>
+                    <ul class="filter-list" style="margin-bottom:0">
+                        <li>
+                            <a href="javascript:void(0)" id="sideLinkCatalogo" class="active" onclick="switchSchoolView('catalogo', event)" style="font-weight:700">
+                                <i class="ph ph-books"></i> Catálogo de Cursos
+                            </a>
+                        </li>
+                        <li>
+                            <a href="javascript:void(0)" id="sideLinkCalendario" onclick="switchSchoolView('calendario', event)" style="font-weight:700;color:var(--color-primary)">
+                                <i class="ph ph-calendar-check"></i> 📅 Calendario de Inicios
+                                <span style="background:#ECFDF5;color:#047857;font-size:.65rem;font-weight:800;padding:.15rem .45rem;border-radius:99px;margin-left:auto">Nuevo</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <h4>Categorías</h4>
+                <ul class="filter-list" id="category-list">
+                    <li><a href="#" class="active">Todos los Cursos <span id="total-courses-count">...</span></a></li>
+                </ul>
+
+                <h4 style="margin-top: 2.5rem;">Nivel</h4>
+                <ul class="filter-list">
+                    <li><a href="#">Principiante</a></li>
+                    <li><a href="#">Intermedio</a></li>
+                    <li><a href="#">Avanzado</a></li>
+                </ul>
+            </aside>
+
+            <!-- Grid -->
+            <main>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2 style="font-size: 1.8rem;">Cursos Destacados</h2>
+                    <span style="color: var(--color-text-light);"><i class="ph ph-sliders"></i> Filtrar</span>
+                </div>
+
+                <div class="course-grid" id="course-grid">
+                    <!-- Los cursos se cargarán dinámicamente aquí -->
+                    <p style="grid-column: 1/-1; text-align: center; color: var(--color-text-light); padding: 2rem;">Cargando catálogo de cursos...</p>
+                </div>
+
+                <!-- Banner al final de los cursos para invitar a ver el calendario -->
+                <div style="margin-top:2.75rem;background:linear-gradient(135deg,#F0FDF4,#ECFDF5);border:1.5px solid #A7F3D0;border-radius:16px;padding:1.35rem 1.6rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;box-shadow:0 6px 20px rgba(5,150,105,.05)">
+                    <div>
+                        <div style="font-weight:800;color:#065F46;font-size:1.05rem;display:flex;align-items:center;gap:.45rem">
+                            <i class="ph-fill ph-calendar-star" style="font-size:1.3rem;color:#059669"></i>
+                            ¿Buscas fechas de inicio, talleres y cupos en tiempo real?
+                        </div>
+                        <div style="color:#047857;font-size:.85rem;margin-top:.25rem">
+                            Consulta la planificación mensual y anual para Sede Calama, Sede La Serena y Online.
+                        </div>
+                    </div>
+                    <button type="button" onclick="switchSchoolView('calendario')" class="btn btn-primary" style="padding:.65rem 1.35rem;font-size:.88rem;border-radius:99px;font-weight:700;display:inline-flex;align-items:center;gap:.4rem">
+                        Abrir Calendario de Inicios <i class="ph ph-arrow-right"></i>
+                    </button>
+                </div>
+            </main>
+        </section>
+    </div>
+
+    <!-- ══ 2) VISTA: CALENDARIO PÚBLICO Y PROMOCIONAL (EN SU PROPIA PESTAÑA / AL FINAL) ══ -->
+    <section id="calendario-actividades" class="container" style="margin-top:1.5rem;margin-bottom:2.5rem;display:none">
         <div style="background:#fff;border:1.5px solid rgba(104,122,97,.22);border-radius:20px;padding:1.75rem 1.85rem;box-shadow:0 12px 32px rgba(44,53,49,.06)">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1.25rem;margin-bottom:1.35rem">
                 <div>
-                    <span style="display:inline-flex;align-items:center;gap:.35rem;background:#ECFDF5;color:#047857;font-size:.74rem;font-weight:700;padding:.25rem .75rem;border-radius:99px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.45rem">
-                        <i class="ph-fill ph-calendar-star"></i> Planificación & Cupos en Tiempo Real
-                    </span>
+                    <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.45rem;flex-wrap:wrap">
+                        <span style="display:inline-flex;align-items:center;gap:.35rem;background:#ECFDF5;color:#047857;font-size:.74rem;font-weight:700;padding:.25rem .75rem;border-radius:99px;text-transform:uppercase;letter-spacing:.5px">
+                            <i class="ph-fill ph-calendar-star"></i> Planificación & Cupos en Tiempo Real
+                        </span>
+                        <button type="button" onclick="switchSchoolView('catalogo')" style="border:1px solid #E2E8F0;background:#F8FAFC;color:#475569;padding:.22rem .75rem;border-radius:99px;font-size:.74rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem">
+                            <i class="ph ph-books"></i> Ver Catálogo de Cursos
+                        </button>
+                    </div>
                     <h2 style="font-size:1.65rem;margin:0;color:var(--color-secondary)">Calendario de Próximos Inicios, Talleres y Actividades</h2>
                     <p style="color:var(--color-text-light);font-size:.92rem;margin:.3rem 0 0;max-width:680px">
                         Revisa las fechas importantes, cierres de inscripción, talleres presenciales y programas online. Los cupos se actualizan automáticamente a medida que los estudiantes se inscriben.
@@ -277,38 +360,6 @@
                 </button>
             </div>
         </div>
-    </div>
-
-    <div class="container" id="catalogo-cursos">
-        <section class="school-layout">
-            <!-- Sidebar -->
-            <aside class="school-sidebar">
-                <h4>Categorías</h4>
-                <ul class="filter-list" id="category-list">
-                    <li><a href="#" class="active">Todos los Cursos <span id="total-courses-count">...</span></a></li>
-                </ul>
-
-                <h4 style="margin-top: 3rem;">Nivel</h4>
-                <ul class="filter-list">
-                    <li><a href="#">Principiante</a></li>
-                    <li><a href="#">Intermedio</a></li>
-                    <li><a href="#">Avanzado</a></li>
-                </ul>
-            </aside>
-
-            <!-- Grid -->
-            <main>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                    <h2 style="font-size: 1.8rem;">Cursos Destacados</h2>
-                    <span style="color: var(--color-text-light);"><i class="ph ph-sliders"></i> Filtrar</span>
-                </div>
-
-                <div class="course-grid" id="course-grid">
-                    <!-- Los cursos se cargarán dinámicamente aquí -->
-                    <p style="grid-column: 1/-1; text-align: center; color: var(--color-text-light); padding: 2rem;">Cargando catálogo de cursos...</p>
-                </div>
-            </main>
-        </section>
     </div>
     <!-- WhatsApp Flotante -->
     <a href="https://wa.me/56912345678?text=Hola%20Flor%20de%20Cha%C3%B1ar%2C%20me%20gustar%C3%ADa%20obtener%20m%C3%A1s%20informaci%C3%B3n" class="wa-float" target="_blank" title="Escríbenos por WhatsApp"><i class="ph ph-whatsapp-logo"></i></a>
@@ -498,6 +549,73 @@
                 grid.innerHTML = teeCardHtml;
             }
             loadPublicCalendar();
+
+            // Detectar hash inicial en la URL para abrir la pestaña correspondiente
+            if (window.location.hash === '#calendario' || window.location.hash === '#calendario-actividades') {
+                switchSchoolView('calendario');
+            } else {
+                switchSchoolView('catalogo');
+            }
+        });
+
+        // ══ CONTROLADOR DE VISTAS (PESTAÑA CATÁLOGO VS CALENDARIO) ══
+        function switchSchoolView(view, ev) {
+            if (ev && ev.preventDefault) ev.preventDefault();
+            const catSec = document.getElementById('catalogo-cursos');
+            const calSec = document.getElementById('calendario-actividades');
+            const tabBtnCat = document.getElementById('tabBtnCatalogo');
+            const tabBtnCal = document.getElementById('tabBtnCalendario');
+            const sideCat = document.getElementById('sideLinkCatalogo');
+            const sideCal = document.getElementById('sideLinkCalendario');
+
+            if (view === 'calendario') {
+                if (catSec) catSec.style.display = 'none';
+                if (calSec) {
+                    calSec.style.display = 'block';
+                    calSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+                if (tabBtnCat) {
+                    tabBtnCat.style.background = 'transparent';
+                    tabBtnCat.style.color = '#475569';
+                    tabBtnCat.style.boxShadow = 'none';
+                }
+                if (tabBtnCal) {
+                    tabBtnCal.style.background = 'var(--color-primary)';
+                    tabBtnCal.style.color = '#fff';
+                    tabBtnCal.style.boxShadow = '0 2px 8px rgba(104,122,97,.25)';
+                }
+                if (sideCat) sideCat.classList.remove('active');
+                if (sideCal) sideCal.classList.add('active');
+                if (history.replaceState) history.replaceState(null, '', '#calendario');
+                if (!_pubCalItems.length) loadPublicCalendar();
+            } else {
+                if (calSec) calSec.style.display = 'none';
+                if (catSec) {
+                    catSec.style.display = 'block';
+                    catSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+                if (tabBtnCal) {
+                    tabBtnCal.style.background = 'transparent';
+                    tabBtnCal.style.color = '#475569';
+                    tabBtnCal.style.boxShadow = 'none';
+                }
+                if (tabBtnCat) {
+                    tabBtnCat.style.background = 'var(--color-primary)';
+                    tabBtnCat.style.color = '#fff';
+                    tabBtnCat.style.boxShadow = '0 2px 8px rgba(104,122,97,.25)';
+                }
+                if (sideCal) sideCal.classList.remove('active');
+                if (sideCat) sideCat.classList.add('active');
+                if (history.replaceState) history.replaceState(null, '', '#catalogo');
+            }
+        }
+
+        window.addEventListener('hashchange', () => {
+            if (window.location.hash === '#calendario' || window.location.hash === '#calendario-actividades') {
+                switchSchoolView('calendario');
+            } else if (window.location.hash === '#catalogo' || window.location.hash === '#catalogo-cursos') {
+                switchSchoolView('catalogo');
+            }
         });
 
         // ══ CALENDARIO PÚBLICO Y PROMOCIONAL + INTEGRACIÓN EVENTOS ATENDIA ══

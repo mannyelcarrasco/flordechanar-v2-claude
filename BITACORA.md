@@ -25,6 +25,11 @@
   - Archivo `.gitkeep` agregado a `public/uploads/` para asegurar que el directorio permanezca versionado en git.
 
 ### 📅 Sistema de Calendario Organizativo, Docente y Promocional + Eventos con Cupo AtendIA (NUEVO)
+- [x] **Pestaña Propia y Reorganización de Navegación en la Escuela (`public/escuela.html`):**
+  - El Calendario de Actividades e Inicios ahora cuenta con su propia **pestaña dedicada** y se ubica limpiamente después del catálogo de cursos para que la oferta académica principal sea lo primero que vea el visitante al entrar.
+  - **Selector Superior de Vistas:** Pestañas tipo pastilla (`Catálogo de Cursos` vs `📅 Calendario de Inicios y Talleres`) justo debajo de la portada para alternar entre ambos modos en 1 clic con persistencia en URL hash (`#catalogo`, `#calendario`).
+  - **Navegación en Barra Lateral (Sidebar):** Nuevo bloque de *Modo de Vista* en la barra lateral de categorías con acceso directo a `Catálogo de Cursos` y `📅 Calendario de Inicios` con insignia de *Nuevo*.
+  - **Banner al Final de los Cursos:** Tarjeta interactiva al pie del listado de cursos que invita a los alumnos a consultar las próximas fechas de clases y talleres con cupos en vivo.
 - [x] **Diferenciación Clara entre Fecha de Inicio de Clases (Docencia) y Apertura de Matrícula (Ventas) (`curso-crear.html`, `server.js`, `escuela.html`, `admin.html`):**
   - Incorporación de la columna `fecha_inicio_clases` en la tabla `cursos`, separando explícitamente:
     1. **Fecha de Inicio de Clases (Docencia):** Cuándo inician efectivamente las clases o se dicta el taller (se muestra destacada en el calendario como "INICIO CLASES" y fecha oficial).
