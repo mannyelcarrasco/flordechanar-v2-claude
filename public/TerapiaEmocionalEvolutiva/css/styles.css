@@ -348,6 +348,103 @@ button { font: inherit; }
 .proyeccion__item p { font-size: 15.5px; line-height: 1.7; color: var(--texto-claro); }
 .proyeccion__item strong { color: var(--oro-claro); font-weight: 600; }
 
+/* ---------- 11.5 Aranceles y Financiamiento Institucional ---------- */
+.aranceles { display: flex; flex-direction: column; gap: 40px; }
+.aranceles__dossier {
+  background: var(--blanco);
+  border: 1px solid var(--crema-borde);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 16px 40px rgba(11,20,38,.04);
+}
+
+.aranceles__cabecera {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 36px;
+  padding: 44px 44px 36px;
+  border-bottom: 1px solid var(--crema-borde);
+  background: linear-gradient(180deg, #fdfbf7, var(--blanco));
+}
+.aranceles__monto-bloque { display: flex; flex-direction: column; gap: 10px; }
+.aranceles__etiqueta {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: var(--oro-oscuro);
+}
+.aranceles__precio { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.aranceles__cifra {
+  font-family: var(--f-titulos); font-size: clamp(34px, 4vw, 44px); font-weight: 600; color: var(--noche); line-height: 1;
+}
+.aranceles__moneda { font-size: 14px; font-weight: 600; color: var(--texto); }
+.aranceles__sub { font-size: 14px; color: var(--texto); line-height: 1.55; margin-top: 4px; }
+
+.aranceles__matricula-bloque {
+  background: var(--marfil);
+  border: 1.5px solid var(--oro);
+  border-radius: 16px;
+  padding: 24px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 8px 24px rgba(201,162,74,.1);
+}
+.aranceles__bono-tag {
+  align-self: flex-start;
+  font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em;
+  background: var(--noche); color: var(--oro-claro); padding: 4px 10px; border-radius: 999px;
+}
+.aranceles__matricula-val { display: flex; align-items: baseline; gap: 10px; }
+.aranceles__matricula-cero {
+  font-family: var(--f-titulos); font-size: 36px; font-weight: 700; color: var(--oro-oscuro); line-height: 1;
+}
+.aranceles__matricula-txt { font-family: var(--f-titulos); font-size: 20px; font-weight: 600; color: var(--noche); }
+.aranceles__matricula-desc { font-size: 13px; color: var(--texto); line-height: 1.5; }
+
+.aranceles__modos { padding: 36px 44px; border-bottom: 1px solid var(--crema-borde); display: flex; flex-direction: column; gap: 24px; }
+.aranceles__modos-titulo { font-family: var(--f-titulos); font-size: 22px; color: var(--noche); font-weight: 500; }
+.aranceles__modos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 24px;
+}
+.aranceles__modo {
+  background: var(--marfil);
+  border: 1px solid var(--crema-borde);
+  border-radius: 16px;
+  padding: 28px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: transform .2s, border-color .2s;
+}
+.aranceles__modo:hover { transform: translateY(-2px); border-color: var(--oro); }
+.aranceles__modo--beneficio {
+  background: #fbf7ee;
+  border-color: rgba(201,162,74,.4);
+}
+.aranceles__modo-top { display: flex; flex-direction: column; gap: 4px; }
+.aranceles__modo-num { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--oro-oscuro); }
+.aranceles__modo-top h4 { font-family: var(--f-titulos); font-size: 19px; color: var(--noche); font-weight: 600; }
+.aranceles__modo-precio { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; padding-bottom: 12px; border-bottom: 1px solid var(--crema-borde); }
+.aranceles__modo-precio strong { font-family: var(--f-titulos); font-size: 22px; color: var(--noche); }
+.aranceles__modo-precio span { font-size: 13px; color: var(--oro-oscuro); font-weight: 600; }
+.aranceles__modo-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; font-size: 14px; line-height: 1.5; color: var(--texto); }
+.aranceles__modo-items li { position: relative; padding-left: 18px; }
+.aranceles__modo-items li::before { content: "•"; position: absolute; left: 0; color: var(--oro); font-weight: bold; font-size: 16px; line-height: 1; }
+
+.aranceles__pie { padding: 36px 44px; display: flex; flex-direction: column; gap: 32px; background: #faf8f5; }
+.aranceles__garantias {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 24px;
+}
+.aranceles__garantia-item { display: flex; gap: 14px; align-items: flex-start; }
+.aranceles__garantia-item svg { flex: none; margin-top: 2px; }
+.aranceles__garantia-item div { display: flex; flex-direction: column; gap: 4px; font-size: 13.5px; line-height: 1.5; color: var(--texto); }
+.aranceles__garantia-item strong { color: var(--noche); font-size: 14.5px; }
+
+.aranceles__cta { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+.aranceles__cta-sub { font-size: 13px; color: var(--texto); }
+
 /* ---------- 12. FAQ ---------- */
 .faq { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 44px; }
 .faq__lista { border-top: 1px solid var(--crema-borde); }
@@ -424,6 +521,9 @@ button { font: inherit; }
   .audiencia__foto { aspect-ratio: 16 / 10; }
   .director__grid { grid-template-columns: 1fr; gap: 32px; padding: 32px 20px; }
   .director__avatar-marco { max-width: 220px; }
+  .aranceles__cabecera { grid-template-columns: 1fr; padding: 28px 20px; }
+  .aranceles__modos { padding: 28px 20px; }
+  .aranceles__pie { padding: 28px 20px; }
   .faq__respuesta p { padding-right: 4px; }
   .wa-float { bottom: 20px; right: 20px; width: 54px; height: 54px; }
 }
