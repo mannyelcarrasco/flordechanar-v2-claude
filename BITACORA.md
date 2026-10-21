@@ -7,6 +7,16 @@
 ## ✅ Avances completados
 
 ### 📅 Sistema de Calendario Organizativo, Docente y Promocional + Eventos con Cupo AtendIA (NUEVO)
+- [x] **Diferenciación Clara entre Fecha de Inicio de Clases (Docencia) y Apertura de Matrícula (Ventas) (`curso-crear.html`, `server.js`, `escuela.html`, `admin.html`):**
+  - Incorporación de la columna `fecha_inicio_clases` en la tabla `cursos`, separando explícitamente:
+    1. **Fecha de Inicio de Clases (Docencia):** Cuándo inician efectivamente las clases o se dicta el taller (se muestra destacada en el calendario como "INICIO CLASES" y fecha oficial).
+    2. **Apertura de Ventas / Matrícula:** Cuándo está disponible para comprarse o postularse (evitando que una venta abierta hoy se confunda con que el curso arranca hoy).
+    3. **Fecha de Término de Clases (Opcional):** Hasta qué fecha se proyectan las clases.
+  - En la tarjeta del calendario de `escuela.html`:
+    - El badge superior ahora indica explícitamente `INICIO CLASES` (o `TALLER` / `EVENTO`), y debajo del título se diferencian con claridad el inicio de clases en verde y la fecha de matrícula abierta.
+    - Corrección del badge de duración (`⏳ 160 hrs` en lugar de un número suelto `160`).
+  - En `admin.html`:
+    - El calendario y la planificación anual muestran ambos hitos (`🚀 Inicio Clases: ...` y `🛒 Apertura Matrícula: ...`) para permitir control total tanto del área académica como del área comercial.
 - [x] **Motor de Proyección de Clases y API de Calendario (`server.js`):**
   - Nuevas columnas `fecha_fin_clases` y `atendia_event_id` en la tabla `cursos`, más nueva tabla `calendario_eventos` para talleres especiales, charlas abiertas, cierres de matrícula, reuniones docentes y feriados.
   - Proyección automática de días de clase recurrentes durante los próximos meses/año (`buildCourseRecurringSessions`, `parseDiasSemana`, `estimateFechaFin`) a partir de `fecha_inicio_clases`, `duracion`, `dias_clase` y `horarios_sedes` de cada curso activo o publicado.

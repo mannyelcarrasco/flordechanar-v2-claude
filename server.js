@@ -318,6 +318,7 @@ async function initDB() {
             `ALTER TABLE cursos ADD COLUMN sede VARCHAR(255)`,
             `ALTER TABLE cursos ADD COLUMN texto_opciones_extra BOOLEAN DEFAULT FALSE`,
             `ALTER TABLE cursos ADD COLUMN fecha_inicio_ventas DATE DEFAULT NULL`,
+            `ALTER TABLE cursos ADD COLUMN fecha_inicio_clases DATE DEFAULT NULL`,
             `ALTER TABLE cursos ADD COLUMN cupos INT DEFAULT 0`,
             `ALTER TABLE cursos ADD COLUMN muestra_gratuita VARCHAR(50) DEFAULT 'ninguna'`,
             `ALTER TABLE cursos ADD COLUMN horarios_sedes TEXT`,
@@ -825,7 +826,7 @@ app.get('/api/cursos', async (req, res) => {
             SELECT c.id, c.titulo, c.descripcion, c.precio, c.tiene_matricula, c.valor_matricula, c.cobra_matricula,
                    c.tipo_acceso, c.portada_url, c.modalidad, c.dias_clase, c.horario_clase, c.sede, c.horarios_sedes,
                    c.texto_opciones_extra, c.ventas_meta, c.duracion_total, c.categoria, c.fecha_inicio_ventas,
-                   c.fecha_fin_clases, c.cupos, c.atendia_event_id, u.nombre as profesor,
+                   c.fecha_inicio_clases, c.fecha_fin_clases, c.cupos, c.atendia_event_id, u.nombre as profesor,
                    (SELECT COUNT(*) FROM inscripciones WHERE curso_id = c.id) as inscritos_count
             FROM cursos c
             LEFT JOIN usuarios u ON c.profesor_id = u.id
@@ -851,7 +852,7 @@ app.post('/api/cursos', verifyToken, async (req, res) => {
             titulo, descripcion, precio, precio_mensual, tiene_matricula, valor_matricula, cobra_matricula, portada_url, estado, meet_url, es_ciclico, 
             tipo_acceso, categoria, nivel, duracion_total, idioma, descripcion_ventas, 
             ventas_meta, certificacion, modalidad, profesor_id, dias_clase, horario_clase, sede, texto_opciones_extra, salas_virtuales,
-            fecha_inicio_ventas, fecha_fin_clases, cupos, muestra_gratuita, horarios_sedes, atendia_event_id
+            fecha_inicio_ventas, fecha_inicio_clases, fecha_fin_clases, cupos, muestra_gratuita, horarios_sedes, atendia_event_id
         } = req.body;
         if (!validStr(titulo, 3, 300)) return res.status(400).json({ error: 'Título del curso requerido (3-300 caracteres)' });
         const estadosPermitidos = ['borrador', 'publicado', 'archivado', 'interno'];
@@ -859,14 +860,14 @@ app.post('/api/cursos', verifyToken, async (req, res) => {
         
         const [result] = await pool.query(
             `INSERT INTO cursos 
-             (titulo, descripcion, precio, tiene_matricula, valor_matricula, cobra_matricula, portada_url, estado, meet_url, es_ciclico, tipo_acceso, categoria, nivel, duracion_total, idioma, descripcion_ventas, ventas_meta, certificacion, modalidad, profesor_id, dias_clase, horario_clase, sede, texto_opciones_extra, salas_virtuales, fecha_inicio_ventas, fecha_fin_clases, cupos, muestra_gratuita, horarios_sedes, atendia_event_id) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             (titulo, descripcion, precio, tiene_matricula, valor_matricula, cobra_matricula, portada_url, estado, meet_url, es_ciclico, tipo_acceso, categoria, nivel, duracion_total, idioma, descripcion_ventas, ventas_meta, certificacion, modalidad, profesor_id, dias_clase, horario_clase, sede, texto_opciones_extra, salas_virtuales, fecha_inicio_ventas, fecha_inicio_clases, fecha_fin_clases, cupos, muestra_gratuita, horarios_sedes, atendia_event_id) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 titulo, descripcion, precio || 0, tiene_matricula ? 1 : 0, parseInt(valor_matricula) || 0, cobra_matricula !== undefined ? (cobra_matricula ? 1 : 0) : 1, portada_url || null, estado || 'borrador', meet_url || null, es_ciclico ? 1 : 0,
                 tipo_acceso || 'gratis', categoria || null, nivel || null, duracion_total || null, idioma || null,
                 descripcion_ventas || null, ventas_meta ? JSON.stringify(ventas_meta) : null, certificacion ? 1 : 0, modalidad || 'Online (Grabado)',
                 profesor_id || req.usuario.id, dias_clase || null, horario_clase || null, sede || null, texto_opciones_extra ? 1 : 0, salas_virtuales ? JSON.stringify(salas_virtuales) : null,
-                fecha_inicio_ventas || null, fecha_fin_clases || null, cupos || 0, muestra_gratuita || 'ninguna', horarios_sedes ? JSON.stringify(horarios_sedes) : null, atendia_event_id ? parseInt(atendia_event_id) : null
+                fecha_inicio_ventas || null, fecha_inicio_clases || null, fecha_fin_clases || null, cupos || 0, muestra_gratuita || 'ninguna', horarios_sedes ? JSON.stringify(horarios_sedes) : null, atendia_event_id ? parseInt(atendia_event_id) : null
             ]
         );
         const newCursoId = result.insertId;
@@ -1039,7 +1040,7 @@ app.get('/api/cursos/:id', verifyToken, async (req, res) => {
 app.put('/api/cursos/:id', verifyToken, async (req, res) => {
     if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
     try {
-        const { titulo, descripcion, precio, precio_mensual, tiene_matricula, valor_matricula, cobra_matricula, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas, ventas_meta, es_ciclico, meet_url, salas_virtuales, dias_clase, horario_clase, sede, texto_opciones_extra, fecha_inicio_ventas, fecha_fin_clases, cupos, muestra_gratuita, horarios_sedes, atendia_event_id } = req.body;
+        const { titulo, descripcion, precio, precio_mensual, tiene_matricula, valor_matricula, cobra_matricula, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas, ventas_meta, es_ciclico, meet_url, salas_virtuales, dias_clase, horario_clase, sede, texto_opciones_extra, fecha_inicio_ventas, fecha_inicio_clases, fecha_fin_clases, cupos, muestra_gratuita, horarios_sedes, atendia_event_id } = req.body;
         let profAsignado = req.usuario.rol === 'admin' ? (profesor_id || req.usuario.id) : req.usuario.id;
 
         let vMetaStr = null;
@@ -1056,8 +1057,8 @@ app.put('/api/cursos/:id', verifyToken, async (req, res) => {
         }
 
         await pool.query(
-            'UPDATE cursos SET titulo = ?, descripcion = ?, precio = ?, tiene_matricula = ?, valor_matricula = ?, cobra_matricula = ?, tipo_acceso = ?, portada_url = ?, estado = ?, profesor_id = ?, categoria = ?, nivel = ?, duracion_total = ?, idioma = ?, certificacion = ?, modalidad = ?, descripcion_ventas = ?, ventas_meta = ?, es_ciclico = ?, meet_url = ?, salas_virtuales = ?, dias_clase = ?, horario_clase = ?, sede = ?, texto_opciones_extra = ?, fecha_inicio_ventas = ?, fecha_fin_clases = ?, cupos = ?, muestra_gratuita = ?, horarios_sedes = ?, atendia_event_id = ? WHERE id = ?',
-            [titulo, descripcion, precio, tiene_matricula ? 1 : 0, parseInt(valor_matricula) || 0, cobra_matricula !== undefined ? (cobra_matricula ? 1 : 0) : 1, tipo_acceso || 'gratis', portada_url, estado, profAsignado, categoria||null, nivel||null, duracion_total||null, idioma||null, certificacion ? 1 : 0, modalidad||'Online (Grabado)', descripcion_ventas||null, vMetaStr, es_ciclico ? 1 : 0, meet_url || null, salasStr, dias_clase||null, horario_clase||null, sede||null, texto_opciones_extra ? 1 : 0, fecha_inicio_ventas||null, fecha_fin_clases||null, cupos||0, muestra_gratuita||'ninguna', hrSedesStr, atendia_event_id !== undefined ? (parseInt(atendia_event_id) || null) : null, req.params.id]
+            'UPDATE cursos SET titulo = ?, descripcion = ?, precio = ?, tiene_matricula = ?, valor_matricula = ?, cobra_matricula = ?, tipo_acceso = ?, portada_url = ?, estado = ?, profesor_id = ?, categoria = ?, nivel = ?, duracion_total = ?, idioma = ?, certificacion = ?, modalidad = ?, descripcion_ventas = ?, ventas_meta = ?, es_ciclico = ?, meet_url = ?, salas_virtuales = ?, dias_clase = ?, horario_clase = ?, sede = ?, texto_opciones_extra = ?, fecha_inicio_ventas = ?, fecha_inicio_clases = ?, fecha_fin_clases = ?, cupos = ?, muestra_gratuita = ?, horarios_sedes = ?, atendia_event_id = ? WHERE id = ?',
+            [titulo, descripcion, precio, tiene_matricula ? 1 : 0, parseInt(valor_matricula) || 0, cobra_matricula !== undefined ? (cobra_matricula ? 1 : 0) : 1, tipo_acceso || 'gratis', portada_url, estado, profAsignado, categoria||null, nivel||null, duracion_total||null, idioma||null, certificacion ? 1 : 0, modalidad||'Online (Grabado)', descripcion_ventas||null, vMetaStr, es_ciclico ? 1 : 0, meet_url || null, salasStr, dias_clase||null, horario_clase||null, sede||null, texto_opciones_extra ? 1 : 0, fecha_inicio_ventas||null, fecha_inicio_clases||null, fecha_fin_clases||null, cupos||0, muestra_gratuita||'ninguna', hrSedesStr, atendia_event_id !== undefined ? (parseInt(atendia_event_id) || null) : null, req.params.id]
         );
 
         // Sincronizar plan de mensualidad si viene precio_mensual en el body
@@ -3514,7 +3515,9 @@ function buildCourseRecurringSessions(curso, rangeStart, rangeEnd, atdMap) {
         });
     }
 
-    const startCourse = curso.fecha_inicio_ventas ? String(curso.fecha_inicio_ventas).slice(0, 10) : rangeStart;
+    const startCourse = (curso.fecha_inicio_clases && String(curso.fecha_inicio_clases).slice(0, 10) !== '0000-00-00')
+        ? String(curso.fecha_inicio_clases).slice(0, 10)
+        : (curso.fecha_inicio_ventas ? String(curso.fecha_inicio_ventas).slice(0, 10) : rangeStart);
     const endCourse = estimateFechaFin(startCourse, curso.duracion_total, curso.fecha_fin_clases) || rangeEnd;
 
     const effStart = startCourse > rangeStart ? startCourse : rangeStart;
@@ -3537,7 +3540,7 @@ function buildCourseRecurringSessions(curso, rangeStart, rangeEnd, atdMap) {
                     origen: 'curso_horario',
                     tipo: isFirstDay ? 'inicio_curso' : 'clase_regular',
                     curso_id: curso.id,
-                    titulo: isFirstDay ? `🚀 Inicio: ${curso.titulo}` : curso.titulo,
+                    titulo: isFirstDay ? `🚀 Inicio Clases: ${curso.titulo}` : curso.titulo,
                     curso_titulo: curso.titulo,
                     fecha: iso,
                     hora: rule.horasStr || 'Por definir',
@@ -3575,13 +3578,13 @@ app.get('/api/calendario/publico', async (req, res) => {
         const [cursos] = await pool.query(`
             SELECT c.id, c.titulo, c.descripcion, c.precio, c.tiene_matricula, c.valor_matricula, c.cobra_matricula,
                    c.tipo_acceso, c.portada_url, c.modalidad, c.dias_clase, c.horario_clase, c.sede, c.horarios_sedes,
-                   c.duracion_total, c.categoria, c.fecha_inicio_ventas, c.fecha_fin_clases, c.cupos, c.atendia_event_id,
+                   c.duracion_total, c.categoria, c.fecha_inicio_ventas, c.fecha_inicio_clases, c.fecha_fin_clases, c.cupos, c.atendia_event_id,
                    c.profesor_id, c.ventas_meta, u.nombre as profesor,
                    (SELECT COUNT(*) FROM inscripciones WHERE curso_id = c.id) as inscritos_count
             FROM cursos c
             LEFT JOIN usuarios u ON c.profesor_id = u.id
             WHERE c.estado = 'publicado'
-            ORDER BY COALESCE(c.fecha_inicio_ventas, '2099-12-31') ASC, c.id DESC
+            ORDER BY COALESCE(c.fecha_inicio_clases, c.fecha_inicio_ventas, '2099-12-31') ASC, c.id DESC
         `);
 
         // 3) Eventos con cupo desde AtendIA (/n8n/events)
@@ -3616,9 +3619,14 @@ app.get('/api/calendario/publico', async (req, res) => {
                 ? Number(atdEv.seats_left)
                 : (cupoTotal > 0 ? Math.max(0, cupoTotal - cuposOcupados) : null);
 
-            const fechaInicio = (c.fecha_inicio_ventas && String(c.fecha_inicio_ventas).slice(0, 10) !== '0000-00-00')
-                ? String(c.fecha_inicio_ventas).slice(0, 10)
-                : (atdEv ? atdEv.date : null);
+            const fClases = (c.fecha_inicio_clases && String(c.fecha_inicio_clases).slice(0, 10) !== '0000-00-00')
+                ? String(c.fecha_inicio_clases).slice(0, 10) : null;
+            const fVentas = (c.fecha_inicio_ventas && String(c.fecha_inicio_ventas).slice(0, 10) !== '0000-00-00')
+                ? String(c.fecha_inicio_ventas).slice(0, 10) : null;
+
+            // La fecha principal de exhibición en el calendario es cuándo se dicta el curso.
+            // Si aún no está definida la fecha de clases, se apoya en fecha_inicio_ventas o en el evento de AtendIA.
+            const fechaInicio = fClases || fVentas || (atdEv ? atdEv.date : null);
 
             items.push({
                 uid: `curso_${c.id}`,
@@ -3629,6 +3637,8 @@ app.get('/api/calendario/publico', async (req, res) => {
                 titulo: c.titulo,
                 descripcion: c.descripcion || '',
                 fecha_inicio: fechaInicio,
+                fecha_inicio_clases: fClases,
+                fecha_inicio_ventas: fVentas,
                 fecha_fin: c.fecha_fin_clases ? String(c.fecha_fin_clases).slice(0, 10) : null,
                 hora_inicio: c.horario_clase || (atdEv ? atdEv.time : ''),
                 dias_clase: c.dias_clase || '',

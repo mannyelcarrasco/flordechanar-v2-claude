@@ -4393,18 +4393,20 @@ function getUnifiedAdminCalendarItems() {
         });
     });
 
-    // 2) Si un curso tiene fecha_inicio_ventas pero aún no tiene días de semana definidos, mostrar igual su hito de inicio
+    // 2) Si un curso tiene fecha_inicio_clases o fecha_inicio_ventas, mostrar sus hitos correspondientes
     (_adminCalData.cursos || []).forEach(c => {
         if (c.atendia_event_id) linkedAtdIds.add(Number(c.atendia_event_id));
-        if (c.fecha_inicio_ventas) {
-            const f = String(c.fecha_inicio_ventas).slice(0, 10);
-            const yaTieneInicio = items.some(x => x.curso_id === c.id && x.fecha === f);
+        const fClases = c.fecha_inicio_clases ? String(c.fecha_inicio_clases).slice(0, 10) : null;
+        const fVentas = c.fecha_inicio_ventas ? String(c.fecha_inicio_ventas).slice(0, 10) : null;
+
+        if (fClases) {
+            const yaTieneInicio = items.some(x => x.curso_id === c.id && x.fecha === fClases);
             if (!yaTieneInicio) {
                 items.push({
                     uid: `curso_init_${c.id}`,
-                    fecha: f,
-                    hora: c.horario_clase || 'Inicio',
-                    titulo: `🚀 Inicio: ${c.titulo}`,
+                    fecha: fClases,
+                    hora: c.horario_clase || 'Inicio de Clases',
+                    titulo: `🚀 Inicio Clases: ${c.titulo}`,
                     subtitulo: `${c.profesor || 'Por asignar'} · ${c.sede || c.modalidad || ''}`,
                     profesor_id: c.profesor_id,
                     profesor_nombre: c.profesor || 'Por asignar',
@@ -4413,10 +4415,27 @@ function getUnifiedAdminCalendarItems() {
                     tipo: 'inicio_curso',
                     color: '#059669',
                     curso_id: c.id,
-                    cupos_info: c.cupos_total > 0 ? `${c.cupos_ocupados}/${c.cupos_total} cupos` : '',
+                    cupos_info: c.cupos > 0 ? `${c.inscritos_count || 0}/${c.cupos} cupos` : '',
                     editable: false
                 });
             }
+        }
+        if (fVentas && fVentas !== fClases) {
+            items.push({
+                uid: `curso_ventas_${c.id}`,
+                fecha: fVentas,
+                hora: 'Apertura',
+                titulo: `🛒 Apertura Matrícula: ${c.titulo}`,
+                subtitulo: `Venta disponible · ${c.sede || c.modalidad || ''}`,
+                profesor_id: c.profesor_id,
+                profesor_nombre: c.profesor || 'Por asignar',
+                sede: c.sede || c.modalidad || '',
+                modalidad: c.modalidad || '',
+                tipo: 'inscripcion',
+                color: '#2563EB',
+                curso_id: c.id,
+                editable: false
+            });
         }
     });
 
@@ -4652,7 +4671,7 @@ function renderAdminTeacherLoad(items) {
     const rows = Object.entries(byTeacher).map(([profName, info]) => {
         const cursosBadges = info.cursos.map(c => {
             const diasTxt = c.dias_clase || 'Horario según sede';
-            const iniTxt = c.fecha_inicio_ventas ? `Inicia: ${String(c.fecha_inicio_ventas).slice(0, 10)}` : 'En curso';
+            const iniTxt = (c.fecha_inicio_clases || c.fecha_inicio_ventas) ? `Inicia: ${String(c.fecha_inicio_clases || c.fecha_inicio_ventas).slice(0, 10)}` : 'En curso';
             return `<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:.55rem .75rem;margin-bottom:.4rem">
                 <div style="display:flex;justify-content:space-between;gap:.5rem;align-items:center">
                     <strong style="font-size:.83rem;color:var(--s)">${c.titulo}</strong>

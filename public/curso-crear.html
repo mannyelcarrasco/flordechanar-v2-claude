@@ -440,10 +440,33 @@
                 </label>
             </div>
 
-            <div class="three">
-                <div class="fg"><label class="fl">Fecha de Inicio (Clases / Taller)</label><input class="fc" id="courseFechaVentas" type="date"><div class="hint">Se mostrará en el Calendario Académico y Promocional</div></div>
-                <div class="fg"><label class="fl">Fecha de Término (Opcional)</label><input class="fc" id="courseFechaFin" type="date"><div class="hint">Hasta qué día se proyectan las clases del profesor</div></div>
-                <div class="fg"><label class="fl">Cupos disponibles</label><input class="fc" id="courseCupos" type="number" placeholder="0 = sin límite"><div class="hint">Se descuenta con inscripciones o Evento AtendIA</div></div>
+            <div style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:12px;padding:1rem 1.15rem;margin-bottom:1.15rem">
+                <div style="font-weight:700;color:var(--color-secondary);font-size:.9rem;margin-bottom:.85rem;display:flex;align-items:center;gap:.45rem">
+                    <i class="ph-fill ph-calendar-blank" style="color:var(--primary);font-size:1.15rem"></i>
+                    Fechas Académicas y Apertura de Matrícula
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1rem">
+                    <div class="fg" style="margin-bottom:0">
+                        <label class="fl" style="color:#065F46;font-weight:700">🚀 Fecha Inicio de Clases (Docencia)</label>
+                        <input class="fc" id="courseFechaInicioClases" type="date" style="border-color:#A7F3D0">
+                        <div class="hint" style="color:#047857">¿Cuándo empiezan las clases o se dicta el taller? Esta fecha es la que se publica como <strong>Inicio de Clases</strong>.</div>
+                    </div>
+                    <div class="fg" style="margin-bottom:0">
+                        <label class="fl" style="color:#1E40AF;font-weight:700">🛒 Apertura de Ventas / Matrícula</label>
+                        <input class="fc" id="courseFechaVentas" type="date" style="border-color:#BFDBFE">
+                        <div class="hint" style="color:#1D4ED8">¿Desde cuándo está listo para ser vendido o postular? Déjalo hoy o vacío para venta inmediata.</div>
+                    </div>
+                    <div class="fg" style="margin-bottom:0">
+                        <label class="fl">🏁 Fecha de Término (Opcional)</label>
+                        <input class="fc" id="courseFechaFin" type="date">
+                        <div class="hint">Hasta qué día se proyectan las clases en el calendario.</div>
+                    </div>
+                    <div class="fg" style="margin-bottom:0">
+                        <label class="fl">🎟️ Cupos disponibles</label>
+                        <input class="fc" id="courseCupos" type="number" placeholder="0 = sin límite">
+                        <div class="hint">0 = sin límite. Se descuenta con inscripciones o Evento AtendIA.</div>
+                    </div>
+                </div>
             </div>
 
             <div class="fg" style="background:#FDF2F8;border:1.5px solid #FBCFE8;border-radius:10px;padding:.85rem 1rem;margin-bottom:1rem">
@@ -1527,6 +1550,9 @@ window.addEventListener('load', async () => {
                     document.getElementById('courseTitle').value = c.titulo || '';
                     document.getElementById('courseDesc').value = c.descripcion || '';
                     document.getElementById('courseDescVentas').value = c.descripcion_ventas || '';
+                    if (document.getElementById('courseFechaInicioClases')) {
+                        document.getElementById('courseFechaInicioClases').value = c.fecha_inicio_clases ? c.fecha_inicio_clases.split('T')[0] : '';
+                    }
                     document.getElementById('courseFechaVentas').value = c.fecha_inicio_ventas ? c.fecha_inicio_ventas.split('T')[0] : '';
                     if (document.getElementById('courseFechaFin')) {
                         document.getElementById('courseFechaFin').value = c.fecha_fin_clases ? c.fecha_fin_clases.split('T')[0] : '';
@@ -1960,6 +1986,7 @@ async function saveDraft() {
             cobra_matricula: document.getElementById('courseCobraMatricula') ? (document.getElementById('courseCobraMatricula').value === '1') : true,
             es_ciclico: document.getElementById('courseCiclico').checked,
             texto_opciones_extra: document.getElementById('courseOpcionesExtra').checked,
+            fecha_inicio_clases: document.getElementById('courseFechaInicioClases') ? (document.getElementById('courseFechaInicioClases').value || null) : null,
             fecha_inicio_ventas: document.getElementById('courseFechaVentas').value || null,
             fecha_fin_clases: document.getElementById('courseFechaFin') ? (document.getElementById('courseFechaFin').value || null) : null,
             atendia_event_id: document.getElementById('courseAtendiaEventId') && document.getElementById('courseAtendiaEventId').value ? parseInt(document.getElementById('courseAtendiaEventId').value) : null,
@@ -2041,6 +2068,7 @@ async function publishCourse(estadoFinal = 'publicado') {
             cobra_matricula: document.getElementById('courseCobraMatricula') ? (document.getElementById('courseCobraMatricula').value === '1') : true,
             es_ciclico: document.getElementById('courseCiclico').checked,
             texto_opciones_extra: document.getElementById('courseOpcionesExtra').checked,
+            fecha_inicio_clases: document.getElementById('courseFechaInicioClases') ? (document.getElementById('courseFechaInicioClases').value || null) : null,
             fecha_inicio_ventas: document.getElementById('courseFechaVentas').value || null,
             fecha_fin_clases: document.getElementById('courseFechaFin') ? (document.getElementById('courseFechaFin').value || null) : null,
             atendia_event_id: document.getElementById('courseAtendiaEventId') && document.getElementById('courseAtendiaEventId').value ? parseInt(document.getElementById('courseAtendiaEventId').value) : null,
