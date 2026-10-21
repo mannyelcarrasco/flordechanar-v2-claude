@@ -296,10 +296,22 @@
                     document.getElementById('loading').innerHTML = '⚠️ Curso no encontrado o no disponible.';
                     return;
                 }
-                
                 currentCourse = await res.json();
-                renderCourse(currentCourse);
+            } catch(e) {
+                document.getElementById('loading').innerHTML = '⚠️ Error de conexión con el servidor.';
+                console.error('Fetch course error:', e);
+                return;
+            }
 
+            try {
+                renderCourse(currentCourse);
+            } catch(e) {
+                console.error('Render course error:', e);
+                document.getElementById('loading').innerHTML = '⚠️ Error al cargar el contenido del curso.';
+                return;
+            }
+
+            try {
                 // Fetch curriculum
                 const curRes = await fetch('/api/cursos/' + courseId + '/curriculum');
                 if (curRes.ok) {
@@ -307,8 +319,7 @@
                     renderCurriculum(curriculum);
                 }
             } catch(e) {
-                document.getElementById('loading').innerHTML = '⚠️ Error de conexión.';
-                console.error(e);
+                console.error('Fetch curriculum error:', e);
             }
         });
 
@@ -400,16 +411,17 @@
                 document.getElementById('cMeta').parentNode.insertBefore(eiDiv, document.getElementById('cMeta').nextSibling);
             }
 
-            // Ventas Meta (VSL, Testimonials, Funnel Config)
+            // Ventas Meta (VSL, Testimonials, Funnel Config, Matricula)
             let vslUrl = '';
             let testimonios = [];
             let funnelConfig = { modo_inscripcion: 'pago' };
+            let parsedVm = null;
             if (c.ventas_meta) {
                 try {
-                    const vm = typeof c.ventas_meta === 'string' ? JSON.parse(c.ventas_meta) : c.ventas_meta;
-                    if(vm.vsl_url) vslUrl = vm.vsl_url;
-                    if(vm.testimonios && vm.testimonios.length) testimonios = vm.testimonios;
-                    if(vm.funnel_config) funnelConfig = vm.funnel_config;
+                    parsedVm = typeof c.ventas_meta === 'string' ? JSON.parse(c.ventas_meta) : c.ventas_meta;
+                    if(parsedVm && parsedVm.vsl_url) vslUrl = parsedVm.vsl_url;
+                    if(parsedVm && parsedVm.testimonios && parsedVm.testimonios.length) testimonios = parsedVm.testimonios;
+                    if(parsedVm && parsedVm.funnel_config) funnelConfig = parsedVm.funnel_config;
                 } catch(e){}
             }
             window.currentFunnelConfig = funnelConfig;
@@ -467,7 +479,7 @@
             
             container.innerHTML = '';
             let payButtonsHtml = '';
-            const matCfg = (meta && meta.matricula_config) || {};
+            const matCfg = (parsedVm && parsedVm.matricula_config) || {};
             const tieneMat = c.tiene_matricula !== undefined ? Boolean(c.tiene_matricula) : Boolean(matCfg.tiene_matricula);
             const valMat = Number(c.valor_matricula !== undefined ? c.valor_matricula : (matCfg.valor_matricula || 0));
             const cobraMat = c.cobra_matricula !== undefined ? Boolean(c.cobra_matricula) : (matCfg.cobra_matricula !== undefined ? Boolean(matCfg.cobra_matricula) : true);

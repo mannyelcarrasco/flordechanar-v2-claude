@@ -6,6 +6,18 @@
 
 ## ✅ Avances completados
 
+### 🐛 Corrección de Error en Detalle de Cursos (`public/detalle.html`) (NUEVO)
+- [x] **Diagnóstico del Error de Conexión en `/detalle.html?id=X`:**
+  - Al abrir la página de detalle de cualquier curso (ej. `/detalle.html?id=13`), la pantalla se quedaba en blanco mostrando únicamente `"⚠️ Error de conexión."`.
+  - La causa raíz fue un `ReferenceError: meta is not defined` en `renderCourse()` al consultar `meta.matricula_config` (la variable `meta` no estaba declarada).
+  - Dado que la llamada a `renderCourse()` estaba contenida en el mismo `try/catch` de la petición `fetch`, cualquier excepción en JavaScript saltaba al bloque `catch` y mostraba el texto `"⚠️ Error de conexión."`.
+- [x] **Solución y Resiliencia en Frontend (`detalle.html`):**
+  - Se declaró correctamente `parsedVm` al deserializar `c.ventas_meta` y se asoció `matCfg = (parsedVm && parsedVm.matricula_config) || {}`.
+  - Se desacopló el flujo en tres fases independientes con manejo de errores granular:
+    1. **Carga de datos del curso:** Muestra mensaje de conexión si la red falla.
+    2. **Renderizado de la interfaz:** Si ocurre algún error visual, se reporta claramente sin confundirlo con un fallo de servidor.
+    3. **Carga del currículum / temario:** Si falla o no tiene temario publicado, no interrumpe ni oculta la información general, precios ni botones de compra del curso.
+
 ### 🖼️ Corrección y Resiliencia de Imágenes de Portada en Cursos (`escuela.html`, `detalle.html`, `server.js`, `curso-crear.html`) (NUEVO)
 - [x] **Diagnóstico de Imágenes No Visibles:**
   - Se identificaron dos causas por las que las imágenes no cargaban y mostraban un recuadro gris vacío (`background-color: #E2E8F0`):
