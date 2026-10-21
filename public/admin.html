@@ -1333,10 +1333,14 @@ ORDER BY u.user_registered;</pre>
                 </select>
             </div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.65rem">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:.65rem">
             <div class="fg">
-                <label class="fl">Cupos Totales (0 = sin tope)</label>
+                <label class="fl">Cupos Totales (0 = ilimitado)</label>
                 <input class="fc" id="calEvCupos" type="number" placeholder="Ej: 15">
+            </div>
+            <div class="fg">
+                <label class="fl">Cupos ya Ocupados</label>
+                <input class="fc" id="calEvCuposOcupados" type="number" placeholder="Ej: 8 inscritos">
             </div>
             <div class="fg">
                 <label class="fl">Valor / Precio Promocional</label>
@@ -4791,6 +4795,7 @@ function openCalEventModal(editId = null, defaultDate = null) {
         document.getElementById('calEvProfesor').value = ev.profesor_id || '';
         document.getElementById('calEvCurso').value = ev.curso_id || '';
         document.getElementById('calEvCupos').value = ev.cupos || '';
+        document.getElementById('calEvCuposOcupados').value = ev.cupos_ocupados || '';
         document.getElementById('calEvPrecio').value = ev.precio || '';
         document.getElementById('calEvAtendiaId').value = ev.atendia_event_id || '';
         document.getElementById('calEvDesc').value = ev.descripcion || '';
@@ -4813,6 +4818,7 @@ function openCalEventModal(editId = null, defaultDate = null) {
         document.getElementById('calEvProfesor').value = '';
         document.getElementById('calEvCurso').value = '';
         document.getElementById('calEvCupos').value = '';
+        document.getElementById('calEvCuposOcupados').value = '';
         document.getElementById('calEvPrecio').value = '';
         document.getElementById('calEvAtendiaId').value = '';
         document.getElementById('calEvDesc').value = '';
@@ -4842,6 +4848,7 @@ async function saveCalEvent() {
         profesor_id: document.getElementById('calEvProfesor').value || null,
         curso_id: document.getElementById('calEvCurso').value || null,
         cupos: parseInt(document.getElementById('calEvCupos').value) || 0,
+        cupos_ocupados: parseInt(document.getElementById('calEvCuposOcupados').value) || 0,
         precio: document.getElementById('calEvPrecio').value.trim(),
         atendia_event_id: document.getElementById('calEvAtendiaId').value || null,
         descripcion: document.getElementById('calEvDesc').value.trim(),

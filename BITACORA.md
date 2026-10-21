@@ -6,6 +6,34 @@
 
 ## ✅ Avances completados
 
+### 🎟️ Gestión Integral y Precisa de Cupos: Capacidad Total, Ocupados Manuales/Externos, Inscritos Web y Cierre Forzado (`curso-crear.html`, `server.js`, `escuela.html`, `admin.html`) (NUEVO)
+- [x] **Diagnóstico del Problema de Cupos:**
+  - En la administración del curso solo existía un único campo de `cupos`. En la página pública de la escuela y en el calendario aparecía un mensaje confuso tipo *"¡Quedan 12 de 12 cupos!"*, calculando los disponibles únicamente contra las matrículas automáticas de la tabla `inscripciones`.
+  - Como muchos alumnos se inscriben presencialmente, por transferencia directa o por WhatsApp, en la base de datos figuraban 0 ocupados y no había ninguna forma en el admin de registrar cuántos cupos ya estaban tomados ni cuántos faltaban por completar en la realidad.
+- [x] **Gestor de Capacidad y Cupos en el Editor de Cursos (`public/curso-crear.html`):**
+  - Se diseñó un panel interactivo con 4 controles claros:
+    1. **Capacidad Máxima / Cupos Totales (`cupos`):** Límite máximo de alumnos para el grupo (o 0 para ilimitado).
+    2. **Cupos Ya Ocupados (Manuales / Externos / Transferencias) (`cupos_ocupados`):** Campo editable donde el administrador ingresa las reservas y matrículas cerradas fuera de la web.
+    3. **Inscritos Web Automáticos (`inscritos_count`):** Contador informativo de sólo lectura que refleja en tiempo real las compras directas en la web.
+    4. **Interruptor de Forzar Cierre ("CUPOS AGOTADOS"):** Switch para cerrar inscripciones manualmente en cualquier momento aunque sobren cupos.
+  - **Previsualizador reactivo en vivo:** Barra de progreso y cálculo dinámico en tiempo real (`¡Quedan X de Y cupos! (Z ocupados)`) que reacciona mientras el administrador escribe.
+- [x] **Base de Datos y API Backend (`server.js`):**
+  - Migración automática en `initDB()`:
+    - `ALTER TABLE cursos ADD COLUMN cupos_ocupados INT DEFAULT 0`
+    - `ALTER TABLE cursos ADD COLUMN cupos_agotados_forzado BOOLEAN DEFAULT FALSE`
+  - Actualización en endpoints `POST /api/cursos`, `PUT /api/cursos/:id` y `GET /api/cursos`.
+  - En `GET /api/calendario/publico` y `GET /api/calendario/interno`:
+    - Suma consolidada real: `totalOcupados = cupos_ocupados_manual + inscritos_web`.
+    - Cupos disponibles: `cuposLibres = Math.max(0, cupoTotal - totalOcupados)` (o sincronizado con AtendIA si tiene evento vinculado).
+    - Estado de agotado: `cupos_agotados_forzado || cuposLibres === 0`.
+- [x] **Visualización en Calendario Público (`public/escuela.html`):**
+  - Las tarjetas del calendario y los badges muestran con total transparencia:
+    - Si hay disponibilidad: `¡Quedan 3 de 15 cupos! (12 ocupados)` y barra de progreso al 80%.
+    - Si queda 1 cupo: `¡ÚLTIMO CUPO DISPONIBLE! (14 de 15 ocupados)` en color ámbar.
+    - Si está completo o forzado: `CUPOS AGOTADOS` con barra roja al 100% y botón de reserva deshabilitado.
+- [x] **Sincronización en Calendario del Panel de Administración (`public/admin.html`):**
+  - El modal de eventos manuales del calendario incorpora también el campo de **Cupos Ya Ocupados**, permitiendo reflejar la ocupación real de talleres y actividades presenciales.
+
 ### 🖼️ Inclusión Permanente de Portadas Oficiales y Corrección de Permisos en Uploads (`server.js`, `public/img/cursos/`, `public/uploads/`) (NUEVO)
 - [x] **Incorporación Permanente de Imágenes en el Repositorio Git:**
   - Se agregaron las imágenes oficiales de **Masoterapia Profesional Sede La Serena** y **Masoterapia Profesional Sede Calama** (Método Mushuu) tanto en `public/img/cursos/` como en `public/uploads/`:

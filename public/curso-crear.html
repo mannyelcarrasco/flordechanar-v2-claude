@@ -465,10 +465,49 @@
                         <input class="fc" id="courseFechaFin" type="date">
                         <div class="hint">Hasta qué día se proyectan las clases en el calendario.</div>
                     </div>
+                </div>
+            </div>
+
+            <!-- 🎟️ GESTIÓN DE CUPOS Y CAPACIDAD DEL GRUPO -->
+            <div style="background:#F0FDF4;border:1.5px solid #BBF7D0;border-radius:12px;padding:1rem 1.15rem;margin-bottom:1.15rem">
+                <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:.85rem">
+                    <div style="font-weight:700;color:#065F46;font-size:.9rem;display:flex;align-items:center;gap:.45rem">
+                        <i class="ph-fill ph-users-three" style="color:#059669;font-size:1.15rem"></i>
+                        Gestión de Cupos y Capacidad del Grupo
+                    </div>
+                    <label style="display:inline-flex;align-items:center;gap:.45rem;cursor:pointer;font-size:.8rem;color:#DC2626;font-weight:700;background:#FEF2F2;border:1px solid #FECACA;padding:.25rem .75rem;border-radius:99px">
+                        <input type="checkbox" id="courseCuposAgotadosForzado" onchange="updateCuposPreview()" style="width:16px;height:16px">
+                        Marcar forzadamente como "CUPOS AGOTADOS"
+                    </label>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem">
                     <div class="fg" style="margin-bottom:0">
-                        <label class="fl">🎟️ Cupos disponibles</label>
-                        <input class="fc" id="courseCupos" type="number" placeholder="0 = sin límite">
-                        <div class="hint">0 = sin límite. Se descuenta con inscripciones o Evento AtendIA.</div>
+                        <label class="fl" style="color:#065F46;font-weight:700">1. Cupos Totales (Capacidad Máxima)</label>
+                        <input class="fc" id="courseCupos" type="number" min="0" placeholder="Ej: 15 (0 = sin tope)" oninput="updateCuposPreview()" style="border-color:#A7F3D0;background:#fff">
+                        <div class="hint" style="color:#047857">Cupos totales del taller o sala. 0 = ilimitado.</div>
+                    </div>
+                    <div class="fg" style="margin-bottom:0">
+                        <label class="fl" style="color:#1E40AF;font-weight:700">2. Cupos Ocupados Previos (Manuales)</label>
+                        <input class="fc" id="courseCuposOcupados" type="number" min="0" placeholder="Ej: 8 inscritos previos" oninput="updateCuposPreview()" style="border-color:#BFDBFE;background:#fff">
+                        <div class="hint" style="color:#1D4ED8">Inscritos por WhatsApp, efectivo o transferencia.</div>
+                    </div>
+                    <div class="fg" style="margin-bottom:0">
+                        <label class="fl" style="color:#475569;font-weight:700">3. Inscripciones Online en la Web</label>
+                        <input class="fc" id="courseInscritosWeb" type="text" readonly value="0 alumnos web" style="background:#F1F5F9;border-color:#CBD5E1;color:#475569;cursor:not-allowed">
+                        <div class="hint">Alumnos matriculados automáticamente en la plataforma.</div>
+                    </div>
+                </div>
+
+                <!-- Barra de Vista Previa de Cupos en Vivo -->
+                <div style="margin-top:.85rem;background:#fff;border:1px solid #CBD5E1;border-radius:10px;padding:.7rem .9rem">
+                    <div style="display:flex;justify-content:space-between;align-items:center;font-size:.78rem;margin-bottom:.35rem">
+                        <span style="font-weight:700;color:#334155;display:flex;align-items:center;gap:.35rem">
+                            <i class="ph ph-eye"></i> Vista previa en la web:
+                        </span>
+                        <strong id="courseCuposPreviewLabel" style="color:#059669">Sin límite de cupos</strong>
+                    </div>
+                    <div style="height:8px;background:#E2E8F0;border-radius:99px;overflow:hidden">
+                        <div id="courseCuposProgressBar" style="height:100%;width:0%;background:#059669;border-radius:99px;transition:width .3s"></div>
                     </div>
                 </div>
             </div>
@@ -1508,6 +1547,49 @@ async function fetchProfessors() {
     }
 }
 
+let _courseInscritosWebCount = 0;
+function updateCuposPreview() {
+    const total = parseInt(document.getElementById('courseCupos')?.value) || 0;
+    const manualOcupados = parseInt(document.getElementById('courseCuposOcupados')?.value) || 0;
+    const forzado = document.getElementById('courseCuposAgotadosForzado')?.checked;
+    const label = document.getElementById('courseCuposPreviewLabel');
+    const bar = document.getElementById('courseCuposProgressBar');
+    if (!label || !bar) return;
+
+    if (forzado) {
+        label.textContent = 'CUPOS AGOTADOS (Cierre manual forzado)';
+        label.style.color = '#EF4444';
+        bar.style.width = '100%';
+        bar.style.background = '#EF4444';
+        return;
+    }
+
+    if (total <= 0) {
+        label.textContent = 'Sin límite de cupos (Admisión continua)';
+        label.style.color = '#059669';
+        bar.style.width = '0%';
+        bar.style.background = '#059669';
+        return;
+    }
+
+    const ocupadosTotales = manualOcupados + _courseInscritosWebCount;
+    const libres = Math.max(0, total - ocupadosTotales);
+    const pct = Math.min(100, Math.round((ocupadosTotales / total) * 100));
+
+    if (libres === 0) {
+        label.textContent = `CUPOS AGOTADOS (${total} de ${total} cupos ocupados)`;
+        label.style.color = '#EF4444';
+        bar.style.width = '100%';
+        bar.style.background = '#EF4444';
+    } else {
+        const col = libres <= 3 ? '#D97706' : '#059669';
+        label.textContent = `¡Quedan ${libres} de ${total} cupos! (${ocupadosTotales} ocupados / ${libres} disponibles)`;
+        label.style.color = col;
+        bar.style.width = `${pct}%`;
+        bar.style.background = col;
+    }
+}
+
 // Init
 let _savedAtendiaEventId = null;
 
@@ -1582,6 +1664,17 @@ window.addEventListener('load', async () => {
                         }
                     }
                     document.getElementById('courseCupos').value = c.cupos || '';
+                    if (document.getElementById('courseCuposOcupados')) {
+                        document.getElementById('courseCuposOcupados').value = c.cupos_ocupados || '';
+                    }
+                    if (document.getElementById('courseCuposAgotadosForzado')) {
+                        document.getElementById('courseCuposAgotadosForzado').checked = Boolean(c.cupos_agotados_forzado);
+                    }
+                    _courseInscritosWebCount = Number(c.inscritos_count) || 0;
+                    if (document.getElementById('courseInscritosWeb')) {
+                        document.getElementById('courseInscritosWeb').value = `${_courseInscritosWebCount} alumno(s) inscritos por la web`;
+                    }
+                    updateCuposPreview();
                     document.getElementById('courseMuestra').value = c.muestra_gratuita || '';
                     if (c.horarios_sedes) {
                         try {
@@ -2009,6 +2102,8 @@ async function saveDraft() {
             fecha_fin_clases: document.getElementById('courseFechaFin') ? (document.getElementById('courseFechaFin').value || null) : null,
             atendia_event_id: document.getElementById('courseAtendiaEventId') && document.getElementById('courseAtendiaEventId').value ? parseInt(document.getElementById('courseAtendiaEventId').value) : null,
             cupos: document.getElementById('courseCupos').value ? parseInt(document.getElementById('courseCupos').value) : 0,
+            cupos_ocupados: document.getElementById('courseCuposOcupados') && document.getElementById('courseCuposOcupados').value ? parseInt(document.getElementById('courseCuposOcupados').value) : 0,
+            cupos_agotados_forzado: document.getElementById('courseCuposAgotadosForzado') ? document.getElementById('courseCuposAgotadosForzado').checked : false,
             muestra_gratuita: document.getElementById('courseMuestra').value,
             salas_virtuales: salasVirtualesData,
             horarios_sedes: horariosSedesData,
@@ -2091,6 +2186,8 @@ async function publishCourse(estadoFinal = 'publicado') {
             fecha_fin_clases: document.getElementById('courseFechaFin') ? (document.getElementById('courseFechaFin').value || null) : null,
             atendia_event_id: document.getElementById('courseAtendiaEventId') && document.getElementById('courseAtendiaEventId').value ? parseInt(document.getElementById('courseAtendiaEventId').value) : null,
             cupos: document.getElementById('courseCupos').value ? parseInt(document.getElementById('courseCupos').value) : 0,
+            cupos_ocupados: document.getElementById('courseCuposOcupados') && document.getElementById('courseCuposOcupados').value ? parseInt(document.getElementById('courseCuposOcupados').value) : 0,
+            cupos_agotados_forzado: document.getElementById('courseCuposAgotadosForzado') ? document.getElementById('courseCuposAgotadosForzado').checked : false,
             muestra_gratuita: document.getElementById('courseMuestra').value,
             salas_virtuales: salasVirtualesData,
             horarios_sedes: horariosSedesData,

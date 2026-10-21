@@ -768,17 +768,22 @@
                 // Barra de cupos si tiene cupo limitado
                 let cuposHtml = '';
                 if (it.cupos_total > 0) {
-                    const libres = it.cupos_libres !== null ? it.cupos_libres : Math.max(0, it.cupos_total - (it.cupos_ocupados || 0));
-                    const pct = Math.min(100, Math.round(((it.cupos_total - libres) / it.cupos_total) * 100));
+                    const libres = it.lleno ? 0 : (it.cupos_libres !== null ? it.cupos_libres : Math.max(0, it.cupos_total - (it.cupos_ocupados || 0)));
+                    const ocupados = Math.max(0, it.cupos_total - libres);
+                    const pct = it.lleno ? 100 : Math.min(100, Math.round((ocupados / it.cupos_total) * 100));
                     const col = it.lleno ? '#EF4444' : (libres <= 4 ? '#D97706' : '#059669');
+                    const msg = it.lleno
+                        ? 'CUPOS AGOTADOS'
+                        : (libres === 1 ? '¡ÚLTIMO CUPO DISPONIBLE!' : `¡Quedan ${libres} de ${it.cupos_total} cupos! (${ocupados} ocupados)`);
+
                     cuposHtml = `
                         <div style="margin-top:.75rem;background:#F8FAFC;padding:.55rem .75rem;border-radius:10px;border:1px solid #E2E8F0">
-                            <div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:.3rem">
+                            <div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:.3rem;align-items:center">
                                 <span style="color:#475569;font-weight:600"><i class="ph-fill ph-users-three"></i> Cupos del grupo</span>
-                                <strong style="color:${col}">${it.lleno ? 'CUPOS AGOTADOS' : `¡Quedan ${libres} de ${it.cupos_total} cupos!`}</strong>
+                                <strong style="color:${col}">${msg}</strong>
                             </div>
                             <div style="height:6px;background:#E2E8F0;border-radius:99px;overflow:hidden">
-                                <div style="height:100%;width:${pct}%;background:${col};border-radius:99px"></div>
+                                <div style="height:100%;width:${pct}%;background:${col};border-radius:99px;transition:width .3s"></div>
                             </div>
                         </div>`;
                 }
