@@ -228,22 +228,20 @@ button { font: inherit; }
   padding: 48px 42px;
   box-shadow: 0 16px 40px rgba(11,20,38,.04);
 }
-.director__perfil { display: flex; flex-direction: column; gap: 20px; align-items: center; text-align: center; }
+.director__perfil { display: flex; flex-direction: column; gap: 16px; align-items: center; text-align: center; }
 .director__avatar-marco {
-  width: 100%; max-width: 280px; aspect-ratio: 1/1; border-radius: 20px;
+  width: 100%; max-width: 280px; aspect-ratio: 4/5; border-radius: 20px;
   border: 2px solid var(--oro); padding: 8px; background: linear-gradient(135deg, rgba(201,162,74,.18), rgba(201,162,74,.02));
+  box-shadow: 0 12px 30px rgba(11,20,38,.08);
 }
-.director__avatar-placeholder {
-  width: 100%; height: 100%; border-radius: 14px; background: var(--noche);
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--oro-claro);
-  position: relative; overflow: hidden;
+.director__avatar-img {
+  width: 100%; height: 100%; object-fit: cover; object-position: center 15%; border-radius: 14px; display: block;
 }
-.director__iniciales { font-family: var(--f-titulos); font-size: 52px; font-weight: 600; color: var(--oro); letter-spacing: 2px; }
 .director__badge-docente {
   font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em;
-  padding: 5px 14px; border-radius: 999px; background: rgba(201,162,74,.18); border: 1px solid rgba(201,162,74,.4); color: var(--oro-claro);
+  padding: 6px 16px; border-radius: 999px; background: var(--noche); border: 1.5px solid var(--oro); color: var(--oro-claro);
+  box-shadow: 0 4px 12px rgba(0,0,0,.15);
 }
-.director__avatar-nota { font-size: 12px; color: #8893a7; font-style: italic; margin-top: -6px; }
 .director__datos-rapidos { width: 100%; display: grid; grid-template-columns: 1fr; gap: 10px; }
 .director__dato {
   background: var(--marfil); border: 1px solid var(--crema-borde); border-radius: 12px;
