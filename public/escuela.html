@@ -294,6 +294,22 @@
                             : bestPriceHtml;
                     const ctaLabel = 'Ver detalles';
                     const ctaOnclick = `location.href='detalle.html?id=${curso.id}'`;
+                    let matriculaCardHtml = '';
+                    let parsedVm = null;
+                    if (curso.ventas_meta) {
+                        try { parsedVm = typeof curso.ventas_meta === 'string' ? JSON.parse(curso.ventas_meta) : curso.ventas_meta; } catch(e) {}
+                    }
+                    const matCfg = (parsedVm && parsedVm.matricula_config) || {};
+                    const tieneMat = curso.tiene_matricula !== undefined ? Boolean(curso.tiene_matricula) : Boolean(matCfg.tiene_matricula);
+                    const valMat = Number(curso.valor_matricula !== undefined ? curso.valor_matricula : (matCfg.valor_matricula || 0));
+                    const cobraMat = curso.cobra_matricula !== undefined ? Boolean(curso.cobra_matricula) : (matCfg.cobra_matricula !== undefined ? Boolean(matCfg.cobra_matricula) : true);
+                    if (!isGratis && tieneMat) {
+                        if (cobraMat && valMat > 0) {
+                            matriculaCardHtml = `<div style="font-size:0.72rem;font-weight:700;color:#475569;margin-top:0.15rem">+ Matrícula ${fmt(valMat)}</div>`;
+                        } else if (!cobraMat) {
+                            matriculaCardHtml = `<div style="font-size:0.72rem;font-weight:700;color:#059669;margin-top:0.15rem">${valMat > 0 ? `<span style="text-decoration:line-through;color:#94A3B8;font-weight:500">${fmt(valMat)}</span> ` : ''}Matrícula Gratis</div>`;
+                        }
+                    }
 
                     let extraInfoHtml = '';
                     let sedesBadgesHtml = '';
@@ -366,7 +382,7 @@
                                 <p>${curso.descripcion}</p>
                                 ${extraInfoHtml}
                                 <div class="c-footer" style="margin-top:1rem">
-                                    <div>${priceBadge}</div>
+                                    <div>${priceBadge}${matriculaCardHtml}</div>
                                     <a href="javascript:void(0)" onclick="${ctaOnclick}" style="color: var(--color-primary); font-weight: 600;">${ctaLabel} <i class="ph ph-arrow-right"></i></a>
                                 </div>
                             </div>

@@ -389,6 +389,39 @@
                     <div class="hint">Aparecerá como <strong>$ /mes</strong> en la tarjeta (0 = solo pago único)</div>
                 </div>
             </div>
+
+            <!-- CONFIGURACIÓN DE MATRÍCULA -->
+            <div id="matriculaConfigBox" style="background:#FFFBEB;border:1.5px solid #FDE68A;border-radius:10px;padding:1rem 1.15rem;margin-bottom:1.1rem">
+                <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+                    <label style="display:flex;align-items:center;gap:.65rem;cursor:pointer;margin:0">
+                        <input type="checkbox" id="courseTieneMatricula" style="width:1.15rem;height:1.15rem;accent-color:#D97706;cursor:pointer" onchange="toggleMatriculaUI()">
+                        <div>
+                            <div style="font-weight:700;font-size:.88rem;color:#92400E;display:flex;align-items:center;gap:.35rem">
+                                <i class="ph ph-graduation-cap" style="font-size:1.1rem;color:#D97706"></i> Este programa / curso tiene Matrícula
+                            </div>
+                            <div style="font-size:.76rem;color:#B45309">Activa esta opción para definir un valor de matrícula e indicar si se cobra o es liberada (gratis).</div>
+                        </div>
+                    </label>
+                </div>
+
+                <div id="matriculaFieldsWrap" style="display:none;margin-top:.9rem;padding-top:.9rem;border-top:1px dashed #FCD34D">
+                    <div class="two">
+                        <div class="fg" style="margin-bottom:0">
+                            <label class="fl" style="color:#92400E">Valor de la Matrícula (CLP)</label>
+                            <input class="fc" type="number" id="courseValorMatricula" placeholder="Ej: 50000" oninput="updateChecklist()">
+                            <div class="hint" style="color:#B45309">Monto de matrícula en pesos chilenos sin puntos</div>
+                        </div>
+                        <div class="fg" style="margin-bottom:0">
+                            <label class="fl" style="color:#92400E">¿Se cobra la matrícula?</label>
+                            <select class="fc" id="courseCobraMatricula" onchange="updateChecklist()">
+                                <option value="1">Sí, se cobra la matrícula al inscribirse</option>
+                                <option value="0">No se cobra (Matrícula Gratis / Liberada $0)</option>
+                            </select>
+                            <div class="hint" style="color:#B45309">Si eliges "No se cobra", se mostrará el valor como referencia tachado (Matrícula Gratis).</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             
             <div class="fg">
                 <label class="toggle-switch" style="display:flex;align-items:center;gap:1rem;cursor:pointer">
@@ -1292,6 +1325,13 @@ async function uploadCover(input) {
     }
 }
 
+function toggleMatriculaUI() {
+    const tiene = document.getElementById('courseTieneMatricula') && document.getElementById('courseTieneMatricula').checked;
+    const wrap = document.getElementById('matriculaFieldsWrap');
+    if (wrap) wrap.style.display = tiene ? 'block' : 'none';
+    updateChecklist();
+}
+
 function togglePrice() {
     const t = document.getElementById('accessType').value;
     document.getElementById('priceField').style.opacity = t==='gratis' ? '.4' : '1';
@@ -1301,9 +1341,18 @@ function togglePrice() {
         mpField.style.opacity = t==='gratis' ? '.4' : '1';
         mpField.style.pointerEvents = t==='gratis' ? 'none' : 'auto';
     }
+    const matBox = document.getElementById('matriculaConfigBox');
+    if (matBox) {
+        matBox.style.opacity = t==='gratis' ? '.4' : '1';
+        matBox.style.pointerEvents = t==='gratis' ? 'none' : 'auto';
+    }
     if(t==='gratis') {
         document.getElementById('coursePrice').value = '0';
         if (document.getElementById('courseMonthlyPrice')) document.getElementById('courseMonthlyPrice').value = '0';
+        if (document.getElementById('courseTieneMatricula')) {
+            document.getElementById('courseTieneMatricula').checked = false;
+            toggleMatriculaUI();
+        }
     }
     updateChecklist();
 }
@@ -1313,6 +1362,9 @@ function updateChecklist() {
     const cat = document.getElementById('courseCategory').value;
     const priceVal = parseInt(document.getElementById('coursePrice').value) || 0;
     const monthlyVal = document.getElementById('courseMonthlyPrice') ? (parseInt(document.getElementById('courseMonthlyPrice').value) || 0) : 0;
+    const tieneMatricula = document.getElementById('courseTieneMatricula') ? document.getElementById('courseTieneMatricula').checked : false;
+    const valorMatricula = document.getElementById('courseValorMatricula') ? (parseInt(document.getElementById('courseValorMatricula').value) || 0) : 0;
+    const cobraMatricula = document.getElementById('courseCobraMatricula') ? document.getElementById('courseCobraMatricula').value === '1' : true;
     const isGratis = document.getElementById('accessType').value === 'gratis';
     const price = priceVal > 0 || monthlyVal > 0 || isGratis;
     const cover = document.getElementById('coverPreview').style.display !== 'none';
@@ -1332,15 +1384,22 @@ function updateChecklist() {
     const prevPriceEl = document.getElementById('previewPrice');
     if (prevPriceEl) {
         const fmt = n => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(n);
+        let mainP = '';
         if (isGratis) {
-            prevPriceEl.textContent = 'Gratis';
+            mainP = 'Gratis';
         } else if (monthlyVal > 0) {
-            prevPriceEl.innerHTML = `${fmt(monthlyVal)} <span style="font-size:.75rem;font-weight:600;color:var(--l)">/mes</span>`;
+            mainP = `${fmt(monthlyVal)} <span style="font-size:.75rem;font-weight:600;color:var(--l)">/mes</span>`;
         } else if (priceVal > 0) {
-            prevPriceEl.textContent = fmt(priceVal);
-        } else {
-            prevPriceEl.textContent = '';
+            mainP = fmt(priceVal);
         }
+        if (!isGratis && tieneMatricula) {
+            if (cobraMatricula && valorMatricula > 0) {
+                mainP += `<div style="font-size:.72rem;font-weight:600;color:#B45309;margin-top:.15rem">+ Matrícula: ${fmt(valorMatricula)}</div>`;
+            } else {
+                mainP += `<div style="font-size:.72rem;font-weight:700;color:#16A34A;margin-top:.15rem">${valorMatricula > 0 ? `<span style="text-decoration:line-through;color:#94A3B8;font-weight:500">${fmt(valorMatricula)}</span> ` : ''}Matrícula Gratis</div>`;
+            }
+        }
+        prevPriceEl.innerHTML = mainP;
     }
 
     // Update step indicators
@@ -1457,6 +1516,22 @@ window.addEventListener('load', async () => {
                         if (planMensual && document.getElementById('courseMonthlyPrice')) {
                             document.getElementById('courseMonthlyPrice').value = planMensual.monto || '';
                         }
+                    }
+                    let matCfg = null;
+                    if (c.ventas_meta) {
+                        try {
+                            const vmObj = typeof c.ventas_meta === 'string' ? JSON.parse(c.ventas_meta) : c.ventas_meta;
+                            if (vmObj && vmObj.matricula_config) matCfg = vmObj.matricula_config;
+                        } catch(e) {}
+                    }
+                    const tieneMat = (c.tiene_matricula !== undefined && c.tiene_matricula !== null) ? !!c.tiene_matricula : (matCfg ? !!matCfg.tiene_matricula : false);
+                    const valMat = (c.valor_matricula !== undefined && c.valor_matricula !== null) ? c.valor_matricula : (matCfg ? matCfg.valor_matricula : '');
+                    const cobraMat = (c.cobra_matricula !== undefined && c.cobra_matricula !== null) ? !!c.cobra_matricula : (matCfg && matCfg.cobra_matricula !== undefined ? !!matCfg.cobra_matricula : true);
+                    if (document.getElementById('courseTieneMatricula')) {
+                        document.getElementById('courseTieneMatricula').checked = tieneMat;
+                        document.getElementById('courseValorMatricula').value = valMat || '';
+                        document.getElementById('courseCobraMatricula').value = cobraMat ? '1' : '0';
+                        toggleMatriculaUI();
                     }
                     document.getElementById('courseCiclico').checked = !!c.es_ciclico;
                     document.getElementById('courseOpcionesExtra').checked = !!c.texto_opciones_extra;
@@ -1761,10 +1836,18 @@ function getVentasMeta() {
         estrellas: parseInt(node.querySelector('.t-estrellas').value),
         texto: node.querySelector('.t-texto').value
     }));
+    const tiene_matricula = document.getElementById('courseTieneMatricula') ? document.getElementById('courseTieneMatricula').checked : false;
+    const valor_matricula = document.getElementById('courseValorMatricula') ? (parseInt(document.getElementById('courseValorMatricula').value) || 0) : 0;
+    const cobra_matricula = document.getElementById('courseCobraMatricula') ? (document.getElementById('courseCobraMatricula').value === '1') : true;
     return {
         vsl_url: document.getElementById('courseVsl') ? document.getElementById('courseVsl').value : '',
         testimonios: testimonios,
-        funnel_config: getFunnelConfig()
+        funnel_config: getFunnelConfig(),
+        matricula_config: {
+            tiene_matricula,
+            valor_matricula,
+            cobra_matricula
+        }
     };
 }
 
@@ -1814,6 +1897,9 @@ async function saveDraft() {
             descripcion_ventas: document.getElementById('courseDescVentas').value,
             precio: price,
             precio_mensual: precio_mensual,
+            tiene_matricula: document.getElementById('courseTieneMatricula') ? document.getElementById('courseTieneMatricula').checked : false,
+            valor_matricula: document.getElementById('courseValorMatricula') ? (parseInt(document.getElementById('courseValorMatricula').value) || 0) : 0,
+            cobra_matricula: document.getElementById('courseCobraMatricula') ? (document.getElementById('courseCobraMatricula').value === '1') : true,
             es_ciclico: document.getElementById('courseCiclico').checked,
             texto_opciones_extra: document.getElementById('courseOpcionesExtra').checked,
             fecha_inicio_ventas: document.getElementById('courseFechaVentas').value,
@@ -1890,6 +1976,9 @@ async function publishCourse(estadoFinal = 'publicado') {
             descripcion_ventas: document.getElementById('courseDescVentas').value,
             precio: price,
             precio_mensual: precio_mensual,
+            tiene_matricula: document.getElementById('courseTieneMatricula') ? document.getElementById('courseTieneMatricula').checked : false,
+            valor_matricula: document.getElementById('courseValorMatricula') ? (parseInt(document.getElementById('courseValorMatricula').value) || 0) : 0,
+            cobra_matricula: document.getElementById('courseCobraMatricula') ? (document.getElementById('courseCobraMatricula').value === '1') : true,
             es_ciclico: document.getElementById('courseCiclico').checked,
             texto_opciones_extra: document.getElementById('courseOpcionesExtra').checked,
             fecha_inicio_ventas: document.getElementById('courseFechaVentas').value,

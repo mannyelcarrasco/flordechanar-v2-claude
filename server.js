@@ -321,6 +321,9 @@ async function initDB() {
             `ALTER TABLE cursos ADD COLUMN cupos INT DEFAULT 0`,
             `ALTER TABLE cursos ADD COLUMN muestra_gratuita VARCHAR(50) DEFAULT 'ninguna'`,
             `ALTER TABLE cursos ADD COLUMN horarios_sedes TEXT`,
+            `ALTER TABLE cursos ADD COLUMN tiene_matricula BOOLEAN DEFAULT FALSE`,
+            `ALTER TABLE cursos ADD COLUMN valor_matricula INT DEFAULT 0`,
+            `ALTER TABLE cursos ADD COLUMN cobra_matricula BOOLEAN DEFAULT TRUE`,
             `ALTER TABLE usuarios ADD COLUMN matriculado BOOLEAN DEFAULT FALSE`,
             `ALTER TABLE usuarios ADD COLUMN matriculado_en DATETIME DEFAULT NULL`,
             `ALTER TABLE inscripciones ADD COLUMN pago_id INT DEFAULT NULL`,
@@ -788,7 +791,7 @@ app.patch('/api/usuarios/:id/activo', verifyToken, async (req, res) => {
 app.get('/api/cursos', async (req, res) => {
     try {
         if (!pool) return res.status(500).json({ error: 'Database not connected' });
-        const [cursos] = await pool.query('SELECT c.id, c.titulo, c.descripcion, c.precio, c.tipo_acceso, c.portada_url, c.modalidad, c.dias_clase, c.horario_clase, c.sede, c.horarios_sedes, c.texto_opciones_extra, c.ventas_meta, c.duracion_total, c.categoria, u.nombre as profesor FROM cursos c LEFT JOIN usuarios u ON c.profesor_id = u.id WHERE c.estado = "publicado"');
+        const [cursos] = await pool.query('SELECT c.id, c.titulo, c.descripcion, c.precio, c.tiene_matricula, c.valor_matricula, c.cobra_matricula, c.tipo_acceso, c.portada_url, c.modalidad, c.dias_clase, c.horario_clase, c.sede, c.horarios_sedes, c.texto_opciones_extra, c.ventas_meta, c.duracion_total, c.categoria, u.nombre as profesor FROM cursos c LEFT JOIN usuarios u ON c.profesor_id = u.id WHERE c.estado = "publicado"');
         
         const [planes] = await pool.query("SELECT * FROM planes WHERE activo = 1 AND nombre != 'matricula'");
         for (let c of cursos) {
@@ -806,7 +809,7 @@ app.post('/api/cursos', verifyToken, async (req, res) => {
     if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
     try {
         const { 
-            titulo, descripcion, precio, precio_mensual, portada_url, estado, meet_url, es_ciclico, 
+            titulo, descripcion, precio, precio_mensual, tiene_matricula, valor_matricula, cobra_matricula, portada_url, estado, meet_url, es_ciclico, 
             tipo_acceso, categoria, nivel, duracion_total, idioma, descripcion_ventas, 
             ventas_meta, certificacion, modalidad, profesor_id, dias_clase, horario_clase, sede, texto_opciones_extra, salas_virtuales,
             fecha_inicio_ventas, cupos, muestra_gratuita, horarios_sedes
@@ -817,10 +820,10 @@ app.post('/api/cursos', verifyToken, async (req, res) => {
         
         const [result] = await pool.query(
             `INSERT INTO cursos 
-             (titulo, descripcion, precio, portada_url, estado, meet_url, es_ciclico, tipo_acceso, categoria, nivel, duracion_total, idioma, descripcion_ventas, ventas_meta, certificacion, modalidad, profesor_id, dias_clase, horario_clase, sede, texto_opciones_extra, salas_virtuales, fecha_inicio_ventas, cupos, muestra_gratuita, horarios_sedes) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             (titulo, descripcion, precio, tiene_matricula, valor_matricula, cobra_matricula, portada_url, estado, meet_url, es_ciclico, tipo_acceso, categoria, nivel, duracion_total, idioma, descripcion_ventas, ventas_meta, certificacion, modalidad, profesor_id, dias_clase, horario_clase, sede, texto_opciones_extra, salas_virtuales, fecha_inicio_ventas, cupos, muestra_gratuita, horarios_sedes) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-                titulo, descripcion, precio || 0, portada_url || null, estado || 'borrador', meet_url || null, es_ciclico ? 1 : 0,
+                titulo, descripcion, precio || 0, tiene_matricula ? 1 : 0, parseInt(valor_matricula) || 0, cobra_matricula !== undefined ? (cobra_matricula ? 1 : 0) : 1, portada_url || null, estado || 'borrador', meet_url || null, es_ciclico ? 1 : 0,
                 tipo_acceso || 'gratis', categoria || null, nivel || null, duracion_total || null, idioma || null,
                 descripcion_ventas || null, ventas_meta ? JSON.stringify(ventas_meta) : null, certificacion ? 1 : 0, modalidad || 'Online (Grabado)',
                 profesor_id || req.usuario.id, dias_clase || null, horario_clase || null, sede || null, texto_opciones_extra ? 1 : 0, salas_virtuales ? JSON.stringify(salas_virtuales) : null,
@@ -997,7 +1000,7 @@ app.get('/api/cursos/:id', verifyToken, async (req, res) => {
 app.put('/api/cursos/:id', verifyToken, async (req, res) => {
     if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
     try {
-        const { titulo, descripcion, precio, precio_mensual, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas, ventas_meta, es_ciclico, meet_url, salas_virtuales, dias_clase, horario_clase, sede, texto_opciones_extra, fecha_inicio_ventas, cupos, muestra_gratuita, horarios_sedes } = req.body;
+        const { titulo, descripcion, precio, precio_mensual, tiene_matricula, valor_matricula, cobra_matricula, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas, ventas_meta, es_ciclico, meet_url, salas_virtuales, dias_clase, horario_clase, sede, texto_opciones_extra, fecha_inicio_ventas, cupos, muestra_gratuita, horarios_sedes } = req.body;
         let profAsignado = req.usuario.rol === 'admin' ? (profesor_id || req.usuario.id) : req.usuario.id;
 
         let vMetaStr = null;
@@ -1014,8 +1017,8 @@ app.put('/api/cursos/:id', verifyToken, async (req, res) => {
         }
 
         await pool.query(
-            'UPDATE cursos SET titulo = ?, descripcion = ?, precio = ?, tipo_acceso = ?, portada_url = ?, estado = ?, profesor_id = ?, categoria = ?, nivel = ?, duracion_total = ?, idioma = ?, certificacion = ?, modalidad = ?, descripcion_ventas = ?, ventas_meta = ?, es_ciclico = ?, meet_url = ?, salas_virtuales = ?, dias_clase = ?, horario_clase = ?, sede = ?, texto_opciones_extra = ?, fecha_inicio_ventas = ?, cupos = ?, muestra_gratuita = ?, horarios_sedes = ? WHERE id = ?',
-            [titulo, descripcion, precio, tipo_acceso || 'gratis', portada_url, estado, profAsignado, categoria||null, nivel||null, duracion_total||null, idioma||null, certificacion ? 1 : 0, modalidad||'Online (Grabado)', descripcion_ventas||null, vMetaStr, es_ciclico ? 1 : 0, meet_url || null, salasStr, dias_clase||null, horario_clase||null, sede||null, texto_opciones_extra ? 1 : 0, fecha_inicio_ventas||null, cupos||0, muestra_gratuita||'ninguna', hrSedesStr, req.params.id]
+            'UPDATE cursos SET titulo = ?, descripcion = ?, precio = ?, tiene_matricula = ?, valor_matricula = ?, cobra_matricula = ?, tipo_acceso = ?, portada_url = ?, estado = ?, profesor_id = ?, categoria = ?, nivel = ?, duracion_total = ?, idioma = ?, certificacion = ?, modalidad = ?, descripcion_ventas = ?, ventas_meta = ?, es_ciclico = ?, meet_url = ?, salas_virtuales = ?, dias_clase = ?, horario_clase = ?, sede = ?, texto_opciones_extra = ?, fecha_inicio_ventas = ?, cupos = ?, muestra_gratuita = ?, horarios_sedes = ? WHERE id = ?',
+            [titulo, descripcion, precio, tiene_matricula ? 1 : 0, parseInt(valor_matricula) || 0, cobra_matricula !== undefined ? (cobra_matricula ? 1 : 0) : 1, tipo_acceso || 'gratis', portada_url, estado, profAsignado, categoria||null, nivel||null, duracion_total||null, idioma||null, certificacion ? 1 : 0, modalidad||'Online (Grabado)', descripcion_ventas||null, vMetaStr, es_ciclico ? 1 : 0, meet_url || null, salasStr, dias_clase||null, horario_clase||null, sede||null, texto_opciones_extra ? 1 : 0, fecha_inicio_ventas||null, cupos||0, muestra_gratuita||'ninguna', hrSedesStr, req.params.id]
         );
 
         // Sincronizar plan de mensualidad si viene precio_mensual en el body
@@ -1928,19 +1931,89 @@ app.get('/api/pagos/estado', verifyToken, async (req, res) => {
     } catch (e) { res.status(500).json({ error: 'Error' }); }
 });
 
+// --- Info pública de matrícula (global o por curso) ---
+app.get('/api/pagos/matricula/info', async (req, res) => {
+    try {
+        const cursoId = req.query.curso_id;
+        if (cursoId) {
+            const [cursos] = await pool.query('SELECT id, titulo, tiene_matricula, valor_matricula, cobra_matricula, ventas_meta FROM cursos WHERE id=? LIMIT 1', [cursoId]);
+            if (cursos.length) {
+                const c = cursos[0];
+                let vmMat = null;
+                if (c.ventas_meta) {
+                    try {
+                        const vm = typeof c.ventas_meta === 'string' ? JSON.parse(c.ventas_meta) : c.ventas_meta;
+                        if (vm && vm.matricula_config) vmMat = vm.matricula_config;
+                    } catch(e) {}
+                }
+                const tiene = c.tiene_matricula !== undefined && c.tiene_matricula !== null ? !!c.tiene_matricula : (vmMat ? !!vmMat.tiene_matricula : false);
+                const cobra = c.cobra_matricula !== undefined && c.cobra_matricula !== null ? !!c.cobra_matricula : (vmMat ? !!vmMat.cobra_matricula : true);
+                const monto = parseInt(c.valor_matricula) || (vmMat ? parseInt(vmMat.valor_matricula) : 0) || 0;
+                return res.json({
+                    curso_id: c.id,
+                    curso_titulo: c.titulo,
+                    tiene_matricula: tiene,
+                    cobra_matricula: cobra,
+                    monto: cobra ? monto : 0,
+                    valor_referencial: monto
+                });
+            }
+        }
+        const [cfgRows] = await pool.query("SELECT monto FROM planes WHERE nombre='matricula' AND activo=1 LIMIT 1");
+        const montoGlobal = cfgRows.length ? cfgRows[0].monto : 50000;
+        res.json({ curso_id: null, curso_titulo: 'Escuela Flor de Chañar', tiene_matricula: true, cobra_matricula: true, monto: montoGlobal, valor_referencial: montoGlobal });
+    } catch (e) {
+        res.status(500).json({ error: 'Error al consultar matrícula' });
+    }
+});
+
 // --- Iniciar pago de matrícula ---
 app.post('/api/pagos/matricula/iniciar', verifyToken, async (req, res) => {
     try {
-        const [cfgRows] = await pool.query("SELECT monto FROM planes WHERE nombre='matricula' AND activo=1 LIMIT 1");
-        const monto = cfgRows.length ? cfgRows[0].monto : 50000;
-        const co = `M${req.usuario.id}_${Date.now()}`;
+        const cursoId = req.body?.curso_id || null;
+        let monto = 50000;
+        let subject = 'Matrícula — Flor de Chañar';
+
+        if (cursoId) {
+            const [cursos] = await pool.query('SELECT id, titulo, tiene_matricula, valor_matricula, cobra_matricula, ventas_meta FROM cursos WHERE id=? LIMIT 1', [cursoId]);
+            if (!cursos.length) return res.status(404).json({ error: 'Curso no encontrado' });
+            const c = cursos[0];
+            let vmMat = null;
+            if (c.ventas_meta) {
+                try {
+                    const vm = typeof c.ventas_meta === 'string' ? JSON.parse(c.ventas_meta) : c.ventas_meta;
+                    if (vm && vm.matricula_config) vmMat = vm.matricula_config;
+                } catch(e) {}
+            }
+            const tiene = c.tiene_matricula !== undefined && c.tiene_matricula !== null ? !!c.tiene_matricula : (vmMat ? !!vmMat.tiene_matricula : false);
+            const cobra = c.cobra_matricula !== undefined && c.cobra_matricula !== null ? !!c.cobra_matricula : (vmMat ? !!vmMat.cobra_matricula : true);
+            const valMat = parseInt(c.valor_matricula) || (vmMat ? parseInt(vmMat.valor_matricula) : 0) || 0;
+
+            if (!tiene || !cobra || valMat <= 0) {
+                return res.status(400).json({ error: 'Este programa tiene matrícula liberada ($0) o no requiere pago de matrícula.' });
+            }
+            monto = valMat;
+            subject = `Matrícula: ${c.titulo}`;
+        } else {
+            const [cfgRows] = await pool.query("SELECT monto FROM planes WHERE nombre='matricula' AND activo=1 LIMIT 1");
+            monto = cfgRows.length ? cfgRows[0].monto : 50000;
+        }
+
+        // Asegurar email válido del usuario
+        let userEmail = req.usuario.email;
+        if (!userEmail) {
+            const [uRows] = await pool.query('SELECT email FROM usuarios WHERE id=? LIMIT 1', [req.usuario.id]);
+            if (uRows.length) userEmail = uRows[0].email;
+        }
+
+        const co = `M${cursoId ? cursoId + '_' : ''}${req.usuario.id}_${Date.now()}`;
         const [ins] = await pool.query(
-            "INSERT INTO pagos (usuario_id, tipo, monto, estado, commerce_order) VALUES (?,?,?,?,?)",
-            [req.usuario.id, 'matricula', monto, 'pendiente', co]
+            "INSERT INTO pagos (usuario_id, tipo, referencia_id, monto, estado, commerce_order) VALUES (?,?,?,?,?,?)",
+            [req.usuario.id, 'matricula', cursoId || null, monto, 'pendiente', co]
         );
         const { data } = await flowPost('payment/create', {
-            commerceOrder: co, subject: 'Matrícula — Flor de Chañar',
-            amount: monto, email: req.usuario.email,
+            commerceOrder: co, subject,
+            amount: monto, email: userEmail,
             urlConfirmation: `${APP_URL}/api/pagos/confirmar`,
             urlReturn: `${APP_URL}/pago-exitoso.html?co=${co}`,
             currency: 'CLP', paymentMethod: 9

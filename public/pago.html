@@ -321,7 +321,7 @@ function buildMatriculaView() {
     return `
         <div class="item">
             <span class="item-label"><i class="ph ph-graduation-cap"></i> Concepto</span>
-            <span class="item-val">Matrícula Escuela <span class="badge-tipo matricula">Único pago</span></span>
+            <span class="item-val" id="matriculaConcepto">Matrícula Escuela <span class="badge-tipo matricula">Único pago</span></span>
         </div>
         <div class="item">
             <span class="item-label"><i class="ph ph-check-circle"></i> Incluye</span>
@@ -344,6 +344,22 @@ function buildMatriculaView() {
 
 function buildCursoView(curso, planes = []) {
     const price = fmt(curso.precio || 0);
+    let parsedVm = null;
+    if (curso.ventas_meta) {
+        try { parsedVm = typeof curso.ventas_meta === 'string' ? JSON.parse(curso.ventas_meta) : curso.ventas_meta; } catch(e) {}
+    }
+    const matCfg = (parsedVm && parsedVm.matricula_config) || {};
+    const tieneMat = curso.tiene_matricula !== undefined ? Boolean(curso.tiene_matricula) : Boolean(matCfg.tiene_matricula);
+    const valMat = Number(curso.valor_matricula !== undefined ? curso.valor_matricula : (matCfg.valor_matricula || 0));
+    const cobraMat = curso.cobra_matricula !== undefined ? Boolean(curso.cobra_matricula) : (matCfg.cobra_matricula !== undefined ? Boolean(matCfg.cobra_matricula) : true);
+    let matRowHtml = '';
+    if (tieneMat) {
+        if (cobraMat && valMat > 0) {
+            matRowHtml = `<div class="item"><span class="item-label"><i class="ph ph-graduation-cap"></i> Matrícula</span><span class="item-val" style="color:#92400E">${fmt(valMat)} <a href="pago.html?tipo=matricula&id=${curso.id}" style="font-size:0.78rem;color:var(--color-primary);margin-left:0.35rem;text-decoration:underline">Pagar matrícula</a></span></div>`;
+        } else if (!cobraMat) {
+            matRowHtml = `<div class="item"><span class="item-label"><i class="ph ph-graduation-cap"></i> Matrícula</span><span class="item-val" style="color:#059669">${valMat > 0 ? `<span style="text-decoration:line-through;color:#94A3B8;font-weight:400;margin-right:0.25rem">${fmt(valMat)}</span>` : ''}Gratis ($0)</span></div>`;
+        }
+    }
     
     let planesHtml = '';
     if (planes.length > 0) {
@@ -379,6 +395,7 @@ function buildCursoView(curso, planes = []) {
             <span class="item-label"><i class="ph ph-book-open"></i> Curso</span>
             <span class="item-val">${curso.titulo}</span>
         </div>
+        ${matRowHtml}
         ${ planes.length === 0 ? `
         <div class="item">
             <span class="item-label"><i class="ph ph-infinity"></i> Tipo de acceso</span>
@@ -498,15 +515,28 @@ function setLoading(loading) {
 
 // Load matrícula amount async
 async function loadMatriculaTotal() {
-    if (!token) {
-        const el = document.getElementById('matriculaTotal');
-        if (el) el.textContent = 'Ver al confirmar';
-        return;
-    }
-    try {
-        await fetch('/api/admin/planes', { headers:{ Authorization:'Bearer '+token } });
-    } catch(e) {}
     const el = document.getElementById('matriculaTotal');
+    const conceptoEl = document.getElementById('matriculaConcepto');
+    try {
+        const q = id ? `?curso_id=${encodeURIComponent(id)}` : '';
+        const res = await fetch('/api/pagos/matricula/info' + q);
+        if (res.ok) {
+            const data = await res.json();
+            if (conceptoEl && data.curso_titulo) {
+                conceptoEl.innerHTML = `${data.curso_titulo} <span class="badge-tipo matricula">Matrícula</span>`;
+            }
+            if (el) {
+                if (!data.cobra_matricula) {
+                    el.innerHTML = `<span style="color:#059669">Matrícula Gratis ($0)</span>`;
+                    const btn = document.getElementById('btnPagar');
+                    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ph ph-check-circle"></i> Matrícula Liberada ($0)'; }
+                } else {
+                    el.textContent = fmt(data.monto || 0);
+                }
+                return;
+            }
+        }
+    } catch(e) {}
     if (el) el.textContent = 'Ver al confirmar';
 }
 
@@ -531,7 +561,8 @@ async function pagarMatricula() {
     if (!okAuth) { setLoading(false); return; }
     try {
         const res = await fetch('/api/pagos/matricula/iniciar', {
-            method:'POST', headers:{ Authorization:'Bearer '+token, 'Content-Type':'application/json' }
+            method:'POST', headers:{ Authorization:'Bearer '+token, 'Content-Type':'application/json' },
+            body: JSON.stringify({ curso_id: id || null })
         });
         if (handleAuthExpired(res)) return;
         const data = await res.json();

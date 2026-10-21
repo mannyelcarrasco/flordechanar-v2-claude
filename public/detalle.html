@@ -250,6 +250,7 @@
             <div class="l-sidebar">
                 <div class="buy-card">
                     <h3 id="cPrice">$0</h3>
+                    <div id="cMatriculaBadge" style="display:none;margin:-0.6rem 0 1.1rem;font-size:0.88rem"></div>
                     <div id="buyButtonsContainer" style="margin-bottom: 1rem; display: flex; flex-direction: column;">
                         <a href="#" id="cBuyBtn" class="btn btn-primary" onclick="handleBuy(event)">Inscribirme Ahora</a>
                     </div>
@@ -461,6 +462,25 @@
             
             container.innerHTML = '';
             let payButtonsHtml = '';
+            const matCfg = (meta && meta.matricula_config) || {};
+            const tieneMat = c.tiene_matricula !== undefined ? Boolean(c.tiene_matricula) : Boolean(matCfg.tiene_matricula);
+            const valMat = Number(c.valor_matricula !== undefined ? c.valor_matricula : (matCfg.valor_matricula || 0));
+            const cobraMat = c.cobra_matricula !== undefined ? Boolean(c.cobra_matricula) : (matCfg.cobra_matricula !== undefined ? Boolean(matCfg.cobra_matricula) : true);
+            const matBadgeEl = document.getElementById('cMatriculaBadge');
+            if (matBadgeEl) {
+                if (!isGratis && tieneMat) {
+                    matBadgeEl.style.display = 'block';
+                    if (cobraMat && valMat > 0) {
+                        matBadgeEl.innerHTML = `<span style="display:inline-flex;align-items:center;gap:0.35rem;background:#FEF3C7;color:#92400E;padding:0.3rem 0.75rem;border-radius:99px;font-weight:700;font-size:0.8rem;border:1px solid #FDE68A"><i class="ph-fill ph-graduation-cap"></i> Matrícula: ${fmt(valMat)}</span>`;
+                    } else if (!cobraMat) {
+                        matBadgeEl.innerHTML = `<span style="display:inline-flex;align-items:center;gap:0.35rem;background:#ECFDF5;color:#065F46;padding:0.3rem 0.75rem;border-radius:99px;font-weight:700;font-size:0.8rem;border:1px solid #A7F3D0"><i class="ph-fill ph-sparkle"></i> ${valMat > 0 ? `<span style="text-decoration:line-through;color:#6EE7B7;margin-right:0.2rem">${fmt(valMat)}</span>` : ''}Matrícula Gratis ($0)</span>`;
+                    } else {
+                        matBadgeEl.style.display = 'none';
+                    }
+                } else {
+                    matBadgeEl.style.display = 'none';
+                }
+            }
             
             if (c.planes && c.planes.length > 0) {
                 const mainPlan = c.planes[0];
@@ -497,6 +517,12 @@
                     document.getElementById('cPrice').textContent = fmt(c.precio);
                     payButtonsHtml = `<a href="#" class="btn btn-primary" onclick="handleBuy(event)">Comprar Ahora</a>`;
                 }
+            }
+
+            if (!isGratis && tieneMat && cobraMat && valMat > 0) {
+                const matUrl = `pago.html?tipo=matricula&id=${c.id}`;
+                const matLabel = `Matrícula ${c.titulo} (${fmt(valMat)})`;
+                payButtonsHtml += `<a href="${matUrl}" onclick="startCheckoutFlow(event, '${matUrl}', '${matLabel.replace(/'/g, "\\'")}', false)" class="btn" style="margin-top:0.5rem;background:#FEF3C7;color:#92400E;border:1.5px solid #F59E0B;font-size:0.88rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:0.4rem"><i class="ph-fill ph-graduation-cap"></i> Pagar Matrícula (${fmt(valMat)})</a>`;
             }
 
             if (modoInscripcion === 'formulario') {

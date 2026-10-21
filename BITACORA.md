@@ -1,6 +1,6 @@
 # 📋 Bitácora del Proyecto — Flor de Chañar v2
 **Repositorio:** [mannyelcarrasco/flordechanar-v2-claude](https://github.com/mannyelcarrasco/flordechanar-v2-claude)  
-**Última actualización:** 2026-10-19
+**Última actualización:** 2026-10-21
 
 ---
 
@@ -44,6 +44,7 @@
   - Corrección de un error tipográfico en el ID del contenedor HTML (`professorsContainer` en lugar de `professorsPanel`) que impedía cargar y mostrar la lista de profesores para asignar a un curso ("Cargando profesores...").
   - Incorporación del campo **Mensualidad (CLP / mes)** directamente en la sección *Precio y Acceso* de `curso-crear.html`, sincronizado automáticamente con la tabla `planes` en `GET/POST/PUT /api/cursos` (y reinicio de `flow_plan_id` al cambiar el monto).
   - Corrección de la carga/cambio de **Imagen de portada**: ahora se muestran botones visibles de *Cambiar / Subir nueva imagen* y *Quitar imagen* tanto en Información Básica como directamente en la tarjeta lateral de *Vista Previa*, además de incluir `portada_url` al crear cursos nuevos (`POST /api/cursos`).
+  - Incorporación de **Configuración de Matrícula** por curso/programa (`tiene_matricula`, `valor_matricula`, `cobra_matricula`) en la sección *Precio y Acceso* de `curso-crear.html`, permitiendo definir si el programa incluye matrícula, su valor en CLP y si se cobra o es **Matrícula Gratis / Liberada ($0)** (mostrando el valor de referencia tachado como promoción en `escuela.html`, `detalle.html` y `pago.html`, y habilitando el cobro de matrícula por curso vía Flow).
 
 ### 🔒 Seguridad & Dependencias (NUEVO)
 - [x] Corrección de vulnerabilidades de NPM detectadas por Hostinger (`qs`, `ip-address`).
