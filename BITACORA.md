@@ -6,6 +6,18 @@
 
 ## ✅ Avances completados
 
+### 🖼️ Inclusión Permanente de Portadas Oficiales y Corrección de Permisos en Uploads (`server.js`, `public/img/cursos/`, `public/uploads/`) (NUEVO)
+- [x] **Incorporación Permanente de Imágenes en el Repositorio Git:**
+  - Se agregaron las imágenes oficiales de **Masoterapia Profesional Sede La Serena** y **Masoterapia Profesional Sede Calama** (Método Mushuu) tanto en `public/img/cursos/` como en `public/uploads/`:
+    - `masoterapia-la-serena-2026.png`
+    - `masoterapia-calama-2026.png`
+  - Al estar versionadas directamente en el repositorio Git, quedan blindadas frente a despliegues y reinicios de contenedores en Hostinger.
+- [x] **Permisos de Archivos y Directorio en Servidor (Hostinger LiteSpeed):**
+  - En entornos compartidos como Hostinger LiteSpeed con CloudLinux, los procesos Node.js pueden crear archivos con umask restrictiva (`0600`), impidiendo que el servidor web LiteSpeed o la CDN de Hostinger (`hcdn`) los lea y provocando el fallo de visualización o el error 422.
+  - Se incorporó `fs.chmodSync(req.file.path, 0o644)` tras cada subida en `POST /api/upload` y permisos `0o755` automáticos para la carpeta `uploadsDir`, garantizando lectura pública para el servidor web.
+- [x] **Auto-asignación en `initDB()`:**
+  - Actualización automática en base de datos para asignar `/img/cursos/masoterapia-la-serena-2026.png` al curso de La Serena y `/img/cursos/masoterapia-calama-2026.png` al curso de Calama.
+
 ### 🐛 Corrección de Error en Detalle de Cursos (`public/detalle.html`) (NUEVO)
 - [x] **Diagnóstico del Error de Conexión en `/detalle.html?id=X`:**
   - Al abrir la página de detalle de cualquier curso (ej. `/detalle.html?id=13`), la pantalla se quedaba en blanco mostrando únicamente `"⚠️ Error de conexión."`.

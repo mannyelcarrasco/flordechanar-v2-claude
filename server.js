@@ -33,7 +33,10 @@ app.use('/wp-content', (req, res) => {
 
 // Directorio de uploads de multer
 const uploadsDir = path.join(__dirname, 'public', 'uploads');
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true, mode: 0o755 });
+}
+try { fs.chmodSync(uploadsDir, 0o755); } catch(e) {}
 
 // Asegurar barra final y soporte mayúsculas/minúsculas para la landing /TerapiaEmocionalEvolutiva/
 app.use((req, res, next) => {
@@ -509,13 +512,13 @@ async function initDB() {
             `);
             await pool.query(`
                 UPDATE cursos 
-                SET portada_url = 'https://web1.flordechanar.cl/wp-content/uploads/2025/03/Copia-de-Horario-Escolar-Universidad-Juvenil-1.jpg'
-                WHERE (id = 13 OR titulo LIKE '%Masoterapia Profesional Presencial%') AND (portada_url LIKE '/uploads/%' OR portada_url IS NULL)
+                SET portada_url = '/img/cursos/masoterapia-la-serena-2026.png'
+                WHERE id = 13 OR titulo LIKE '%Masoterapia%La Serena%'
             `);
             await pool.query(`
                 UPDATE cursos 
-                SET portada_url = 'https://web1.flordechanar.cl/wp-content/uploads/2024/02/Copia-de-Curso-de-reiki-nivel-1-4.jpg'
-                WHERE (id = 25 OR titulo LIKE '%Reflexolog%') AND (portada_url LIKE '/uploads/%' OR portada_url IS NULL)
+                SET portada_url = '/img/cursos/masoterapia-calama-2026.png'
+                WHERE id = 25 OR titulo LIKE '%Calama%' OR (titulo LIKE '%Reflexolog%' AND portada_url NOT LIKE '/img/%')
             `);
             await pool.query(`
                 UPDATE cursos 
@@ -568,6 +571,9 @@ app.post('/api/upload', verifyToken, (req, res) => {
     upload.single('file')(req, res, (err) => {
         if (err) return res.status(400).json({ error: err.message });
         if (!req.file) return res.status(400).json({ error: 'No se recibió ningún archivo' });
+        try {
+            fs.chmodSync(req.file.path, 0o644);
+        } catch(e) {}
         res.json({ url: '/uploads/' + req.file.filename });
     });
 });
