@@ -95,7 +95,13 @@
         .course-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.08); }
         
         .c-image {
-            height: 180px; background-color: #E2E8F0; background-size: cover; background-position: center; position: relative;
+            height: 180px; background-color: #E2E8F0; position: relative; overflow: hidden;
+        }
+        .c-image img {
+            width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .course-card:hover .c-image img {
+            transform: scale(1.05);
         }
         .c-content { padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column; }
         .c-meta { display: flex; justify-content: space-between; margin-bottom: 1rem; align-items: center; }
@@ -313,7 +319,9 @@
             const grid = document.getElementById('course-grid');
             const teeCardHtml = `
                 <div class="course-card">
-                    <div class="c-image" style="background-image: url('/TerapiaEmocionalEvolutiva/assets/img/hero-arbol.jpg'); cursor: pointer;" onclick="location.href='/TerapiaEmocionalEvolutiva/'"></div>
+                    <div class="c-image" style="cursor: pointer;" onclick="location.href='/TerapiaEmocionalEvolutiva/'">
+                        <img src="/TerapiaEmocionalEvolutiva/assets/img/hero-arbol.jpg" alt="Formación TEE" loading="lazy" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=600&q=80'">
+                    </div>
                     <div class="c-content">
                         <div class="c-meta">
                             <span class="badge" style="text-transform:uppercase">ONLINE EN VIVO</span>
@@ -361,8 +369,12 @@
                 }
 
                 const fmt = n => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(n);
+                const fallbackCover = 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=600&q=80';
                 cursos.forEach(curso => {
-                    const cover = curso.portada_url || 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=600&q=80';
+                    let cover = curso.portada_url || fallbackCover;
+                    if (cover.includes('flordechanar.cl/wp-content/')) {
+                        cover = cover.replace(/https?:\/\/(?:i\d\.wp\.com\/)?flordechanar\.cl\/wp-content\//, 'https://web1.flordechanar.cl/wp-content/');
+                    }
                     const tipo = curso.tipo_acceso || 'gratis';
                     const isGratis = tipo === 'gratis' || !curso.precio;
                     let bestPriceHtml = `<span style="font-weight:800;color:var(--color-primary);font-size:1rem">${fmt(curso.precio)}</span>`;
@@ -460,7 +472,9 @@
 
                     grid.innerHTML += `
                         <div class="course-card">
-                            <div class="c-image" style="background-image: url('${cover}')"></div>
+                            <div class="c-image" style="cursor:pointer" onclick="${ctaOnclick}">
+                                <img src="${cover}" alt="${curso.titulo}" loading="lazy" onerror="if(this.src!=='${fallbackCover}'){this.onerror=null;this.src='${fallbackCover}';}">
+                            </div>
                             <div class="c-content">
                                 <div class="c-meta" style="flex-wrap:wrap;gap:0.35rem">
                                     <div style="display:flex;gap:0.35rem;flex-wrap:wrap">

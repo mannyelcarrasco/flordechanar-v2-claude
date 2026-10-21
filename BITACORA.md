@@ -6,6 +6,24 @@
 
 ## ✅ Avances completados
 
+### 🖼️ Corrección y Resiliencia de Imágenes de Portada en Cursos (`escuela.html`, `detalle.html`, `server.js`, `curso-crear.html`) (NUEVO)
+- [x] **Diagnóstico de Imágenes No Visibles:**
+  - Se identificaron dos causas por las que las imágenes no cargaban y mostraban un recuadro gris vacío (`background-color: #E2E8F0`):
+    1. **Archivos de `/uploads/` faltantes o no persistentes tras redeploys:** Al solicitar `/uploads/...` y no existir el archivo en disco, la petición caía en el fallback SPA (`index.html`) devolviendo código 200 con HTML; Hostinger CDN (`hcdn`) al intentar optimizar la imagen recibía HTML y arrojaba error `422 Invalid source image`, haciendo que el CSS `background-image` fallara silenciosamente a color gris.
+    2. **URLs históricas de WordPress con CDN de Jetpack (`i0.wp.com`):** Las imágenes migradas apuntaban a `flordechanar.cl/wp-content/...`, pero WordPress fue movido a `web1.flordechanar.cl`, lo que provocaba que Jetpack devolviera error `400 Bad Request`.
+- [x] **Backend & API (`server.js`):**
+  - **Redirección de `/wp-content`:** Nuevo middleware que redirige automáticamente cualquier solicitud a `/wp-content/*` hacia `https://web1.flordechanar.cl/wp-content/*` (donde residen todas las imágenes oficiales de WordPress).
+  - **Ruta de rescate para `/uploads/:filename`:** Si un archivo subido no existe físicamente en disco, en lugar de devolver `index.html` (que producía 422 en CDN), el servidor redirige de inmediato (302) a una imagen de bienestar/terapia válida de alta resolución.
+  - **Normalizador de URLs (`normalizePortadaUrl`):** En `GET /api/cursos`, `GET /api/cursos/publico/:id`, `GET /api/cursos/:id`, `GET /api/cursos/dictados`, `GET /api/cursos/mis-cursos` y `GET /api/admin/cursos`, se reescriben al vuelo las URLs de `flordechanar.cl/wp-content/` a `web1.flordechanar.cl/wp-content/`.
+  - **Auto-reparación en `initDB()`:** Script de inicialización que actualiza automáticamente las portadas de los cursos existentes con sus imágenes oficiales válidas (Presencial La Serena, Reflexología Holística y Masoterapia Online).
+- [x] **Frontend Público y Alumno (`escuela.html`, `detalle.html`, `dashboard.html`):**
+  - Reemplazo de `background-image` en CSS estático por elementos `<img>` con `loading="lazy"` y controlador `onerror` automático: si una imagen falla por red o CDN, se reemplaza al instante por la portada de respaldo sin dejar jamás el recuadro gris vacío.
+  - Efecto de zoom suave al pasar el cursor (`transform: scale(1.05)`) y cursor clicable hacia el detalle del curso.
+  - En `detalle.html`: pre-carga y verificación con `new Image()` para el fondo del Hero, cayendo al fondo por defecto si falla la imagen externa.
+- [x] **Panel de Creación de Cursos (`curso-crear.html`):**
+  - Nuevo campo opcional para **Ingresar enlace directo (URL)** de imagen (`#coverUrlInput`), permitiendo a los administradores pegar links directos de Unsplash, Cloudinary o WordPress además de la opción de subir archivos locales.
+  - Archivo `.gitkeep` agregado a `public/uploads/` para asegurar que el directorio permanezca versionado en git.
+
 ### 📅 Sistema de Calendario Organizativo, Docente y Promocional + Eventos con Cupo AtendIA (NUEVO)
 - [x] **Diferenciación Clara entre Fecha de Inicio de Clases (Docencia) y Apertura de Matrícula (Ventas) (`curso-crear.html`, `server.js`, `escuela.html`, `admin.html`):**
   - Incorporación de la columna `fecha_inicio_clases` en la tabla `cursos`, separando explícitamente:

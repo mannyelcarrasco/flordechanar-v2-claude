@@ -26,6 +26,15 @@ app.use('/mi-cuenta', (req, res) => {
     res.redirect(301, 'https://web1.flordechanar.cl' + req.originalUrl);
 });
 
+// Redireccionar accesos a /wp-content al sitio antiguo (WordPress en web1) para preservar imágenes históricas
+app.use('/wp-content', (req, res) => {
+    res.redirect(301, 'https://web1.flordechanar.cl' + req.originalUrl);
+});
+
+// Directorio de uploads de multer
+const uploadsDir = path.join(__dirname, 'public', 'uploads');
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
 // Asegurar barra final y soporte mayúsculas/minúsculas para la landing /TerapiaEmocionalEvolutiva/
 app.use((req, res, next) => {
     if (req.path.replace(/\/+$/, '').toLowerCase() === '/terapiaemocionalevolutiva' && !req.originalUrl.startsWith('/TerapiaEmocionalEvolutiva/')) {
@@ -37,6 +46,19 @@ app.use((req, res, next) => {
 // Si Flow redirige vía POST a una página HTML estática (ej. /pago-exitoso.html), redirigir como GET (303)
 app.post(/^\/[^/]+\.html$/i, (req, res) => {
     res.redirect(303, req.originalUrl);
+});
+
+// Servir uploads con fallback elegante si el archivo físico no existe en disco
+// (Evita que caiga en SPA fallback index.html y Hostinger CDN genere 422 Invalid source image)
+app.get('/uploads/:filename', (req, res, next) => {
+    const filename = req.params.filename.replace(/[^a-zA-Z0-9._-]/g, '');
+    const filePath = path.join(uploadsDir, filename);
+    if (fs.existsSync(filePath)) {
+        return res.sendFile(filePath);
+    }
+    // Si la imagen física no existe en disco (rebuild/deploy o archivo perdido),
+    // responder con redirect a fallback para evitar 422 de Hostinger CDN (hcdn)
+    return res.redirect(302, 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=600&q=80');
 });
 
 // Serve static frontend files from 'public' directory
@@ -478,6 +500,32 @@ async function initDB() {
             console.log('Admin password forcefully reset to admin123');
         }
 
+        // Auto-reparación y migración de URLs de portadas de cursos (Wordpress a web1 / portadas perdidas)
+        try {
+            await pool.query(`
+                UPDATE cursos 
+                SET portada_url = REPLACE(REPLACE(portada_url, 'https://i0.wp.com/flordechanar.cl/wp-content/', 'https://web1.flordechanar.cl/wp-content/'), 'https://flordechanar.cl/wp-content/', 'https://web1.flordechanar.cl/wp-content/')
+                WHERE portada_url LIKE '%flordechanar.cl/wp-content/%'
+            `);
+            await pool.query(`
+                UPDATE cursos 
+                SET portada_url = 'https://web1.flordechanar.cl/wp-content/uploads/2025/03/Copia-de-Horario-Escolar-Universidad-Juvenil-1.jpg'
+                WHERE (id = 13 OR titulo LIKE '%Masoterapia Profesional Presencial%') AND (portada_url LIKE '/uploads/%' OR portada_url IS NULL)
+            `);
+            await pool.query(`
+                UPDATE cursos 
+                SET portada_url = 'https://web1.flordechanar.cl/wp-content/uploads/2024/02/Copia-de-Curso-de-reiki-nivel-1-4.jpg'
+                WHERE (id = 25 OR titulo LIKE '%Reflexolog%') AND (portada_url LIKE '/uploads/%' OR portada_url IS NULL)
+            `);
+            await pool.query(`
+                UPDATE cursos 
+                SET portada_url = 'https://web1.flordechanar.cl/wp-content/uploads/2024/04/4472777.jpg'
+                WHERE (id = 27 OR titulo LIKE '%Masoterapia Profesional%Online%') AND (portada_url LIKE '%4472777.jpg%' OR portada_url LIKE '/uploads/%' OR portada_url IS NULL)
+            `);
+        } catch (migrErr) {
+            console.warn('Aviso en auto-reparación de portadas:', migrErr.message);
+        }
+
     } catch (err) {
         dbInitError = err;
         console.error('Database initialization error:', err);
@@ -486,10 +534,17 @@ async function initDB() {
 
 initDB();
 
-// --- File Upload (Multer) ---
-const uploadsDir = path.join(__dirname, 'public', 'uploads');
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+// Helper para normalizar URLs de portada en respuestas de la API
+function normalizePortadaUrl(url) {
+    if (!url) return null;
+    let s = String(url).trim();
+    if (s.includes('flordechanar.cl/wp-content/')) {
+        s = s.replace(/https?:\/\/(?:i\d\.wp\.com\/)?flordechanar\.cl\/wp-content\//, 'https://web1.flordechanar.cl/wp-content/');
+    }
+    return s;
+}
 
+// --- File Upload (Multer) ---
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, uploadsDir),
     filename: (req, file, cb) => {
@@ -836,8 +891,8 @@ app.get('/api/cursos', async (req, res) => {
         const [planes] = await pool.query("SELECT * FROM planes WHERE activo = 1 AND nombre != 'matricula'");
         for (let c of cursos) {
             c.planes = planes.filter(p => p.curso_id === c.id);
+            c.portada_url = normalizePortadaUrl(c.portada_url);
         }
-
         res.json(cursos);
     } catch (e) {
         console.error(e);
@@ -894,6 +949,9 @@ app.get('/api/cursos/dictados', verifyToken, async (req, res) => {
             FROM cursos c
             WHERE c.profesor_id = ?
         `, [req.usuario.id]);
+        for (let c of cursos) {
+            c.portada_url = normalizePortadaUrl(c.portada_url);
+        }
         res.json(cursos);
     } catch (e) {
         console.error(e);
@@ -910,6 +968,9 @@ app.get('/api/cursos/mis-cursos', verifyToken, async (req, res) => {
             LEFT JOIN suscripciones s ON s.plan_id = p.id AND s.usuario_id = ? AND s.estado = 'activa'
             WHERE i.id IS NOT NULL OR s.id IS NOT NULL
         `, [req.usuario.id, req.usuario.id]);
+        for (let c of cursos) {
+            c.portada_url = normalizePortadaUrl(c.portada_url);
+        }
         res.json(cursos);
     } catch (e) {
         console.error(e);
@@ -1008,6 +1069,7 @@ app.get('/api/cursos/publico/:id', async (req, res) => {
         const curso = cursos[0];
         const [planes] = await pool.query('SELECT * FROM planes WHERE curso_id = ? AND activo = 1', [curso.id]);
         curso.planes = planes;
+        curso.portada_url = normalizePortadaUrl(curso.portada_url);
         
         res.json(curso);
     } catch (e) {
@@ -1030,6 +1092,7 @@ app.get('/api/cursos/:id', verifyToken, async (req, res) => {
         const curso = cursos[0];
         const [planes] = await pool.query('SELECT * FROM planes WHERE curso_id = ? ORDER BY id ASC', [curso.id]);
         curso.planes = planes;
+        curso.portada_url = normalizePortadaUrl(curso.portada_url);
         res.json(curso);
     } catch (e) {
         console.error(e);
@@ -1554,6 +1617,9 @@ app.get('/api/admin/cursos', verifyToken, async (req, res) => {
             LEFT JOIN usuarios u ON c.profesor_id = u.id
             ORDER BY c.creado_en DESC
         `);
+        for (let c of cursos) {
+            c.portada_url = normalizePortadaUrl(c.portada_url);
+        }
         res.json(cursos);
     } catch (e) {
         console.error(e);

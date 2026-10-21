@@ -281,6 +281,10 @@
                     <p>Arrastra una imagen o <span>selecciona un archivo desde tu equipo</span><br><small>JPG, PNG, WEBP · Recomendado 1280×720 px</small></p>
                 </div>
                 <input type="file" id="coverInput" style="display:none" accept=".jpg,.jpeg,.png,.webp" onchange="uploadCover(this)">
+                <div style="margin-top:0.65rem;display:flex;gap:0.5rem;align-items:center;">
+                    <span style="font-size:0.78rem;color:var(--l);white-space:nowrap"><i class="ph ph-link"></i> O enlace directo:</span>
+                    <input type="url" id="coverUrlInput" placeholder="https://ejemplo.com/imagen.jpg" style="flex:1;padding:0.4rem 0.65rem;border:1px solid #CBD5E1;border-radius:8px;font-size:0.82rem;" onchange="applyDirectCoverUrl(this.value)" oninput="if(this.value.startsWith('http'))applyDirectCoverUrl(this.value)">
+                </div>
             </div>
         </div>
 
@@ -1312,6 +1316,10 @@ function syncCoverUI(url) {
     const drop = document.getElementById('coverDrop');
     const sbImg = document.getElementById('sidebarPreviewImg');
     const sbThumb = document.getElementById('previewThumb');
+    const urlInput = document.getElementById('coverUrlInput');
+    if (urlInput && urlInput !== document.activeElement) {
+        urlInput.value = url || '';
+    }
 
     if (url) {
         prev.src = url;
@@ -1330,9 +1338,19 @@ function syncCoverUI(url) {
     }
 }
 
+function applyDirectCoverUrl(url) {
+    const clean = (url || '').trim();
+    if (!clean) return;
+    currentCoverUrl = clean;
+    syncCoverUI(clean);
+    updateChecklist();
+}
+
 function removeCoverImage() {
     currentCoverUrl = null;
     document.getElementById('coverInput').value = '';
+    const urlInput = document.getElementById('coverUrlInput');
+    if (urlInput) urlInput.value = '';
     syncCoverUI(null);
     updateChecklist();
 }

@@ -316,11 +316,16 @@
             document.title = c.titulo + " | Flor de Chañar";
             
             // Hero
-            if(c.portada_url) {
-                document.getElementById('heroSec').style.backgroundImage = `url('${c.portada_url}')`;
-            } else {
-                document.getElementById('heroSec').style.backgroundImage = `url('https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1200&q=80')`;
+            const defaultHero = 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1200&q=80';
+            let heroUrl = c.portada_url || defaultHero;
+            if (heroUrl.includes('flordechanar.cl/wp-content/')) {
+                heroUrl = heroUrl.replace(/https?:\/\/(?:i\d\.wp\.com\/)?flordechanar\.cl\/wp-content\//, 'https://web1.flordechanar.cl/wp-content/');
             }
+            const heroSec = document.getElementById('heroSec');
+            const imgChecker = new Image();
+            imgChecker.onload = () => { heroSec.style.backgroundImage = `url('${heroUrl}')`; };
+            imgChecker.onerror = () => { heroSec.style.backgroundImage = `url('${defaultHero}')`; };
+            imgChecker.src = heroUrl;
             
             document.getElementById('cTitle').textContent = c.titulo;
             document.getElementById('cDesc').textContent = c.descripcion;

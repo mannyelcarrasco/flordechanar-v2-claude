@@ -412,10 +412,16 @@ window.addEventListener('load', async () => {
         const list = document.getElementById('myCoursesList');
         list.innerHTML = cursos.map((c, i) => {
             const pg     = progressData[i];
-            const cover  = c.portada_url || 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=200&q=80';
+            const fallbackCover = 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=200&q=80';
+            let cover = c.portada_url || fallbackCover;
+            if (cover.includes('flordechanar.cl/wp-content/')) {
+                cover = cover.replace(/https?:\/\/(?:i\d\.wp\.com\/)?flordechanar\.cl\/wp-content\//, 'https://web1.flordechanar.cl/wp-content/');
+            }
             const label  = pg.completadas > 0 ? 'Continuar →' : 'Empezar →';
             return `<div class="course-row" onclick="window.location='curso.html?id=${c.id}'">
-                <div class="c-thumb" style="background-image:url('${cover}')"></div>
+                <div class="c-thumb" style="overflow:hidden">
+                    <img src="${cover}" alt="${c.titulo}" loading="lazy" onerror="if(this.src!=='${fallbackCover}'){this.onerror=null;this.src='${fallbackCover}';}" style="width:100%;height:100%;object-fit:cover;display:block">
+                </div>`;
                 <div class="c-info">
                     <h3>${c.titulo}</h3>
                     <div class="c-sub"><span><i class="ph ph-play-circle"></i> ${pg.completadas} de ${pg.total} lecciones completadas</span></div>
