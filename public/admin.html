@@ -384,6 +384,7 @@
         <li><a href="#" class="active" onclick="st(event,'tu')"><i class="ph ph-house"></i> Dashboard</a></li>
         <li><a href="#" onclick="st(event,'tu')"><i class="ph ph-users-three"></i> Usuarios <span class="sb-b">12</span></a></li>
         <li><a href="#" onclick="st(event,'tc')"><i class="ph ph-books"></i> Cursos</a></li>
+        <li><a href="#" onclick="st(event,'tcal')"><i class="ph ph-calendar-check"></i> Calendario Académico</a></li>
         <li><a href="#" onclick="st(event,'tprospectos')"><i class="ph ph-funnel"></i> Prospectos Funnel</a></li>
         <li><a href="#" onclick="st(event,'ta')"><i class="ph ph-lock-key"></i> Accesos</a></li>
         <li><a href="#" onclick="st(event,'tpag')"><i class="ph ph-files"></i> Páginas</a></li>
@@ -420,6 +421,7 @@
     <div class="tabs">
         <button class="tab active" onclick="st(event,'tu')">Usuarios</button>
         <button class="tab" onclick="st(event,'tc')">Cursos</button>
+        <button class="tab" onclick="st(event,'tcal')" style="color:#4F46E5;font-weight:700"><i class="ph ph-calendar-check"></i> 📅 Calendario y Planificación</button>
         <button class="tab" onclick="st(event,'tprospectos')" style="color:#059669;font-weight:700">🎯 Prospectos / Funnel</button>
         <button class="tab" onclick="st(event,'ti')">Inscripciones</button>
         <button class="tab" onclick="st(event,'ta')">Acceso Profesores</button>
@@ -464,6 +466,70 @@
                     <tr><td colspan="7" style="text-align:center; padding: 2rem;">Cargando cursos desde la base de datos...</td></tr>
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- TAB Calendario Académico, Planificación & Eventos AtendIA -->
+    <div id="tcal" class="tp">
+        <!-- Cabecera explicativa y controles -->
+        <div style="background:linear-gradient(135deg,#F8FAFC,#EEF2FF);border:1.5px solid #E0E7FF;border-radius:12px;padding:1.15rem 1.3rem;margin-bottom:1.1rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem">
+            <div>
+                <h3 style="font-size:1.1rem;margin:0;color:#1E1B4B;display:flex;align-items:center;gap:.45rem">
+                    <i class="ph-fill ph-calendar-check" style="color:#4F46E5;font-size:1.3rem"></i> Calendario Organizativo, Docente y Promocional
+                </h3>
+                <p style="font-size:.81rem;color:#475569;margin:.25rem 0 0;max-width:740px">
+                    <strong>1) Orden Docente:</strong> proyecta los días de clase de cada profesor y sede ·
+                    <strong>2) Planificación Anual:</strong> organiza talleres, hitos y fechas clave ·
+                    <strong>3) Promoción y Cupos AtendIA:</strong> sincroniza cupos reales con el Bot de WhatsApp y la vitrina pública (<a href="escuela.html#calendario-actividades" target="_blank" style="color:#4F46E5;font-weight:600">ver en Escuela ↗</a>).
+                </p>
+            </div>
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+                <button class="btn bo btn-sm" onclick="fetchAdminCalendario(true)"><i class="ph ph-arrows-clockwise"></i> Sincronizar Cupos AtendIA</button>
+                <button class="btn bp btn-sm" onclick="openCalEventModal()"><i class="ph ph-plus"></i> Nuevo Evento / Fecha Importante</button>
+            </div>
+        </div>
+
+        <!-- Filtros y Selector de Vista -->
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap;background:#fff;padding:.85rem 1rem;border-radius:10px;border:1px solid #E5E7EB">
+            <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+                <button type="button" class="editor-modo-btn active" id="calViewBtn_mes" onclick="setAdminCalView('mes')"><i class="ph ph-calendar-blank"></i> Grilla Mensual</button>
+                <button type="button" class="editor-modo-btn" id="calViewBtn_anual" onclick="setAdminCalView('anual')"><i class="ph ph-list-Bullets"></i> Planificación Anual (Mes a Mes)</button>
+                <button type="button" class="editor-modo-btn" id="calViewBtn_profesores" onclick="setAdminCalView('profesores')"><i class="ph ph-chalkboard-teacher"></i> Carga por Profesor y Sede</button>
+                <button type="button" class="editor-modo-btn" id="calViewBtn_atendia" onclick="setAdminCalView('atendia')"><i class="ph ph-ticket"></i> Eventos con Cupo (AtendIA)</button>
+            </div>
+            <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+                <select id="calFilterProfesor" onchange="renderAdminCalendar()" class="role-select" style="padding:.42rem .75rem">
+                    <option value="">👨‍🏫 Todos los profesores</option>
+                </select>
+                <select id="calFilterSede" onchange="renderAdminCalendar()" class="role-select" style="padding:.42rem .75rem">
+                    <option value="">📍 Todas las sedes / modalidades</option>
+                    <option value="Calama">Sede Calama</option>
+                    <option value="La Serena">Sede La Serena</option>
+                    <option value="Online">Online en Vivo</option>
+                </select>
+                <select id="calFilterTipo" onchange="renderAdminCalendar()" class="role-select" style="padding:.42rem .75rem">
+                    <option value="">🏷️ Todos los tipos</option>
+                    <option value="clase_regular">📚 Clases regulares de cursos</option>
+                    <option value="inicio_curso">🚀 Inicios de curso / taller</option>
+                    <option value="clase_vivo">🎥 Clases en vivo programadas</option>
+                    <option value="evento_atendia">🎟️ Eventos con cupo AtendIA</option>
+                    <option value="hito">📌 Fechas importantes / Hitos</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Leyenda rápida -->
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;font-size:.75rem;color:#475569;margin-bottom:.85rem;padding:0 .25rem">
+            <span style="display:inline-flex;align-items:center;gap:.35rem"><span style="width:10px;height:10px;border-radius:50%;background:#059669;display:inline-block"></span> 🚀 Inicio de Curso / Programa</span>
+            <span style="display:inline-flex;align-items:center;gap:.35rem"><span style="width:10px;height:10px;border-radius:50%;background:#4F46E5;display:inline-block"></span> 📚 Clase Regular (Horario Docente)</span>
+            <span style="display:inline-flex;align-items:center;gap:.35rem"><span style="width:10px;height:10px;border-radius:50%;background:#7C3AED;display:inline-block"></span> 🎥 Clase en Vivo (Aula)</span>
+            <span style="display:inline-flex;align-items:center;gap:.35rem"><span style="width:10px;height:10px;border-radius:50%;background:#DB2777;display:inline-block"></span> 🎟️ Evento con Cupo (Bot AtendIA)</span>
+            <span style="display:inline-flex;align-items:center;gap:.35rem"><span style="width:10px;height:10px;border-radius:50%;background:#D97706;display:inline-block"></span> 📌 Fecha Importante / Cierre Matrícula / Taller</span>
+        </div>
+
+        <!-- Contenedor dinámico del calendario -->
+        <div id="adminCalendarViewport" style="min-height:480px">
+            <div style="text-align:center;padding:3rem;color:var(--l)">Cargando planificación académica...</div>
         </div>
     </div>
 
@@ -1204,6 +1270,109 @@ ORDER BY u.user_registered;</pre>
     </div>
 </div>
 
+<!-- Modal: Crear / Editar Evento o Fecha Importante en el Calendario -->
+<div class="modal-bg" id="calEventModalBg" onclick="if(event.target===this)closeCalEventModal()">
+    <div class="modal" style="max-width:580px;max-height:90vh;overflow-y:auto">
+        <h3 id="calEventModalTitle" style="display:flex;align-items:center;gap:.45rem"><i class="ph-fill ph-calendar-plus" style="color:#4F46E5"></i> Nuevo Evento / Fecha Importante</h3>
+        <input type="hidden" id="calEvId">
+        <div style="display:grid;grid-template-columns:1fr 180px;gap:.75rem">
+            <div class="fg">
+                <label class="fl">Título de la Actividad o Fecha Clave *</label>
+                <input class="fc" id="calEvTitulo" type="text" placeholder="Ej: Taller de Acupuntura Clínica / Cierre de Matrículas">
+            </div>
+            <div class="fg">
+                <label class="fl">Tipo de Actividad</label>
+                <select class="fc" id="calEvTipo">
+                    <option value="taller">🟣 Taller / Seminario</option>
+                    <option value="charla">🎙️ Charla Gratuita / Masterclass</option>
+                    <option value="inscripcion">🔥 Fecha Límite Inscripción / Matrícula</option>
+                    <option value="inicio_curso">🚀 Inicio de Programa / Curso</option>
+                    <option value="reunion_docente">👨‍🏫 Reunión Docente / Directivos</option>
+                    <option value="feriado">🏖️ Receso / Feriado Académico</option>
+                </select>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.65rem">
+            <div class="fg"><label class="fl">Fecha Inicio *</label><input class="fc" id="calEvFechaInicio" type="date"></div>
+            <div class="fg"><label class="fl">Fecha Fin</label><input class="fc" id="calEvFechaFin" type="date"></div>
+            <div class="fg"><label class="fl">Hora Inicio</label><input class="fc" id="calEvHoraInicio" type="time"></div>
+            <div class="fg"><label class="fl">Hora Término</label><input class="fc" id="calEvHoraFin" type="time"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.65rem">
+            <div class="fg">
+                <label class="fl">Modalidad</label>
+                <select class="fc" id="calEvModalidad">
+                    <option value="Presencial">Presencial</option>
+                    <option value="Online en Vivo">Online en Vivo</option>
+                    <option value="Semipresencial">Semipresencial / Híbrido</option>
+                </select>
+            </div>
+            <div class="fg">
+                <label class="fl">Sede / Lugar</label>
+                <input class="fc" id="calEvSede" type="text" placeholder="Ej: Sede Calama / Sede La Serena / Zoom">
+            </div>
+            <div class="fg">
+                <label class="fl">Visibilidad</label>
+                <select class="fc" id="calEvVisibilidad">
+                    <option value="publico">🌎 Público (Promoción + Interno)</option>
+                    <option value="interno">🔒 Solo Interno (Profesores y Directivos)</option>
+                </select>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem">
+            <div class="fg">
+                <label class="fl">Profesor / Responsable (Opcional)</label>
+                <select class="fc" id="calEvProfesor">
+                    <option value="">— Todos / Sin profesor específico —</option>
+                </select>
+            </div>
+            <div class="fg">
+                <label class="fl">Asociar a Curso Publicado (Opcional)</label>
+                <select class="fc" id="calEvCurso">
+                    <option value="">— Independiente / Sin curso —</option>
+                </select>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.65rem">
+            <div class="fg">
+                <label class="fl">Cupos Totales (0 = sin tope)</label>
+                <input class="fc" id="calEvCupos" type="number" placeholder="Ej: 15">
+            </div>
+            <div class="fg">
+                <label class="fl">Valor / Precio Promocional</label>
+                <input class="fc" id="calEvPrecio" type="text" placeholder="Ej: $25.000 o Gratuito">
+            </div>
+            <div class="fg">
+                <label class="fl">Vincular Evento AtendIA</label>
+                <select class="fc" id="calEvAtendiaId">
+                    <option value="">— Sin vincular —</option>
+                </select>
+            </div>
+        </div>
+        <div class="fg">
+            <label class="fl">Descripción o Detalles para Alumnos / Profesores</label>
+            <textarea class="fc" id="calEvDesc" rows="2" placeholder="Detalles importantes, temario breve o indicaciones..."></textarea>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem">
+            <div class="fg">
+                <label class="fl">Texto Botón Promocional (Opcional)</label>
+                <input class="fc" id="calEvCtaTexto" type="text" placeholder="Ej: Reservar mi Cupo">
+            </div>
+            <div class="fg">
+                <label class="fl">Link Destino (vacío = registro directo o curso)</label>
+                <input class="fc" id="calEvCtaUrl" type="text" placeholder="Ej: detalle.html?id=5">
+            </div>
+        </div>
+        <div class="modal-actions" style="justify-content:space-between">
+            <button type="button" class="btn btn-sm" id="calEvDeleteBtn" style="display:none;background:#FEE2E2;color:#DC2626" onclick="deleteCalEvent()"><i class="ph ph-trash"></i> Eliminar</button>
+            <div style="display:flex;gap:.65rem;margin-left:auto">
+                <button type="button" class="btn bo" onclick="closeCalEventModal()">Cancelar</button>
+                <button type="button" class="btn bp" onclick="saveCalEvent()"><i class="ph ph-floppy-disk"></i> Guardar en Calendario</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="toast" id="toast"><i class="ph ph-check-circle" id="tI"></i><span id="tM">Guardado</span></div>
 
 <script src="shared.js"></script>
@@ -1445,6 +1614,7 @@ function st(e, id) {
     if (id === 'tpagos')  fetchAdminPagos();
     if (id === 'tplanes') fetchAdminPlanes();
     if (id === 'tprospectos') fetchProspectos();
+    if (id === 'tcal') fetchAdminCalendario();
 
     // Header button
     const btn = document.getElementById('headerActionBtn');
@@ -1453,6 +1623,11 @@ function st(e, id) {
         btn.style.display = 'inline-flex';
         btn.setAttribute('onclick', "window.location.href='curso-crear.html'");
         label.textContent = 'Crear Curso';
+    } else if (id === 'tcal') {
+        btn.style.display = 'inline-flex';
+        btn.setAttribute('onclick', 'openCalEventModal()');
+        document.getElementById('headerActionIcon').className = 'ph ph-calendar-plus';
+        label.textContent = 'Nuevo Evento';
     } else if (id === 'tu') {
         btn.style.display = 'inline-flex';
         btn.setAttribute('onclick', 'openModal()');
@@ -4096,11 +4271,611 @@ async function eliminarProspecto(id) {
     }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+//  CALENDARIO ACADÉMICO, PLANIFICACIÓN ANUAL & EVENTOS ATENDIA (ADMIN)
+// ═══════════════════════════════════════════════════════════════════════════
+
+let _adminCalData = { cursos: [], sesiones_cursos: [], clases_vivo: [], eventos_locales: [], evaluaciones: [], eventos_atendia: [] };
+let _adminCalView = 'mes';
+let _adminCalDate = new Date();
+
+function setAdminCalView(v) {
+    _adminCalView = v;
+    ['mes', 'anual', 'profesores', 'atendia'].forEach(k => {
+        const b = document.getElementById('calViewBtn_' + k);
+        if (b) b.classList.toggle('active', k === v);
+    });
+    renderAdminCalendar();
+}
+
+function moveAdminCalMonth(delta) {
+    _adminCalDate = new Date(_adminCalDate.getFullYear(), _adminCalDate.getMonth() + delta, 1);
+    renderAdminCalendar();
+}
+
+function goTodayAdminCal() {
+    _adminCalDate = new Date();
+    renderAdminCalendar();
+}
+
+async function fetchAdminCalendario(forceRefresh = false) {
+    const vp = document.getElementById('adminCalendarViewport');
+    if (vp && !_adminCalData.cursos.length) {
+        vp.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--l)"><i class="ph ph-spinner ph-spin" style="font-size:1.5rem"></i> Cargando planificación académica y eventos AtendIA...</div>';
+    }
+    try {
+        const token = localStorage.getItem('token');
+        const y = _adminCalDate.getFullYear();
+        const start = `${y - 1}-11-01`;
+        const end = `${y + 1}-03-31`;
+        const res = await fetch(`/api/calendario/interno?start=${start}&end=${end}${forceRefresh ? '&refresh=1' : ''}`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) throw new Error('Error al obtener calendario');
+        _adminCalData = await res.json();
+        populateCalFiltersAndSelects();
+        renderAdminCalendar();
+        if (forceRefresh) showT('🎟️ Calendario y cupos de AtendIA sincronizados');
+    } catch (e) {
+        if (vp) vp.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--err)">No se pudo cargar el calendario académico.</div>';
+    }
+}
+
+function populateCalFiltersAndSelects() {
+    const profFilter = document.getElementById('calFilterProfesor');
+    const profModal = document.getElementById('calEvProfesor');
+    const cursoModal = document.getElementById('calEvCurso');
+    const atdModal = document.getElementById('calEvAtendiaId');
+
+    const profMap = new Map();
+    (_adminCalData.cursos || []).forEach(c => {
+        if (c.profesor_id && c.profesor) profMap.set(String(c.profesor_id), c.profesor);
+    });
+    (allUsers || []).forEach(u => {
+        if (u.rol === 'profesor' || u.rol === 'admin') profMap.set(String(u.id), u.nombre);
+    });
+
+    if (profFilter) {
+        const cur = profFilter.value;
+        profFilter.innerHTML = '<option value="">👨‍🏫 Todos los profesores</option>';
+        profMap.forEach((name, id) => {
+            profFilter.innerHTML += `<option value="${id}" ${cur === id ? 'selected' : ''}>${name}</option>`;
+        });
+    }
+    if (profModal) {
+        const cur = profModal.value;
+        profModal.innerHTML = '<option value="">— Todos / Sin profesor específico —</option>';
+        profMap.forEach((name, id) => {
+            profModal.innerHTML += `<option value="${id}" ${cur === id ? 'selected' : ''}>${name}</option>`;
+        });
+    }
+    if (cursoModal) {
+        const cur = cursoModal.value;
+        cursoModal.innerHTML = '<option value="">— Independiente / Sin curso —</option>';
+        (_adminCalData.cursos || []).forEach(c => {
+            cursoModal.innerHTML += `<option value="${c.id}" ${String(cur) === String(c.id) ? 'selected' : ''}>${c.titulo} (${c.estado})</option>`;
+        });
+    }
+    if (atdModal) {
+        const cur = atdModal.value;
+        atdModal.innerHTML = '<option value="">— Sin vincular —</option>';
+        (_adminCalData.eventos_atendia || []).forEach(ev => {
+            atdModal.innerHTML += `<option value="${ev.id}" ${String(cur) === String(ev.id) ? 'selected' : ''}>🎟️ #${ev.id} · ${ev.name} (${ev.date} · ${ev.seats_left}/${ev.capacity} libres)</option>`;
+        });
+    }
+}
+
+// Unifica todos los eventos en entradas planas por fecha para pintar grilla, anual y carga docente
+function getUnifiedAdminCalendarItems() {
+    const profFil = document.getElementById('calFilterProfesor')?.value || '';
+    const sedeFil = (document.getElementById('calFilterSede')?.value || '').toLowerCase();
+    const tipoFil = document.getElementById('calFilterTipo')?.value || '';
+
+    const items = [];
+    const linkedAtdIds = new Set();
+
+    // 1) Sesiones proyectadas de cursos publicados/internos
+    (_adminCalData.sesiones_cursos || []).forEach(s => {
+        items.push({
+            uid: s.id,
+            fecha: s.fecha,
+            hora: s.hora || '',
+            titulo: s.titulo,
+            subtitulo: `${s.profesor_nombre} · ${s.sede}`,
+            profesor_id: s.profesor_id,
+            profesor_nombre: s.profesor_nombre,
+            sede: s.sede || '',
+            modalidad: s.modalidad || '',
+            tipo: s.tipo, // 'inicio_curso' | 'clase_regular'
+            color: s.color || '#4F46E5',
+            curso_id: s.curso_id,
+            editable: false
+        });
+    });
+
+    // 2) Si un curso tiene fecha_inicio_ventas pero aún no tiene días de semana definidos, mostrar igual su hito de inicio
+    (_adminCalData.cursos || []).forEach(c => {
+        if (c.atendia_event_id) linkedAtdIds.add(Number(c.atendia_event_id));
+        if (c.fecha_inicio_ventas) {
+            const f = String(c.fecha_inicio_ventas).slice(0, 10);
+            const yaTieneInicio = items.some(x => x.curso_id === c.id && x.fecha === f);
+            if (!yaTieneInicio) {
+                items.push({
+                    uid: `curso_init_${c.id}`,
+                    fecha: f,
+                    hora: c.horario_clase || 'Inicio',
+                    titulo: `🚀 Inicio: ${c.titulo}`,
+                    subtitulo: `${c.profesor || 'Por asignar'} · ${c.sede || c.modalidad || ''}`,
+                    profesor_id: c.profesor_id,
+                    profesor_nombre: c.profesor || 'Por asignar',
+                    sede: c.sede || c.modalidad || '',
+                    modalidad: c.modalidad || '',
+                    tipo: 'inicio_curso',
+                    color: '#059669',
+                    curso_id: c.id,
+                    cupos_info: c.cupos_total > 0 ? `${c.cupos_ocupados}/${c.cupos_total} cupos` : '',
+                    editable: false
+                });
+            }
+        }
+    });
+
+    // 3) Clases en vivo programadas
+    (_adminCalData.clases_vivo || []).forEach(cv => {
+        if (!cv.fecha_inicio) return;
+        const f = String(cv.fecha_inicio).slice(0, 10);
+        const h = String(cv.fecha_inicio).slice(11, 16);
+        items.push({
+            uid: `vivo_${cv.id}`,
+            fecha: f,
+            hora: h,
+            titulo: `🎥 ${cv.titulo}`,
+            subtitulo: `${cv.profesor_nombre || ''} ${cv.curso_titulo ? '· ' + cv.curso_titulo : ''}`,
+            profesor_id: cv.creado_por,
+            profesor_nombre: cv.profesor_nombre || 'Profesor',
+            sede: cv.curso_sede || 'Online en Vivo',
+            modalidad: 'Online en Vivo',
+            tipo: 'clase_vivo',
+            color: '#7C3AED',
+            curso_id: cv.curso_id,
+            editable: false
+        });
+    });
+
+    // 4) Eventos locales / Hitos / Talleres manuales
+    (_adminCalData.eventos_locales || []).forEach(ev => {
+        if (ev.atendia_event_id) linkedAtdIds.add(Number(ev.atendia_event_id));
+        const f = String(ev.fecha_inicio || '').slice(0, 10);
+        if (!f) return;
+        const typeColor = ev.tipo === 'inscripcion' ? '#DC2626'
+            : (ev.tipo === 'reunion_docente' ? '#0284C7'
+            : (ev.tipo === 'feriado' ? '#64748B' : (ev.color || '#D97706')));
+        items.push({
+            uid: `local_${ev.id}`,
+            local_id: ev.id,
+            raw: ev,
+            fecha: f,
+            hora: ev.hora_inicio || '',
+            titulo: `${ev.visibilidad === 'interno' ? '🔒 ' : '📌 '}${ev.titulo}`,
+            subtitulo: `${ev.sede || ev.modalidad || ''} ${ev.profesor_nombre ? '· ' + ev.profesor_nombre : ''}`,
+            profesor_id: ev.profesor_id,
+            profesor_nombre: ev.profesor_nombre || 'Equipo General',
+            sede: ev.sede || ev.modalidad || '',
+            modalidad: ev.modalidad || '',
+            tipo: 'hito',
+            color: typeColor,
+            cupos_info: Number(ev.cupos) > 0 ? `${ev.cupos_ocupados || 0}/${ev.cupos} cupos` : '',
+            editable: true
+        });
+    });
+
+    // 5) Eventos con Cupo de AtendIA
+    (_adminCalData.eventos_atendia || []).forEach(atd => {
+        const taken = Math.max(0, Number(atd.capacity) - Number(atd.seats_left));
+        items.push({
+            uid: `atd_${atd.id}`,
+            atendia_id: atd.id,
+            raw_atd: atd,
+            fecha: atd.date,
+            hora: atd.time || '',
+            titulo: `🎟️ ${atd.name}`,
+            subtitulo: `${taken}/${atd.capacity} cupos (${atd.is_full ? 'LLENO' : atd.seats_left + ' libres'})`,
+            profesor_id: null,
+            profesor_nombre: 'Bot AtendIA',
+            sede: atd.modality === 'online' ? 'Online' : (atd.place || 'Presencial'),
+            modalidad: atd.modality === 'online' ? 'Online' : 'Presencial',
+            tipo: 'evento_atendia',
+            color: '#DB2777',
+            cupos_info: `${taken}/${atd.capacity} cupos`,
+            editable: false
+        });
+    });
+
+    return items.filter(it => {
+        if (profFil && String(it.profesor_id || '') !== String(profFil)) return false;
+        if (sedeFil && !`${it.sede} ${it.modalidad}`.toLowerCase().includes(sedeFil)) return false;
+        if (tipoFil && it.tipo !== tipoFil) return false;
+        return true;
+    });
+}
+
+function renderAdminCalendar() {
+    const vp = document.getElementById('adminCalendarViewport');
+    if (!vp) return;
+    const items = getUnifiedAdminCalendarItems();
+
+    if (_adminCalView === 'mes') {
+        vp.innerHTML = renderAdminMonthGrid(items);
+    } else if (_adminCalView === 'anual') {
+        vp.innerHTML = renderAdminAnnualPlan(items);
+    } else if (_adminCalView === 'profesores') {
+        vp.innerHTML = renderAdminTeacherLoad(items);
+    } else if (_adminCalView === 'atendia') {
+        vp.innerHTML = renderAdminAtendiaEventsView();
+    }
+}
+
+function renderAdminMonthGrid(items) {
+    const y = _adminCalDate.getFullYear();
+    const m = _adminCalDate.getMonth();
+    const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    const firstDay = new Date(y, m, 1);
+    const lastDay = new Date(y, m + 1, 0);
+    // Lunes = 0 ... Domingo = 6
+    const startOffset = (firstDay.getDay() + 6) % 7;
+    const totalDays = lastDay.getDate();
+    const todayIso = new Date().toISOString().slice(0, 10);
+
+    const byDate = {};
+    items.forEach(it => {
+        if (!byDate[it.fecha]) byDate[it.fecha] = [];
+        byDate[it.fecha].push(it);
+    });
+
+    let cellsHtml = '';
+    for (let i = 0; i < startOffset; i++) {
+        cellsHtml += `<div style="min-height:110px;background:#F8FAFC;border-right:1px solid #E5E7EB;border-bottom:1px solid #E5E7EB"></div>`;
+    }
+
+    for (let d = 1; d <= totalDays; d++) {
+        const iso = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const dayItems = (byDate[iso] || []).sort((a, b) => String(a.hora).localeCompare(String(b.hora)));
+        const isToday = (iso === todayIso);
+
+        const chips = dayItems.map(it => {
+            const clickAttr = it.editable
+                ? `onclick="event.stopPropagation();openCalEventModal(${it.local_id})"`
+                : (it.curso_id ? `onclick="event.stopPropagation();window.location.href='curso-crear.html?id=${it.curso_id}'"` : '');
+            return `<div ${clickAttr} title="${(it.titulo + ' · ' + it.subtitulo).replace(/"/g, '&quot;')}"
+                style="background:${it.color}15;border-left:3px solid ${it.color};color:#1E293B;padding:.22rem .4rem;border-radius:5px;font-size:.7rem;margin-bottom:.25rem;cursor:pointer;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                ${it.hora ? `<strong style="color:${it.color}">${it.hora}</strong> ` : ''}<span style="font-weight:600">${it.titulo}</span>
+                ${it.cupos_info ? `<span style="display:block;font-size:.64rem;color:#64748B">${it.cupos_info}</span>` : ''}
+            </div>`;
+        }).join('');
+
+        cellsHtml += `
+            <div onclick="openCalEventModal(null, '${iso}')" style="min-height:115px;background:${isToday ? '#F0FDF4' : '#fff'};border-right:1px solid #E5E7EB;border-bottom:1px solid #E5E7EB;padding:.4rem;cursor:pointer;transition:background .15s" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='${isToday ? '#F0FDF4' : '#fff'}'">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem">
+                    <span style="font-size:.78rem;font-weight:${isToday ? '800' : '600'};color:${isToday ? '#fff' : '#475569'};background:${isToday ? '#059669' : 'transparent'};width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center">${d}</span>
+                    ${dayItems.length ? `<span style="font-size:.65rem;color:#94A3B8;font-weight:600">${dayItems.length} act.</span>` : ''}
+                </div>
+                <div style="max-height:145px;overflow-y:auto">${chips}</div>
+            </div>`;
+    }
+
+    return `
+        <div class="tw" style="padding:1.1rem">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
+                <div style="display:flex;align-items:center;gap:.5rem">
+                    <button class="btn bo btn-sm" onclick="moveAdminCalMonth(-1)"><i class="ph ph-caret-left"></i> Mes Anterior</button>
+                    <h3 style="margin:0 1rem;font-size:1.2rem;min-width:190px;text-align:center">${monthNames[m]} ${y}</h3>
+                    <button class="btn bo btn-sm" onclick="moveAdminCalMonth(1)">Mes Siguiente <i class="ph ph-caret-right"></i></button>
+                    <button class="btn bo btn-sm" onclick="goTodayAdminCal()" style="margin-left:.4rem">Hoy</button>
+                </div>
+                <div style="font-size:.78rem;color:var(--l)"><i class="ph ph-hand-pointing"></i> Haz clic en cualquier día para agendar un taller, hito o reunión docente.</div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);border-top:1px solid #E5E7EB;border-left:1px solid #E5E7EB;border-radius:8px;overflow:hidden">
+                ${['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'].map(dn => `<div style="background:#F1F5F9;padding:.55rem;text-align:center;font-size:.73rem;font-weight:700;text-transform:uppercase;color:#475569;border-right:1px solid #E5E7EB;border-bottom:1px solid #E5E7EB">${dn}</div>`).join('')}
+                ${cellsHtml}
+            </div>
+        </div>`;
+}
+
+function renderAdminAnnualPlan(items) {
+    const y = _adminCalDate.getFullYear();
+    const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+    // Para la vista anual, mostramos los inicios de cursos, talleres, eventos AtendIA, clases en vivo y un resumen de clases regulares
+    const cardsHtml = monthNames.map((mName, mIdx) => {
+        const prefix = `${y}-${String(mIdx + 1).padStart(2, '0')}`;
+        const mItems = items.filter(it => it.fecha && it.fecha.startsWith(prefix));
+        const hitos = mItems.filter(it => it.tipo !== 'clase_regular');
+        const regularesCount = mItems.filter(it => it.tipo === 'clase_regular').length;
+
+        const listHtml = hitos.length
+            ? hitos.slice(0, 8).map(it => {
+                const dayNum = it.fecha.slice(8, 10);
+                const clickAttr = it.editable ? `onclick="openCalEventModal(${it.local_id})"` : (it.curso_id ? `onclick="window.location.href='curso-crear.html?id=${it.curso_id}'"` : '');
+                return `<div ${clickAttr} style="display:flex;align-items:flex-start;gap:.45rem;padding:.35rem .45rem;border-radius:6px;background:#F8FAFC;border-left:3px solid ${it.color};font-size:.75rem;cursor:pointer">
+                    <strong style="color:${it.color};min-width:22px">${dayNum}</strong>
+                    <div style="flex:1;min-width:0">
+                        <div style="font-weight:600;color:#1E293B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${it.titulo}</div>
+                        <div style="font-size:.68rem;color:#64748B">${it.subtitulo || ''} ${it.cupos_info ? '· <b>' + it.cupos_info + '</b>' : ''}</div>
+                    </div>
+                </div>`;
+            }).join('')
+            : `<div style="font-size:.76rem;color:#94A3B8;font-style:italic;padding:.5rem 0">Sin lanzamientos ni hitos programados en este mes.</div>`;
+
+        return `
+            <div class="tw" style="padding:1rem;border:1px solid #E5E7EB;display:flex;flex-direction:column;justify-content:space-between">
+                <div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.65rem;padding-bottom:.45rem;border-bottom:1px solid #F1F5F9">
+                        <h4 style="margin:0;font-size:.95rem;color:var(--s);cursor:pointer" onclick="_adminCalDate=new Date(${y},${mIdx},1);setAdminCalView('mes')">${mName} ${y}</h4>
+                        <span style="font-size:.7rem;background:#EEF2FF;color:#4F46E5;padding:.15rem .5rem;border-radius:99px;font-weight:700">${hitos.length} hitos · ${regularesCount} clases</span>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:.35rem">${listHtml}</div>
+                </div>
+                <button class="btn bo btn-sm" style="margin-top:.75rem;width:100%;justify-content:center;font-size:.74rem" onclick="openCalEventModal(null, '${prefix}-01')"><i class="ph ph-plus"></i> Planificar en ${mName}</button>
+            </div>`;
+    }).join('');
+
+    return `
+        <div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+                <div style="display:flex;align-items:center;gap:.5rem">
+                    <button class="btn bo btn-sm" onclick="_adminCalDate=new Date(${y - 1},0,1);fetchAdminCalendario()"><i class="ph ph-caret-left"></i> Año ${y - 1}</button>
+                    <h3 style="margin:0 1rem;font-size:1.2rem">Planificación Anual ${y}</h3>
+                    <button class="btn bo btn-sm" onclick="_adminCalDate=new Date(${y + 1},0,1);fetchAdminCalendario()">Año ${y + 1} <i class="ph ph-caret-right"></i></button>
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem">${cardsHtml}</div>
+        </div>`;
+}
+
+function renderAdminTeacherLoad(items) {
+    const cursos = _adminCalData.cursos || [];
+    const byTeacher = {};
+
+    cursos.forEach(c => {
+        const tName = c.profesor || 'Sin Profesor Asignado';
+        if (!byTeacher[tName]) byTeacher[tName] = { cursos: [], proximasSesiones: [] };
+        byTeacher[tName].cursos.push(c);
+    });
+
+    const todayIso = new Date().toISOString().slice(0, 10);
+    items.filter(it => it.fecha >= todayIso).forEach(it => {
+        const tName = it.profesor_nombre || 'Equipo General';
+        if (!byTeacher[tName]) byTeacher[tName] = { cursos: [], proximasSesiones: [] };
+        byTeacher[tName].proximasSesiones.push(it);
+    });
+
+    const rows = Object.entries(byTeacher).map(([profName, info]) => {
+        const cursosBadges = info.cursos.map(c => {
+            const diasTxt = c.dias_clase || 'Horario según sede';
+            const iniTxt = c.fecha_inicio_ventas ? `Inicia: ${String(c.fecha_inicio_ventas).slice(0, 10)}` : 'En curso';
+            return `<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:.55rem .75rem;margin-bottom:.4rem">
+                <div style="display:flex;justify-content:space-between;gap:.5rem;align-items:center">
+                    <strong style="font-size:.83rem;color:var(--s)">${c.titulo}</strong>
+                    <span class="bp2 ${c.estado === 'publicado' ? 'bA' : 'bD'}">${c.estado}</span>
+                </div>
+                <div style="font-size:.74rem;color:#475569;margin-top:.2rem">
+                    <i class="ph ph-calendar-blank"></i> ${diasTxt} ${c.horario_clase ? '· ' + c.horario_clase : ''} · <strong>${c.sede || c.modalidad}</strong> · <span style="color:#059669;font-weight:600">${iniTxt}</span>
+                </div>
+            </div>`;
+        }).join('') || '<span class="ts">Sin cursos fijos asignados</span>';
+
+        const proxHtml = info.proximasSesiones.slice(0, 6).map(s => `
+            <span style="display:inline-flex;align-items:center;gap:.3rem;background:#EEF2FF;color:#3730A3;border:1px solid #C7D2FE;padding:.22rem .55rem;border-radius:6px;font-size:.72rem;margin:.15rem">
+                <b>${s.fecha.slice(5)}</b> ${s.hora ? s.hora : ''} · ${s.sede || ''}
+            </span>
+        `).join('') || '<span class="ts">Sin sesiones próximas proyectadas</span>';
+
+        return `<tr>
+            <td style="width:210px">
+                <div class="tn" style="font-size:.92rem">👨‍🏫 ${profName}</div>
+                <div class="ts">${info.cursos.length} programa(s) · ${info.proximasSesiones.length} sesiones próx.</div>
+            </td>
+            <td>${cursosBadges}</td>
+            <td style="max-width:340px">${proxHtml}</td>
+        </tr>`;
+    }).join('');
+
+    return `
+        <div class="tw">
+            <div style="padding:1rem 1.2rem;border-bottom:1px solid #F1F5F9;display:flex;justify-content:space-between;align-items:center">
+                <div>
+                    <h4 style="margin:0;font-size:.98rem">Orden de Profesores, Sedes y Días de Clase</h4>
+                    <p style="margin:.15rem 0 0;font-size:.78rem;color:var(--l)">Revisa qué días tiene ocupados cada docente y en qué sede para coordinar nuevos talleres sin choques de horario.</p>
+                </div>
+            </div>
+            <table>
+                <thead><tr><th>Profesor / Directivo</th><th>Programas Activos, Días y Sedes</th><th>Próximas Fechas en Calendario</th></tr></thead>
+                <tbody>${rows || '<tr><td colspan="3" style="text-align:center;padding:2rem">Sin datos de profesores</td></tr>'}</tbody>
+            </table>
+        </div>`;
+}
+
+function renderAdminAtendiaEventsView() {
+    const evs = _adminCalData.eventos_atendia || [];
+    const cursos = _adminCalData.cursos || [];
+
+    const cards = evs.map(ev => {
+        const cap = Math.max(1, Number(ev.capacity) || 1);
+        const left = Number(ev.seats_left) || 0;
+        const taken = Math.max(0, cap - left);
+        const pct = Math.min(100, Math.round((taken / cap) * 100));
+        const barCol = ev.is_full ? '#EF4444' : (pct >= 80 ? '#F59E0B' : '#10B981');
+        const linkedCurso = cursos.find(c => Number(c.atendia_event_id) === Number(ev.id));
+
+        return `
+            <div class="tw" style="padding:1.15rem;border:1.5px solid #FBCFE8;background:#fff">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem">
+                    <div>
+                        <span style="background:#FCE7F3;color:#9D174D;font-size:.68rem;font-weight:700;padding:.15rem .5rem;border-radius:99px">🎟️ EVENTO ATENDIA #${ev.id}</span>
+                        <h4 style="margin:.4rem 0 .2rem;font-size:1rem;color:#111827">${ev.name}</h4>
+                        <div style="font-size:.8rem;color:#4B5563"><i class="ph ph-calendar-blank"></i> <strong>${ev.date}</strong> a las <strong>${ev.time}</strong> (${ev.duration || 60} min)</div>
+                    </div>
+                    <span style="font-weight:800;color:#9D174D;font-size:.9rem">${ev.price ? (/^\d+$/.test(String(ev.price)) ? '$' + Number(ev.price).toLocaleString('es-CL') : ev.price) : 'Gratis'}</span>
+                </div>
+                <div style="margin-top:.85rem">
+                    <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:.3rem">
+                        <span><strong>${taken}</strong> de ${cap} cupos inscritos</span>
+                        <strong style="color:${barCol}">${ev.is_full ? 'SIN CUPOS (LLENO)' : `${left} cupos libres`}</strong>
+                    </div>
+                    <div style="height:8px;background:#F3F4F6;border-radius:99px;overflow:hidden">
+                        <div style="height:100%;width:${pct}%;background:${barCol};border-radius:99px"></div>
+                    </div>
+                </div>
+                <div style="margin-top:.85rem;padding-top:.7rem;border-top:1px dashed #F3F4F6;font-size:.76rem;color:#6B7280;display:flex;justify-content:space-between;align-items:center">
+                    <span>${linkedCurso ? `🔗 Vinculado a curso: <strong style="color:#059669">${linkedCurso.titulo}</strong>` : '🌐 Visible en Calendario Público y Bot de WhatsApp'}</span>
+                    ${linkedCurso ? `<a href="curso-crear.html?id=${linkedCurso.id}" class="btn bo btn-sm" style="font-size:.7rem;padding:.2rem .5rem">Ver Curso</a>` : ''}
+                </div>
+            </div>`;
+    }).join('');
+
+    return `
+        <div>
+            <div style="background:#FDF2F8;border:1px solid #FBCFE8;border-radius:10px;padding:1rem 1.2rem;margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.75rem">
+                <div>
+                    <h4 style="margin:0;color:#9D174D;font-size:.95rem">🎟️ Eventos con Cupo Sincronizados con el Bot de AtendIA (Empresa 8)</h4>
+                    <p style="margin:.2rem 0 0;font-size:.78rem;color:#BE185D">Cuando el Bot de WhatsApp inscribe a una persona en AtendIA o cuando alguien se registra desde el Calendario de Flor de Chañar, los cupos se descuentan automáticamente en ambos sistemas.</p>
+                </div>
+                <button class="btn bo btn-sm" onclick="fetchAdminCalendario(true)"><i class="ph ph-arrows-clockwise"></i> Actualizar Cupos Ahora</button>
+            </div>
+            ${evs.length
+                ? `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:1rem">${cards}</div>`
+                : `<div class="tw" style="padding:2.5rem;text-align:center;color:var(--l)">No hay eventos activos próximos en AtendIA o aún no se han creado en el panel de AtendIA (Citas → Eventos). Puedes crear eventos o fechas importantes directamente acá con el botón <strong>+ Nuevo Evento / Fecha Importante</strong>.</div>`
+            }
+        </div>`;
+}
+
+function openCalEventModal(editId = null, defaultDate = null) {
+    populateCalFiltersAndSelects();
+    const modal = document.getElementById('calEventModalBg');
+    const delBtn = document.getElementById('calEvDeleteBtn');
+    const titleEl = document.getElementById('calEventModalTitle');
+
+    if (editId) {
+        const ev = (_adminCalData.eventos_locales || []).find(x => Number(x.id) === Number(editId));
+        if (!ev) return;
+        titleEl.innerHTML = '<i class="ph-fill ph-pencil-simple" style="color:#4F46E5"></i> Editar Actividad del Calendario';
+        document.getElementById('calEvId').value = ev.id;
+        document.getElementById('calEvTitulo').value = ev.titulo || '';
+        document.getElementById('calEvTipo').value = ev.tipo || 'taller';
+        document.getElementById('calEvFechaInicio').value = ev.fecha_inicio ? String(ev.fecha_inicio).slice(0, 10) : '';
+        document.getElementById('calEvFechaFin').value = ev.fecha_fin ? String(ev.fecha_fin).slice(0, 10) : '';
+        document.getElementById('calEvHoraInicio').value = ev.hora_inicio || '';
+        document.getElementById('calEvHoraFin').value = ev.hora_fin || '';
+        document.getElementById('calEvModalidad').value = ev.modalidad || 'Presencial';
+        document.getElementById('calEvSede').value = ev.sede || '';
+        document.getElementById('calEvVisibilidad').value = ev.visibilidad || 'publico';
+        document.getElementById('calEvProfesor').value = ev.profesor_id || '';
+        document.getElementById('calEvCurso').value = ev.curso_id || '';
+        document.getElementById('calEvCupos').value = ev.cupos || '';
+        document.getElementById('calEvPrecio').value = ev.precio || '';
+        document.getElementById('calEvAtendiaId').value = ev.atendia_event_id || '';
+        document.getElementById('calEvDesc').value = ev.descripcion || '';
+        document.getElementById('calEvCtaTexto').value = ev.cta_texto || '';
+        document.getElementById('calEvCtaUrl').value = ev.cta_url || '';
+        delBtn.style.display = 'inline-flex';
+    } else {
+        titleEl.innerHTML = '<i class="ph-fill ph-calendar-plus" style="color:#4F46E5"></i> Nuevo Evento / Fecha Importante';
+        const today = defaultDate || new Date().toISOString().slice(0, 10);
+        document.getElementById('calEvId').value = '';
+        document.getElementById('calEvTitulo').value = '';
+        document.getElementById('calEvTipo').value = 'taller';
+        document.getElementById('calEvFechaInicio').value = today;
+        document.getElementById('calEvFechaFin').value = today;
+        document.getElementById('calEvHoraInicio').value = '19:00';
+        document.getElementById('calEvHoraFin').value = '21:00';
+        document.getElementById('calEvModalidad').value = 'Presencial';
+        document.getElementById('calEvSede').value = '';
+        document.getElementById('calEvVisibilidad').value = 'publico';
+        document.getElementById('calEvProfesor').value = '';
+        document.getElementById('calEvCurso').value = '';
+        document.getElementById('calEvCupos').value = '';
+        document.getElementById('calEvPrecio').value = '';
+        document.getElementById('calEvAtendiaId').value = '';
+        document.getElementById('calEvDesc').value = '';
+        document.getElementById('calEvCtaTexto').value = '';
+        document.getElementById('calEvCtaUrl').value = '';
+        delBtn.style.display = 'none';
+    }
+    modal.classList.add('open');
+}
+
+function closeCalEventModal() {
+    document.getElementById('calEventModalBg')?.classList.remove('open');
+}
+
+async function saveCalEvent() {
+    const id = document.getElementById('calEvId').value;
+    const payload = {
+        titulo: document.getElementById('calEvTitulo').value.trim(),
+        tipo: document.getElementById('calEvTipo').value,
+        fecha_inicio: document.getElementById('calEvFechaInicio').value,
+        fecha_fin: document.getElementById('calEvFechaFin').value || document.getElementById('calEvFechaInicio').value,
+        hora_inicio: document.getElementById('calEvHoraInicio').value,
+        hora_fin: document.getElementById('calEvHoraFin').value,
+        modalidad: document.getElementById('calEvModalidad').value,
+        sede: document.getElementById('calEvSede').value.trim(),
+        visibilidad: document.getElementById('calEvVisibilidad').value,
+        profesor_id: document.getElementById('calEvProfesor').value || null,
+        curso_id: document.getElementById('calEvCurso').value || null,
+        cupos: parseInt(document.getElementById('calEvCupos').value) || 0,
+        precio: document.getElementById('calEvPrecio').value.trim(),
+        atendia_event_id: document.getElementById('calEvAtendiaId').value || null,
+        descripcion: document.getElementById('calEvDesc').value.trim(),
+        cta_texto: document.getElementById('calEvCtaTexto').value.trim(),
+        cta_url: document.getElementById('calEvCtaUrl').value.trim()
+    };
+    if (!payload.titulo || !payload.fecha_inicio) {
+        showT('⚠️ Ingresa al menos el título y la fecha de inicio');
+        return;
+    }
+    try {
+        const res = await fetch(id ? `/api/calendario/eventos/${id}` : '/api/calendario/eventos', {
+            method: id ? 'PUT' : 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+            body: JSON.stringify(payload)
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            showT('⚠️ ' + (err.error || 'Error al guardar'));
+            return;
+        }
+        closeCalEventModal();
+        showT('✅ Evento guardado en el calendario');
+        await fetchAdminCalendario();
+    } catch (e) {
+        showT('⚠️ Error de conexión');
+    }
+}
+
+async function deleteCalEvent() {
+    const id = document.getElementById('calEvId').value;
+    if (!id || !confirm('¿Eliminar este evento del calendario?')) return;
+    try {
+        const res = await fetch(`/api/calendario/eventos/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        if (res.ok) {
+            closeCalEventModal();
+            showT('🗑️ Evento eliminado');
+            await fetchAdminCalendario();
+        }
+    } catch (e) {
+        showT('⚠️ Error al eliminar');
+    }
+}
+
 (function handleUrlTabParams() {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
     const stab = params.get('stab');
     if (tab === 'cursos' || tab === 'tc') st(null, 'tc');
+    else if (tab === 'calendario' || tab === 'tcal') st(null, 'tcal');
     else if (tab === 'prospectos' || tab === 'tprospectos') st(null, 'tprospectos');
     else if (tab === 'ajustes' || tab === 'ts') {
         st(null, 'ts');

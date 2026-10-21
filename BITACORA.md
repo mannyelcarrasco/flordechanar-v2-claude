@@ -6,6 +6,28 @@
 
 ## ✅ Avances completados
 
+### 📅 Sistema de Calendario Organizativo, Docente y Promocional + Eventos con Cupo AtendIA (NUEVO)
+- [x] **Motor de Proyección de Clases y API de Calendario (`server.js`):**
+  - Nuevas columnas `fecha_fin_clases` y `atendia_event_id` en la tabla `cursos`, más nueva tabla `calendario_eventos` para talleres especiales, charlas abiertas, cierres de matrícula, reuniones docentes y feriados.
+  - Proyección automática de días de clase recurrentes durante los próximos meses/año (`buildCourseRecurringSessions`, `parseDiasSemana`, `estimateFechaFin`) a partir de `fecha_inicio_clases`, `duracion`, `dias_clase` y `horarios_sedes` de cada curso activo o publicado.
+  - Nuevos endpoints `GET /api/calendario/publico`, `GET /api/calendario/interno`, `POST/PUT/DELETE /api/calendario/eventos` y `POST /api/calendario/inscribir-evento`.
+- [x] **Integración Bidireccional con Eventos con Cupo de AtendIA (`server.js` & `curso-crear.html`):**
+  - Conexión en tiempo real con `GET /n8n/events?company_id=8` y `POST /n8n/event-register` de AtendIA (`X-Atendia-Token`) para compartir cupos disponibles (`capacity`, `seats_left`, `is_full`) entre el Bot de WhatsApp y la web.
+  - En el editor de cursos (`curso-crear.html`, Paso 5), ahora se puede definir la **Fecha de Término de Clases** y vincular un programa o taller con un **Evento con Cupo de AtendIA**, de modo que cuando un alumno completa el formulario o se registra desde el calendario web, descuenta automáticamente el cupo en AtendIA y sincroniza su perfil con el Bot de IA.
+- [x] **Calendario y Planificación para Directivos (`admin.html`):**
+  - Nueva pestaña **📅 Calendario y Planificación** con 4 sub-vistas interactivas:
+    1. **Grilla Mensual:** Visualización día a día con detalle de clases regulares proyectadas, inicios de curso, talleres, evaluaciones, clases en vivo y eventos de AtendIA.
+    2. **Planificación Anual (Mes a Mes):** Línea de tiempo anual para planificar aperturas de programas, talleres e hitos mes por mes.
+    3. **Carga por Profesor y Sede:** Resumen de sesiones proyectadas en el mes y próximos días de clase agrupados por docente y sede (*Sede Calama*, *Sede La Serena*, *Online*).
+    4. **Eventos con Cupo (AtendIA):** Panel de control de eventos grupales sincronizados con el Bot de WhatsApp y barra de ocupación de cupos en vivo.
+  - Modal para crear/editar/eliminar eventos, talleres promocionales e hitos internos o públicos.
+- [x] **Mi Calendario de Clases para Profesores (`profesor.html`):**
+  - Nueva pestaña **📅 Mi Calendario de Clases** para que cada docente consulte su grilla mensual personalizada y el listado cronológico de sus próximas clases regulares, sesiones en vivo y evaluaciones.
+- [x] **Calendario Promocional Público y Reserva de Cupos (`escuela.html`):**
+  - Nueva sección pública **📅 Calendario de Próximos Inicios, Talleres y Actividades** (`#calendario-actividades`) con acceso directo desde el Hero de la escuela.
+  - Filtros por **Sede / Modalidad** (*Calama*, *La Serena*, *Online*) y por **Mes**, alternando entre vista de **Próximas Fechas (Tarjetas con barra de cupos en tiempo real)** y **Calendario Mensual**.
+  - Modal de **Reserva Directa de Cupo** (`#pubEventRegModal`) que registra al interesado en AtendIA (`/n8n/event-register` + `/n8n/save-profile`), descuenta el cupo en vivo y ofrece confirmación inmediata vía WhatsApp.
+
 ### 🎯 Embudo Interactivo de Admisión (Funnel Editable) + Integración API con Bot AtendIA (NUEVO)
 - [x] **3 Modos de Flujo de Entrada por Programa (`curso-crear.html` & `detalle.html`):**
   - En el editor de cursos (*Precio y Acceso*), ahora se puede elegir entre **3 opciones de flujo** para cada programa o curso:

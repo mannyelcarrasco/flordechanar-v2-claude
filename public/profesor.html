@@ -43,6 +43,7 @@
     <ul class="sb-nav">
         <li><a href="#" class="active" onclick="sw(event,'tc')"><i class="ph ph-house"></i> Resumen</a></li>
         <li><a href="#" onclick="sw(event,'tc')"><i class="ph ph-books"></i> Mis Cursos</a></li>
+        <li><a href="#" onclick="sw(event,'tcal')"><i class="ph ph-calendar-check"></i> Mi Calendario</a></li>
         <li><a href="clase-vivo.html"><i class="ph ph-video-camera"></i> Clases en Vivo</a></li>
         <li><a href="#" onclick="sw(event,'tu')"><i class="ph ph-upload-simple"></i> Subir Contenido</a></li>
     </ul>
@@ -76,6 +77,7 @@
 
     <div class="tabs">
         <button class="tab active" onclick="st(event,'tc')">Mis Cursos</button>
+        <button class="tab" onclick="st(event,'tcal')" style="color:var(--primary);font-weight:700"><i class="ph ph-calendar-check"></i> 📅 Mi Calendario de Clases</button>
         <button class="tab" onclick="st(event,'tn')">Libro de Notas</button>
         <button class="tab" onclick="st(event,'te')">Evaluaciones</button>
         <button class="tab" onclick="st(event,'tu')">Subir Contenido</button>
@@ -90,6 +92,25 @@
                     <tr><td colspan="6" style="text-align:center; padding: 2rem;">Cargando tus cursos asignados...</td></tr>
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- TAB Mi Calendario Docente -->
+    <div id="tcal" class="tp">
+        <div class="uc" style="margin-bottom:1.1rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem">
+            <div>
+                <h3 style="margin:0"><i class="ph ph-calendar-check" style="color:var(--primary)"></i> Mi Agenda Docente y Planificación de Clases</h3>
+                <p style="font-size:.82rem;color:var(--light);margin:.25rem 0 0">Revisa qué días te corresponde dictar clases regulares, talleres en sede, clases en vivo y fechas importantes en los próximos meses.</p>
+            </div>
+            <div style="display:flex;gap:.45rem;align-items:center">
+                <button class="btn btn-o btn-sm" onclick="moveProfCalMonth(-1)"><i class="ph ph-caret-left"></i> Mes Anterior</button>
+                <strong id="profCalMonthLabel" style="min-width:150px;text-align:center;font-size:.98rem">Mes</strong>
+                <button class="btn btn-o btn-sm" onclick="moveProfCalMonth(1)">Mes Siguiente <i class="ph ph-caret-right"></i></button>
+                <button class="btn btn-p btn-sm" onclick="goTodayProfCal()">Hoy</button>
+            </div>
+        </div>
+        <div id="profCalContainer">
+            <div class="uc" style="text-align:center;padding:2.5rem;color:var(--light)">Cargando tu calendario de clases...</div>
         </div>
     </div>
 
@@ -188,6 +209,7 @@ function st(e, id){
     if(e){ document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); e.target.classList.add('active'); }
     document.querySelectorAll('.tp').forEach(p=>p.classList.remove('active'));
     document.getElementById(id).classList.add('active');
+    if (id === 'tcal') fetchProfCalendario();
 }
 function sw(e, id){
     if(e) e.preventDefault();
@@ -196,6 +218,7 @@ function sw(e, id){
     document.querySelectorAll('.sb-nav a').forEach(a=>a.classList.remove('active'));
     document.getElementById(id).classList.add('active');
     document.querySelectorAll(`[onclick="sw(event,'${id}')"]`).forEach(el=>el.classList.add('active'));
+    if (id === 'tcal') fetchProfCalendario();
 }
 
 /* ── File upload helper ───────────────────────────────────────────────── */
@@ -500,6 +523,117 @@ async function fetchEvaluaciones() {
     } catch(e) {
         tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;color:red;">Error al cargar evaluaciones.</td></tr>';
     }
+}
+
+/* ── Mi Calendario Docente ────────────────────────────────────────────── */
+let _profCalData = null;
+let _profCalDate = new Date();
+
+function moveProfCalMonth(delta) {
+    _profCalDate = new Date(_profCalDate.getFullYear(), _profCalDate.getMonth() + delta, 1);
+    renderProfCalendario();
+}
+
+function goTodayProfCal() {
+    _profCalDate = new Date();
+    renderProfCalendario();
+}
+
+async function fetchProfCalendario() {
+    const box = document.getElementById('profCalContainer');
+    if (!box) return;
+    try {
+        const token = localStorage.getItem('token');
+        const y = _profCalDate.getFullYear();
+        const res = await fetch(`/api/calendario/interno?start=${y - 1}-11-01&end=${y + 1}-03-31`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) throw new Error();
+        _profCalData = await res.json();
+        renderProfCalendario();
+    } catch (e) {
+        box.innerHTML = '<div class="uc" style="text-align:center;padding:2rem;color:var(--danger)">No se pudo cargar tu calendario de clases.</div>';
+    }
+}
+
+function renderProfCalendario() {
+    const box = document.getElementById('profCalContainer');
+    if (!box || !_profCalData) return;
+
+    const y = _profCalDate.getFullYear();
+    const m = _profCalDate.getMonth();
+    const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    const lbl = document.getElementById('profCalMonthLabel');
+    if (lbl) lbl.textContent = `${monthNames[m]} ${y}`;
+
+    const items = [];
+    (_profCalData.sesiones_cursos || []).forEach(s => {
+        items.push({ fecha: s.fecha, hora: s.hora || '', titulo: s.titulo, sede: s.sede || s.modalidad || '', color: s.color || '#687A61', curso_id: s.curso_id });
+    });
+    (_profCalData.clases_vivo || []).forEach(cv => {
+        if (!cv.fecha_inicio) return;
+        items.push({ fecha: String(cv.fecha_inicio).slice(0, 10), hora: String(cv.fecha_inicio).slice(11, 16), titulo: `🎥 ${cv.titulo}`, sede: 'Clase en Vivo', color: '#7C3AED', curso_id: cv.curso_id });
+    });
+    (_profCalData.eventos_locales || []).forEach(ev => {
+        if (!ev.fecha_inicio) return;
+        items.push({ fecha: String(ev.fecha_inicio).slice(0, 10), hora: ev.hora_inicio || '', titulo: `📌 ${ev.titulo}`, sede: ev.sede || ev.modalidad || '', color: ev.color || '#D97706', curso_id: ev.curso_id });
+    });
+
+    const firstDay = new Date(y, m, 1);
+    const lastDay = new Date(y, m + 1, 0);
+    const startOffset = (firstDay.getDay() + 6) % 7;
+    const totalDays = lastDay.getDate();
+    const todayIso = new Date().toISOString().slice(0, 10);
+
+    const byDate = {};
+    items.forEach(it => {
+        if (!byDate[it.fecha]) byDate[it.fecha] = [];
+        byDate[it.fecha].push(it);
+    });
+
+    let cells = '';
+    for (let i = 0; i < startOffset; i++) {
+        cells += `<div style="min-height:95px;background:#F8FAFC;border-right:1px solid #E5E7EB;border-bottom:1px solid #E5E7EB"></div>`;
+    }
+    for (let d = 1; d <= totalDays; d++) {
+        const iso = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const dayItems = byDate[iso] || [];
+        const isToday = iso === todayIso;
+        const chips = dayItems.map(it => `
+            <div style="background:${it.color}18;border-left:3px solid ${it.color};padding:.2rem .35rem;border-radius:4px;font-size:.68rem;margin-bottom:.2rem;line-height:1.25">
+                ${it.hora ? `<strong style="color:${it.color}">${it.hora}</strong> ` : ''}<span style="font-weight:600">${it.titulo}</span>
+                ${it.sede ? `<div style="font-size:.62rem;color:#64748B">${it.sede}</div>` : ''}
+            </div>
+        `).join('');
+        cells += `
+            <div style="min-height:100px;background:${isToday ? '#F0FDF4' : '#fff'};border-right:1px solid #E5E7EB;border-bottom:1px solid #E5E7EB;padding:.35rem">
+                <div style="font-size:.75rem;font-weight:${isToday ? '800' : '600'};color:${isToday ? '#059669' : '#475569'};margin-bottom:.25rem">${d}</div>
+                ${chips}
+            </div>`;
+    }
+
+    const proxList = items
+        .filter(it => it.fecha >= todayIso)
+        .sort((a, b) => (a.fecha + a.hora).localeCompare(b.fecha + b.hora))
+        .slice(0, 10)
+        .map(it => `<div class="fr" style="border-left:3px solid ${it.color}">
+            <strong style="min-width:85px;color:${it.color}">${it.fecha}</strong>
+            <span class="fn">${it.titulo}</span>
+            <span class="fs">${it.hora ? it.hora + ' · ' : ''}${it.sede}</span>
+        </div>`).join('');
+
+    box.innerHTML = `
+        <div class="uc" style="margin-bottom:1.25rem;overflow-x:auto">
+            <div style="min-width:660px;display:grid;grid-template-columns:repeat(7,1fr);border-top:1px solid #E5E7EB;border-left:1px solid #E5E7EB;border-radius:8px;overflow:hidden">
+                ${['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].map(dn => `<div style="background:#F1F5F9;padding:.5rem;text-align:center;font-size:.72rem;font-weight:700;color:#475569;border-right:1px solid #E5E7EB;border-bottom:1px solid #E5E7EB">${dn}</div>`).join('')}
+                ${cells}
+            </div>
+        </div>
+        <div class="uc">
+            <h3><i class="ph ph-clock-countdown" style="color:var(--primary)"></i> Próximas Sesiones y Fechas en tu Agenda</h3>
+            <div class="fl-list">${proxList || '<div style="font-size:.84rem;color:var(--light)">No hay sesiones programadas próximamente.</div>'}</div>
+        </div>
+    `;
 }
 </script>
 </body>

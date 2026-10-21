@@ -179,10 +179,101 @@
         <div class="container">
             <h1>Escuela de Terapias</h1>
             <p>Conviértete en un profesional del bienestar con nuestros diplomados y cursos creados con la máxima calidad y usabilidad.</p>
+            <div style="margin-top:1.35rem;display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap">
+                <a href="#calendario-actividades" class="btn btn-primary" style="background:#fff;color:var(--color-primary-dark);font-size:.9rem;padding:.65rem 1.35rem;border-radius:99px;font-weight:700;display:inline-flex;align-items:center;gap:.45rem;box-shadow:0 6px 18px rgba(0,0,0,.15)">
+                    <i class="ph-fill ph-calendar-check" style="font-size:1.15rem"></i> Ver Calendario de Actividades y Cupos
+                </a>
+                <a href="#catalogo-cursos" style="color:rgba(255,255,255,.92);border:1.5px solid rgba(255,255,255,.45);padding:.65rem 1.3rem;border-radius:99px;font-size:.9rem;font-weight:600;display:inline-flex;align-items:center;gap:.4rem">
+                    <i class="ph ph-books"></i> Explorar Catálogo
+                </a>
+            </div>
         </div>
     </section>
 
-    <div class="container">
+    <!-- ══ CALENDARIO PÚBLICO Y PROMOCIONAL DE ACTIVIDADES, TALLERES E INICIOS ══ -->
+    <section id="calendario-actividades" class="container" style="margin-top:2.75rem;margin-bottom:1rem">
+        <div style="background:#fff;border:1.5px solid rgba(104,122,97,.22);border-radius:20px;padding:1.75rem 1.85rem;box-shadow:0 12px 32px rgba(44,53,49,.06)">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1.25rem;margin-bottom:1.35rem">
+                <div>
+                    <span style="display:inline-flex;align-items:center;gap:.35rem;background:#ECFDF5;color:#047857;font-size:.74rem;font-weight:700;padding:.25rem .75rem;border-radius:99px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.45rem">
+                        <i class="ph-fill ph-calendar-star"></i> Planificación & Cupos en Tiempo Real
+                    </span>
+                    <h2 style="font-size:1.65rem;margin:0;color:var(--color-secondary)">Calendario de Próximos Inicios, Talleres y Actividades</h2>
+                    <p style="color:var(--color-text-light);font-size:.92rem;margin:.3rem 0 0;max-width:680px">
+                        Revisa las fechas importantes, cierres de inscripción, talleres presenciales y programas online. Los cupos se actualizan automáticamente a medida que los estudiantes se inscriben.
+                    </p>
+                </div>
+                <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+                    <select id="pubCalSedeFilter" onchange="renderPublicCalendar()" style="padding:.55rem .9rem;border:1.5px solid #E2E8F0;border-radius:99px;font-family:var(--font-sans);font-size:.84rem;color:var(--color-secondary);background:#F8FAFC;outline:none;cursor:pointer;font-weight:600">
+                        <option value="">📍 Todas las Sedes y Online</option>
+                        <option value="calama">📍 Sede Calama</option>
+                        <option value="serena">📍 Sede La Serena</option>
+                        <option value="online">💻 Online en Vivo</option>
+                    </select>
+                    <div style="display:inline-flex;background:#F1F5F9;padding:.22rem;border-radius:99px">
+                        <button type="button" id="pubViewBtn_agenda" onclick="setPublicCalView('agenda')" style="border:none;background:var(--color-primary);color:#fff;padding:.42rem .95rem;border-radius:99px;font-size:.8rem;font-weight:700;cursor:pointer;transition:.2s">
+                            <i class="ph ph-list-checks"></i> Próximas Fechas
+                        </button>
+                        <button type="button" id="pubViewBtn_mes" onclick="setPublicCalView('mes')" style="border:none;background:transparent;color:#475569;padding:.42rem .95rem;border-radius:99px;font-size:.8rem;font-weight:700;cursor:pointer;transition:.2s">
+                            <i class="ph ph-calendar-blank"></i> Calendario Mensual
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filtro rápido por Mes -->
+            <div id="pubCalMonthPills" style="display:flex;gap:.45rem;overflow-x:auto;padding-bottom:.65rem;margin-bottom:1.1rem;border-bottom:1px solid #F1F5F9"></div>
+
+            <!-- Contenedor de Actividades / Grilla Mensual -->
+            <div id="pubCalBody">
+                <div style="text-align:center;padding:2.5rem;color:var(--color-text-light)">Cargando calendario de actividades y cupos disponibles...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modal de Inscripción Rápida a Evento / Taller del Calendario -->
+    <div id="pubEventRegModal" onclick="if(event.target===this)closePublicEventModal()" style="position:fixed;inset:0;background:rgba(15,23,42,.6);backdrop-filter:blur(4px);z-index:2000;display:none;align-items:center;justify-content:center;padding:1rem">
+        <div style="background:#fff;border-radius:20px;max-width:460px;width:100%;padding:1.75rem;box-shadow:0 20px 50px rgba(0,0,0,.25);position:relative">
+            <button type="button" onclick="closePublicEventModal()" style="position:absolute;top:1rem;right:1rem;border:none;background:#F1F5F9;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1rem;color:#475569">✕</button>
+            <span style="background:#FCE7F3;color:#9D174D;font-size:.72rem;font-weight:700;padding:.2rem .65rem;border-radius:99px">🎟️ RESERVA DE CUPO EN LÍNEA</span>
+            <h3 id="pubEvModalTitle" style="margin:.6rem 0 .25rem;font-size:1.25rem;color:var(--color-secondary)">Inscribirme a la Actividad</h3>
+            <p id="pubEvModalMeta" style="font-size:.84rem;color:var(--color-text-light);margin:0 0 1.1rem"></p>
+            <input type="hidden" id="pubEvAtendiaId">
+            <input type="hidden" id="pubEvLocalId">
+            <input type="hidden" id="pubEvCursoId">
+            <input type="hidden" id="pubEvSede">
+            <div style="display:flex;flex-direction:column;gap:.75rem">
+                <div>
+                    <label style="display:block;font-size:.78rem;font-weight:700;margin-bottom:.25rem;color:var(--color-secondary)">Tu Nombre y Apellido *</label>
+                    <input type="text" id="pubEvNombre" placeholder="Ej: Carolina Morales" style="width:100%;padding:.65rem .85rem;border:1.5px solid #CBD5E1;border-radius:10px;font-size:.9rem;font-family:var(--font-sans)">
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 110px;gap:.65rem">
+                    <div>
+                        <label style="display:block;font-size:.78rem;font-weight:700;margin-bottom:.25rem;color:var(--color-secondary)">Tu WhatsApp *</label>
+                        <input type="tel" id="pubEvWhatsapp" placeholder="+56 9 1234 5678" style="width:100%;padding:.65rem .85rem;border:1.5px solid #CBD5E1;border-radius:10px;font-size:.9rem;font-family:var(--font-sans)">
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:.78rem;font-weight:700;margin-bottom:.25rem;color:var(--color-secondary)">Cupos</label>
+                        <select id="pubEvSeats" style="width:100%;padding:.65rem .5rem;border:1.5px solid #CBD5E1;border-radius:10px;font-size:.9rem;font-family:var(--font-sans)">
+                            <option value="1">1 persona</option>
+                            <option value="2">2 personas</option>
+                            <option value="3">3 personas</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label style="display:block;font-size:.78rem;font-weight:700;margin-bottom:.25rem;color:var(--color-secondary)">Correo Electrónico (para enviarte invitación al calendario)</label>
+                    <input type="email" id="pubEvEmail" placeholder="tucorreo@ejemplo.com" style="width:100%;padding:.65rem .85rem;border:1.5px solid #CBD5E1;border-radius:10px;font-size:.9rem;font-family:var(--font-sans)">
+                </div>
+                <div id="pubEvError" style="display:none;background:#FEF2F2;color:#DC2626;padding:.6rem .8rem;border-radius:8px;font-size:.82rem;font-weight:600"></div>
+                <button type="button" id="pubEvSubmitBtn" onclick="submitPublicEventRegistration()" class="btn btn-primary" style="width:100%;justify-content:center;padding:.8rem;border-radius:12px;font-size:.95rem;margin-top:.25rem">
+                    Confirmar mi Cupo y Continuar por WhatsApp <i class="ph ph-whatsapp-logo"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" id="catalogo-cursos">
         <section class="school-layout">
             <!-- Sidebar -->
             <aside class="school-sidebar">
@@ -392,7 +483,303 @@
             } catch(e) {
                 grid.innerHTML = teeCardHtml;
             }
+            loadPublicCalendar();
         });
+
+        // ══ CALENDARIO PÚBLICO Y PROMOCIONAL + INTEGRACIÓN EVENTOS ATENDIA ══
+        let _pubCalItems = [];
+        let _pubCalView = 'agenda'; // 'agenda' | 'mes'
+        let _pubCalSelectedMonth = 'all'; // 'all' o 'YYYY-MM'
+        let _pubCalGridDate = new Date();
+
+        async function loadPublicCalendar() {
+            const box = document.getElementById('pubCalBody');
+            if (!box) return;
+            try {
+                const res = await fetch('/api/calendario/publico');
+                const data = await res.json();
+                _pubCalItems = Array.isArray(data.items) ? data.items : [];
+                renderPublicMonthPills();
+                renderPublicCalendar();
+            } catch (e) {
+                box.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--color-text-light)">Pronto publicaremos las nuevas fechas de talleres y programas.</div>';
+            }
+        }
+
+        function setPublicCalView(v) {
+            _pubCalView = v;
+            const bAg = document.getElementById('pubViewBtn_agenda');
+            const bMe = document.getElementById('pubViewBtn_mes');
+            if (bAg && bMe) {
+                if (v === 'agenda') {
+                    bAg.style.background = 'var(--color-primary)'; bAg.style.color = '#fff';
+                    bMe.style.background = 'transparent'; bMe.style.color = '#475569';
+                } else {
+                    bMe.style.background = 'var(--color-primary)'; bMe.style.color = '#fff';
+                    bAg.style.background = 'transparent'; bAg.style.color = '#475569';
+                }
+            }
+            renderPublicCalendar();
+        }
+
+        function selectPublicMonthPill(mKey) {
+            _pubCalSelectedMonth = mKey;
+            if (mKey !== 'all' && /^\d{4}-\d{2}$/.test(mKey)) {
+                const [y, m] = mKey.split('-').map(Number);
+                _pubCalGridDate = new Date(y, m - 1, 1);
+            }
+            renderPublicMonthPills();
+            renderPublicCalendar();
+        }
+
+        function renderPublicMonthPills() {
+            const bar = document.getElementById('pubCalMonthPills');
+            if (!bar) return;
+            const monthNames = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+            const monthsSet = new Set();
+            _pubCalItems.forEach(it => {
+                if (it.fecha_inicio && /^\d{4}-\d{2}/.test(it.fecha_inicio)) {
+                    monthsSet.add(it.fecha_inicio.slice(0, 7));
+                }
+            });
+            const sortedMonths = Array.from(monthsSet).sort();
+            let html = `<button type="button" onclick="selectPublicMonthPill('all')" style="border:1.5px solid ${_pubCalSelectedMonth === 'all' ? 'var(--color-primary)' : '#E2E8F0'};background:${_pubCalSelectedMonth === 'all' ? 'var(--color-primary)' : '#fff'};color:${_pubCalSelectedMonth === 'all' ? '#fff' : '#475569'};padding:.35rem .85rem;border-radius:99px;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap">📅 Todos los meses (${_pubCalItems.length})</button>`;
+            sortedMonths.forEach(ym => {
+                const [y, m] = ym.split('-').map(Number);
+                const active = (_pubCalSelectedMonth === ym);
+                html += `<button type="button" onclick="selectPublicMonthPill('${ym}')" style="border:1.5px solid ${active ? 'var(--color-primary)' : '#E2E8F0'};background:${active ? 'var(--color-primary)' : '#fff'};color:${active ? '#fff' : '#475569'};padding:.35rem .85rem;border-radius:99px;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap">${monthNames[m - 1]} ${y}</button>`;
+            });
+            bar.innerHTML = html;
+        }
+
+        function getFilteredPublicItems() {
+            const sedeFil = (document.getElementById('pubCalSedeFilter')?.value || '').toLowerCase();
+            return _pubCalItems.filter(it => {
+                if (sedeFil) {
+                    const hay = `${it.sede || ''} ${it.modalidad || ''} ${(it.sedes_array || []).join(' ')}`.toLowerCase();
+                    if (!hay.includes(sedeFil)) return false;
+                }
+                if (_pubCalSelectedMonth !== 'all') {
+                    if (!it.fecha_inicio || !it.fecha_inicio.startsWith(_pubCalSelectedMonth)) return false;
+                }
+                return true;
+            });
+        }
+
+        function renderPublicCalendar() {
+            const box = document.getElementById('pubCalBody');
+            if (!box) return;
+            const list = getFilteredPublicItems();
+
+            if (_pubCalView === 'mes') {
+                box.innerHTML = renderPublicMonthGrid(list);
+                return;
+            }
+
+            if (list.length === 0) {
+                box.innerHTML = `<div style="text-align:center;padding:2.5rem;background:#F8FAFC;border-radius:14px;color:var(--color-text-light)">
+                    <i class="ph ph-calendar-blank" style="font-size:2rem;display:block;margin-bottom:.4rem;color:var(--color-primary)"></i>
+                    No hay actividades con ese filtro específico. Prueba seleccionando "Todas las Sedes" o "Todos los meses".
+                </div>`;
+                return;
+            }
+
+            const monthNamesFull = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+            box.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:1.1rem">` + list.map(it => {
+                let dateBadgeHtml = `<div style="background:#F0FDF4;border:1px solid #BBF7D0;color:#166534;border-radius:12px;padding:.5rem .75rem;text-align:center;min-width:68px">
+                    <div style="font-size:.65rem;font-weight:800;text-transform:uppercase">Admisión</div>
+                    <div style="font-size:.82rem;font-weight:800">Abierta</div>
+                </div>`;
+                if (it.fecha_inicio && /^\d{4}-\d{2}-\d{2}$/.test(it.fecha_inicio)) {
+                    const [yy, mm, dd] = it.fecha_inicio.split('-').map(Number);
+                    dateBadgeHtml = `<div style="background:linear-gradient(135deg,var(--color-primary),var(--color-primary-dark));color:#fff;border-radius:12px;padding:.45rem .7rem;text-align:center;min-width:68px;box-shadow:0 4px 10px rgba(104,122,97,.25)">
+                        <div style="font-size:1.25rem;font-weight:800;line-height:1">${String(dd).padStart(2, '0')}</div>
+                        <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:.15rem">${monthNamesFull[mm - 1].slice(0, 3)} ${yy}</div>
+                    </div>`;
+                }
+
+                // Barra de cupos si tiene cupo limitado
+                let cuposHtml = '';
+                if (it.cupos_total > 0) {
+                    const libres = it.cupos_libres !== null ? it.cupos_libres : Math.max(0, it.cupos_total - (it.cupos_ocupados || 0));
+                    const pct = Math.min(100, Math.round(((it.cupos_total - libres) / it.cupos_total) * 100));
+                    const col = it.lleno ? '#EF4444' : (libres <= 4 ? '#D97706' : '#059669');
+                    cuposHtml = `
+                        <div style="margin-top:.75rem;background:#F8FAFC;padding:.55rem .75rem;border-radius:10px;border:1px solid #E2E8F0">
+                            <div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:.3rem">
+                                <span style="color:#475569;font-weight:600"><i class="ph-fill ph-users-three"></i> Cupos del grupo</span>
+                                <strong style="color:${col}">${it.lleno ? 'CUPOS AGOTADOS' : `¡Quedan ${libres} de ${it.cupos_total} cupos!`}</strong>
+                            </div>
+                            <div style="height:6px;background:#E2E8F0;border-radius:99px;overflow:hidden">
+                                <div style="height:100%;width:${pct}%;background:${col};border-radius:99px"></div>
+                            </div>
+                        </div>`;
+                }
+
+                const typeLabel = it.origen === 'atendia' ? '🎟️ TALLER / EVENTO CON CUPO'
+                    : (it.tipo === 'inscripcion' ? '🔥 FECHA IMPORTANTE'
+                    : (it.tipo === 'charla' ? '🎙️ CHARLA / MASTERCLASS'
+                    : (it.tipo === 'taller' ? '🟣 TALLER PRÁCTICO' : '🎓 PROGRAMA / DIPLOMADO')));
+
+                const actionBtn = it.cta_url
+                    ? `<a href="${it.cta_url}" class="btn btn-primary" style="width:100%;justify-content:center;padding:.62rem 1rem;border-radius:10px;font-size:.84rem;margin-top:.85rem">${it.cta_texto || 'Ver Detalles e Inscribirme'} <i class="ph ph-arrow-right"></i></a>`
+                    : `<button type="button" ${it.lleno ? 'disabled' : ''} onclick="openPublicEventModal('${it.uid}')" class="btn btn-primary" style="width:100%;justify-content:center;padding:.62rem 1rem;border-radius:10px;font-size:.84rem;margin-top:.85rem;${it.lleno ? 'background:#94A3B8;cursor:not-allowed' : ''}">
+                        <i class="ph ph-ticket"></i> ${it.lleno ? 'Cupos Agotados' : (it.cta_texto || 'Reservar mi Cupo Ahora')}
+                       </button>`;
+
+                return `
+                    <div style="border:1.5px solid #E5E7EB;border-radius:16px;padding:1.15rem;background:#fff;display:flex;flex-direction:column;justify-content:space-between;transition:transform .2s,box-shadow .2s" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 25px rgba(0,0,0,.07)'" onmouseout="this.style.transform='none';this.style.boxShadow='none'">
+                        <div>
+                            <div style="display:flex;gap:.85rem;align-items:flex-start">
+                                ${dateBadgeHtml}
+                                <div style="flex:1;min-width:0">
+                                    <div style="font-size:.68rem;font-weight:800;color:var(--color-primary);letter-spacing:.4px;margin-bottom:.2rem">${typeLabel}</div>
+                                    <h3 style="font-size:1.05rem;margin:0;color:var(--color-secondary);line-height:1.3">${it.titulo}</h3>
+                                    <div style="font-size:.76rem;color:var(--color-text-light);margin-top:.25rem">
+                                        <i class="ph ph-chalkboard-teacher"></i> ${it.profesor_nombre || 'Equipo Flor de Chañar'}
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.8rem;font-size:.75rem">
+                                ${it.sede ? `<span style="background:#FEF3C7;color:#B45309;padding:.2rem .6rem;border-radius:6px;font-weight:700"><i class="ph ph-map-pin"></i> ${it.sede}</span>` : ''}
+                                ${it.dias_clase ? `<span style="background:#F1F5F9;color:#334155;padding:.2rem .6rem;border-radius:6px;font-weight:600"><i class="ph ph-calendar"></i> ${it.dias_clase}</span>` : ''}
+                                ${it.hora_inicio ? `<span style="background:#F1F5F9;color:#334155;padding:.2rem .6rem;border-radius:6px;font-weight:600"><i class="ph ph-clock"></i> ${it.hora_inicio}</span>` : ''}
+                                ${it.duracion_total ? `<span style="background:#EEF2FF;color:#4338CA;padding:.2rem .6rem;border-radius:6px;font-weight:600">⏳ ${it.duracion_total}</span>` : ''}
+                            </div>
+                            ${cuposHtml}
+                        </div>
+                        ${actionBtn}
+                    </div>`;
+            }).join('') + `</div>`;
+        }
+
+        function movePublicGridMonth(delta) {
+            _pubCalGridDate = new Date(_pubCalGridDate.getFullYear(), _pubCalGridDate.getMonth() + delta, 1);
+            renderPublicCalendar();
+        }
+
+        function renderPublicMonthGrid(items) {
+            const y = _pubCalGridDate.getFullYear();
+            const m = _pubCalGridDate.getMonth();
+            const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+            const firstDay = new Date(y, m, 1);
+            const lastDay = new Date(y, m + 1, 0);
+            const startOffset = (firstDay.getDay() + 6) % 7;
+            const totalDays = lastDay.getDate();
+
+            const byDate = {};
+            items.forEach(it => {
+                if (it.fecha_inicio) {
+                    if (!byDate[it.fecha_inicio]) byDate[it.fecha_inicio] = [];
+                    byDate[it.fecha_inicio].push(it);
+                }
+            });
+
+            let cells = '';
+            for (let i = 0; i < startOffset; i++) {
+                cells += `<div style="min-height:90px;background:#F8FAFC;border-right:1px solid #E2E8F0;border-bottom:1px solid #E2E8F0"></div>`;
+            }
+            for (let d = 1; d <= totalDays; d++) {
+                const iso = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const dayEvs = byDate[iso] || [];
+                const chips = dayEvs.map(ev => {
+                    const click = ev.cta_url ? `window.location.href='${ev.cta_url}'` : `openPublicEventModal('${ev.uid}')`;
+                    return `<div onclick="${click}" style="background:#ECFDF5;border-left:3px solid var(--color-primary);color:#065F46;padding:.22rem .4rem;border-radius:5px;font-size:.7rem;font-weight:600;margin-bottom:.25rem;cursor:pointer;line-height:1.25">
+                        ${ev.hora_inicio ? `<b>${ev.hora_inicio}</b> ` : ''}${ev.titulo}
+                    </div>`;
+                }).join('');
+                cells += `<div style="min-height:95px;background:#fff;border-right:1px solid #E2E8F0;border-bottom:1px solid #E2E8F0;padding:.4rem">
+                    <div style="font-size:.76rem;font-weight:700;color:#64748B;margin-bottom:.25rem">${d}</div>
+                    ${chips}
+                </div>`;
+            }
+
+            return `
+                <div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.85rem">
+                        <button type="button" onclick="movePublicGridMonth(-1)" style="border:1px solid #CBD5E1;background:#fff;padding:.4rem .85rem;border-radius:8px;cursor:pointer;font-weight:600"><i class="ph ph-caret-left"></i> Anterior</button>
+                        <h3 style="margin:0;font-size:1.15rem">${monthNames[m]} ${y}</h3>
+                        <button type="button" onclick="movePublicGridMonth(1)" style="border:1px solid #CBD5E1;background:#fff;padding:.4rem .85rem;border-radius:8px;cursor:pointer;font-weight:600">Siguiente <i class="ph ph-caret-right"></i></button>
+                    </div>
+                    <div style="overflow-x:auto">
+                        <div style="min-width:640px;display:grid;grid-template-columns:repeat(7,1fr);border-top:1px solid #E2E8F0;border-left:1px solid #E2E8F0;border-radius:10px;overflow:hidden">
+                            ${['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].map(dn => `<div style="background:#F1F5F9;padding:.5rem;text-align:center;font-size:.74rem;font-weight:700;color:#475569;border-right:1px solid #E2E8F0;border-bottom:1px solid #E2E8F0">${dn}</div>`).join('')}
+                            ${cells}
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        function openPublicEventModal(uid) {
+            const it = _pubCalItems.find(x => x.uid === uid);
+            if (!it) return;
+            document.getElementById('pubEvModalTitle').textContent = it.titulo;
+            document.getElementById('pubEvModalMeta').textContent = `${it.fecha_inicio || 'Próximamente'} ${it.hora_inicio ? '· ' + it.hora_inicio : ''} · ${it.sede || it.modalidad || ''}`;
+            document.getElementById('pubEvAtendiaId').value = it.atendia_event_id || '';
+            document.getElementById('pubEvLocalId').value = it.origen === 'calendario_local' ? it.id : '';
+            document.getElementById('pubEvCursoId').value = it.curso_id || '';
+            document.getElementById('pubEvSede').value = it.sede || it.modalidad || '';
+            document.getElementById('pubEvError').style.display = 'none';
+            document.getElementById('pubEventRegModal').style.display = 'flex';
+        }
+
+        function closePublicEventModal() {
+            document.getElementById('pubEventRegModal').style.display = 'none';
+        }
+
+        async function submitPublicEventRegistration() {
+            const btn = document.getElementById('pubEvSubmitBtn');
+            const errBox = document.getElementById('pubEvError');
+            const nombre = document.getElementById('pubEvNombre').value.trim();
+            const whatsapp = document.getElementById('pubEvWhatsapp').value.trim();
+            const email = document.getElementById('pubEvEmail').value.trim();
+            const seats = parseInt(document.getElementById('pubEvSeats').value) || 1;
+
+            if (!nombre || !whatsapp) {
+                errBox.textContent = 'Por favor completa tu nombre y número de WhatsApp.';
+                errBox.style.display = 'block';
+                return;
+            }
+            errBox.style.display = 'none';
+            const oldHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = 'Reservando cupo...';
+
+            try {
+                const res = await fetch('/api/calendario/inscribir-evento', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        nombre,
+                        whatsapp,
+                        email,
+                        seats,
+                        titulo: document.getElementById('pubEvModalTitle').textContent,
+                        atendia_event_id: document.getElementById('pubEvAtendiaId').value || null,
+                        local_event_id: document.getElementById('pubEvLocalId').value || null,
+                        curso_id: document.getElementById('pubEvCursoId').value || null,
+                        sede: document.getElementById('pubEvSede').value || ''
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    errBox.textContent = data.error || 'No se pudo completar la inscripción.';
+                    errBox.style.display = 'block';
+                    btn.disabled = false;
+                    btn.innerHTML = oldHtml;
+                    return;
+                }
+                closePublicEventModal();
+                await loadPublicCalendar();
+                if (data.wa_url) window.open(data.wa_url, '_blank');
+            } catch (e) {
+                errBox.textContent = 'Error de conexión. Intenta nuevamente.';
+                errBox.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = oldHtml;
+            }
+        }
 
         async function inscribir(curso_id) {
             const token = localStorage.getItem('token');

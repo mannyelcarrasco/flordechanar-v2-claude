@@ -440,9 +440,27 @@
                 </label>
             </div>
 
-            <div class="two">
-                <div class="fg"><label class="fl">Fecha de inicio de ventas</label><input class="fc" id="courseFechaVentas" type="date"></div>
-                <div class="fg"><label class="fl">Cupos disponibles</label><input class="fc" id="courseCupos" type="number" placeholder="0 = sin límite"></div>
+            <div class="three">
+                <div class="fg"><label class="fl">Fecha de Inicio (Clases / Taller)</label><input class="fc" id="courseFechaVentas" type="date"><div class="hint">Se mostrará en el Calendario Académico y Promocional</div></div>
+                <div class="fg"><label class="fl">Fecha de Término (Opcional)</label><input class="fc" id="courseFechaFin" type="date"><div class="hint">Hasta qué día se proyectan las clases del profesor</div></div>
+                <div class="fg"><label class="fl">Cupos disponibles</label><input class="fc" id="courseCupos" type="number" placeholder="0 = sin límite"><div class="hint">Se descuenta con inscripciones o Evento AtendIA</div></div>
+            </div>
+
+            <div class="fg" style="background:#FDF2F8;border:1.5px solid #FBCFE8;border-radius:10px;padding:.85rem 1rem;margin-bottom:1rem">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap">
+                    <div style="flex:1;min-width:220px">
+                        <label class="fl" style="color:#9D174D;margin-bottom:.15rem;display:flex;align-items:center;gap:.35rem">
+                            <i class="ph ph-ticket" style="font-size:1.05rem;color:#DB2777"></i> Vincular con Evento con Cupo de AtendIA (Opcional)
+                        </label>
+                        <div style="font-size:.76rem;color:#BE185D">Si este taller o programa está creado en <strong>AtendIA → Citas → Eventos</strong>, vincúlalo aquí para que el Bot de WhatsApp y el Calendario Web descuenten los mismos cupos en tiempo real.</div>
+                    </div>
+                    <div style="display:flex;gap:.5rem;align-items:center">
+                        <select class="fc" id="courseAtendiaEventId" style="min-width:240px;background:#fff;border-color:#F9A8D4">
+                            <option value="">— Sin vincular a Evento AtendIA —</option>
+                        </select>
+                        <button type="button" class="btn bo btn-sm" onclick="loadAtendiaEventsForCourseSelect(true)" title="Recargar eventos de AtendIA"><i class="ph ph-arrows-clockwise"></i></button>
+                    </div>
+                </div>
             </div>
 
             <div class="fg">
@@ -1450,8 +1468,39 @@ async function fetchProfessors() {
 }
 
 // Init
+let _savedAtendiaEventId = null;
+
+async function loadAtendiaEventsForCourseSelect(force = false) {
+    const sel = document.getElementById('courseAtendiaEventId');
+    if (!sel) return;
+    try {
+        const res = await fetch('/api/calendario/publico' + (force ? '?refresh=1' : ''));
+        if (!res.ok) return;
+        const data = await res.json();
+        const token = localStorage.getItem('token');
+        let evs = [];
+        if (token) {
+            const rInt = await fetch('/api/calendario/interno' + (force ? '?refresh=1' : ''), { headers: { 'Authorization': 'Bearer ' + token } });
+            if (rInt.ok) {
+                const dInt = await rInt.json();
+                evs = Array.isArray(dInt.eventos_atendia) ? dInt.eventos_atendia : [];
+            }
+        }
+        const curVal = sel.value || _savedAtendiaEventId || '';
+        sel.innerHTML = '<option value="">— Sin vincular a Evento AtendIA —</option>';
+        evs.forEach(ev => {
+            const opt = document.createElement('option');
+            opt.value = ev.id;
+            opt.textContent = `🎟️ #${ev.id} · ${ev.name} (${ev.date} · ${ev.seats_left}/${ev.capacity} libres)`;
+            if (String(ev.id) === String(curVal)) opt.selected = true;
+            sel.appendChild(opt);
+        });
+        if (force && typeof showToast === 'function') showToast(`🎟️ ${evs.length} evento(s) de AtendIA sincronizados`);
+    } catch (e) {}
+}
+
 window.addEventListener('load', async () => {
-    try { await fetchProfessors(); await loadSedesGlobales(); } catch(e) { console.warn(e); }
+    try { await fetchProfessors(); await loadSedesGlobales(); await loadAtendiaEventsForCourseSelect(); } catch(e) { console.warn(e); }
     updateChecklist();
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -1479,6 +1528,15 @@ window.addEventListener('load', async () => {
                     document.getElementById('courseDesc').value = c.descripcion || '';
                     document.getElementById('courseDescVentas').value = c.descripcion_ventas || '';
                     document.getElementById('courseFechaVentas').value = c.fecha_inicio_ventas ? c.fecha_inicio_ventas.split('T')[0] : '';
+                    if (document.getElementById('courseFechaFin')) {
+                        document.getElementById('courseFechaFin').value = c.fecha_fin_clases ? c.fecha_fin_clases.split('T')[0] : '';
+                    }
+                    if (c.atendia_event_id) {
+                        _savedAtendiaEventId = c.atendia_event_id;
+                        if (document.getElementById('courseAtendiaEventId')) {
+                            document.getElementById('courseAtendiaEventId').value = String(c.atendia_event_id);
+                        }
+                    }
                     document.getElementById('courseCupos').value = c.cupos || '';
                     document.getElementById('courseMuestra').value = c.muestra_gratuita || '';
                     if (c.horarios_sedes) {
@@ -1902,7 +1960,9 @@ async function saveDraft() {
             cobra_matricula: document.getElementById('courseCobraMatricula') ? (document.getElementById('courseCobraMatricula').value === '1') : true,
             es_ciclico: document.getElementById('courseCiclico').checked,
             texto_opciones_extra: document.getElementById('courseOpcionesExtra').checked,
-            fecha_inicio_ventas: document.getElementById('courseFechaVentas').value,
+            fecha_inicio_ventas: document.getElementById('courseFechaVentas').value || null,
+            fecha_fin_clases: document.getElementById('courseFechaFin') ? (document.getElementById('courseFechaFin').value || null) : null,
+            atendia_event_id: document.getElementById('courseAtendiaEventId') && document.getElementById('courseAtendiaEventId').value ? parseInt(document.getElementById('courseAtendiaEventId').value) : null,
             cupos: document.getElementById('courseCupos').value ? parseInt(document.getElementById('courseCupos').value) : 0,
             muestra_gratuita: document.getElementById('courseMuestra').value,
             salas_virtuales: salasVirtualesData,
@@ -1981,7 +2041,9 @@ async function publishCourse(estadoFinal = 'publicado') {
             cobra_matricula: document.getElementById('courseCobraMatricula') ? (document.getElementById('courseCobraMatricula').value === '1') : true,
             es_ciclico: document.getElementById('courseCiclico').checked,
             texto_opciones_extra: document.getElementById('courseOpcionesExtra').checked,
-            fecha_inicio_ventas: document.getElementById('courseFechaVentas').value,
+            fecha_inicio_ventas: document.getElementById('courseFechaVentas').value || null,
+            fecha_fin_clases: document.getElementById('courseFechaFin') ? (document.getElementById('courseFechaFin').value || null) : null,
+            atendia_event_id: document.getElementById('courseAtendiaEventId') && document.getElementById('courseAtendiaEventId').value ? parseInt(document.getElementById('courseAtendiaEventId').value) : null,
             cupos: document.getElementById('courseCupos').value ? parseInt(document.getElementById('courseCupos').value) : 0,
             muestra_gratuita: document.getElementById('courseMuestra').value,
             salas_virtuales: salasVirtualesData,

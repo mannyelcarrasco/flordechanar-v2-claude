@@ -324,6 +324,8 @@ async function initDB() {
             `ALTER TABLE cursos ADD COLUMN tiene_matricula BOOLEAN DEFAULT FALSE`,
             `ALTER TABLE cursos ADD COLUMN valor_matricula INT DEFAULT 0`,
             `ALTER TABLE cursos ADD COLUMN cobra_matricula BOOLEAN DEFAULT TRUE`,
+            `ALTER TABLE cursos ADD COLUMN fecha_fin_clases DATE DEFAULT NULL`,
+            `ALTER TABLE cursos ADD COLUMN atendia_event_id INT DEFAULT NULL`,
             `ALTER TABLE usuarios ADD COLUMN matriculado BOOLEAN DEFAULT FALSE`,
             `ALTER TABLE usuarios ADD COLUMN matriculado_en DATETIME DEFAULT NULL`,
             `ALTER TABLE inscripciones ADD COLUMN pago_id INT DEFAULT NULL`,
@@ -432,7 +434,35 @@ async function initDB() {
             )
         `);
 
-        console.log('Tables checked/created: usuarios, cursos, inscripciones, modulos, lecciones, progreso_lecciones, prospectos_cursos.');
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS calendario_eventos (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                titulo VARCHAR(300) NOT NULL,
+                descripcion TEXT DEFAULT NULL,
+                tipo VARCHAR(40) DEFAULT 'taller',
+                fecha_inicio DATE NOT NULL,
+                fecha_fin DATE DEFAULT NULL,
+                hora_inicio VARCHAR(20) DEFAULT NULL,
+                hora_fin VARCHAR(20) DEFAULT NULL,
+                sede VARCHAR(150) DEFAULT NULL,
+                modalidad VARCHAR(60) DEFAULT 'Presencial',
+                profesor_id INT DEFAULT NULL,
+                curso_id INT DEFAULT NULL,
+                cupos INT DEFAULT 0,
+                cupos_ocupados INT DEFAULT 0,
+                precio VARCHAR(60) DEFAULT NULL,
+                visibilidad VARCHAR(20) DEFAULT 'publico',
+                destacado BOOLEAN DEFAULT FALSE,
+                color VARCHAR(30) DEFAULT '#687A61',
+                cta_texto VARCHAR(100) DEFAULT NULL,
+                cta_url VARCHAR(500) DEFAULT NULL,
+                atendia_event_id INT DEFAULT NULL,
+                estado VARCHAR(20) DEFAULT 'activo',
+                creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        console.log('Tables checked/created: usuarios, cursos, inscripciones, modulos, lecciones, progreso_lecciones, prospectos_cursos, calendario_eventos.');
 
         const [rows] = await pool.query('SELECT * FROM usuarios WHERE email = "admin@flordechanar.cl"');
         const hash = await bcrypt.hash('admin123', 10);
@@ -791,7 +821,16 @@ app.patch('/api/usuarios/:id/activo', verifyToken, async (req, res) => {
 app.get('/api/cursos', async (req, res) => {
     try {
         if (!pool) return res.status(500).json({ error: 'Database not connected' });
-        const [cursos] = await pool.query('SELECT c.id, c.titulo, c.descripcion, c.precio, c.tiene_matricula, c.valor_matricula, c.cobra_matricula, c.tipo_acceso, c.portada_url, c.modalidad, c.dias_clase, c.horario_clase, c.sede, c.horarios_sedes, c.texto_opciones_extra, c.ventas_meta, c.duracion_total, c.categoria, u.nombre as profesor FROM cursos c LEFT JOIN usuarios u ON c.profesor_id = u.id WHERE c.estado = "publicado"');
+        const [cursos] = await pool.query(`
+            SELECT c.id, c.titulo, c.descripcion, c.precio, c.tiene_matricula, c.valor_matricula, c.cobra_matricula,
+                   c.tipo_acceso, c.portada_url, c.modalidad, c.dias_clase, c.horario_clase, c.sede, c.horarios_sedes,
+                   c.texto_opciones_extra, c.ventas_meta, c.duracion_total, c.categoria, c.fecha_inicio_ventas,
+                   c.fecha_fin_clases, c.cupos, c.atendia_event_id, u.nombre as profesor,
+                   (SELECT COUNT(*) FROM inscripciones WHERE curso_id = c.id) as inscritos_count
+            FROM cursos c
+            LEFT JOIN usuarios u ON c.profesor_id = u.id
+            WHERE c.estado = "publicado"
+        `);
         
         const [planes] = await pool.query("SELECT * FROM planes WHERE activo = 1 AND nombre != 'matricula'");
         for (let c of cursos) {
@@ -812,7 +851,7 @@ app.post('/api/cursos', verifyToken, async (req, res) => {
             titulo, descripcion, precio, precio_mensual, tiene_matricula, valor_matricula, cobra_matricula, portada_url, estado, meet_url, es_ciclico, 
             tipo_acceso, categoria, nivel, duracion_total, idioma, descripcion_ventas, 
             ventas_meta, certificacion, modalidad, profesor_id, dias_clase, horario_clase, sede, texto_opciones_extra, salas_virtuales,
-            fecha_inicio_ventas, cupos, muestra_gratuita, horarios_sedes
+            fecha_inicio_ventas, fecha_fin_clases, cupos, muestra_gratuita, horarios_sedes, atendia_event_id
         } = req.body;
         if (!validStr(titulo, 3, 300)) return res.status(400).json({ error: 'Título del curso requerido (3-300 caracteres)' });
         const estadosPermitidos = ['borrador', 'publicado', 'archivado', 'interno'];
@@ -820,14 +859,14 @@ app.post('/api/cursos', verifyToken, async (req, res) => {
         
         const [result] = await pool.query(
             `INSERT INTO cursos 
-             (titulo, descripcion, precio, tiene_matricula, valor_matricula, cobra_matricula, portada_url, estado, meet_url, es_ciclico, tipo_acceso, categoria, nivel, duracion_total, idioma, descripcion_ventas, ventas_meta, certificacion, modalidad, profesor_id, dias_clase, horario_clase, sede, texto_opciones_extra, salas_virtuales, fecha_inicio_ventas, cupos, muestra_gratuita, horarios_sedes) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             (titulo, descripcion, precio, tiene_matricula, valor_matricula, cobra_matricula, portada_url, estado, meet_url, es_ciclico, tipo_acceso, categoria, nivel, duracion_total, idioma, descripcion_ventas, ventas_meta, certificacion, modalidad, profesor_id, dias_clase, horario_clase, sede, texto_opciones_extra, salas_virtuales, fecha_inicio_ventas, fecha_fin_clases, cupos, muestra_gratuita, horarios_sedes, atendia_event_id) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 titulo, descripcion, precio || 0, tiene_matricula ? 1 : 0, parseInt(valor_matricula) || 0, cobra_matricula !== undefined ? (cobra_matricula ? 1 : 0) : 1, portada_url || null, estado || 'borrador', meet_url || null, es_ciclico ? 1 : 0,
                 tipo_acceso || 'gratis', categoria || null, nivel || null, duracion_total || null, idioma || null,
                 descripcion_ventas || null, ventas_meta ? JSON.stringify(ventas_meta) : null, certificacion ? 1 : 0, modalidad || 'Online (Grabado)',
                 profesor_id || req.usuario.id, dias_clase || null, horario_clase || null, sede || null, texto_opciones_extra ? 1 : 0, salas_virtuales ? JSON.stringify(salas_virtuales) : null,
-                fecha_inicio_ventas || null, cupos || 0, muestra_gratuita || 'ninguna', horarios_sedes ? JSON.stringify(horarios_sedes) : null
+                fecha_inicio_ventas || null, fecha_fin_clases || null, cupos || 0, muestra_gratuita || 'ninguna', horarios_sedes ? JSON.stringify(horarios_sedes) : null, atendia_event_id ? parseInt(atendia_event_id) : null
             ]
         );
         const newCursoId = result.insertId;
@@ -1000,7 +1039,7 @@ app.get('/api/cursos/:id', verifyToken, async (req, res) => {
 app.put('/api/cursos/:id', verifyToken, async (req, res) => {
     if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
     try {
-        const { titulo, descripcion, precio, precio_mensual, tiene_matricula, valor_matricula, cobra_matricula, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas, ventas_meta, es_ciclico, meet_url, salas_virtuales, dias_clase, horario_clase, sede, texto_opciones_extra, fecha_inicio_ventas, cupos, muestra_gratuita, horarios_sedes } = req.body;
+        const { titulo, descripcion, precio, precio_mensual, tiene_matricula, valor_matricula, cobra_matricula, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas, ventas_meta, es_ciclico, meet_url, salas_virtuales, dias_clase, horario_clase, sede, texto_opciones_extra, fecha_inicio_ventas, fecha_fin_clases, cupos, muestra_gratuita, horarios_sedes, atendia_event_id } = req.body;
         let profAsignado = req.usuario.rol === 'admin' ? (profesor_id || req.usuario.id) : req.usuario.id;
 
         let vMetaStr = null;
@@ -1017,8 +1056,8 @@ app.put('/api/cursos/:id', verifyToken, async (req, res) => {
         }
 
         await pool.query(
-            'UPDATE cursos SET titulo = ?, descripcion = ?, precio = ?, tiene_matricula = ?, valor_matricula = ?, cobra_matricula = ?, tipo_acceso = ?, portada_url = ?, estado = ?, profesor_id = ?, categoria = ?, nivel = ?, duracion_total = ?, idioma = ?, certificacion = ?, modalidad = ?, descripcion_ventas = ?, ventas_meta = ?, es_ciclico = ?, meet_url = ?, salas_virtuales = ?, dias_clase = ?, horario_clase = ?, sede = ?, texto_opciones_extra = ?, fecha_inicio_ventas = ?, cupos = ?, muestra_gratuita = ?, horarios_sedes = ? WHERE id = ?',
-            [titulo, descripcion, precio, tiene_matricula ? 1 : 0, parseInt(valor_matricula) || 0, cobra_matricula !== undefined ? (cobra_matricula ? 1 : 0) : 1, tipo_acceso || 'gratis', portada_url, estado, profAsignado, categoria||null, nivel||null, duracion_total||null, idioma||null, certificacion ? 1 : 0, modalidad||'Online (Grabado)', descripcion_ventas||null, vMetaStr, es_ciclico ? 1 : 0, meet_url || null, salasStr, dias_clase||null, horario_clase||null, sede||null, texto_opciones_extra ? 1 : 0, fecha_inicio_ventas||null, cupos||0, muestra_gratuita||'ninguna', hrSedesStr, req.params.id]
+            'UPDATE cursos SET titulo = ?, descripcion = ?, precio = ?, tiene_matricula = ?, valor_matricula = ?, cobra_matricula = ?, tipo_acceso = ?, portada_url = ?, estado = ?, profesor_id = ?, categoria = ?, nivel = ?, duracion_total = ?, idioma = ?, certificacion = ?, modalidad = ?, descripcion_ventas = ?, ventas_meta = ?, es_ciclico = ?, meet_url = ?, salas_virtuales = ?, dias_clase = ?, horario_clase = ?, sede = ?, texto_opciones_extra = ?, fecha_inicio_ventas = ?, fecha_fin_clases = ?, cupos = ?, muestra_gratuita = ?, horarios_sedes = ?, atendia_event_id = ? WHERE id = ?',
+            [titulo, descripcion, precio, tiene_matricula ? 1 : 0, parseInt(valor_matricula) || 0, cobra_matricula !== undefined ? (cobra_matricula ? 1 : 0) : 1, tipo_acceso || 'gratis', portada_url, estado, profAsignado, categoria||null, nivel||null, duracion_total||null, idioma||null, certificacion ? 1 : 0, modalidad||'Online (Grabado)', descripcion_ventas||null, vMetaStr, es_ciclico ? 1 : 0, meet_url || null, salasStr, dias_clase||null, horario_clase||null, sede||null, texto_opciones_extra ? 1 : 0, fecha_inicio_ventas||null, fecha_fin_clases||null, cupos||0, muestra_gratuita||'ninguna', hrSedesStr, atendia_event_id !== undefined ? (parseInt(atendia_event_id) || null) : null, req.params.id]
         );
 
         // Sincronizar plan de mensualidad si viene precio_mensual en el body
@@ -3169,6 +3208,38 @@ async function syncLeadToAtendIA({ curso, funnelCfg, nombre, phoneNorm, email, s
         }
     }
 
+        // 4) Si el curso está vinculado a un Evento con Cupo de AtendIA (atendia_event_id), reservar el cupo automáticamente
+        const linkedEvId = parseInt(curso.atendia_event_id || funnelCfg?.atendia_event_id || 0);
+        if (linkedEvId > 0) {
+            try {
+                const evRegRes = await fetch(`${atendiaBase}/n8n/event-register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Atendia-Token': atendiaToken
+                    },
+                    body: JSON.stringify({
+                        company_id: companyId,
+                        phone: phoneNorm,
+                        event: String(linkedEvId),
+                        name: nombre,
+                        email: email || '',
+                        seats: 1
+                    }),
+                    signal: AbortSignal.timeout(8000)
+                });
+                const evRegJson = await evRegRes.json().catch(() => ({}));
+                if (evRegRes.ok && evRegJson.registered) {
+                    syncedOk = true;
+                    logs.push(`AtendIA Evento #${linkedEvId} inscrito (quedan ${evRegJson.seats_left ?? '?'} cupos)`);
+                } else {
+                    logs.push(`AtendIA Evento #${linkedEvId}: ${evRegJson.status || evRegJson.error || evRegRes.status}`);
+                }
+            } catch (err) {
+                logs.push(`AtendIA Evento Error: ${err.message}`);
+            }
+        }
+
     return { synced: syncedOk, detail: logs.join(' · ') };
 }
 
@@ -3189,7 +3260,7 @@ app.post('/api/prospectos', async (req, res) => {
         const phoneNorm = normalizeClPhone(whatsapp);
         if (!phoneNorm || phoneNorm.length < 9) return res.status(400).json({ error: 'Por favor ingresa un número de WhatsApp válido' });
 
-        const [cursos] = await pool.query('SELECT id, titulo, modalidad, sede, ventas_meta FROM cursos WHERE id = ?', [curso_id]);
+        const [cursos] = await pool.query('SELECT id, titulo, modalidad, sede, ventas_meta, atendia_event_id FROM cursos WHERE id = ?', [curso_id]);
         if (!cursos.length) return res.status(404).json({ error: 'Programa no encontrado' });
         const curso = cursos[0];
 
@@ -3305,7 +3376,7 @@ app.post('/api/prospectos/:id/resync', verifyToken, async (req, res) => {
         const [rows] = await pool.query('SELECT * FROM prospectos_cursos WHERE id = ?', [req.params.id]);
         if (!rows.length) return res.status(404).json({ error: 'Prospecto no encontrado' });
         const p = rows[0];
-        const [cursos] = await pool.query('SELECT id, titulo, modalidad, sede, ventas_meta FROM cursos WHERE id = ?', [p.curso_id]);
+        const [cursos] = await pool.query('SELECT id, titulo, modalidad, sede, ventas_meta, atendia_event_id FROM cursos WHERE id = ?', [p.curso_id]);
         const curso = cursos[0] || { id: p.curso_id, titulo: p.curso_titulo };
         let vm = {};
         try { vm = typeof curso.ventas_meta === 'string' ? JSON.parse(curso.ventas_meta) : (curso.ventas_meta || {}); } catch (e) {}
@@ -3339,6 +3410,702 @@ app.delete('/api/prospectos/:id', verifyToken, async (req, res) => {
         res.json({ ok: true });
     } catch (e) {
         res.status(500).json({ error: 'Error al eliminar prospecto' });
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  CALENDARIO ACADÉMICO, PLANIFICACIÓN ANUAL & PUENTE EVENTOS ATENDIA
+// ═══════════════════════════════════════════════════════════════════════════
+
+let _atendiaEventsCache = { at: 0, companyId: 0, events: [], text: '' };
+
+async function fetchAtendiaEvents(companyIdOverride, forceRefresh = false) {
+    const companyId = parseInt(companyIdOverride) || parseInt(process.env.ATENDIA_COMPANY_ID) || 8;
+    if (!forceRefresh && _atendiaEventsCache.companyId === companyId && (Date.now() - _atendiaEventsCache.at < 25000)) {
+        return _atendiaEventsCache;
+    }
+    const atendiaBase = (process.env.ATENDIA_API_URL || 'https://funnelstudio.click/AtendIA_dev/api/index.php').replace(/\/+$/, '');
+    const atendiaToken = process.env.ATENDIA_N8N_TOKEN || 'atendia2026xK9456';
+    try {
+        const r = await fetch(`${atendiaBase}/n8n/events?company_id=${companyId}`, {
+            method: 'GET',
+            headers: { 'X-Atendia-Token': atendiaToken },
+            signal: AbortSignal.timeout(7000)
+        });
+        const j = await r.json().catch(() => ({}));
+        if (r.ok && j.ok && Array.isArray(j.events)) {
+            _atendiaEventsCache = {
+                at: Date.now(),
+                companyId,
+                events: j.events,
+                text: j.text || ''
+            };
+            return _atendiaEventsCache;
+        }
+    } catch (e) {
+        // Degradación silenciosa si AtendIA no responde en ese instante
+    }
+    return _atendiaEventsCache.companyId === companyId ? _atendiaEventsCache : { at: 0, companyId, events: [], text: '' };
+}
+
+// Parsea textos como "Martes y Jueves", "Sábados", "Lunes, Miércoles y Viernes" a índices JS (0=Dom..6=Sáb)
+function parseDiasSemana(str) {
+    if (!str) return [];
+    const s = String(str).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const out = new Set();
+    if (/\blun/.test(s)) out.add(1);
+    if (/\bmar/.test(s)) out.add(2);
+    if (/\bmie/.test(s)) out.add(3);
+    if (/\bjue/.test(s)) out.add(4);
+    if (/\bvie/.test(s)) out.add(5);
+    if (/\bsab/.test(s)) out.add(6);
+    if (/\bdom/.test(s)) out.add(0);
+    if (/fin de semana/.test(s)) { out.add(6); out.add(0); }
+    return Array.from(out);
+}
+
+// Estima fecha de término según duracion_total ("3 meses", "2 años", "8 semanas", etc.) si fecha_fin_clases no está definida
+function estimateFechaFin(fechaInicioStr, duracionTotalStr, fechaFinExplicit) {
+    if (fechaFinExplicit && /^\d{4}-\d{2}-\d{2}/.test(String(fechaFinExplicit))) {
+        return String(fechaFinExplicit).slice(0, 10);
+    }
+    if (!fechaInicioStr || !/^\d{4}-\d{2}-\d{2}/.test(String(fechaInicioStr))) return null;
+    const d = new Date(String(fechaInicioStr).slice(0, 10) + 'T12:00:00');
+    if (isNaN(d.getTime())) return null;
+    const txt = String(duracionTotalStr || '').toLowerCase();
+    const mAnio = txt.match(/(\d+)\s*a[ñn]o/);
+    const mMes = txt.match(/(\d+)\s*mes/);
+    const mSem = txt.match(/(\d+)\s*seman/);
+    const mDia = txt.match(/(\d+)\s*(dia|d[ií]a|jornada|sesion|clase)/);
+    if (mAnio) d.setMonth(d.getMonth() + parseInt(mAnio[1]) * 12);
+    else if (mMes) d.setMonth(d.getMonth() + parseInt(mMes[1]));
+    else if (mSem) d.setDate(d.getDate() + parseInt(mSem[1]) * 7);
+    else if (mDia && parseInt(mDia[1]) <= 5) d.setDate(d.getDate() + Math.max(0, parseInt(mDia[1]) - 1));
+    else d.setMonth(d.getMonth() + 3); // Por defecto 3 meses de proyección si tiene días de semana
+    return d.toISOString().slice(0, 10);
+}
+
+// Genera bloques de clases recurrentes de un curso dentro de una ventana [rangeStart, rangeEnd]
+function buildCourseRecurringSessions(curso, rangeStart, rangeEnd, atdMap) {
+    const sessions = [];
+    let parsedHs = null;
+    if (curso.horarios_sedes) {
+        try { parsedHs = typeof curso.horarios_sedes === 'string' ? JSON.parse(curso.horarios_sedes) : curso.horarios_sedes; } catch (e) {}
+    }
+
+    // Recolectar bloques de horario: [{ sede, diasStr, horasStr, modalidad }]
+    const scheduleRules = [];
+    if (parsedHs && ((Array.isArray(parsedHs.sedes) && parsedHs.sedes.length) || (Array.isArray(parsedHs.online) && parsedHs.online.length))) {
+        (parsedHs.sedes || []).forEach(s => {
+            (s.horarios || []).forEach(h => {
+                if (h.dias) scheduleRules.push({ sede: s.nombre || curso.sede || 'Presencial', diasStr: h.dias, horasStr: h.horas || curso.horario_clase || '', modalidad: 'Presencial' });
+            });
+        });
+        (parsedHs.online || []).forEach(h => {
+            if (h.dias) scheduleRules.push({ sede: 'Online en Vivo', diasStr: h.dias, horasStr: h.horas || curso.horario_clase || '', modalidad: 'Online' });
+        });
+    }
+    if (!scheduleRules.length && curso.dias_clase) {
+        scheduleRules.push({
+            sede: curso.sede || (String(curso.modalidad || '').toLowerCase().includes('online') ? 'Online en Vivo' : 'Sede Principal'),
+            diasStr: curso.dias_clase,
+            horasStr: curso.horario_clase || '',
+            modalidad: curso.modalidad || 'Presencial'
+        });
+    }
+
+    const startCourse = curso.fecha_inicio_ventas ? String(curso.fecha_inicio_ventas).slice(0, 10) : rangeStart;
+    const endCourse = estimateFechaFin(startCourse, curso.duracion_total, curso.fecha_fin_clases) || rangeEnd;
+
+    const effStart = startCourse > rangeStart ? startCourse : rangeStart;
+    const effEnd = endCourse < rangeEnd ? endCourse : rangeEnd;
+    if (effStart > effEnd) return sessions;
+
+    scheduleRules.forEach((rule, rIdx) => {
+        const dowList = parseDiasSemana(rule.diasStr);
+        if (!dowList.length) return;
+        const cur = new Date(effStart + 'T12:00:00');
+        const last = new Date(effEnd + 'T12:00:00');
+        let guard = 0;
+        while (cur <= last && guard < 400) {
+            guard++;
+            const iso = cur.toISOString().slice(0, 10);
+            if (dowList.includes(cur.getDay())) {
+                const isFirstDay = (iso === startCourse);
+                sessions.push({
+                    id: `curso_ses_${curso.id}_${rIdx}_${iso}`,
+                    origen: 'curso_horario',
+                    tipo: isFirstDay ? 'inicio_curso' : 'clase_regular',
+                    curso_id: curso.id,
+                    titulo: isFirstDay ? `🚀 Inicio: ${curso.titulo}` : curso.titulo,
+                    curso_titulo: curso.titulo,
+                    fecha: iso,
+                    hora: rule.horasStr || 'Por definir',
+                    sede: rule.sede,
+                    modalidad: rule.modalidad,
+                    profesor_id: curso.profesor_id,
+                    profesor_nombre: curso.profesor || 'Por asignar',
+                    estado_curso: curso.estado,
+                    color: isFirstDay ? '#059669' : '#4F46E5'
+                });
+            }
+            cur.setDate(cur.getDate() + 1);
+        }
+    });
+
+    return sessions;
+}
+
+// GET /api/calendario/publico — Actividades promocionales, inicios de cursos/talleres y eventos con cupo AtendIA
+app.get('/api/calendario/publico', async (req, res) => {
+    try {
+        if (!pool) return res.status(500).json({ error: 'Database not connected' });
+
+        // 1) Eventos manuales públicos de nuestra tabla calendario_eventos
+        const [evLocales] = await pool.query(`
+            SELECT ce.*, u.nombre as profesor_nombre, c.titulo as curso_titulo
+            FROM calendario_eventos ce
+            LEFT JOIN usuarios u ON ce.profesor_id = u.id
+            LEFT JOIN cursos c ON ce.curso_id = c.id
+            WHERE ce.estado = 'activo' AND ce.visibilidad = 'publico'
+            ORDER BY ce.fecha_inicio ASC, ce.hora_inicio ASC
+        `);
+
+        // 2) Cursos publicados en el LMS
+        const [cursos] = await pool.query(`
+            SELECT c.id, c.titulo, c.descripcion, c.precio, c.tiene_matricula, c.valor_matricula, c.cobra_matricula,
+                   c.tipo_acceso, c.portada_url, c.modalidad, c.dias_clase, c.horario_clase, c.sede, c.horarios_sedes,
+                   c.duracion_total, c.categoria, c.fecha_inicio_ventas, c.fecha_fin_clases, c.cupos, c.atendia_event_id,
+                   c.profesor_id, c.ventas_meta, u.nombre as profesor,
+                   (SELECT COUNT(*) FROM inscripciones WHERE curso_id = c.id) as inscritos_count
+            FROM cursos c
+            LEFT JOIN usuarios u ON c.profesor_id = u.id
+            WHERE c.estado = 'publicado'
+            ORDER BY COALESCE(c.fecha_inicio_ventas, '2099-12-31') ASC, c.id DESC
+        `);
+
+        // 3) Eventos con cupo desde AtendIA (/n8n/events)
+        const atdData = await fetchAtendiaEvents(req.query.company_id, req.query.refresh === '1');
+        const atdEvents = Array.isArray(atdData.events) ? atdData.events : [];
+        const atdMap = {};
+        atdEvents.forEach(ev => { atdMap[Number(ev.id)] = ev; });
+
+        // IDs de eventos AtendIA que ya están vinculados a un curso o evento local (para no duplicarlos)
+        const linkedAtdIds = new Set();
+
+        const items = [];
+
+        // A) Transformar cursos publicados en tarjetas/entradas de calendario promocional
+        cursos.forEach(c => {
+            const atdEv = c.atendia_event_id ? atdMap[Number(c.atendia_event_id)] : null;
+            if (atdEv) linkedAtdIds.add(Number(atdEv.id));
+
+            let parsedHs = null;
+            if (c.horarios_sedes) {
+                try { parsedHs = typeof c.horarios_sedes === 'string' ? JSON.parse(c.horarios_sedes) : c.horarios_sedes; } catch (e) {}
+            }
+            const sedesList = (parsedHs && Array.isArray(parsedHs.sedes) && parsedHs.sedes.length > 0)
+                ? parsedHs.sedes.map(s => s.nombre).filter(Boolean)
+                : (c.sede ? c.sede.split(',').map(s => s.trim()).filter(Boolean) : []);
+
+            const cupoTotal = atdEv ? Number(atdEv.capacity) : (Number(c.cupos) || 0);
+            const cuposOcupados = atdEv
+                ? Math.max(0, Number(atdEv.capacity) - Number(atdEv.seats_left))
+                : (Number(c.inscritos_count) || 0);
+            const cuposLibres = atdEv
+                ? Number(atdEv.seats_left)
+                : (cupoTotal > 0 ? Math.max(0, cupoTotal - cuposOcupados) : null);
+
+            const fechaInicio = (c.fecha_inicio_ventas && String(c.fecha_inicio_ventas).slice(0, 10) !== '0000-00-00')
+                ? String(c.fecha_inicio_ventas).slice(0, 10)
+                : (atdEv ? atdEv.date : null);
+
+            items.push({
+                uid: `curso_${c.id}`,
+                origen: 'curso',
+                tipo: (c.categoria && c.categoria.toLowerCase().includes('taller')) ? 'taller' : 'inicio_curso',
+                id: c.id,
+                curso_id: c.id,
+                titulo: c.titulo,
+                descripcion: c.descripcion || '',
+                fecha_inicio: fechaInicio,
+                fecha_fin: c.fecha_fin_clases ? String(c.fecha_fin_clases).slice(0, 10) : null,
+                hora_inicio: c.horario_clase || (atdEv ? atdEv.time : ''),
+                dias_clase: c.dias_clase || '',
+                duracion_total: c.duracion_total || '',
+                modalidad: c.modalidad || 'Online',
+                sede: sedesList.join(', ') || (String(c.modalidad || '').includes('Online') ? 'Online' : ''),
+                sedes_array: sedesList,
+                horarios_sedes: parsedHs,
+                profesor_nombre: c.profesor || 'Equipo Docente',
+                precio: c.precio ? `$${Number(c.precio).toLocaleString('es-CL')}` : 'Gratis / Consultar',
+                tiene_matricula: Boolean(c.tiene_matricula),
+                valor_matricula: Number(c.valor_matricula) || 0,
+                cobra_matricula: Boolean(c.cobra_matricula),
+                cupos_total: cupoTotal,
+                cupos_ocupados: cuposOcupados,
+                cupos_libres: cuposLibres,
+                lleno: cupoTotal > 0 && cuposLibres === 0,
+                portada_url: c.portada_url || '',
+                cta_texto: 'Ver Programa e Inscribirme',
+                cta_url: `detalle.html?id=${c.id}`,
+                atendia_event_id: c.atendia_event_id || null,
+                color: '#687A61',
+                destacado: true
+            });
+        });
+
+        // B) Eventos manuales de calendario_eventos
+        evLocales.forEach(ev => {
+            const atdEv = ev.atendia_event_id ? atdMap[Number(ev.atendia_event_id)] : null;
+            if (atdEv) linkedAtdIds.add(Number(atdEv.id));
+
+            const cupoTotal = atdEv ? Number(atdEv.capacity) : (Number(ev.cupos) || 0);
+            const cuposOcupados = atdEv
+                ? Math.max(0, Number(atdEv.capacity) - Number(atdEv.seats_left))
+                : (Number(ev.cupos_ocupados) || 0);
+            const cuposLibres = atdEv
+                ? Number(atdEv.seats_left)
+                : (cupoTotal > 0 ? Math.max(0, cupoTotal - cuposOcupados) : null);
+
+            items.push({
+                uid: `local_${ev.id}`,
+                origen: 'calendario_local',
+                tipo: ev.tipo || 'taller',
+                id: ev.id,
+                curso_id: ev.curso_id || null,
+                titulo: ev.titulo,
+                descripcion: ev.descripcion || '',
+                fecha_inicio: ev.fecha_inicio ? String(ev.fecha_inicio).slice(0, 10) : null,
+                fecha_fin: ev.fecha_fin ? String(ev.fecha_fin).slice(0, 10) : null,
+                hora_inicio: ev.hora_inicio || (atdEv ? atdEv.time : ''),
+                hora_fin: ev.hora_fin || '',
+                dias_clase: '',
+                duracion_total: '',
+                modalidad: ev.modalidad || 'Presencial',
+                sede: ev.sede || (ev.modalidad === 'Online' ? 'Online' : ''),
+                sedes_array: ev.sede ? [ev.sede] : [],
+                profesor_nombre: ev.profesor_nombre || 'Flor de Chañar',
+                precio: ev.precio || (atdEv && atdEv.price ? atdEv.price : ''),
+                cupos_total: cupoTotal,
+                cupos_ocupados: cuposOcupados,
+                cupos_libres: cuposLibres,
+                lleno: cupoTotal > 0 && cuposLibres === 0,
+                cta_texto: ev.cta_texto || (ev.curso_id ? 'Ver Curso e Inscribirme' : (atdEv ? 'Reservar mi Cupo' : 'Consultar por WhatsApp')),
+                cta_url: ev.cta_url || (ev.curso_id ? `detalle.html?id=${ev.curso_id}` : ''),
+                atendia_event_id: ev.atendia_event_id || null,
+                color: ev.color || '#D97706',
+                destacado: Boolean(ev.destacado)
+            });
+        });
+
+        // C) Eventos con cupo creados directamente en AtendIA que no estén ya vinculados arriba
+        atdEvents.forEach(atdEv => {
+            if (linkedAtdIds.has(Number(atdEv.id))) return;
+            const cap = Number(atdEv.capacity) || 0;
+            const left = Number(atdEv.seats_left) || 0;
+            const taken = Math.max(0, cap - left);
+            const modalityLabel = atdEv.modality === 'online' ? 'Online en Vivo' : 'Presencial';
+            items.push({
+                uid: `atendia_${atdEv.id}`,
+                origen: 'atendia',
+                tipo: 'evento_atendia',
+                id: atdEv.id,
+                atendia_event_id: atdEv.id,
+                curso_id: null,
+                titulo: atdEv.name,
+                descripcion: `Actividad con cupos limitados gestionada en vivo. ${atdEv.place ? 'Lugar: ' + atdEv.place : ''}`.trim(),
+                fecha_inicio: atdEv.date,
+                fecha_fin: atdEv.date,
+                hora_inicio: atdEv.time || '',
+                duracion_total: atdEv.duration ? `${atdEv.duration} min` : '',
+                modalidad: modalityLabel,
+                sede: atdEv.modality === 'online' ? 'Online' : (atdEv.place || 'Sede Presencial'),
+                sedes_array: atdEv.place ? [atdEv.place] : [],
+                profesor_nombre: 'Equipo Flor de Chañar',
+                precio: atdEv.price ? (/^\d+$/.test(String(atdEv.price)) ? `$${Number(atdEv.price).toLocaleString('es-CL')}` : atdEv.price) : 'Consultar',
+                cupos_total: cap,
+                cupos_ocupados: taken,
+                cupos_libres: left,
+                lleno: Boolean(atdEv.is_full),
+                cta_texto: atdEv.is_full ? 'Cupos Agotados' : 'Inscribirme al Evento',
+                cta_url: '',
+                color: '#DB2777',
+                destacado: true
+            });
+        });
+
+        res.json({
+            ok: true,
+            items,
+            atendia_connected: atdEvents.length > 0 || atdData.at > 0,
+            atendia_events_count: atdEvents.length
+        });
+    } catch (e) {
+        console.error('Error en GET /api/calendario/publico:', e);
+        res.status(500).json({ error: 'Error al cargar el calendario público' });
+    }
+});
+
+// GET /api/calendario/interno — Vista completa para Directivos (admin) y Profesores (clases recurrentes, clases en vivo, hitos y eventos AtendIA)
+app.get('/api/calendario/interno', verifyToken, async (req, res) => {
+    if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Sin permisos' });
+    try {
+        const isProf = req.usuario.rol === 'profesor';
+        const profFilterId = isProf ? req.usuario.id : (req.query.profesor_id ? parseInt(req.query.profesor_id) : null);
+
+        // Rango de proyección de sesiones recurrentes (por defecto 4 meses atrás y 10 meses adelante)
+        const now = new Date();
+        const defaultStart = new Date(now.getFullYear(), now.getMonth() - 2, 1).toISOString().slice(0, 10);
+        const defaultEnd = new Date(now.getFullYear(), now.getMonth() + 10, 0).toISOString().slice(0, 10);
+        const rangeStart = /^\d{4}-\d{2}-\d{2}$/.test(req.query.start || '') ? req.query.start : defaultStart;
+        const rangeEnd = /^\d{4}-\d{2}-\d{2}$/.test(req.query.end || '') ? req.query.end : defaultEnd;
+
+        // 1) Cursos activos / publicados / internos / borrador
+        let sqlCursos = `
+            SELECT c.*, u.nombre as profesor,
+                   (SELECT COUNT(*) FROM inscripciones WHERE curso_id = c.id) as inscritos_count
+            FROM cursos c
+            LEFT JOIN usuarios u ON c.profesor_id = u.id
+            WHERE c.estado IN ('publicado', 'interno', 'borrador')
+        `;
+        const argsCursos = [];
+        if (profFilterId) {
+            sqlCursos += ' AND c.profesor_id = ?';
+            argsCursos.push(profFilterId);
+        }
+        sqlCursos += ' ORDER BY c.id DESC';
+        const [cursos] = await pool.query(sqlCursos, argsCursos);
+
+        // 2) Clases en Vivo programadas
+        let sqlVivo = `
+            SELECT cv.*, u.nombre as profesor_nombre, c.titulo as curso_titulo, c.sede as curso_sede
+            FROM clases_vivo cv
+            JOIN usuarios u ON cv.creado_por = u.id
+            LEFT JOIN cursos c ON cv.curso_id = c.id
+            WHERE 1=1
+        `;
+        const argsVivo = [];
+        if (profFilterId) {
+            sqlVivo += ' AND (cv.creado_por = ? OR c.profesor_id = ?)';
+            argsVivo.push(profFilterId, profFilterId);
+        }
+        sqlVivo += ' ORDER BY cv.fecha_inicio ASC';
+        const [clasesVivo] = await pool.query(sqlVivo, argsVivo);
+
+        // 3) Eventos del calendario organizativo (hitos, talleres, cierres de inscripción, reuniones docentes, etc.)
+        let sqlEv = `
+            SELECT ce.*, u.nombre as profesor_nombre, c.titulo as curso_titulo
+            FROM calendario_eventos ce
+            LEFT JOIN usuarios u ON ce.profesor_id = u.id
+            LEFT JOIN cursos c ON ce.curso_id = c.id
+            WHERE ce.estado != 'eliminado'
+        `;
+        const argsEv = [];
+        if (isProf) {
+            sqlEv += ' AND (ce.profesor_id IS NULL OR ce.profesor_id = ?)';
+            argsEv.push(req.usuario.id);
+        } else if (profFilterId) {
+            sqlEv += ' AND (ce.profesor_id = ? OR ce.profesor_id IS NULL)';
+            argsEv.push(profFilterId);
+        }
+        sqlEv += ' ORDER BY ce.fecha_inicio ASC, ce.hora_inicio ASC';
+        const [eventosLocales] = await pool.query(sqlEv, argsEv);
+
+        // 4) Evaluaciones con fecha de apertura/cierre
+        let sqlEval = `
+            SELECT e.id, e.curso_id, e.titulo, e.fecha_apertura, e.fecha_cierre, e.publicada,
+                   c.titulo as curso_titulo, c.profesor_id, u.nombre as profesor_nombre
+            FROM evaluaciones e
+            JOIN cursos c ON e.curso_id = c.id
+            LEFT JOIN usuarios u ON c.profesor_id = u.id
+            WHERE (e.fecha_apertura IS NOT NULL OR e.fecha_cierre IS NOT NULL)
+        `;
+        const argsEval = [];
+        if (profFilterId) {
+            sqlEval += ' AND c.profesor_id = ?';
+            argsEval.push(profFilterId);
+        }
+        const [evaluaciones] = await pool.query(sqlEval, argsEval);
+
+        // 5) Eventos con cupo de AtendIA
+        const atdData = await fetchAtendiaEvents(req.query.company_id, req.query.refresh === '1');
+        const atdEvents = Array.isArray(atdData.events) ? atdData.events : [];
+        const atdMap = {};
+        atdEvents.forEach(ev => { atdMap[Number(ev.id)] = ev; });
+
+        // Generar sesiones proyectadas para cada curso publicado/interno que tenga días de clase
+        const sesionesProyectadas = [];
+        cursos.forEach(c => {
+            if (c.estado === 'publicado' || c.estado === 'interno') {
+                const ses = buildCourseRecurringSessions(c, rangeStart, rangeEnd, atdMap);
+                sesionesProyectadas.push(...ses);
+            }
+        });
+
+        // Enriquecer cursos con cupos de AtendIA si están vinculados
+        const cursosEnriquecidos = cursos.map(c => {
+            const atdEv = c.atendia_event_id ? atdMap[Number(c.atendia_event_id)] : null;
+            const cupoTotal = atdEv ? Number(atdEv.capacity) : (Number(c.cupos) || 0);
+            const cuposOcupados = atdEv
+                ? Math.max(0, Number(atdEv.capacity) - Number(atdEv.seats_left))
+                : (Number(c.inscritos_count) || 0);
+            return {
+                ...c,
+                cupos_total: cupoTotal,
+                cupos_ocupados: cuposOcupados,
+                cupos_libres: cupoTotal > 0 ? Math.max(0, cupoTotal - cuposOcupados) : null,
+                atendia_event: atdEv || null
+            };
+        });
+
+        res.json({
+            ok: true,
+            range: { start: rangeStart, end: rangeEnd },
+            cursos: cursosEnriquecidos,
+            sesiones_cursos: sesionesProyectadas,
+            clases_vivo: clasesVivo,
+            eventos_locales: eventosLocales,
+            evaluaciones: evaluaciones,
+            eventos_atendia: atdEvents
+        });
+    } catch (e) {
+        console.error('Error en GET /api/calendario/interno:', e);
+        res.status(500).json({ error: 'Error al obtener el calendario académico' });
+    }
+});
+
+// POST /api/calendario/eventos — Crear un evento, taller, fecha importante o hito en el calendario
+app.post('/api/calendario/eventos', verifyToken, async (req, res) => {
+    if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Sin permisos' });
+    try {
+        const b = req.body || {};
+        if (!b.titulo || String(b.titulo).trim().length < 2) {
+            return res.status(400).json({ error: 'El título del evento es obligatorio' });
+        }
+        if (!b.fecha_inicio || !/^\d{4}-\d{2}-\d{2}$/.test(String(b.fecha_inicio).slice(0, 10))) {
+            return res.status(400).json({ error: 'La fecha de inicio es obligatoria (AAAA-MM-DD)' });
+        }
+        const profId = req.usuario.rol === 'profesor' ? req.usuario.id : (b.profesor_id ? parseInt(b.profesor_id) : null);
+        const [ins] = await pool.query(
+            `INSERT INTO calendario_eventos
+             (titulo, descripcion, tipo, fecha_inicio, fecha_fin, hora_inicio, hora_fin, sede, modalidad,
+              profesor_id, curso_id, cupos, cupos_ocupados, precio, visibilidad, destacado, color,
+              cta_texto, cta_url, atendia_event_id, estado)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'activo')`,
+            [
+                String(b.titulo).trim(),
+                b.descripcion ? String(b.descripcion).trim() : null,
+                b.tipo || 'taller',
+                String(b.fecha_inicio).slice(0, 10),
+                b.fecha_fin ? String(b.fecha_fin).slice(0, 10) : String(b.fecha_inicio).slice(0, 10),
+                b.hora_inicio || null,
+                b.hora_fin || null,
+                b.sede || null,
+                b.modalidad || 'Presencial',
+                profId,
+                b.curso_id ? parseInt(b.curso_id) : null,
+                parseInt(b.cupos) || 0,
+                parseInt(b.cupos_ocupados) || 0,
+                b.precio ? String(b.precio).trim() : null,
+                b.visibilidad || 'publico',
+                b.destacado ? 1 : 0,
+                b.color || '#687A61',
+                b.cta_texto || null,
+                b.cta_url || null,
+                b.atendia_event_id ? parseInt(b.atendia_event_id) : null
+            ]
+        );
+        res.status(201).json({ ok: true, id: ins.insertId });
+    } catch (e) {
+        console.error('Error en POST /api/calendario/eventos:', e);
+        res.status(500).json({ error: 'No se pudo guardar el evento' });
+    }
+});
+
+// PUT /api/calendario/eventos/:id — Editar un evento o hito del calendario
+app.put('/api/calendario/eventos/:id', verifyToken, async (req, res) => {
+    if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Sin permisos' });
+    try {
+        const b = req.body || {};
+        if (!b.titulo || String(b.titulo).trim().length < 2) {
+            return res.status(400).json({ error: 'El título del evento es obligatorio' });
+        }
+        await pool.query(
+            `UPDATE calendario_eventos
+             SET titulo=?, descripcion=?, tipo=?, fecha_inicio=?, fecha_fin=?, hora_inicio=?, hora_fin=?,
+                 sede=?, modalidad=?, profesor_id=?, curso_id=?, cupos=?, cupos_ocupados=?, precio=?,
+                 visibilidad=?, destacado=?, color=?, cta_texto=?, cta_url=?, atendia_event_id=?, estado=?
+             WHERE id=?`,
+            [
+                String(b.titulo).trim(),
+                b.descripcion ? String(b.descripcion).trim() : null,
+                b.tipo || 'taller',
+                String(b.fecha_inicio).slice(0, 10),
+                b.fecha_fin ? String(b.fecha_fin).slice(0, 10) : String(b.fecha_inicio).slice(0, 10),
+                b.hora_inicio || null,
+                b.hora_fin || null,
+                b.sede || null,
+                b.modalidad || 'Presencial',
+                b.profesor_id ? parseInt(b.profesor_id) : null,
+                b.curso_id ? parseInt(b.curso_id) : null,
+                parseInt(b.cupos) || 0,
+                parseInt(b.cupos_ocupados) || 0,
+                b.precio ? String(b.precio).trim() : null,
+                b.visibilidad || 'publico',
+                b.destacado ? 1 : 0,
+                b.color || '#687A61',
+                b.cta_texto || null,
+                b.cta_url || null,
+                b.atendia_event_id ? parseInt(b.atendia_event_id) : null,
+                b.estado || 'activo',
+                req.params.id
+            ]
+        );
+        res.json({ ok: true });
+    } catch (e) {
+        console.error('Error en PUT /api/calendario/eventos/:id:', e);
+        res.status(500).json({ error: 'No se pudo actualizar el evento' });
+    }
+});
+
+// DELETE /api/calendario/eventos/:id — Eliminar evento del calendario
+app.delete('/api/calendario/eventos/:id', verifyToken, async (req, res) => {
+    if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Sin permisos' });
+    try {
+        await pool.query('DELETE FROM calendario_eventos WHERE id = ?', [req.params.id]);
+        res.json({ ok: true });
+    } catch (e) {
+        res.status(500).json({ error: 'No se pudo eliminar el evento' });
+    }
+});
+
+// POST /api/calendario/inscribir-evento — Público: inscribe directamente a un visitante en un Evento con Cupo de AtendIA (y lo registra como prospecto)
+app.post('/api/calendario/inscribir-evento', async (req, res) => {
+    try {
+        const b = req.body || {};
+        const nombre = String(b.nombre || '').trim();
+        const phoneNorm = normalizeClPhone(b.whatsapp || b.telefono || '');
+        const email = String(b.email || '').trim();
+        const seats = Math.max(1, Math.min(10, parseInt(b.seats) || 1));
+        const atendiaEventId = parseInt(b.atendia_event_id) || 0;
+        const localEventId = parseInt(b.local_event_id) || 0;
+        const eventoTitulo = String(b.titulo || 'Actividad / Taller').trim();
+        const sede = String(b.sede || '').trim();
+
+        if (nombre.length < 2) return res.status(400).json({ error: 'Por favor ingresa tu nombre completo' });
+        if (!phoneNorm || phoneNorm.length < 9) return res.status(400).json({ error: 'Por favor ingresa un WhatsApp válido' });
+
+        const companyId = parseInt(process.env.ATENDIA_COMPANY_ID) || 8;
+        const atendiaBase = (process.env.ATENDIA_API_URL || 'https://funnelstudio.click/AtendIA_dev/api/index.php').replace(/\/+$/, '');
+        const atendiaToken = process.env.ATENDIA_N8N_TOKEN || 'atendia2026xK9456';
+
+        let atdRegResult = null;
+        let synced = false;
+
+        // 1) Si tiene ID de evento en AtendIA, descontar cupo real en /n8n/event-register
+        if (atendiaEventId > 0) {
+            try {
+                const r = await fetch(`${atendiaBase}/n8n/event-register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Atendia-Token': atendiaToken
+                    },
+                    body: JSON.stringify({
+                        company_id: companyId,
+                        phone: phoneNorm,
+                        event: String(atendiaEventId),
+                        name: nombre,
+                        email: email,
+                        seats: seats
+                    }),
+                    signal: AbortSignal.timeout(8000)
+                });
+                atdRegResult = await r.json().catch(() => ({}));
+                if (atdRegResult && atdRegResult.status === 'sin_cupo') {
+                    return res.status(409).json({ error: 'Lo sentimos, los cupos de este evento se acaban de agotar.', status: 'sin_cupo' });
+                }
+                if (r.ok && atdRegResult.registered) {
+                    synced = true;
+                    _atendiaEventsCache.at = 0; // invalidar caché para reflejar el nuevo cupo al instante
+                }
+            } catch (err) {
+                console.error('Error inscribiendo en AtendIA event-register:', err.message);
+            }
+        }
+
+        // 2) Si además es un evento local de calendario_eventos, incrementar cupos_ocupados
+        if (localEventId > 0 && pool) {
+            try {
+                await pool.query(
+                    'UPDATE calendario_eventos SET cupos_ocupados = cupos_ocupados + ? WHERE id = ?',
+                    [seats, localEventId]
+                );
+            } catch (e) {}
+        }
+
+        // 3) Guardar también en prospectos_cursos y en la memoria del Bot de AtendIA (/n8n/save-profile)
+        try {
+            await fetch(`${atendiaBase}/n8n/save-profile`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Atendia-Token': atendiaToken
+                },
+                body: JSON.stringify({
+                    company_id: companyId,
+                    phone: phoneNorm,
+                    name: nombre,
+                    email: email,
+                    sede: sede,
+                    personal_notes: `Inscrito desde Calendario Web a: ${eventoTitulo} (${seats} cupo/s)`
+                }),
+                signal: AbortSignal.timeout(6000)
+            });
+            synced = true;
+        } catch (e) {}
+
+        if (pool) {
+            try {
+                await pool.query(
+                    `INSERT INTO prospectos_cursos (curso_id, curso_titulo, nombre, whatsapp, email, sede_modalidad, respuestas, estado, atendia_sync, atendia_detalle)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, 'inscrito', ?, ?)`,
+                    [
+                        parseInt(b.curso_id) || 0,
+                        `📅 [Calendario] ${eventoTitulo}`,
+                        nombre,
+                        phoneNorm,
+                        email || null,
+                        sede || 'Calendario Web',
+                        JSON.stringify([{ pregunta: 'Inscripción desde Calendario', respuesta: `${eventoTitulo} (${seats} cupo/s)` }]),
+                        synced ? 1 : 0,
+                        atdRegResult ? `Evento AtendIA #${atendiaEventId}: ${atdRegResult.status || 'ok'}` : 'Calendario Local'
+                    ]
+                );
+            } catch (e) {}
+        }
+
+        let waPhone = '56984281226';
+        if (pool) {
+            try {
+                const [cfgRows] = await pool.query("SELECT valor FROM configuracion WHERE clave = 'wa_numero' LIMIT 1");
+                if (cfgRows.length && cfgRows[0].valor) waPhone = normalizeClPhone(cfgRows[0].valor);
+            } catch (e) {}
+        }
+        const msg = `Hola! Soy *${nombre}* 👋\nMe acabo de inscribir en el calendario web para *${eventoTitulo}* (${seats} cupo${seats > 1 ? 's' : ''}).\nQuedo atento/a a los detalles para asistir.`;
+        const waUrl = `https://wa.me/${waPhone}?text=${encodeURIComponent(msg)}`;
+
+        res.json({
+            ok: true,
+            registered: true,
+            status: atdRegResult?.status || 'inscrito',
+            seats_left: atdRegResult?.seats_left ?? null,
+            wa_url: waUrl
+        });
+    } catch (e) {
+        console.error('Error en POST /api/calendario/inscribir-evento:', e);
+        res.status(500).json({ error: 'No se pudo completar la inscripción' });
     }
 });
 
