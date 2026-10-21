@@ -18,6 +18,14 @@
 - [x] **Auto-asignación en `initDB()`:**
   - Actualización automática en base de datos para asignar `/img/cursos/masoterapia-la-serena-2026.png` al curso de La Serena y `/img/cursos/masoterapia-calama-2026.png` al curso de Calama.
 
+### 🎯 Simplificación de Botones de Compra en Detalle (`public/detalle.html`) (NUEVO)
+- [x] **Eliminación de Botón Redundante de Matrícula en Buy Box:**
+  - Se removió el botón amarillo secundario de "Pagar Matrícula" en la tarjeta de compra de [detalle.html](file:///c:/Users/manny/OneDrive/Documents/flordechanar-v2-claude/public/detalle.html).
+  - El valor de la matrícula se mantiene de forma clara y elegante en la insignia superior (`🎓 Matrícula: $XX.XXX` o `Matrícula Gratis ($0)`).
+  - Ahora las acciones principales quedan limpias y directas:
+    1. **"Suscribirme Ahora"** (o "Comprar Ahora" / Pago único).
+    2. **"Postular / Solicitar Admisión e Info"** (formulario interactivo del funnel).
+
 ### 🐛 Corrección de Error en Detalle de Cursos (`public/detalle.html`) (NUEVO)
 - [x] **Diagnóstico del Error de Conexión en `/detalle.html?id=X`:**
   - Al abrir la página de detalle de cualquier curso (ej. `/detalle.html?id=13`), la pantalla se quedaba en blanco mostrando únicamente `"⚠️ Error de conexión."`.
