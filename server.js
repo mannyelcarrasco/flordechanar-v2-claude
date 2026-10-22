@@ -43,6 +43,9 @@ app.use((req, res, next) => {
     if (req.path.replace(/\/+$/, '').toLowerCase() === '/terapiaemocionalevolutiva' && !req.originalUrl.startsWith('/TerapiaEmocionalEvolutiva/')) {
         return res.redirect(301, '/TerapiaEmocionalEvolutiva/');
     }
+    if ((req.path.replace(/\/+$/, '').toLowerCase() === '/metodo-mushuu' || req.path.replace(/\/+$/, '').toLowerCase() === '/masoterapia') && !req.originalUrl.startsWith('/metodo-mushuu/')) {
+        return res.redirect(301, '/metodo-mushuu/');
+    }
     next();
 });
 
@@ -4216,6 +4219,11 @@ app.post('/api/calendario/inscribir-evento', async (req, res) => {
 // Any Uncaught API routes return 404
 app.use('/api', (req, res) => {
     res.status(404).json({ error: 'Endpoint no encontrado' });
+});
+
+// Landing Método Mushuu - Masoterapia Profesional
+app.get(['/metodo-mushuu', '/metodo-mushuu/', '/masoterapia'], (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'metodo-mushuu', 'index.html'));
 });
 
 // Páginas CMS públicas — /p/:slug
