@@ -122,6 +122,7 @@ async function initDB() {
             CREATE TABLE IF NOT EXISTS cursos (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 titulo VARCHAR(300) NOT NULL,
+                subtitulo VARCHAR(500),
                 descripcion TEXT,
                 precio INT DEFAULT 0,
                 portada_url VARCHAR(500),
@@ -328,6 +329,7 @@ async function initDB() {
             `ALTER TABLE lecciones ADD COLUMN tipo VARCHAR(20) DEFAULT 'video'`,
             `ALTER TABLE lecciones ADD COLUMN duracion VARCHAR(50)`,
             `ALTER TABLE lecciones ADD COLUMN visibilidad VARCHAR(10) DEFAULT 'privada'`,
+            `ALTER TABLE cursos ADD COLUMN subtitulo VARCHAR(500)`,
             `ALTER TABLE cursos MODIFY COLUMN estado ENUM('borrador','publicado','archivado','interno') DEFAULT 'borrador'`,
             `ALTER TABLE cursos ADD COLUMN tipo_acceso VARCHAR(20) DEFAULT 'gratis'`,
             `ALTER TABLE cursos ADD COLUMN categoria VARCHAR(100)`,
@@ -886,7 +888,7 @@ app.get('/api/cursos', async (req, res) => {
     try {
         if (!pool) return res.status(500).json({ error: 'Database not connected' });
         const [cursos] = await pool.query(`
-            SELECT c.id, c.titulo, c.descripcion, c.precio, c.tiene_matricula, c.valor_matricula, c.cobra_matricula,
+            SELECT c.id, c.titulo, c.subtitulo, c.descripcion, c.precio, c.tiene_matricula, c.valor_matricula, c.cobra_matricula,
                    c.tipo_acceso, c.portada_url, c.modalidad, c.dias_clase, c.horario_clase, c.sede, c.horarios_sedes,
                    c.texto_opciones_extra, c.ventas_meta, c.duracion_total, c.categoria, c.fecha_inicio_ventas,
                    c.fecha_inicio_clases, c.fecha_fin_clases, c.cupos, c.cupos_ocupados, c.cupos_agotados_forzado, c.atendia_event_id, u.nombre as profesor,
@@ -912,7 +914,7 @@ app.post('/api/cursos', verifyToken, async (req, res) => {
     if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
     try {
         const { 
-            titulo, descripcion, precio, precio_mensual, tiene_matricula, valor_matricula, cobra_matricula, portada_url, estado, meet_url, es_ciclico, 
+            titulo, subtitulo, descripcion, precio, precio_mensual, tiene_matricula, valor_matricula, cobra_matricula, portada_url, estado, meet_url, es_ciclico, 
             tipo_acceso, categoria, nivel, duracion_total, idioma, descripcion_ventas, 
             ventas_meta, certificacion, modalidad, profesor_id, dias_clase, horario_clase, sede, texto_opciones_extra, salas_virtuales,
             fecha_inicio_ventas, fecha_inicio_clases, fecha_fin_clases, cupos, cupos_ocupados, cupos_agotados_forzado, muestra_gratuita, horarios_sedes, atendia_event_id
@@ -923,10 +925,10 @@ app.post('/api/cursos', verifyToken, async (req, res) => {
         
         const [result] = await pool.query(
             `INSERT INTO cursos 
-             (titulo, descripcion, precio, tiene_matricula, valor_matricula, cobra_matricula, portada_url, estado, meet_url, es_ciclico, tipo_acceso, categoria, nivel, duracion_total, idioma, descripcion_ventas, ventas_meta, certificacion, modalidad, profesor_id, dias_clase, horario_clase, sede, texto_opciones_extra, salas_virtuales, fecha_inicio_ventas, fecha_inicio_clases, fecha_fin_clases, cupos, cupos_ocupados, cupos_agotados_forzado, muestra_gratuita, horarios_sedes, atendia_event_id) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             (titulo, subtitulo, descripcion, precio, tiene_matricula, valor_matricula, cobra_matricula, portada_url, estado, meet_url, es_ciclico, tipo_acceso, categoria, nivel, duracion_total, idioma, descripcion_ventas, ventas_meta, certificacion, modalidad, profesor_id, dias_clase, horario_clase, sede, texto_opciones_extra, salas_virtuales, fecha_inicio_ventas, fecha_inicio_clases, fecha_fin_clases, cupos, cupos_ocupados, cupos_agotados_forzado, muestra_gratuita, horarios_sedes, atendia_event_id) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-                titulo, descripcion, precio || 0, tiene_matricula ? 1 : 0, parseInt(valor_matricula) || 0, cobra_matricula !== undefined ? (cobra_matricula ? 1 : 0) : 1, portada_url || null, estado || 'borrador', meet_url || null, es_ciclico ? 1 : 0,
+                titulo, subtitulo || null, descripcion, precio || 0, tiene_matricula ? 1 : 0, parseInt(valor_matricula) || 0, cobra_matricula !== undefined ? (cobra_matricula ? 1 : 0) : 1, portada_url || null, estado || 'borrador', meet_url || null, es_ciclico ? 1 : 0,
                 tipo_acceso || 'gratis', categoria || null, nivel || null, duracion_total || null, idioma || null,
                 descripcion_ventas || null, ventas_meta ? JSON.stringify(ventas_meta) : null, certificacion ? 1 : 0, modalidad || 'Online (Grabado)',
                 profesor_id || req.usuario.id, dias_clase || null, horario_clase || null, sede || null, texto_opciones_extra ? 1 : 0, salas_virtuales ? JSON.stringify(salas_virtuales) : null,
@@ -1111,7 +1113,7 @@ app.get('/api/cursos/:id', verifyToken, async (req, res) => {
 app.put('/api/cursos/:id', verifyToken, async (req, res) => {
     if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
     try {
-        const { titulo, descripcion, precio, precio_mensual, tiene_matricula, valor_matricula, cobra_matricula, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas, ventas_meta, es_ciclico, meet_url, salas_virtuales, dias_clase, horario_clase, sede, texto_opciones_extra, fecha_inicio_ventas, fecha_inicio_clases, fecha_fin_clases, cupos, cupos_ocupados, cupos_agotados_forzado, muestra_gratuita, horarios_sedes, atendia_event_id } = req.body;
+        const { titulo, subtitulo, descripcion, precio, precio_mensual, tiene_matricula, valor_matricula, cobra_matricula, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas, ventas_meta, es_ciclico, meet_url, salas_virtuales, dias_clase, horario_clase, sede, texto_opciones_extra, fecha_inicio_ventas, fecha_inicio_clases, fecha_fin_clases, cupos, cupos_ocupados, cupos_agotados_forzado, muestra_gratuita, horarios_sedes, atendia_event_id } = req.body;
         let profAsignado = req.usuario.rol === 'admin' ? (profesor_id || req.usuario.id) : req.usuario.id;
 
         let vMetaStr = null;
@@ -1128,8 +1130,8 @@ app.put('/api/cursos/:id', verifyToken, async (req, res) => {
         }
 
         await pool.query(
-            'UPDATE cursos SET titulo = ?, descripcion = ?, precio = ?, tiene_matricula = ?, valor_matricula = ?, cobra_matricula = ?, tipo_acceso = ?, portada_url = ?, estado = ?, profesor_id = ?, categoria = ?, nivel = ?, duracion_total = ?, idioma = ?, certificacion = ?, modalidad = ?, descripcion_ventas = ?, ventas_meta = ?, es_ciclico = ?, meet_url = ?, salas_virtuales = ?, dias_clase = ?, horario_clase = ?, sede = ?, texto_opciones_extra = ?, fecha_inicio_ventas = ?, fecha_inicio_clases = ?, fecha_fin_clases = ?, cupos = ?, cupos_ocupados = ?, cupos_agotados_forzado = ?, muestra_gratuita = ?, horarios_sedes = ?, atendia_event_id = ? WHERE id = ?',
-            [titulo, descripcion, precio, tiene_matricula ? 1 : 0, parseInt(valor_matricula) || 0, cobra_matricula !== undefined ? (cobra_matricula ? 1 : 0) : 1, tipo_acceso || 'gratis', portada_url, estado, profAsignado, categoria||null, nivel||null, duracion_total||null, idioma||null, certificacion ? 1 : 0, modalidad||'Online (Grabado)', descripcion_ventas||null, vMetaStr, es_ciclico ? 1 : 0, meet_url || null, salasStr, dias_clase||null, horario_clase||null, sede||null, texto_opciones_extra ? 1 : 0, fecha_inicio_ventas||null, fecha_inicio_clases||null, fecha_fin_clases||null, parseInt(cupos)||0, parseInt(cupos_ocupados)||0, cupos_agotados_forzado ? 1 : 0, muestra_gratuita||'ninguna', hrSedesStr, atendia_event_id !== undefined ? (parseInt(atendia_event_id) || null) : null, req.params.id]
+            'UPDATE cursos SET titulo = ?, subtitulo = ?, descripcion = ?, precio = ?, tiene_matricula = ?, valor_matricula = ?, cobra_matricula = ?, tipo_acceso = ?, portada_url = ?, estado = ?, profesor_id = ?, categoria = ?, nivel = ?, duracion_total = ?, idioma = ?, certificacion = ?, modalidad = ?, descripcion_ventas = ?, ventas_meta = ?, es_ciclico = ?, meet_url = ?, salas_virtuales = ?, dias_clase = ?, horario_clase = ?, sede = ?, texto_opciones_extra = ?, fecha_inicio_ventas = ?, fecha_inicio_clases = ?, fecha_fin_clases = ?, cupos = ?, cupos_ocupados = ?, cupos_agotados_forzado = ?, muestra_gratuita = ?, horarios_sedes = ?, atendia_event_id = ? WHERE id = ?',
+            [titulo, subtitulo || null, descripcion, precio, tiene_matricula ? 1 : 0, parseInt(valor_matricula) || 0, cobra_matricula !== undefined ? (cobra_matricula ? 1 : 0) : 1, tipo_acceso || 'gratis', portada_url, estado, profAsignado, categoria||null, nivel||null, duracion_total||null, idioma||null, certificacion ? 1 : 0, modalidad||'Online (Grabado)', descripcion_ventas||null, vMetaStr, es_ciclico ? 1 : 0, meet_url || null, salasStr, dias_clase||null, horario_clase||null, sede||null, texto_opciones_extra ? 1 : 0, fecha_inicio_ventas||null, fecha_inicio_clases||null, fecha_fin_clases||null, parseInt(cupos)||0, parseInt(cupos_ocupados)||0, cupos_agotados_forzado ? 1 : 0, muestra_gratuita||'ninguna', hrSedesStr, atendia_event_id !== undefined ? (parseInt(atendia_event_id) || null) : null, req.params.id]
         );
 
         // Sincronizar plan de mensualidad si viene precio_mensual en el body
@@ -3650,7 +3652,7 @@ app.get('/api/calendario/publico', async (req, res) => {
 
         // 2) Cursos publicados en el LMS
         const [cursos] = await pool.query(`
-            SELECT c.id, c.titulo, c.descripcion, c.precio, c.tiene_matricula, c.valor_matricula, c.cobra_matricula,
+            SELECT c.id, c.titulo, c.subtitulo, c.descripcion, c.precio, c.tiene_matricula, c.valor_matricula, c.cobra_matricula,
                    c.tipo_acceso, c.portada_url, c.modalidad, c.dias_clase, c.horario_clase, c.sede, c.horarios_sedes,
                    c.duracion_total, c.categoria, c.fecha_inicio_ventas, c.fecha_inicio_clases, c.fecha_fin_clases,
                    c.cupos, c.cupos_ocupados, c.cupos_agotados_forzado, c.atendia_event_id,
@@ -3714,6 +3716,7 @@ app.get('/api/calendario/publico', async (req, res) => {
                 id: c.id,
                 curso_id: c.id,
                 titulo: c.titulo,
+                subtitulo: c.subtitulo || '',
                 descripcion: c.descripcion || '',
                 fecha_inicio: fechaInicio,
                 fecha_inicio_clases: fClases,

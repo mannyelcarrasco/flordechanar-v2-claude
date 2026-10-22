@@ -279,7 +279,11 @@ async function fetchDictados() {
             const estadoTxt = c.estado === 'publicado' ? '● Activo' : 'Borrador';
             tbody.innerHTML += `
                 <tr>
-                    <td><div class="tn">${c.titulo}</div><div class="ts">Acceso asignado</div></td>
+                    <td>
+                        <div class="tn">${c.titulo}</div>
+                        ${c.subtitulo ? `<div style="font-size:.74rem;color:#64748B;line-height:1.3;margin-top:2px">${c.subtitulo}</div>` : ''}
+                        <div class="ts">Acceso asignado</div>
+                    </td>
                     <td><span class="bp ${estadoCls}">${estadoTxt}</span></td>
                     <td>${c.alumnos || 0}</td>
                     <td><span class="ts">–</span></td>

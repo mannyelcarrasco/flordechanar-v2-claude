@@ -339,7 +339,7 @@
             imgChecker.src = heroUrl;
             
             document.getElementById('cTitle').textContent = c.titulo;
-            document.getElementById('cDesc').textContent = c.descripcion;
+            document.getElementById('cDesc').textContent = c.subtitulo || c.descripcion || '';
 
             let parsedHs = null;
             if (c.horarios_sedes) {
@@ -446,7 +446,7 @@
             if (c.descripcion_ventas && c.descripcion_ventas.trim() !== '') {
                 document.getElementById('cLongDesc').innerHTML = c.descripcion_ventas;
             } else {
-                document.getElementById('cLongDesc').innerHTML = `<p>${c.descripcion}</p><p>Próximamente más información detallada de este curso.</p>`;
+                document.getElementById('cLongDesc').innerHTML = `<p>${c.descripcion || c.subtitulo || ''}</p><p>Próximamente más información detallada de este curso.</p>`;
             }
 
             // Testimonials

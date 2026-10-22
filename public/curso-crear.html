@@ -193,7 +193,7 @@
             </div>
 
             <div class="fg"><label class="fl">Título del curso <span style="color:var(--err)">*</span></label><input class="fc" type="text" id="courseTitle" placeholder="Ej: Diplomado en Terapia Energética Integral" oninput="updateChecklist()"></div>
-            <div class="fg"><label class="fl">Subtítulo / descripción corta</label><input class="fc" type="text" placeholder="Ej: Aprende a dominar las técnicas de armonización y equilibrio holístico"></div>
+            <div class="fg"><label class="fl">Subtítulo / descripción corta</label><input class="fc" type="text" id="courseSubtitle" placeholder="Ej: Aprende a dominar las técnicas de armonización y equilibrio holístico" oninput="updateChecklist()"></div>
             <div class="fg"><label class="fl">Descripción corta (Tarjeta)</label><textarea class="fc" id="courseDesc" rows="2" placeholder="Describe brevemente el curso..."></textarea></div>
 
 
@@ -760,6 +760,7 @@
                 <i class="ph ph-upload-simple"></i> Subir / Cambiar imagen
             </button>
             <div style="font-size:.87rem;font-weight:700;color:var(--s);margin-bottom:.25rem" id="previewTitle">Título del curso</div>
+            <div style="font-size:.76rem;color:var(--p);font-weight:600;margin-bottom:.25rem;display:none;line-height:1.3" id="previewSubtitle"></div>
             <div style="font-size:.76rem;color:var(--l);margin-bottom:.35rem" id="previewMeta">Categoría · Principiante</div>
             <div style="font-size:.88rem;font-weight:800;color:var(--p)" id="previewPrice"></div>
         </div>
@@ -1477,6 +1478,17 @@ function updateChecklist() {
     setChk('chk-assign', assignOk);
 
     if(title) { document.getElementById('previewTitle').textContent = title; }
+    const subEl = document.getElementById('courseSubtitle');
+    const prevSubEl = document.getElementById('previewSubtitle');
+    if (prevSubEl) {
+        const subVal = subEl ? subEl.value.trim() : '';
+        if (subVal) {
+            prevSubEl.textContent = subVal;
+            prevSubEl.style.display = 'block';
+        } else {
+            prevSubEl.style.display = 'none';
+        }
+    }
     if(cat) { document.getElementById('previewMeta').textContent = `${cat} · Principiante`; }
 
     const prevPriceEl = document.getElementById('previewPrice');
@@ -1648,6 +1660,9 @@ window.addEventListener('load', async () => {
                 } else {
                     const c = await res.json();
                     document.getElementById('courseTitle').value = c.titulo || '';
+                    if (document.getElementById('courseSubtitle')) {
+                        document.getElementById('courseSubtitle').value = c.subtitulo || '';
+                    }
                     document.getElementById('courseDesc').value = c.descripcion || '';
                     document.getElementById('courseDescVentas').value = c.descripcion_ventas || '';
                     if (document.getElementById('courseFechaInicioClases')) {
@@ -2075,6 +2090,7 @@ async function saveDraft() {
     const title = document.getElementById('courseTitle').value.trim();
     if(!title) { showToast('⚠️ Agrega un título antes de guardar'); return; }
 
+    const subtitle = document.getElementById('courseSubtitle') ? document.getElementById('courseSubtitle').value.trim() : '';
     const desc = document.getElementById('courseDesc').value;
     const priceRaw = document.getElementById('coursePrice').value;
     const price = priceRaw ? parseInt(priceRaw) : 0;
@@ -2088,6 +2104,7 @@ async function saveDraft() {
 
         const payload = {
             titulo: title,
+            subtitulo: subtitle,
             descripcion: desc,
             descripcion_ventas: document.getElementById('courseDescVentas').value,
             precio: price,
@@ -2158,7 +2175,8 @@ async function publishCourse(estadoFinal = 'publicado') {
     const title = document.getElementById('courseTitle').value.trim();
     if(!title) { showToast('⚠️ Agrega un título antes de publicar'); return; }
 
-    const desc = document.querySelector('textarea.fc').value;
+    const subtitle = document.getElementById('courseSubtitle') ? document.getElementById('courseSubtitle').value.trim() : '';
+    const desc = document.getElementById('courseDesc') ? document.getElementById('courseDesc').value : document.querySelector('textarea.fc').value;
     const priceRaw = document.getElementById('coursePrice').value;
     const price = priceRaw ? parseInt(priceRaw) : 0;
     const monthlyRaw = document.getElementById('courseMonthlyPrice') ? document.getElementById('courseMonthlyPrice').value : '';
@@ -2172,6 +2190,7 @@ async function publishCourse(estadoFinal = 'publicado') {
 
         const payload = {
             titulo: title,
+            subtitulo: subtitle,
             descripcion: desc,
             descripcion_ventas: document.getElementById('courseDescVentas').value,
             precio: price,

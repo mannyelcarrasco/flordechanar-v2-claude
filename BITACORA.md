@@ -1,12 +1,34 @@
 # 📋 Bitácora del Proyecto — Flor de Chañar v2
 **Repositorio:** [mannyelcarrasco/flordechanar-v2-claude](https://github.com/mannyelcarrasco/flordechanar-v2-claude)  
-**Última actualización:** 2026-10-21
+**Última actualización:** 2026-10-22
 
 ---
 
 ## ✅ Avances completados
 
-### 🎟️ Gestión Integral y Precisa de Cupos: Capacidad Total, Ocupados Manuales/Externos, Inscritos Web y Cierre Forzado (`curso-crear.html`, `server.js`, `escuela.html`, `admin.html`) (NUEVO)
+### ✍️ Corrección Integral de Subtítulo / Bajada en Cursos: Persistencia y Visualización Multicanal (`curso-crear.html`, `server.js`, `detalle.html`, `escuela.html`, `admin.html`, `profesor.html`) (NUEVO)
+- [x] **Diagnóstico del Problema:**
+  - En el formulario de creación/edición de cursos (`public/curso-crear.html`), el campo *"Subtítulo / descripción corta"* no poseía atributo `id`, por lo que su valor nunca era leído, nunca se enviaba en los payloads de guardado (`saveDraft` / `publishCourse`), nunca se cargaba al editar un curso existente y no se reflejaba en ninguna vista pública ni administrativa.
+- [x] **Base de Datos y API Backend (`server.js`):**
+  - Se agregó la columna `subtitulo VARCHAR(500)` a la tabla `cursos` en `initDB()` (`CREATE TABLE` y migración automática vía `ALTER TABLE`).
+  - Se actualizó el endpoint de creación `POST /api/cursos` para recibir y persistir `subtitulo`.
+  - Se actualizó el endpoint de edición `PUT /api/cursos/:id` para actualizar `subtitulo`.
+  - Se incluyó `c.subtitulo` en las consultas de `GET /api/cursos` y `GET /api/calendario/publico`.
+- [x] **Editor de Cursos (`public/curso-crear.html`):**
+  - Se asignó `id="courseSubtitle"` y `oninput="updateChecklist()"` al campo de entrada.
+  - Se vinculó la carga del curso (`c.subtitulo`) en la función de inicialización.
+  - Se incorporó `subtitulo` a los payloads de guardado como borrador (`saveDraft`) y publicación (`publishCourse`).
+  - Se añadió la previsualización en vivo del subtítulo en la tarjeta lateral de *Vista previa*.
+- [x] **Visualización en Landing del Curso (`public/detalle.html`):**
+  - En la sección Hero, el elemento `<p id="cDesc">` ahora renderiza preferentemente `c.subtitulo` (con fallback a `c.descripcion` si no hay subtítulo definido).
+  - En la descripción por defecto (`cLongDesc`), si no hay texto de ventas, se muestra la descripción general disponible.
+- [x] **Visualización en Catálogo y Calendario de la Escuela (`public/escuela.html`):**
+  - En las tarjetas del catálogo de cursos, se renderiza el subtítulo destacado en tipografía media y color de marca sobre la descripción corta, enriqueciendo la presentación sin duplicar contenido.
+  - En las tarjetas de actividades y cursos del calendario interactivo, se muestra el subtítulo bajo el título.
+- [x] **Paneles de Administración y Profesor (`public/admin.html`, `public/profesor.html`):**
+  - En la tabla de cursos se despliega el subtítulo bajo el título principal en texto sutil, permitiendo al administrador y profesores verificar de inmediato la bajada de cada programa.
+
+### 🎟️ Gestión Integral y Precisa de Cupos: Capacidad Total, Ocupados Manuales/Externos, Inscritos Web y Cierre Forzado (`curso-crear.html`, `server.js`, `escuela.html`, `admin.html`)
 - [x] **Diagnóstico del Problema de Cupos:**
   - En la administración del curso solo existía un único campo de `cupos`. En la página pública de la escuela y en el calendario aparecía un mensaje confuso tipo *"¡Quedan 12 de 12 cupos!"*, calculando los disponibles únicamente contra las matrículas automáticas de la tabla `inscripciones`.
   - Como muchos alumnos se inscriben presencialmente, por transferencia directa o por WhatsApp, en la base de datos figuraban 0 ocupados y no había ninguna forma en el admin de registrar cuántos cupos ya estaban tomados ni cuántos faltaban por completar en la realidad.

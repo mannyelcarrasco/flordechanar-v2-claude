@@ -521,6 +521,12 @@
                         extraInfoHtml = `<div style="font-size:0.8rem;color:var(--color-text-light);margin-top:0.5rem;display:flex;flex-direction:column;gap:0.4rem;">${blocksHtml}</div>`;
                     }
 
+                    const subHtml = (curso.subtitulo && curso.subtitulo.trim() && curso.subtitulo.trim() !== (curso.descripcion || '').trim())
+                        ? `<div style="font-size:0.86rem;color:var(--color-primary);font-weight:600;margin-bottom:0.35rem;line-height:1.35">${curso.subtitulo}</div>`
+                        : '';
+                    const descText = (curso.descripcion && curso.descripcion.trim()) || curso.subtitulo || '';
+                    const descHtml = descText ? `<p>${descText}</p>` : '';
+
                     grid.innerHTML += `
                         <div class="course-card">
                             <div class="c-image" style="cursor:pointer" onclick="${ctaOnclick}">
@@ -535,7 +541,8 @@
                                     <span style="font-size: 0.8rem; color: var(--color-text-light);"><i class="ph ph-chalkboard-teacher"></i> ${curso.profesor || 'Staff'}</span>
                                 </div>
                                 <h3>${curso.titulo}</h3>
-                                <p>${curso.descripcion}</p>
+                                ${subHtml}
+                                ${descHtml}
                                 ${extraInfoHtml}
                                 <div class="c-footer" style="margin-top:1rem">
                                     <div>${priceBadge}${matriculaCardHtml}</div>
@@ -807,6 +814,7 @@
                                 <div style="flex:1;min-width:0">
                                     <div style="font-size:.68rem;font-weight:800;color:var(--color-primary);letter-spacing:.4px;margin-bottom:.2rem">${typeLabel}</div>
                                     <h3 style="font-size:1.05rem;margin:0;color:var(--color-secondary);line-height:1.3">${it.titulo}</h3>
+                                    ${it.subtitulo ? `<div style="font-size:.78rem;color:var(--color-primary);font-weight:600;margin-top:.2rem;line-height:1.3">${it.subtitulo}</div>` : ''}
                                     <div style="font-size:.76rem;color:var(--color-text-light);margin-top:.25rem">
                                         <i class="ph ph-chalkboard-teacher"></i> ${it.profesor_nombre || 'Equipo Flor de Chañar'}
                                     </div>
