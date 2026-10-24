@@ -1,10 +1,35 @@
 # 📋 Bitácora del Proyecto — Flor de Chañar v2
 **Repositorio:** [mannyelcarrasco/flordechanar-v2-claude](https://github.com/mannyelcarrasco/flordechanar-v2-claude)  
-**Última actualización:** 2026-10-22
+**Última actualización:** 2026-10-23
 
 ---
 
 ## ✅ Avances completados
+
+### 🎨 Banner Visual Atractivo para la Escuela con Gestión Integral desde el Panel Admin (`escuela.html`, `admin.html`, `server.js`, `public/img/banners/`) (NUEVO)
+- [x] **Diseño Visual Atractivo en la Portada de Escuela (`public/escuela.html`):**
+  - Se sustituyó el fondo verde plano anterior por una composición visual de alta calidad orientada a terapias holísticas y bienestar (`/img/banners/banner-spa-zen.jpg` por defecto).
+  - Capa de gradiente oscuro suave (`linear-gradient`) y destello radial cálido que garantiza un contraste perfecto y máxima legibilidad de los textos en blanco con sutiles sombras tipográficas.
+  - Se incorporó la insignia destacada tipo píldora translúcida con icono brillante (`✨ FORMACIÓN HOLÍSTICA & BIENESTAR`) sobre el título principal.
+  - Botones de acción mejorados con efectos de sombra, elevación y estilo translúcido tipo vidrio pulido (glassmorphism).
+- [x] **Gestión Dinámica en el Panel de Administración (`public/admin.html`):**
+  - **Nueva sub-pestaña `🎨 Banner Escuela` en Ajustes (`#ts`):** con acceso rápido directo también desde la pestaña de Cursos.
+  - **Previsualizador interactivo en tiempo real:** muestra exactamente cómo lucirá el banner en la escuela mientras se escribe o selecciona una foto.
+  - **Galería de estilos predeterminados a 1-clic:** presets locales de alta calidad versionados en Git:
+    1. *🌿 Spa & Cuencos Tibetanos* (`/img/banners/banner-spa-zen.jpg`)
+    2. *🌸 Aromaterapia & Flores* (`/img/banners/banner-aromaterapia.jpg`)
+    3. *💆 Masoterapia & Relax* (`/img/banners/banner-masaje.jpg`)
+    4. *🧘 Meditación & Paz* (`/img/banners/banner-meditacion.jpg`)
+    5. *🌳 Árbol Transgeneracional* (`/TerapiaEmocionalEvolutiva/assets/img/hero-arbol.jpg`)
+  - **Subida de imágenes desde el computador:** carga directa mediante el endpoint seguro `/api/upload` con indicador de progreso.
+  - **Entrada de URL externa:** soporte para pegar enlaces directos de Unsplash, WordPress o cualquier CDN.
+  - **Control de contraste y oscuridad del filtro:** selector tipo slider (desde 30% hasta 90%) para adaptar el oscurecimiento según la claridad de la imagen elegida.
+  - **Textos personalizables:** campos editables para el título principal y subtítulo/bajada.
+  - **Acciones:** botones para *Guardar Cambios*, *Restaurar Predeterminado* y enlace directo a *Ver en vivo*.
+- [x] **Backend & Base de Datos (`server.js`):**
+  - En `initDB()`: inicialización automática con valores por defecto mediante `INSERT IGNORE INTO configuracion` (`escuela_banner_img`, `escuela_banner_overlay`, `escuela_banner_titulo`, `escuela_banner_subtitulo`).
+  - En `GET /api/config/publica`: inclusión de las claves del banner para que la portada pública pueda leer los datos sin requerir inicio de sesión.
+  - Los cambios guardados desde el admin persisten en MySQL y se reflejan instantáneamente en toda la plataforma.
 
 ### ✍️ Corrección Integral de Subtítulo / Bajada en Cursos: Persistencia y Visualización Multicanal (`curso-crear.html`, `server.js`, `detalle.html`, `escuela.html`, `admin.html`, `profesor.html`) (NUEVO)
 - [x] **Diagnóstico del Problema:**

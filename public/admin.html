@@ -455,6 +455,7 @@
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
             <div style="font-size:.85rem;color:var(--l)">Administra el catálogo de programas, su modalidad, sedes y su flujo de entrada (Pasarela de Pago vs Formulario Interactivo AtendIA).</div>
             <div style="display:flex;gap:.5rem">
+                <button class="btn bo btn-sm" onclick="st(null,'ts');switchStab('banner')"><i class="ph ph-image"></i> Banner Escuela</button>
                 <button class="btn bo btn-sm" onclick="st(null,'ts');switchStab('sedes')"><i class="ph ph-map-pin"></i> Configurar Sedes Físicas</button>
                 <a href="curso-crear.html" class="btn bp btn-sm"><i class="ph ph-plus"></i> Crear Curso</a>
             </div>
@@ -708,6 +709,9 @@
             <button id="stab-general" class="stab stab-active" onclick="switchStab('general')">
                 <i class="ph ph-gear"></i> General
             </button>
+            <button id="stab-banner" class="stab" onclick="switchStab('banner')">
+                <i class="ph ph-image"></i> 🎨 Banner Escuela
+            </button>
             <button id="stab-integraciones" class="stab" onclick="switchStab('integraciones')">
                 <i class="ph ph-plugs-connected"></i> Integraciones
             </button>
@@ -728,6 +732,120 @@
                 <div class="fg"><label class="fl">Idioma por defecto</label><select class="fc" id="cfg-idioma"><option>Español (Chile)</option></select></div>
                 <div class="fg"><label class="fl">Escala de Notas</label><select class="fc" id="cfg-escala"><option>1.0 – 7.0 (Chilena)</option><option>0 – 100 (Porcentual)</option></select></div>
                 <button class="btn bp" onclick="saveSettings()"><i class="ph ph-floppy-disk"></i> Guardar Cambios</button>
+            </div>
+        </div>
+
+        <!-- SUB-PANEL: Banner Escuela -->
+        <div id="spanel-banner" style="display:none;max-width:920px">
+            <div class="tw" style="padding:1.75rem;margin-bottom:1.5rem">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;margin-bottom:1.25rem">
+                    <div>
+                        <h3 style="font-size:1.15rem;margin:0;display:flex;align-items:center;gap:.5rem;color:var(--color-secondary,#1e293b)">
+                            <i class="ph ph-image" style="color:var(--p,#687A61)"></i> Imagen y Portada Principal de la Escuela
+                        </h3>
+                        <p style="font-size:.84rem;color:var(--l,#64748b);margin:.3rem 0 0">
+                            Personaliza la imagen de fondo, el filtro de contraste y los textos del banner principal de <a href="escuela.html" target="_blank" style="color:var(--p,#687A61);font-weight:600;text-decoration:underline">/escuela.html ↗</a>.
+                        </p>
+                    </div>
+                    <div style="display:flex;gap:.5rem">
+                        <a href="escuela.html" target="_blank" class="btn bo btn-sm">
+                            <i class="ph ph-arrow-square-out"></i> Ver en vivo
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Live Preview Card -->
+                <div style="margin-bottom:1.5rem">
+                    <label class="fl" style="font-weight:700;margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem">
+                        <i class="ph ph-eye"></i> Vista Previa en Tiempo Real
+                    </label>
+                    <div id="bannerPreviewContainer" style="position:relative;border-radius:16px;overflow:hidden;padding:2.5rem 1.5rem;text-align:center;color:#fff;background-color:#2D3A2C;background-size:cover;background-position:center center;background-repeat:no-repeat;box-shadow:0 10px 30px rgba(0,0,0,.15);min-height:220px;display:flex;flex-direction:column;justify-content:center;align-items:center;transition:background 0.3s ease">
+                        <div id="bannerPreviewOverlay" style="position:absolute;inset:0;background:linear-gradient(180deg, rgba(28,38,29,0.65) 0%, rgba(15,22,16,0.83) 100%);z-index:1;transition:background 0.2s"></div>
+                        <div style="position:relative;z-index:2;max-width:620px">
+                            <span style="display:inline-flex;align-items:center;gap:.35rem;background:rgba(255,255,255,0.2);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:.25rem .8rem;border-radius:999px;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.75rem">
+                                <i class="ph-fill ph-sparkle" style="color:#FDE047"></i> Formación Holística & Bienestar
+                            </span>
+                            <h2 id="bannerPreviewTitle" style="font-family:'Playfair Display',serif;font-size:2rem;color:#fff;margin:0 0 .5rem;text-shadow:0 4px 16px rgba(0,0,0,0.6)">Escuela de Terapias</h2>
+                            <p id="bannerPreviewSubtitle" style="font-size:.88rem;color:rgba(255,255,255,0.92);margin:0 auto 1.1rem;line-height:1.5;text-shadow:0 2px 8px rgba(0,0,0,0.6)">Conviértete en un profesional del bienestar con nuestros diplomados y cursos creados con la máxima calidad y usabilidad.</p>
+                            <div style="display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap">
+                                <span style="background:#fff;color:#52634C;font-size:.78rem;font-weight:700;padding:.45rem .95rem;border-radius:99px;box-shadow:0 4px 12px rgba(0,0,0,.15);display:inline-flex;align-items:center;gap:.35rem">
+                                    <i class="ph ph-books"></i> Explorar Catálogo
+                                </span>
+                                <span style="background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.5);color:#fff;font-size:.78rem;font-weight:700;padding:.45rem .95rem;border-radius:99px;backdrop-filter:blur(4px);display:inline-flex;align-items:center;gap:.35rem">
+                                    <i class="ph-fill ph-calendar-check"></i> Calendario y Cupos
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Presets recomendados -->
+                <div style="margin-bottom:1.5rem">
+                    <label class="fl" style="font-weight:700;margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem">
+                        <i class="ph ph-sparkle"></i> Estilos y Fondos Recomendados (1 Clic)
+                    </label>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.75rem" id="bannerPresetsGrid">
+                    </div>
+                </div>
+
+                <!-- Fuente de Imagen (Subir o URL) -->
+                <div style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:12px;padding:1.25rem;margin-bottom:1.5rem">
+                    <h4 style="font-size:.92rem;margin:0 0 .85rem;color:var(--color-secondary,#1e293b);display:flex;align-items:center;gap:.4rem">
+                        <i class="ph ph-upload-simple"></i> Cambiar Imagen del Banner
+                    </h4>
+                    
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start">
+                        <!-- Opción Subir archivo -->
+                        <div style="border:1.5px dashed #CBD5E1;border-radius:10px;padding:1.2rem;text-align:center;background:#fff;cursor:pointer;transition:border-color .2s" onclick="document.getElementById('bannerFileInput').click()" onmouseover="this.style.borderColor='var(--p,#687A61)'" onmouseout="this.style.borderColor='#CBD5E1'">
+                            <i class="ph ph-cloud-arrow-up" style="font-size:2rem;color:var(--p,#687A61);margin-bottom:.25rem"></i>
+                            <div style="font-weight:700;font-size:.85rem;color:var(--color-secondary,#1e293b)">Subir desde tu computador</div>
+                            <div style="font-size:.75rem;color:var(--l,#64748b);margin-top:.2rem">JPG, PNG o WEBP (máx. 10MB)</div>
+                            <input type="file" id="bannerFileInput" accept="image/*" style="display:none" onchange="uploadBannerImage(this)">
+                            <div id="bannerUploadStatus" style="font-size:.78rem;color:var(--p,#687A61);font-weight:600;margin-top:.4rem;display:none"></div>
+                        </div>
+
+                        <!-- Opción URL -->
+                        <div>
+                            <label class="fl" style="font-size:.8rem">O ingresa un enlace directo (URL)</label>
+                            <input type="text" id="cfg-banner-img" class="fc" placeholder="https://ejemplo.com/imagen.jpg o /img/..." oninput="updateBannerPreviewFromInputs()">
+                            <div style="font-size:.74rem;color:var(--l,#64748b);margin-top:.3rem">
+                                Puedes usar imágenes de Unsplash, WordPress o cualquier URL https.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controles de contraste y textos -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.5rem">
+                    <div class="fg" style="margin:0">
+                        <label class="fl" style="display:flex;justify-content:space-between">
+                            <span>Oscuridad del Filtro (Contraste)</span>
+                            <span id="bannerOverlayVal" style="color:var(--p,#687A61);font-weight:700">65%</span>
+                        </label>
+                        <input type="range" id="cfg-banner-overlay" min="0.30" max="0.90" step="0.05" value="0.65" style="width:100%;accent-color:var(--p,#687A61);cursor:pointer" oninput="updateBannerPreviewFromInputs()">
+                        <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--l,#64748b);margin-top:.2rem">
+                            <span>Más claro (30%)</span>
+                            <span>Equilibrado (65%)</span>
+                            <span>Más oscuro (90%)</span>
+                        </div>
+                    </div>
+
+                    <div class="fg" style="margin:0">
+                        <label class="fl">Título Principal del Banner</label>
+                        <input type="text" id="cfg-banner-titulo" class="fc" placeholder="Escuela de Terapias" value="Escuela de Terapias" oninput="updateBannerPreviewFromInputs()">
+                    </div>
+                </div>
+
+                <div class="fg" style="margin-bottom:1.5rem">
+                    <label class="fl">Subtítulo / Bajada descriptiva</label>
+                    <textarea id="cfg-banner-subtitulo" class="fc" style="height:65px;resize:vertical" placeholder="Conviértete en un profesional del bienestar..." oninput="updateBannerPreviewFromInputs()"></textarea>
+                </div>
+
+                <!-- Botones de Acción -->
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.75rem;padding-top:1rem;border-top:1px solid #E2E8F0">
+                    <button class="btn bo" onclick="restoreDefaultBanner()"><i class="ph ph-arrow-counter-clockwise"></i> Restaurar Valores Originales</button>
+                    <button class="btn bp" id="btnSaveBanner" onclick="saveBannerSettings()"><i class="ph ph-floppy-disk"></i> Guardar Cambios del Banner</button>
+                </div>
             </div>
         </div>
 
@@ -1668,12 +1786,219 @@ function switchStab(id) {
     // Quitar active de todos los stab
     document.querySelectorAll('.stab').forEach(b => b.classList.remove('stab-active'));
     // Mostrar el seleccionado
-    document.getElementById('spanel-' + id).style.display = '';
-    document.getElementById('stab-' + id).classList.add('stab-active');
+    const panel = document.getElementById('spanel-' + id);
+    if (panel) panel.style.display = '';
+    const btn = document.getElementById('stab-' + id);
+    if (btn) btn.classList.add('stab-active');
     // Si integraciones, asegurarse de que el grid esté renderizado
     if (id === 'integraciones') renderIntegrations();
     // Si whatsapp, cargar datos guardados
     if (id === 'whatsapp') loadWaSettings();
+    // Si banner, cargar datos del banner
+    if (id === 'banner') loadBannerSettings();
+}
+
+// ── Banner Principal de Escuela ─────────────────────────
+const BANNER_PRESETS = [
+    {
+        id: 'spa-zen',
+        nombre: '🌿 Spa & Cuencos',
+        url: '/img/banners/banner-spa-zen.jpg',
+        desc: 'Piedras calientes, loto y serenidad'
+    },
+    {
+        id: 'aromaterapia',
+        nombre: '🌸 Aromaterapia & Flores',
+        url: '/img/banners/banner-aromaterapia.jpg',
+        desc: 'Botánica, óleos e infusiones'
+    },
+    {
+        id: 'masaje',
+        nombre: '💆 Masoterapia & Relax',
+        url: '/img/banners/banner-masaje.jpg',
+        desc: 'Camilla, toallas y bienestar'
+    },
+    {
+        id: 'meditacion',
+        nombre: '🧘 Meditación & Paz',
+        url: '/img/banners/banner-meditacion.jpg',
+        desc: 'Naturaleza, calma y luz'
+    },
+    {
+        id: 'arbol',
+        nombre: '🌳 Árbol Transgeneracional',
+        url: '/TerapiaEmocionalEvolutiva/assets/img/hero-arbol.jpg',
+        desc: 'Raíces, conciencia y evolución'
+    }
+];
+
+function renderBannerPresets() {
+    const grid = document.getElementById('bannerPresetsGrid');
+    if (!grid) return;
+    const currentUrl = (document.getElementById('cfg-banner-img')?.value || '').trim();
+    
+    grid.innerHTML = BANNER_PRESETS.map(p => {
+        const isSelected = currentUrl === p.url;
+        return `
+            <div onclick="selectBannerPreset('${p.url}')" style="cursor:pointer;border:${isSelected ? '2.5px solid var(--p,#687A61)' : '1.5px solid #E2E8F0'};border-radius:10px;overflow:hidden;background:#fff;transition:all .2s;box-shadow:${isSelected ? '0 4px 14px rgba(104,122,97,.3)' : 'none'}" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                <div style="height:70px;background:url('${p.url}') center/cover no-repeat;position:relative">
+                    ${isSelected ? '<span style="position:absolute;top:4px;right:4px;background:var(--p,#687A61);color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:bold;box-shadow:0 2px 5px rgba(0,0,0,.3)">✓</span>' : ''}
+                </div>
+                <div style="padding:.5rem;font-size:.78rem">
+                    <div style="font-weight:700;color:var(--color-secondary,#1e293b);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.nombre}</div>
+                    <div style="font-size:.7rem;color:var(--l,#64748b);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.desc}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function selectBannerPreset(url) {
+    const input = document.getElementById('cfg-banner-img');
+    if (input) input.value = url;
+    updateBannerPreviewFromInputs();
+    renderBannerPresets();
+    showT('Preset aplicado en la vista previa');
+}
+
+function updateBannerPreviewFromInputs() {
+    const imgUrl = (document.getElementById('cfg-banner-img')?.value || '').trim() || '/img/banners/banner-spa-zen.jpg';
+    const overlayVal = document.getElementById('cfg-banner-overlay')?.value || '0.65';
+    const titulo = (document.getElementById('cfg-banner-titulo')?.value || '').trim() || 'Escuela de Terapias';
+    const subtitulo = (document.getElementById('cfg-banner-subtitulo')?.value || '').trim() || 'Conviértete en un profesional del bienestar con nuestros diplomados y cursos creados con la máxima calidad y usabilidad.';
+    
+    const oNum = parseFloat(overlayVal) || 0.65;
+    const oPct = Math.round(oNum * 100);
+    const oBottom = Math.min(0.96, (oNum + 0.18)).toFixed(2);
+    
+    const lbl = document.getElementById('bannerOverlayVal');
+    if (lbl) lbl.textContent = oPct + '%';
+    
+    const container = document.getElementById('bannerPreviewContainer');
+    if (container) {
+        container.style.backgroundImage = `url('${imgUrl}')`;
+    }
+    
+    const overlay = document.getElementById('bannerPreviewOverlay');
+    if (overlay) {
+        overlay.style.background = `linear-gradient(180deg, rgba(28,38,29,${oNum}) 0%, rgba(15,22,16,${oBottom}) 100%)`;
+    }
+    
+    const t = document.getElementById('bannerPreviewTitle');
+    if (t) t.textContent = titulo;
+    
+    const st = document.getElementById('bannerPreviewSubtitle');
+    if (st) st.textContent = subtitulo;
+}
+
+async function uploadBannerImage(input) {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    
+    const status = document.getElementById('bannerUploadStatus');
+    if (status) {
+        status.style.display = 'block';
+        status.textContent = '⏳ Subiendo ' + file.name + '...';
+        status.style.color = 'var(--p,#687A61)';
+    }
+    
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/upload', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token },
+            body: formData
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error al subir imagen');
+        
+        document.getElementById('cfg-banner-img').value = data.url;
+        if (status) {
+            status.textContent = '✅ Imagen subida con éxito';
+            status.style.color = '#059669';
+        }
+        updateBannerPreviewFromInputs();
+        renderBannerPresets();
+        showT('✅ Imagen subida y aplicada');
+    } catch(e) {
+        if (status) {
+            status.textContent = '⚠️ ' + e.message;
+            status.style.color = '#dc2626';
+        }
+        showT('⚠️ ' + e.message);
+    }
+}
+
+async function loadBannerSettings() {
+    renderBannerPresets();
+    try {
+        const res = await fetch('/api/admin/config', {
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        if (!res.ok) throw new Error();
+        const cfg = await res.json();
+        
+        const img = cfg.escuela_banner_img || '/img/banners/banner-spa-zen.jpg';
+        const overlay = cfg.escuela_banner_overlay || '0.65';
+        const titulo = cfg.escuela_banner_titulo || 'Escuela de Terapias';
+        const subtitulo = cfg.escuela_banner_subtitulo || 'Conviértete en un profesional del bienestar con nuestros diplomados y cursos creados con la máxima calidad y usabilidad.';
+        
+        if (document.getElementById('cfg-banner-img')) document.getElementById('cfg-banner-img').value = img;
+        if (document.getElementById('cfg-banner-overlay')) document.getElementById('cfg-banner-overlay').value = overlay;
+        if (document.getElementById('cfg-banner-titulo')) document.getElementById('cfg-banner-titulo').value = titulo;
+        if (document.getElementById('cfg-banner-subtitulo')) document.getElementById('cfg-banner-subtitulo').value = subtitulo;
+        
+        updateBannerPreviewFromInputs();
+        renderBannerPresets();
+    } catch(e) {
+        updateBannerPreviewFromInputs();
+    }
+}
+
+async function saveBannerSettings() {
+    const btn = document.getElementById('btnSaveBanner');
+    const oldHtml = btn ? btn.innerHTML : '';
+    if (btn) { btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Guardando...'; btn.disabled = true; }
+    
+    const img = (document.getElementById('cfg-banner-img')?.value || '').trim() || '/img/banners/banner-spa-zen.jpg';
+    const overlay = document.getElementById('cfg-banner-overlay')?.value || '0.65';
+    const titulo = (document.getElementById('cfg-banner-titulo')?.value || '').trim() || 'Escuela de Terapias';
+    const subtitulo = (document.getElementById('cfg-banner-subtitulo')?.value || '').trim();
+    
+    try {
+        const res = await fetch('/api/admin/config', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('token')
+            },
+            body: JSON.stringify({
+                escuela_banner_img: img,
+                escuela_banner_overlay: overlay,
+                escuela_banner_titulo: titulo,
+                escuela_banner_subtitulo: subtitulo
+            })
+        });
+        if (!res.ok) throw new Error();
+        showT('✅ Banner de la escuela guardado correctamente');
+    } catch(e) {
+        showT('⚠️ Error al guardar los cambios del banner');
+    } finally {
+        if (btn) { btn.innerHTML = oldHtml; btn.disabled = false; }
+    }
+}
+
+async function restoreDefaultBanner() {
+    if (!confirm('¿Deseas restaurar la imagen y textos originales del banner de la escuela?')) return;
+    document.getElementById('cfg-banner-img').value = '/img/banners/banner-spa-zen.jpg';
+    document.getElementById('cfg-banner-overlay').value = '0.65';
+    document.getElementById('cfg-banner-titulo').value = 'Escuela de Terapias';
+    document.getElementById('cfg-banner-subtitulo').value = 'Conviértete en un profesional del bienestar con nuestros diplomados y cursos creados con la máxima calidad y usabilidad.';
+    updateBannerPreviewFromInputs();
+    renderBannerPresets();
+    await saveBannerSettings();
 }
 
 // ── WhatsApp Click-to-Chat ────────────────────────────────

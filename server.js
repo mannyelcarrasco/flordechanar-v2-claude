@@ -418,6 +418,15 @@ async function initDB() {
                 valor TEXT
             )
         `);
+        try {
+            await pool.query(`
+                INSERT IGNORE INTO configuracion (clave, valor) VALUES 
+                ('escuela_banner_img', '/img/banners/banner-spa-zen.jpg'),
+                ('escuela_banner_overlay', '0.65'),
+                ('escuela_banner_titulo', 'Escuela de Terapias'),
+                ('escuela_banner_subtitulo', 'Conviértete en un profesional del bienestar con nuestros diplomados y cursos creados con la máxima calidad y usabilidad.')
+            `);
+        } catch (e) { /* ignorar si ya existe */ }
         await pool.query(`
             CREATE TABLE IF NOT EXISTS paginas (
                 id          INT AUTO_INCREMENT PRIMARY KEY,
@@ -2499,12 +2508,12 @@ app.delete('/api/admin/planes/:id', verifyToken, async (req, res) => {
     }
 });
 
-// ── Configuración pública (WhatsApp, etc.) ─────────────────────────────────
-// GET /api/config/publica — sin autenticación, retorna wa_numero y wa_mensaje
+// ── Configuración pública (WhatsApp, Banner Escuela, etc.) ─────────────────────────────────
+// GET /api/config/publica — sin autenticación, retorna wa_numero, wa_mensaje, y config de banner escuela
 app.get('/api/config/publica', async (req, res) => {
     try {
         const [rows] = await pool.query(
-            "SELECT clave, valor FROM configuracion WHERE clave IN ('wa_numero','wa_mensaje','wa_activo')"
+            "SELECT clave, valor FROM configuracion WHERE clave IN ('wa_numero','wa_mensaje','wa_activo','escuela_banner_img','escuela_banner_overlay','escuela_banner_titulo','escuela_banner_subtitulo')"
         );
         const cfg = {};
         rows.forEach(r => { cfg[r.clave] = r.valor; });

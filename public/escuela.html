@@ -58,13 +58,53 @@
 
         /* Inner Hero */
         .inner-hero {
-            padding-top: 150px; padding-bottom: 60px;
-            background-color: var(--color-primary);
+            position: relative;
+            padding-top: 155px; 
+            padding-bottom: 70px;
+            background-color: #2D3A2C;
+            background-image: linear-gradient(180deg, rgba(28, 38, 29, 0.65) 0%, rgba(15, 22, 16, 0.82) 100%), url('/img/banners/banner-spa-zen.jpg');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
             color: var(--color-white);
             text-align: center;
+            overflow: hidden;
+            box-shadow: inset 0 -30px 45px rgba(0,0,0,0.35);
+            transition: background-image 0.4s ease;
         }
-        .inner-hero h1 { font-size: 3.5rem; margin-bottom: 1rem; color: var(--color-white); }
-        .inner-hero p { font-size: 1.1rem; color: rgba(255,255,255,0.8); max-width: 600px; margin: 0 auto; }
+        .inner-hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, rgba(212, 163, 115, 0.12) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 1;
+        }
+        .inner-hero .container {
+            position: relative;
+            z-index: 2;
+        }
+        .inner-hero h1 { 
+            font-size: 3.5rem; 
+            margin-bottom: 0.9rem; 
+            color: var(--color-white);
+            text-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            letter-spacing: -0.5px;
+        }
+        .inner-hero p { 
+            font-size: 1.15rem; 
+            color: rgba(255,255,255,0.94); 
+            max-width: 680px; 
+            margin: 0 auto;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.6);
+            font-weight: 400;
+            line-height: 1.6;
+        }
+        @media (max-width: 768px) {
+            .inner-hero { padding-top: 125px; padding-bottom: 50px; }
+            .inner-hero h1 { font-size: 2.3rem; }
+            .inner-hero p { font-size: 1rem; }
+        }
 
         /* Courses Dashboard/Catalog UX */
         .school-layout {
@@ -181,15 +221,18 @@
         </div>
     </header>
 
-    <section class="inner-hero">
+    <section class="inner-hero" id="escuelaHero">
         <div class="container">
-            <h1>Escuela de Terapias</h1>
-            <p>Conviértete en un profesional del bienestar con nuestros diplomados y cursos creados con la máxima calidad y usabilidad.</p>
-            <div style="margin-top:1.35rem;display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap">
-                <a href="javascript:void(0)" onclick="switchSchoolView('catalogo', event)" class="btn btn-primary" style="background:#fff;color:var(--color-primary-dark);font-size:.9rem;padding:.65rem 1.35rem;border-radius:99px;font-weight:700;display:inline-flex;align-items:center;gap:.45rem;box-shadow:0 6px 18px rgba(0,0,0,.15)">
+            <span style="display:inline-flex;align-items:center;gap:.45rem;background:rgba(255,255,255,0.18);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.35);color:#fff;padding:.35rem 1.1rem;border-radius:999px;font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:1.1rem;box-shadow:0 4px 15px rgba(0,0,0,.15)">
+                <i class="ph-fill ph-sparkle" style="color:#FDE047"></i> Formación Holística & Bienestar
+            </span>
+            <h1 id="escuelaHeroTitle">Escuela de Terapias</h1>
+            <p id="escuelaHeroSubtitle">Conviértete en un profesional del bienestar con nuestros diplomados y cursos creados con la máxima calidad y usabilidad.</p>
+            <div style="margin-top:1.45rem;display:flex;gap:.85rem;justify-content:center;flex-wrap:wrap">
+                <a href="javascript:void(0)" onclick="switchSchoolView('catalogo', event)" class="btn btn-primary" style="background:#fff;color:var(--color-primary-dark);font-size:.92rem;padding:.7rem 1.45rem;border-radius:99px;font-weight:700;display:inline-flex;align-items:center;gap:.5rem;box-shadow:0 8px 24px rgba(0,0,0,.22);transition:all .2s">
                     <i class="ph ph-books" style="font-size:1.15rem"></i> Explorar Catálogo de Cursos
                 </a>
-                <a href="javascript:void(0)" onclick="switchSchoolView('calendario', event)" style="color:rgba(255,255,255,.95);border:1.5px solid rgba(255,255,255,.5);background:rgba(255,255,255,.12);backdrop-filter:blur(4px);padding:.65rem 1.35rem;border-radius:99px;font-size:.9rem;font-weight:700;display:inline-flex;align-items:center;gap:.45rem">
+                <a href="javascript:void(0)" onclick="switchSchoolView('calendario', event)" style="color:#ffffff;border:1.5px solid rgba(255,255,255,.6);background:rgba(255,255,255,.16);backdrop-filter:blur(8px);padding:.7rem 1.45rem;border-radius:99px;font-size:.92rem;font-weight:700;display:inline-flex;align-items:center;gap:.5rem;box-shadow:0 8px 24px rgba(0,0,0,.15);transition:all .2s">
                     <i class="ph-fill ph-calendar-check" style="font-size:1.15rem"></i> 📅 Calendario de Inicios y Cupos
                 </a>
             </div>
@@ -378,7 +421,36 @@
 
     <!-- Frontend Script -->
     <script>
+        async function loadEscuelaBannerConfig() {
+            try {
+                const res = await fetch('/api/config/publica');
+                if (!res.ok) return;
+                const cfg = await res.json();
+                const hero = document.getElementById('escuelaHero');
+                if (!hero) return;
+                
+                const img = cfg.escuela_banner_img || '/img/banners/banner-spa-zen.jpg';
+                const overlay = cfg.escuela_banner_overlay || '0.65';
+                const oNum = parseFloat(overlay) || 0.65;
+                const oBottom = Math.min(0.96, (oNum + 0.18)).toFixed(2);
+                
+                hero.style.backgroundImage = `linear-gradient(180deg, rgba(28, 38, 29, ${oNum}) 0%, rgba(15, 22, 16, ${oBottom}) 100%), url('${img}')`;
+                
+                if (cfg.escuela_banner_titulo) {
+                    const t = document.getElementById('escuelaHeroTitle');
+                    if (t) t.textContent = cfg.escuela_banner_titulo;
+                }
+                if (cfg.escuela_banner_subtitulo) {
+                    const st = document.getElementById('escuelaHeroSubtitle');
+                    if (st) st.textContent = cfg.escuela_banner_subtitulo;
+                }
+            } catch(e) {
+                console.warn('Error al cargar config del banner:', e);
+            }
+        }
+
         document.addEventListener("DOMContentLoaded", async () => {
+            loadEscuelaBannerConfig();
             const grid = document.getElementById('course-grid');
             const teeCardHtml = `
                 <div class="course-card">
