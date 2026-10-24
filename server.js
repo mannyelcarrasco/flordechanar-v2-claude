@@ -424,7 +424,11 @@ async function initDB() {
                 ('escuela_banner_img', '/img/banners/banner-spa-zen.jpg'),
                 ('escuela_banner_overlay', '0.65'),
                 ('escuela_banner_titulo', 'Escuela de Terapias'),
-                ('escuela_banner_subtitulo', 'Conviértete en un profesional del bienestar con nuestros diplomados y cursos creados con la máxima calidad y usabilidad.')
+                ('escuela_banner_subtitulo', 'Conviértete en un profesional del bienestar con nuestros diplomados y cursos creados con la máxima calidad y usabilidad.'),
+                ('terapias_banner_img', '/img/banners/banner-masaje.jpg'),
+                ('terapias_banner_overlay', '0.65'),
+                ('terapias_banner_titulo', 'Agenda tu Espacio de Sanación'),
+                ('terapias_banner_subtitulo', 'Selecciona tu servicio. Nuestro nuevo sistema te permite reservar en menos de 1 minuto sin complicaciones ni registros extensos.')
             `);
         } catch (e) { /* ignorar si ya existe */ }
         await pool.query(`
@@ -2508,12 +2512,12 @@ app.delete('/api/admin/planes/:id', verifyToken, async (req, res) => {
     }
 });
 
-// ── Configuración pública (WhatsApp, Banner Escuela, etc.) ─────────────────────────────────
-// GET /api/config/publica — sin autenticación, retorna wa_numero, wa_mensaje, y config de banner escuela
+// ── Configuración pública (WhatsApp, Banners Escuela y Terapias, etc.) ──────────────────────
+// GET /api/config/publica — sin autenticación, retorna wa_numero, wa_mensaje, y config de banners
 app.get('/api/config/publica', async (req, res) => {
     try {
         const [rows] = await pool.query(
-            "SELECT clave, valor FROM configuracion WHERE clave IN ('wa_numero','wa_mensaje','wa_activo','escuela_banner_img','escuela_banner_overlay','escuela_banner_titulo','escuela_banner_subtitulo')"
+            "SELECT clave, valor FROM configuracion WHERE clave IN ('wa_numero','wa_mensaje','wa_activo','escuela_banner_img','escuela_banner_overlay','escuela_banner_titulo','escuela_banner_subtitulo','terapias_banner_img','terapias_banner_overlay','terapias_banner_titulo','terapias_banner_subtitulo')"
         );
         const cfg = {};
         rows.forEach(r => { cfg[r.clave] = r.valor; });

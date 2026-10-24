@@ -6,6 +6,31 @@
 
 ## ✅ Avances completados
 
+### 💆 Banner Visual Atractivo para Terapias con Gestión Integral desde el Panel Admin (`terapias.html`, `admin.html`, `server.js`, `public/img/banners/`) (NUEVO)
+- [x] **Diseño Visual Atractivo en la Portada de Terapias (`public/terapias.html`):**
+  - Se modernizó la cabecera reemplazando el fondo beige plano por una imagen de relajación y bienestar de alta definición (`/img/banners/banner-masaje.jpg` por defecto).
+  - Capa de gradiente oscuro suave y destello radial que proporciona un contraste óptimo para la lectura nítida de los textos en blanco con sombras tipográficas.
+  - Insignia destacada superior tipo píldora translúcida con icono de sanación: `💓 SANACIÓN & TERAPIAS PRESENCIALES Y ONLINE`.
+  - Botón de reserva directa "Ir directo a Reservar Hora" estilizado en blanco sobre el fondo oscuro con sombras envolventes y transición suave.
+- [x] **Gestión Dinámica en el Panel de Administración (`public/admin.html`):**
+  - **Nueva sub-pestaña `💆 Banner Terapias` en Ajustes (`#ts`):** ubicada junto al Banner de Escuela para una administración centralizada de la identidad visual.
+  - **Previsualizador interactivo en tiempo real:** refleja de inmediato el título, subtítulo, imagen de fondo y oscurecimiento del filtro de Terapias.
+  - **Galería de estilos predeterminados a 1-clic específicos para Terapias:**
+    1. *💆 Masoterapia & Relax* (`/img/banners/banner-masaje.jpg`)
+    2. *🌿 Spa & Cuencos Tibetanos* (`/img/banners/banner-spa-zen.jpg`)
+    3. *🌸 Aromaterapia & Flores de Bach* (`/img/banners/banner-aromaterapia.jpg`)
+    4. *✨ Sanación Holística* (`/img/banners/banner-sanacion.jpg`)
+    5. *🧘 Meditación & Calma* (`/img/banners/banner-meditacion.jpg`)
+    6. *🌳 Terapia Emocional* (`/TerapiaEmocionalEvolutiva/assets/img/hero-arbol.jpg`)
+  - **Subida de imágenes desde el computador:** carga directa mediante `/api/upload` con indicador de progreso.
+  - **Entrada de URL externa:** permite ingresar cualquier link https directo de imágenes externas.
+  - **Control de contraste/oscuridad (Slider):** regulador de 30% a 90% para equilibrar la visibilidad de los textos según la fotografía.
+  - **Textos personalizables:** edición del título y bajada descriptiva de la sección de agendamiento.
+  - **Acciones:** botón para *Guardar Cambios del Banner*, *Restaurar Valores Originales* y link *Ver en vivo*.
+- [x] **Backend & Base de Datos (`server.js`):**
+  - En `initDB()`: inicialización automática con valores por defecto mediante `INSERT IGNORE INTO configuracion` (`terapias_banner_img`, `terapias_banner_overlay`, `terapias_banner_titulo`, `terapias_banner_subtitulo`).
+  - En `GET /api/config/publica`: inclusión de las 4 claves del banner de Terapias para carga pública instantánea.
+
 ### 🎨 Banner Visual Atractivo para la Escuela con Gestión Integral desde el Panel Admin (`escuela.html`, `admin.html`, `server.js`, `public/img/banners/`) (NUEVO)
 - [x] **Diseño Visual Atractivo en la Portada de Escuela (`public/escuela.html`):**
   - Se sustituyó el fondo verde plano anterior por una composición visual de alta calidad orientada a terapias holísticas y bienestar (`/img/banners/banner-spa-zen.jpg` por defecto).
