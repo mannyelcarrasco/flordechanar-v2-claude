@@ -1,0 +1,61 @@
+[
+  {
+    "id": "diplomado-holistico",
+    "nombre": "Diplomado Holístico & Formación Extensa",
+    "subtitulo": "Basada en Terapia Emocional Evolutiva (T.E.E.)",
+    "categoria": "Diplomados y Carreras (1 a 2 años)",
+    "badge": "Recomendada para Programas Largos",
+    "color_tema": "#B8860B",
+    "descripcion": "Diseño de alta gama con velo oscuro y dorado, presentación de director/fundador, pilares metodológicos, malla curricular modular, aranceles, FAQ y formulario de admisión.",
+    "carpeta": "diplomado-holistico",
+    "demo_url": "/plantillas/diplomado-holistico/index.html",
+    "preview_img": "/plantillas/diplomado-holistico/assets/img/hero-arbol.jpg",
+    "ideal_para": "Diplomados, formaciones de 6 a 24 meses, certificaciones de alto valor, escuelas de psicología transpersonal o terapias holísticas.",
+    "secciones": [
+      "Hero con llamado a postulación y badge de convocatoria",
+      "Pilares de sanación y método",
+      "Malla curricular organizada en 9 módulos",
+      "Metodología de clases y fechas clave",
+      "Perfil del director y trayectoria institucional",
+      "Aranceles, matrículas y opciones de cuotas",
+      "Preguntas frecuentes (Acordeón FAQ)",
+      "Formulario interactivo / CTA directo a WhatsApp"
+    ],
+    "variables": [
+      { "clave": "titulo_programa", "label": "Título del Programa", "default": "Terapia Emocional Evolutiva (T.E.E.)" },
+      { "clave": "subtitulo_bajada", "label": "Bajada / Subtítulo", "default": "Descodificando el Camino hacia la Sanación." },
+      { "clave": "duracion", "label": "Duración y Carga", "default": "Formación profesional de 2 años (122 clases teórico-prácticas en 9 módulos)" },
+      { "clave": "fecha_inicio", "label": "Fecha de Inicio / Convocatoria", "default": "Convocatoria Oficial · Inicio 5 de Abril 2027" },
+      { "clave": "director_nombre", "label": "Nombre del Director / Fundador", "default": "Manny Carrasco" },
+      { "clave": "whatsapp_contacto", "label": "WhatsApp de Contacto", "default": "56984281226" }
+    ]
+  },
+  {
+    "id": "academia-terapias",
+    "nombre": "Academia Profesional & Formación Técnica",
+    "subtitulo": "Basada en Método Mushuu (Masoterapia y Terapias Manuales)",
+    "categoria": "Cursos Técnicos y Talleres Prácticos",
+    "badge": "Recomendada para Cursos con Sedes",
+    "color_tema": "#D9A95B",
+    "descripcion": "Estética premium sobria con tonos oscuros y dorados, barra de cifras de autoridad (años de experiencia, técnicas, cupos por aula), pilares técnicos, sedes físicas y llamado a la acción.",
+    "carpeta": "academia-terapias",
+    "demo_url": "/plantillas/academia-terapias/index.html",
+    "preview_img": "/plantillas/academia-terapias/img/hero.jpg",
+    "ideal_para": "Cursos de masoterapia, cosmetología, spa, quiropraxia, talleres intensivos con sedes físicas u online.",
+    "secciones": [
+      "Cabecera con marca, logo y navegación suave",
+      "Hero de impacto visual con foto lateral destacada",
+      "Barra de cifras y métricas de autoridad",
+      "Pilares de enseñanza y práctica continuada",
+      "Catálogo de programas formativos y sedes",
+      "Llamado a inscripción directa / Reserva de cupos"
+    ],
+    "variables": [
+      { "clave": "titulo_programa", "label": "Título del Programa", "default": "Formación Profesional en Terapias Manuales" },
+      { "clave": "subtitulo_bajada", "label": "Bajada / Subtítulo", "default": "Tu camino hacia la excelencia terapéutica. Una metodología con más de 15 años de desarrollo." },
+      { "clave": "cifras_destacadas", "label": "Métricas Clave", "default": "15+ años · 200+ técnicas · 12 alumnos máx · 10 meses" },
+      { "clave": "sedes", "label": "Sedes Disponibles", "default": "Sede Calama, Sede La Serena y Online Mundial" },
+      { "clave": "whatsapp_contacto", "label": "WhatsApp de Contacto", "default": "56984281226" }
+    ]
+  }
+]

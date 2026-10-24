@@ -250,22 +250,46 @@ async function cargarPagina() {
         document.title = `${p.titulo} | Flor de Chañar`;
         document.getElementById('metaDesc').content = p.meta_desc || p.extracto || '';
 
-        // Hero
-        const hero = document.getElementById('pageHero');
-        hero.style.display = 'block';
-        hero.className = `page-hero${p.portada_url ? ' has-cover' : ''}`;
-        hero.innerHTML = `
-            ${p.portada_url ? `<div class="hero-bg" style="background-image:url('${p.portada_url}')"></div>` : ''}
-            <div class="hero-content">
-                <h1>${p.titulo}</h1>
-                ${p.extracto ? `<p class="extracto">${p.extracto}</p>` : ''}
-            </div>`;
+        // Detectar si es una Landing Page completa (Full-width) o un artículo estándar
+        const esLandingCompleta = p.contenido && (
+            p.contenido.includes('<!DOCTYPE') ||
+            p.contenido.includes('<header') ||
+            p.contenido.includes('class="hero') ||
+            p.contenido.includes('class="seccion') ||
+            p.contenido.includes('id="inicio"') ||
+            p.contenido.includes('class="nav')
+        );
 
-        // Contenido
-        document.getElementById('pageMain').innerHTML =
-            `<div class="page-content">${p.contenido || '<p style="color:var(--light);font-style:italic">Esta página aún no tiene contenido.</p>'}</div>`;
+        if (esLandingCompleta) {
+            // Ocultar wrapper y navegación genérica de blog para permitir diseño 100% full-width
+            document.querySelector('.top-nav')?.remove();
+            document.querySelector('.page-footer')?.remove();
+            document.getElementById('pageHero')?.remove();
+            const wrap = document.querySelector('.page-wrap');
+            if (wrap) {
+                wrap.style.maxWidth = '100%';
+                wrap.style.padding = '0';
+                wrap.style.margin = '0';
+            }
+            document.body.style.background = 'transparent';
+            document.getElementById('pageMain').innerHTML = p.contenido;
+        } else {
+            // Hero estándar
+            const hero = document.getElementById('pageHero');
+            hero.style.display = 'block';
+            hero.className = `page-hero${p.portada_url ? ' has-cover' : ''}`;
+            hero.innerHTML = `
+                ${p.portada_url ? `<div class="hero-bg" style="background-image:url('${p.portada_url}')"></div>` : ''}
+                <div class="hero-content">
+                    <h1>${p.titulo}</h1>
+                    ${p.extracto ? `<p class="extracto">${p.extracto}</p>` : ''}
+                </div>`;
 
-    } catch(e) {
+            // Contenido estándar
+            document.getElementById('pageMain').innerHTML =
+                `<div class="page-content">${p.contenido || '<p style="color:var(--light);font-style:italic">Esta página aún no tiene contenido.</p>'}</div>`;
+        }
+        } catch(e) {
         mostrarError('Error de conexión: ' + e.message);
     }
 }

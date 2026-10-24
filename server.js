@@ -2945,6 +2945,36 @@ app.post('/api/admin/paginas/batch-delete', verifyToken, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// GET /api/plantillas — listado oficial de plantillas landing disponibles
+app.get('/api/plantillas', async (req, res) => {
+    try {
+        const filePath = path.join(__dirname, 'public', 'plantillas', 'plantillas.json');
+        if (fs.existsSync(filePath)) {
+            const raw = fs.readFileSync(filePath, 'utf8');
+            return res.json(JSON.parse(raw));
+        }
+        res.json([]);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// GET /api/plantillas/:id/contenido — obtiene el código HTML base de la plantilla
+app.get('/api/plantillas/:id/contenido', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Sin acceso' });
+    try {
+        const templateId = req.params.id.replace(/[^a-zA-Z0-9_-]/g, '');
+        const indexPath = path.join(__dirname, 'public', 'plantillas', templateId, 'index.html');
+        if (!fs.existsSync(indexPath)) {
+            return res.status(404).json({ error: 'Plantilla no encontrada' });
+        }
+        const html = fs.readFileSync(indexPath, 'utf8');
+        res.json({ id: templateId, html });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // GET /api/admin/ia/proveedores — qué proveedores tienen API key configurada
 app.get('/api/admin/ia/proveedores', verifyToken, async (req, res) => {
     if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Sin acceso' });

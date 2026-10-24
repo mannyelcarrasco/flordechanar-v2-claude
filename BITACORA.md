@@ -6,6 +6,31 @@
 
 ## ✅ Avances completados
 
+### 🌟 Sistema de Plantillas Maestras Landing y Desacople de GrapesJS (`public/plantillas/`, `admin.html`, `server.js`, `pagina.html`) (NUEVO)
+- [x] **Modularización de las 2 Landings Oficiales como Plantillas Maestras:**
+  - **Plantilla 1: Diplomado Holístico & Formación Extensa (`public/plantillas/diplomado-holistico/`):**
+    - Basada en la arquitectura de alta conversión de **Terapia Emocional Evolutiva (T.E.E.)**.
+    - Preparada para formaciones largas (1 a 2 años), diplomados y programas de alto valor.
+    - Secciones: Hero con llamado a postulación, pilares metodológicos, malla curricular en 9 módulos, fechas y metodología, perfil del director/docente, aranceles y pasarela/WhatsApp.
+  - **Plantilla 2: Academia Profesional & Formación Técnica (`public/plantillas/academia-terapias/`):**
+    - Basada en la arquitectura de **Método Mushuu (Masoterapia Profesional)**.
+    - Optimizada para cursos técnicos, talleres prácticos presenciales y online con sedes físicas.
+    - Secciones: Hero lateral destacado, barra de cifras de autoridad (15+ años, 200+ técnicas, 12 alumnos máx), pilares técnicos, oferta por sedes y llamado a reserva.
+- [x] **Manifest Central y Endpoints de Plantillas (`public/plantillas/plantillas.json`, `server.js`):**
+  - Creación del registro central `plantillas.json` con metadatos, demos, badges, secciones y variables configurables por plantilla.
+  - Nuevo endpoint `GET /api/plantillas`: entrega la lista pública y dinámica de todas las plantillas registradas.
+  - Nuevo endpoint `GET /api/plantillas/:id/contenido`: obtiene el código HTML base de cualquier plantilla para clonación o personalización instantánea.
+- [x] **Depuración y Eliminación de GrapesJS (Constructor Pesado) en el Panel Admin (`public/admin.html`):**
+  - Se eliminaron las librerías CDN externas de GrapesJS (`grapes.min.css`, `grapes.min.js`, `grapesjs-blocks-basic`), aligerando la carga del panel admin y evitando bloqueos o conflictos de memoria en el navegador.
+  - Se eliminaron más de 300 líneas de código muerto y bloques CSS inline que generaban estilos inconsistentes y se descuadraban en móviles.
+  - Se transformó la pestaña de Páginas en un centro moderno con dos sub-vistas:
+    1. **🌟 Plantillas Maestras:** Catálogo visual con tarjetas, vistas previas, botones "Ver Demo en Vivo", "Usar Plantilla como Base" y modal de "Variables Configurables".
+    2. **📄 Mis Páginas Creadas:** Gestor ágil y veloz con Editor Visual (Quill), Editor de Código HTML limpio, Vista Previa en Vivo y Asistente de IA integrado.
+- [x] **Detección Automática de Landings Completas en el Frontend Público (`public/pagina.html`):**
+  - Si una página creada contiene estructura de landing completa (`<!DOCTYPE`, `<header`, `.hero`, `.seccion`), el renderizador público oculta los elementos genéricos de blog (nav estándar, hero simple, footer fijo) y despliega la landing a pantalla completa (100% full-width responsivo), manteniendo a la vez el diseño tipo artículo para páginas informativas clásicas.
+- [x] **Protocolo de Integración para Futuras Plantillas:**
+  - Guía informativa integrada directamente en la interfaz del administrador explicando los 3 pasos para sumar nuevos diseños en el futuro (carpeta en `public/plantillas/`, manifest `plantillas.json`, detección automática en el sistema).
+
 ### 💆 Banner Visual Atractivo para Terapias con Gestión Integral desde el Panel Admin (`terapias.html`, `admin.html`, `server.js`, `public/img/banners/`) (NUEVO)
 - [x] **Diseño Visual Atractivo en la Portada de Terapias (`public/terapias.html`):**
   - Se modernizó la cabecera reemplazando el fondo beige plano por una imagen de relajación y bienestar de alta definición (`/img/banners/banner-masaje.jpg` por defecto).
