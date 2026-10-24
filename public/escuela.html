@@ -530,13 +530,14 @@
                         : tipo === 'suscripcion'
                             ? `<span style="background:#EFF6FF;color:#2563EB;padding:.2rem .7rem;border-radius:20px;font-size:.75rem;font-weight:700">Con suscripción</span>`
                             : bestPriceHtml;
-                    const ctaLabel = 'Ver detalles';
-                    const ctaOnclick = `location.href='detalle.html?id=${curso.id}'`;
-                    let matriculaCardHtml = '';
                     let parsedVm = null;
                     if (curso.ventas_meta) {
                         try { parsedVm = typeof curso.ventas_meta === 'string' ? JSON.parse(curso.ventas_meta) : curso.ventas_meta; } catch(e) {}
                     }
+                    const targetLandingUrl = (parsedVm && parsedVm.landing_personalizada_url) ? parsedVm.landing_personalizada_url : `detalle.html?id=${curso.id}`;
+                    const ctaLabel = 'Ver detalles';
+                    const ctaOnclick = `location.href='${targetLandingUrl}'`;
+                    let matriculaCardHtml = '';
                     const matCfg = (parsedVm && parsedVm.matricula_config) || {};
                     const tieneMat = curso.tiene_matricula !== undefined ? Boolean(curso.tiene_matricula) : Boolean(matCfg.tiene_matricula);
                     const valMat = Number(curso.valor_matricula !== undefined ? curso.valor_matricula : (matCfg.valor_matricula || 0));

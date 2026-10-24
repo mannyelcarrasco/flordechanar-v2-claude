@@ -28,6 +28,10 @@
     2. **📄 Mis Páginas Creadas:** Gestor ágil y veloz con Editor Visual (Quill), Editor de Código HTML limpio, Vista Previa en Vivo y Asistente de IA integrado.
 - [x] **Detección Automática de Landings Completas en el Frontend Público (`public/pagina.html`):**
   - Si una página creada contiene estructura de landing completa (`<!DOCTYPE`, `<header`, `.hero`, `.seccion`), el renderizador público oculta los elementos genéricos de blog (nav estándar, hero simple, footer fijo) y despliega la landing a pantalla completa (100% full-width responsivo), manteniendo a la vez el diseño tipo artículo para páginas informativas clásicas.
+- [x] **Conexión Directa entre Cursos y Landings Dedicadas / Plantillas (`curso-crear.html`, `admin.html`, `escuela.html`):**
+  - En el editor de cursos (`curso-crear.html`, Paso 5 "Página de Ventas"), se agregó un nuevo control destacado para ingresar una **URL de Landing Personalizada o Plantilla** (ej. `/TerapiaEmocionalEvolutiva/`, `/metodo-mushuu/` o `/p/mi-landing`) con botón de prueba en vivo.
+  - En la tabla de administración de cursos (`admin.html`), se añadió un botón directo **`[👁️ Landing]`** que abre la landing de ventas correspondiente (personalizada o estándar `detalle.html?id=X`) con 1 clic.
+  - En el catálogo público de la escuela (`escuela.html`), si el curso tiene una landing personalizada asignada, los clics en la tarjeta y en el botón "Ver detalles" redirigen directamente a esa landing page.
 - [x] **Protocolo de Integración para Futuras Plantillas:**
   - Guía informativa integrada directamente en la interfaz del administrador explicando los 3 pasos para sumar nuevos diseños en el futuro (carpeta en `public/plantillas/`, manifest `plantillas.json`, detección automática en el sistema).
 

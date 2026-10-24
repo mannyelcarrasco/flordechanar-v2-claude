@@ -681,6 +681,22 @@
                 <div class="sec-icon b"><i class="ph ph-layout"></i></div>
                 <h3>Página de Ventas (Landing)</h3>
             </div>
+
+            <!-- Conexión a Landing Dedicada / Plantilla -->
+            <div class="fg" style="background:#F0FDF4; border:1.5px solid #BBF7D0; border-radius:10px; padding:0.9rem; margin-bottom:1.15rem;">
+                <label class="fl" style="color:#15803D; font-weight:700; display:flex; align-items:center; gap:0.4rem; margin-bottom:0.35rem;">
+                    <i class="ph ph-link" style="font-size:1.1rem"></i> Enlace a Landing Page Personalizada o Plantilla (Opcional)
+                </label>
+                <div style="display:flex; gap:0.5rem; align-items:center;">
+                    <input class="fc" type="text" id="courseCustomLandingUrl" placeholder="Ej: /TerapiaEmocionalEvolutiva/ o /metodo-mushuu/ o /p/mi-landing" style="background:#fff;">
+                    <button type="button" class="btn btn-sm" onclick="probarLandingPersonalizada()" style="white-space:nowrap; background:#fff; border:1px solid #86EFAC; color:#15803D; font-weight:700; padding:0.55rem 0.9rem;">
+                        <i class="ph ph-arrow-square-out"></i> Probar Link
+                    </button>
+                </div>
+                <div class="hint" style="color:#166534; margin-top:0.35rem; line-height:1.4;">
+                    Si este programa tiene su propia landing dedicada (como <strong>Terapia Emocional Evolutiva</strong> o <strong>Método Mushuu</strong>) o una página del CMS, ingresa aquí su ruta. Si lo dejas vacío, el sistema usará automáticamente la landing estándar del curso (<code>detalle.html?id=...</code>).
+                </div>
+            </div>
             
             <div class="fg"><label class="fl">Video VSL (URL YouTube/Vimeo)</label><input class="fc" type="url" id="courseVsl" placeholder="Ej: https://www.youtube.com/watch?v=..."></div>
             
@@ -1711,6 +1727,9 @@ window.addEventListener('load', async () => {
                         try {
                             const vm = typeof c.ventas_meta === 'string' ? JSON.parse(c.ventas_meta) : c.ventas_meta;
                             if(vm.vsl_url) document.getElementById('courseVsl').value = vm.vsl_url;
+                            if(vm.landing_personalizada_url && document.getElementById('courseCustomLandingUrl')) {
+                                document.getElementById('courseCustomLandingUrl').value = vm.landing_personalizada_url;
+                            }
                             if(vm.testimonios && vm.testimonios.length) {
                                 document.getElementById('testimonioList').innerHTML = ''; // clear any empty default
                                 vm.testimonios.forEach(t => addTestimonio(t));
@@ -2039,6 +2058,17 @@ function loadFunnelConfig(fc) {
     setFunnelMode(fc.modo_inscripcion || 'pago');
 }
 
+function probarLandingPersonalizada() {
+    const val = document.getElementById('courseCustomLandingUrl')?.value.trim();
+    if (val) {
+        window.open(val, '_blank');
+    } else {
+        const id = new URLSearchParams(window.location.search).get('id');
+        if (id) window.open('detalle.html?id=' + id, '_blank');
+        else alert('Ingresa una URL o guarda el curso primero para ver la landing.');
+    }
+}
+
 function getVentasMeta() {
     const testimoniosNodes = document.querySelectorAll('.testimonio-item');
     const testimonios = Array.from(testimoniosNodes).map(node => ({
@@ -2049,8 +2079,11 @@ function getVentasMeta() {
     const tiene_matricula = document.getElementById('courseTieneMatricula') ? document.getElementById('courseTieneMatricula').checked : false;
     const valor_matricula = document.getElementById('courseValorMatricula') ? (parseInt(document.getElementById('courseValorMatricula').value) || 0) : 0;
     const cobra_matricula = document.getElementById('courseCobraMatricula') ? (document.getElementById('courseCobraMatricula').value === '1') : true;
+    const landing_personalizada_url = document.getElementById('courseCustomLandingUrl') ? document.getElementById('courseCustomLandingUrl').value.trim() : '';
+
     return {
         vsl_url: document.getElementById('courseVsl') ? document.getElementById('courseVsl').value : '',
+        landing_personalizada_url,
         testimonios: testimonios,
         funnel_config: getFunnelConfig(),
         matricula_config: {
