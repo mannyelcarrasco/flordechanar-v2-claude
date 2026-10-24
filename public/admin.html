@@ -1856,6 +1856,8 @@ function st(e, id) {
     const mainEl = document.querySelector('.main');
     if (id === 'tpag') {
         mainEl.classList.add('pages-mode');
+        if (typeof _pagLista === 'undefined' || !_pagLista.length) pagCargarLista();
+        cargarPlantillasCatalogo();
     } else {
         mainEl.classList.remove('pages-mode');
     }
@@ -3223,12 +3225,28 @@ async function renderAdminCourses() {
             }
 
             let landingUrl = `detalle.html?id=${c.id}`;
+            let isCustomLanding = false;
+            let landingLabel = 'Estándar';
             if (c.ventas_meta) {
                 try {
                     const vm = typeof c.ventas_meta === 'string' ? JSON.parse(c.ventas_meta) : c.ventas_meta;
-                    if (vm && vm.landing_personalizada_url) landingUrl = vm.landing_personalizada_url;
+                    if (vm && vm.landing_personalizada_url) {
+                        landingUrl = vm.landing_personalizada_url;
+                        isCustomLanding = true;
+                    }
                 } catch(e) {}
             }
+            if (landingUrl.includes('metodo-mushuu')) {
+                landingLabel = '🌸 Método Mushuu';
+            } else if (landingUrl.includes('TerapiaEmocionalEvolutiva') || landingUrl.includes('terapia-emocional')) {
+                landingLabel = '🌳 Terapia Emocional';
+            } else if (isCustomLanding) {
+                landingLabel = '📄 ' + landingUrl;
+            }
+            const landingBadge = `
+                <div style="margin-top:.3rem;font-size:.72rem;color:#7C3AED;font-weight:700;display:flex;align-items:center;gap:3px">
+                    <i class="ph-fill ph-layout"></i> Landing: ${landingLabel}
+                </div>`;
 
             tbody.innerHTML += `
                 <tr>
@@ -3242,20 +3260,49 @@ async function renderAdminCourses() {
                         <span style="font-size:0.82rem;color:var(--sec);background:#f1f5f9;padding:0.2rem 0.5rem;border-radius:4px;display:inline-block">${c.modalidad || 'N/A'}</span>
                         ${sedesHTML}
                         ${flujoBadge}
+                        ${landingBadge}
                     </td>
                     <td>${c.alumnos || 0}</td>
                     <td>${estadoHTML}</td>
                     <td class="ts">${fecha}</td>
-                    <td><div style="display:flex;gap:.4rem">
-                        <a href="${landingUrl}" target="_blank" class="btn bo btn-sm" title="Ver Landing pública de ventas" style="color:#0284C7;border-color:#BAE6FD"><i class="ph ph-eye"></i> Landing</a>
-                        <a href="curso-crear.html?id=${c.id}" class="btn bo btn-sm">Editar</a>
-                        <button class="btn bo btn-sm" style="border-color: #EF4444; color: #EF4444;" onclick="eliminarCursoDesdeAdmin(${c.id}, '${c.titulo.replace(/'/g, "\\'")}')"><i class="ph ph-trash"></i></button>
+                    <td><div style="display:flex;gap:.35rem;flex-wrap:wrap">
+                        <a href="${landingUrl}" target="_blank" class="btn bo btn-sm" title="Ver Landing pública de ventas" style="color:#0284C7;border-color:#BAE6FD">
+                            <i class="ph ph-eye"></i> Ver
+                        </a>
+                        <button type="button" class="btn bo btn-sm" onclick="editarLandingDeCurso('${landingUrl}')" title="Editar contenido de la Landing vinculada" style="color:#7C3AED;border-color:#DDD6FE;background:#FAF5FF;font-weight:600">
+                            <i class="ph ph-pencil-simple"></i> Landing
+                        </button>
+                        <a href="curso-crear.html?id=${c.id}" class="btn bo btn-sm" title="Editar curso completo"><i class="ph ph-pencil"></i></a>
+                        <button class="btn bo btn-sm" style="border-color: #EF4444; color: #EF4444;" onclick="eliminarCursoDesdeAdmin(${c.id}, '${c.titulo.replace(/'/g, "\\'")}')" title="Eliminar"><i class="ph ph-trash"></i></button>
                     </div></td>
                 </tr>
             `;
         });
     } catch(e) {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem; color:red;">Error al cargar cursos</td></tr>';
+    }
+}
+
+function editarLandingDeCurso(landingUrl) {
+    if (!landingUrl) return;
+    if (landingUrl.includes('metodo-mushuu')) {
+        st(null, 'tpag');
+        editarLandingOficial('metodo-mushuu');
+    } else if (landingUrl.includes('TerapiaEmocionalEvolutiva') || landingUrl.includes('terapia-emocional')) {
+        st(null, 'tpag');
+        editarLandingOficial('terapia-emocional-evolutiva');
+    } else if (landingUrl.includes('/p/')) {
+        const slug = landingUrl.split('/p/')[1]?.split('?')[0]?.replace(/\/$/, '');
+        st(null, 'tpag');
+        switchSubtabPaginas('gestor');
+        (async () => {
+            if (!_pagLista.length) await pagCargarLista();
+            const p = _pagLista.find(item => item.slug === slug);
+            if (p) pagEditar(p.id);
+            else alert('No se encontró la página para editar: ' + slug);
+        })();
+    } else {
+        alert('Este curso utiliza la landing estándar institucional (detalle.html). Si deseas usar o personalizar una Landing Oficial o crear una en el CMS, puedes asignarla editando el curso en la Sección 5.');
     }
 }
 
@@ -3389,15 +3436,18 @@ async function cargarPlantillasCatalogo() {
                         <div style="font-size:.72rem;font-weight:700;color:var(--s);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.3rem">Secciones Incluidas:</div>
                         <div class="plantilla-sections">${secTags}</div>
                     </div>
-                    <div class="plantilla-actions">
-                        <a href="${t.demo_url}" target="_blank" class="btn bo btn-sm" style="flex:1;justify-content:center;color:var(--s)">
-                            <i class="ph ph-arrow-square-out"></i> Ver Demo en Vivo
+                    <div class="plantilla-actions" style="flex-wrap:wrap">
+                        <a href="${t.demo_url}" target="_blank" class="btn bo btn-sm" style="flex:1;min-width:130px;justify-content:center;color:var(--s)">
+                            <i class="ph ph-arrow-square-out"></i> Ver en Vivo
                         </a>
+                        <button type="button" class="btn btn-sm" onclick="editarLandingOficial('${t.id}')" style="background:#FAF5FF;border:1px solid #DDD6FE;color:#6B21A8;font-weight:700" title="Editar contenido y textos de esta landing">
+                            <i class="ph ph-pencil-simple"></i> Editar Landing
+                        </button>
                         <button type="button" class="btn btn-sm" onclick="mostrarVariablesPlantilla('${t.id}')" style="background:#F1F5F9;border:1px solid #CBD5E1;color:var(--s)" title="Ver variables configurables">
                             <i class="ph ph-sliders"></i> Variables
                         </button>
                         <button type="button" class="btn bp btn-sm" onclick="usarPlantillaComoBase('${t.id}')" style="background:#7C3AED;border-color:#7C3AED;color:#fff;font-weight:700">
-                            <i class="ph ph-copy"></i> Usar Plantilla
+                            <i class="ph ph-copy"></i> Clonar Plantilla
                         </button>
                     </div>
                 </div>
@@ -3405,6 +3455,37 @@ async function cargarPlantillasCatalogo() {
         }).join('');
     } catch(e) {
         grid.innerHTML = `<div style="padding:2rem;text-align:center;color:#EF4444;grid-column:1/-1">Error al cargar plantillas: ${e.message}</div>`;
+    }
+}
+
+async function editarLandingOficial(templateId) {
+    const slug = (templateId === 'diplomado-holistico' || templateId === 'tee' || templateId === 'terapia-emocional-evolutiva')
+        ? 'terapia-emocional-evolutiva'
+        : 'metodo-mushuu';
+
+    switchSubtabPaginas('gestor');
+    if (!_pagLista.length) await pagCargarLista();
+    let p = _pagLista.find(item => item.slug === slug);
+    if (p) {
+        pagEditar(p.id);
+    } else {
+        try {
+            const tk = localStorage.getItem('token');
+            const res = await fetch(`/api/plantillas/${templateId}/contenido`, {
+                headers: { 'Authorization': 'Bearer ' + tk }
+            });
+            const d = await res.json();
+            pagNueva();
+            const titEl = document.getElementById('pagTitulo');
+            const slugEl = document.getElementById('pagSlug');
+            if (titEl) titEl.value = slug === 'terapia-emocional-evolutiva' ? 'Terapia Emocional Evolutiva (T.E.E.)' : 'Método Mushuu · Formación Profesional en Masoterapia';
+            if (slugEl) slugEl.value = slug;
+            const code = document.getElementById('pagCodigoHTML');
+            if (code) code.value = d.html || '';
+            setEditorModo('codigo');
+        } catch(e) {
+            alert('Error al abrir la landing: ' + e.message);
+        }
     }
 }
 
@@ -3697,14 +3778,24 @@ function pagRenderLista(lista) {
     cont.innerHTML = lista.map(p => {
         const fecha = p.actualizado_en ? new Date(p.actualizado_en).toLocaleDateString('es-CL',{day:'2-digit',month:'short'}) : '';
         const esPub = p.estado === 'publicado';
-        return `<div class="pag-item" id="pag-item-${p.id}" onclick="pagEditar(${p.id})">
-            <i class="pag-item-icon ph ${esPub?'ph-file-text':'ph-file-dashed'}"></i>
+        const esOficial = p.slug === 'terapia-emocional-evolutiva' || p.slug === 'metodo-mushuu';
+        const slugDisplay = esOficial
+            ? (p.slug === 'terapia-emocional-evolutiva' ? '/TerapiaEmocionalEvolutiva/' : '/metodo-mushuu/')
+            : `/p/${p.slug}`;
+        const oficialBadge = esOficial
+            ? `<span style="background:#EDE9FE;color:#6B21A8;border:1px solid #DDD6FE;border-radius:4px;font-size:.65rem;font-weight:700;padding:1px 5px;margin-left:5px">🌟 OFICIAL</span>`
+            : '';
+
+        return `<div class="pag-item" id="pag-item-${p.id}" onclick="pagEditar(${p.id})" style="${esOficial ? 'border-left:3px solid #7C3AED;background:#FAF5FF;' : ''}">
+            <i class="pag-item-icon ph ${esPub?'ph-file-text':'ph-file-dashed'}" style="${esOficial ? 'color:#7C3AED;' : ''}"></i>
             <div class="pag-item-info">
-                <div class="pag-item-title" title="${p.titulo}">${p.titulo}</div>
-                <div class="pag-item-slug">/p/${p.slug}${fecha?' · '+fecha:''}</div>
+                <div class="pag-item-title" title="${p.titulo}">
+                    ${p.titulo} ${oficialBadge}
+                </div>
+                <div class="pag-item-slug" style="${esOficial ? 'color:#7C3AED;font-weight:600;' : ''}">${slugDisplay}${fecha?' · '+fecha:''}</div>
             </div>
             <span class="pag-badge ${esPub?'pub':'bor'}">${esPub?'✓':'–'}</span>
-            <button class="pag-del" onclick="event.stopPropagation();pagEliminarId(${p.id},'${p.titulo.replace(/'/g,"\\'")}')">✕</button>
+            ${!esOficial ? `<button class="pag-del" onclick="event.stopPropagation();pagEliminarId(${p.id},'${p.titulo.replace(/'/g,"\\'")}')">✕</button>` : ''}
         </div>`;
     }).join('');
 }
@@ -3740,8 +3831,8 @@ function pagMostrarEditor(p) {
             <div style="display:flex;gap:.45rem;align-items:center;flex-wrap:wrap">
                 <button type="button" class="btn bo btn-sm" onclick="switchSubtabPaginas('plantillas')" style="color:#7C3AED;border-color:#DDD6FE"><i class="ph ph-sparkle"></i> Ver Plantillas</button>
                 <button type="button" class="btn bo btn-sm" onclick="iaOpen()" style="color:#7C3AED;border-color:#DDD6FE"><i class="ph ph-sparkle"></i> IA</button>
-                ${p ? `<a href="/p/${p.slug}" target="_blank" class="btn bo btn-sm"><i class="ph ph-eye"></i> Ver en vivo</a>` : ''}
-                <button type="button" class="btn bd btn-sm" onclick="pagEliminar()" ${!p?'disabled':''}><i class="ph ph-trash"></i></button>
+                ${p ? `<a href="${(p.slug==='terapia-emocional-evolutiva'?'/TerapiaEmocionalEvolutiva/':(p.slug==='metodo-mushuu'?'/metodo-mushuu/':'/p/'+p.slug))}" target="_blank" class="btn bo btn-sm" style="color:#0284C7;border-color:#BAE6FD"><i class="ph ph-eye"></i> Ver en vivo</a>` : ''}
+                ${(p && (p.slug==='terapia-emocional-evolutiva'||p.slug==='metodo-mushuu')) ? '' : `<button type="button" class="btn bd btn-sm" onclick="pagEliminar()" ${!p?'disabled':''}><i class="ph ph-trash"></i></button>`}
                 <button type="button" class="btn bp btn-sm" onclick="pagGuardar()" id="pagBtnGuardar" style="background:#7C3AED;border-color:#7C3AED"><i class="ph ph-floppy-disk"></i> Guardar</button>
             </div>
         </div>
@@ -5325,9 +5416,18 @@ async function deleteCalEvent() {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
     const stab = params.get('stab');
+    const edit = params.get('edit');
     if (tab === 'cursos' || tab === 'tc') st(null, 'tc');
     else if (tab === 'calendario' || tab === 'tcal') st(null, 'tcal');
     else if (tab === 'prospectos' || tab === 'tprospectos') st(null, 'tprospectos');
+    else if (tab === 'paginas' || tab === 'tpag') {
+        st(null, 'tpag');
+        if (edit) {
+            setTimeout(() => {
+                editarLandingOficial(edit);
+            }, 350);
+        }
+    }
     else if (tab === 'ajustes' || tab === 'ts') {
         st(null, 'ts');
         if (stab) switchStab(stab);

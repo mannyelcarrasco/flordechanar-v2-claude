@@ -1,10 +1,35 @@
 # 📋 Bitácora del Proyecto — Flor de Chañar v2
 **Repositorio:** [mannyelcarrasco/flordechanar-v2-claude](https://github.com/mannyelcarrasco/flordechanar-v2-claude)  
-**Última actualización:** 2026-10-23
+**Última actualización:** 2026-10-24
 
 ---
 
 ## ✅ Avances completados
+
+### 🚀 Integración Total de Landings Oficiales: Edición Directa en CMS y Selector Visual en Cursos (`server.js`, `admin.html`, `curso-crear.html`) (NUEVO)
+- [x] **Disponibilidad y Edición Directa de las Landings Oficiales en el Admin:**
+  - **Auto-seeding inteligente (`server.js`):** Al inicializar la base de datos, las 2 landings maestras (**Terapia Emocional Evolutiva** y **Método Mushuu**) se registran automáticamente en la tabla `paginas` con sus títulos, extractos, fotos de portada y código HTML íntegro.
+  - **Sincronización bidireccional DB ↔ Servidor (`server.js`):**
+    - Las rutas `/TerapiaEmocionalEvolutiva/` y `/metodo-mushuu/` ahora consultan en la base de datos si existe una versión actualizada y la sirven en tiempo real.
+    - Al editar y guardar la página desde el CMS, el endpoint `PUT /api/admin/paginas/:id` actualiza MySQL y reescribe físicamente los archivos `index.html` en disco para redundancia y sincronización absoluta.
+  - **Acceso a edición en 1-clic (`admin.html`):**
+    - En el catálogo de plantillas se incorporó el botón **`[✏️ Editar Landing]`** junto a "Ver Demo" y "Clonar Plantilla".
+    - En la lista de páginas del CMS, las landings oficiales lucen el distintivo **`🌟 OFICIAL`**, borde púrpura destacado, enlace directo a sus rutas oficiales y protección contra eliminación accidental.
+    - Soporte para parámetros URL (`admin.html?tab=paginas&edit=metodo-mushuu` o `terapia-emocional-evolutiva`) para saltar de inmediato al editor desde cualquier otra pantalla.
+- [x] **Selector Visual de Landing Page en la Creación/Edición de Cursos (`curso-crear.html`):**
+  - Se sustituyó el campo de texto plano de la Sección 5 por un **Selector Visual Interactivo** con tarjetas gráficas:
+    1. **🌸 Método Mushuu:** Para masoterapia y cursos prácticos (asigna `/metodo-mushuu/`). Incluye botones directos `[👁️ Ver]` y `[✏️ Editar]`.
+    2. **🌳 Terapia Emocional (T.E.E.):** Para diplomados y formaciones extensas (asigna `/TerapiaEmocionalEvolutiva/`). Incluye botones directos `[👁️ Ver]` y `[✏️ Editar]`.
+    3. **📄 Estándar Escuela:** Ficha institucional clásica (`detalle.html?id=X`) con previsualización en vivo.
+    4. **⚙️ Personalizada / CMS:** Para enlazar páginas creadas libremente en el CMS (`/p/slug`) o enlaces externos.
+  - **Detección inteligente:** Al cargar cualquier curso existente, el selector ilumina y marca automáticamente la tarjeta correspondiente según su URL guardada.
+- [x] **Visibilidad y Edición Rápida en el Listado de Cursos del Admin (`admin.html`):**
+  - En la tabla de administración de cursos se añadió la insignia de la landing asignada (`Landing: 🌸 Método Mushuu`, `Landing: 🌳 Terapia Emocional`, etc.).
+  - En las acciones por fila se incorporaron dos accesos rápidos:
+    - **`[👁️ Ver]`:** Abre la landing pública vinculada en una nueva pestaña.
+    - **`[✏️ Landing]`:** Cambia a la pestaña de CMS y abre inmediatamente el editor con el contenido de esa landing para modificar textos, fotos o módulos al instante.
+- [x] **Auto-vinculación de Cursos Existentes (`server.js`):**
+  - Cursos con palabras clave como masoterapia o mushuu quedan automáticamente asociados a `/metodo-mushuu/`, y los de terapia emocional o TEE a `/TerapiaEmocionalEvolutiva/`, asegurando que el flujo esté 100% operativo sin configuración manual.
 
 ### 🌟 Sistema de Plantillas Maestras Landing y Desacople de GrapesJS (`public/plantillas/`, `admin.html`, `server.js`, `pagina.html`) (NUEVO)
 - [x] **Modularización de las 2 Landings Oficiales como Plantillas Maestras:**

@@ -49,6 +49,27 @@ app.use((req, res, next) => {
     next();
 });
 
+// Servir versión actualizada desde DB de las Landings Oficiales si fueron editadas en el admin
+app.get(['/TerapiaEmocionalEvolutiva/', '/TerapiaEmocionalEvolutiva/index.html'], async (req, res, next) => {
+    try {
+        if (pool) {
+            const [[page]] = await pool.query("SELECT contenido FROM paginas WHERE slug='terapia-emocional-evolutiva' AND estado='publicado'");
+            if (page && page.contenido) return res.send(page.contenido);
+        }
+    } catch(e) {}
+    next();
+});
+
+app.get(['/metodo-mushuu/', '/metodo-mushuu/index.html'], async (req, res, next) => {
+    try {
+        if (pool) {
+            const [[page]] = await pool.query("SELECT contenido FROM paginas WHERE slug='metodo-mushuu' AND estado='publicado'");
+            if (page && page.contenido) return res.send(page.contenido);
+        }
+    } catch(e) {}
+    next();
+});
+
 // Si Flow redirige vía POST a una página HTML estática (ej. /pago-exitoso.html), redirigir como GET (303)
 app.post(/^\/[^/]+\.html$/i, (req, res) => {
     res.redirect(303, req.originalUrl);
@@ -547,6 +568,68 @@ async function initDB() {
             `);
         } catch (migrErr) {
             console.warn('Aviso en auto-reparación de portadas:', migrErr.message);
+        }
+
+        // Auto-seeding de las Landings Oficiales (T.E.E. y Método Mushuu) en la tabla 'paginas' para poder editarlas directamente en el admin
+        try {
+            const teePath = path.join(__dirname, 'public', 'TerapiaEmocionalEvolutiva', 'index.html');
+            if (fs.existsSync(teePath)) {
+                const teeHtml = fs.readFileSync(teePath, 'utf8');
+                await pool.query(`
+                    INSERT INTO paginas (titulo, slug, contenido, extracto, meta_desc, portada_url, estado, orden)
+                    VALUES (?, ?, ?, ?, ?, ?, 'publicado', 1)
+                    ON DUPLICATE KEY UPDATE
+                        titulo = VALUES(titulo),
+                        portada_url = VALUES(portada_url),
+                        extracto = VALUES(extracto)
+                `, [
+                    'Terapia Emocional Evolutiva (T.E.E.)',
+                    'terapia-emocional-evolutiva',
+                    teeHtml,
+                    'Formación profesional de 2 años en Terapia Emocional Evolutiva: Árbol Transgeneracional, Hipnosis Clínica y Bio Correlaciones.',
+                    'Formación integral de 2 años, 100% online en vivo.',
+                    '/TerapiaEmocionalEvolutiva/assets/img/hero-arbol.jpg'
+                ]);
+            }
+
+            const mushuuPath = path.join(__dirname, 'public', 'metodo-mushuu', 'index.html');
+            if (fs.existsSync(mushuuPath)) {
+                const mushuuHtml = fs.readFileSync(mushuuPath, 'utf8');
+                await pool.query(`
+                    INSERT INTO paginas (titulo, slug, contenido, extracto, meta_desc, portada_url, estado, orden)
+                    VALUES (?, ?, ?, ?, ?, ?, 'publicado', 2)
+                    ON DUPLICATE KEY UPDATE
+                        titulo = VALUES(titulo),
+                        portada_url = VALUES(portada_url),
+                        extracto = VALUES(extracto)
+                `, [
+                    'Método Mushuu · Formación Profesional en Masoterapia',
+                    'metodo-mushuu',
+                    mushuuHtml,
+                    'Formación profesional en masoterapia con el Método Mushuu por Escuela Flor de Chañar. Sedes Calama, La Serena y Online.',
+                    'Aprende más de 200 técnicas de masaje con el Método Mushuu.',
+                    '/metodo-mushuu/img/hero.jpg'
+                ]);
+            }
+
+            // Auto-asociar landing en cursos existentes si no tienen landing explícita
+            const [curList] = await pool.query("SELECT id, titulo, ventas_meta FROM cursos");
+            for (const c of curList) {
+                let vm = {};
+                try { vm = typeof c.ventas_meta === 'string' ? JSON.parse(c.ventas_meta) : (c.ventas_meta || {}); } catch(e) {}
+                if (!vm.landing_personalizada_url) {
+                    const tit = (c.titulo || '').toLowerCase();
+                    if (tit.includes('masoterapia') || tit.includes('mushuu')) {
+                        vm.landing_personalizada_url = '/metodo-mushuu/';
+                        await pool.query("UPDATE cursos SET ventas_meta = ? WHERE id = ?", [JSON.stringify(vm), c.id]);
+                    } else if (tit.includes('terapia emocional') || tit.includes('t.e.e.') || tit.includes('evolutiva')) {
+                        vm.landing_personalizada_url = '/TerapiaEmocionalEvolutiva/';
+                        await pool.query("UPDATE cursos SET ventas_meta = ? WHERE id = ?", [JSON.stringify(vm), c.id]);
+                    }
+                }
+            }
+        } catch (seedErr) {
+            console.warn('Aviso en auto-seeding de landings en paginas:', seedErr.message);
         }
 
     } catch (err) {
@@ -2918,6 +3001,18 @@ app.put('/api/admin/paginas/:id', verifyToken, async (req, res) => {
             [titulo, slug, contenido||'', extracto||'', meta_desc||'', portada_url||null,
              estado||'borrador', orden||0, req.params.id]
         );
+
+        // Sincronizar archivo físico en disco si es una landing oficial
+        if (slug === 'terapia-emocional-evolutiva') {
+            try {
+                fs.writeFileSync(path.join(__dirname, 'public', 'TerapiaEmocionalEvolutiva', 'index.html'), contenido || '', 'utf8');
+            } catch(wErr) { console.warn('Aviso escribiendo TEE index.html:', wErr.message); }
+        } else if (slug === 'metodo-mushuu') {
+            try {
+                fs.writeFileSync(path.join(__dirname, 'public', 'metodo-mushuu', 'index.html'), contenido || '', 'utf8');
+            } catch(wErr) { console.warn('Aviso escribiendo Mushuu index.html:', wErr.message); }
+        }
+
         res.json({ ok: true });
     } catch (e) {
         if (e.code === 'ER_DUP_ENTRY') return res.status(409).json({ error: 'Ya existe una página con ese slug' });

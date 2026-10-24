@@ -682,19 +682,110 @@
                 <h3>Página de Ventas (Landing)</h3>
             </div>
 
-            <!-- Conexión a Landing Dedicada / Plantilla -->
-            <div class="fg" style="background:#F0FDF4; border:1.5px solid #BBF7D0; border-radius:10px; padding:0.9rem; margin-bottom:1.15rem;">
-                <label class="fl" style="color:#15803D; font-weight:700; display:flex; align-items:center; gap:0.4rem; margin-bottom:0.35rem;">
-                    <i class="ph ph-link" style="font-size:1.1rem"></i> Enlace a Landing Page Personalizada o Plantilla (Opcional)
-                </label>
-                <div style="display:flex; gap:0.5rem; align-items:center;">
-                    <input class="fc" type="text" id="courseCustomLandingUrl" placeholder="Ej: /TerapiaEmocionalEvolutiva/ o /metodo-mushuu/ o /p/mi-landing" style="background:#fff;">
-                    <button type="button" class="btn btn-sm" onclick="probarLandingPersonalizada()" style="white-space:nowrap; background:#fff; border:1px solid #86EFAC; color:#15803D; font-weight:700; padding:0.55rem 0.9rem;">
-                        <i class="ph ph-arrow-square-out"></i> Probar Link
-                    </button>
+            <!-- Selector Visual de Landing Page para este Curso -->
+            <div class="fg" style="background:#F8FAFC; border:1.5px solid #CBD5E1; border-radius:12px; padding:1.15rem; margin-bottom:1.25rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; flex-wrap:wrap; gap:0.5rem;">
+                    <div>
+                        <label class="fl" style="color:var(--s); font-size:0.95rem; font-weight:700; display:flex; align-items:center; gap:0.4rem; margin:0;">
+                            <i class="ph-fill ph-layout" style="color:#7C3AED; font-size:1.15rem"></i> Selección de Landing Page para este Curso
+                        </label>
+                        <div style="font-size:0.76rem; color:var(--l); margin-top:2px;">
+                            Define qué página verán tus alumnos cuando hagan clic en este curso desde el catálogo de la Escuela o anuncios.
+                        </div>
+                    </div>
+                    <a href="admin.html?tab=paginas" target="_blank" class="btn bo btn-sm" style="color:#7C3AED; border-color:#DDD6FE; font-size:0.76rem; background:#fff">
+                        <i class="ph ph-sparkle"></i> Ver Catálogo de Plantillas & CMS
+                    </a>
                 </div>
-                <div class="hint" style="color:#166534; margin-top:0.35rem; line-height:1.4;">
-                    Si este programa tiene su propia landing dedicada (como <strong>Terapia Emocional Evolutiva</strong> o <strong>Método Mushuu</strong>) o una página del CMS, ingresa aquí su ruta. Si lo dejas vacío, el sistema usará automáticamente la landing estándar del curso (<code>detalle.html?id=...</code>).
+
+                <!-- Grid de Tarjetas de Landing -->
+                <div class="landing-options-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:0.75rem; margin-bottom:0.9rem;">
+                    
+                    <!-- Opción 1: Método Mushuu -->
+                    <div class="landing-card-opt" id="optLandingMushuu" onclick="selectLandingOption('/metodo-mushuu/')" style="background:#fff; border:2px solid #E2E8F0; border-radius:10px; padding:0.9rem; cursor:pointer; transition:all .2s; position:relative;">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.35rem;">
+                            <span style="font-weight:700; font-size:0.88rem; color:#1E293B;">🌸 Método Mushuu</span>
+                            <span class="badge" style="background:#EDE9FE; color:#6B21A8; font-size:0.65rem; font-weight:700; padding:2px 6px; border-radius:4px;">OFICIAL</span>
+                        </div>
+                        <div style="font-size:0.74rem; color:#64748B; line-height:1.35; margin-bottom:0.75rem;">
+                            Landing especializada en Masoterapia Profesional (módulos técnicos, sedes Calama/Serena/Online y aranceles).
+                        </div>
+                        <div style="display:flex; gap:0.35rem; align-items:center; border-top:1px solid #F1F5F9; padding-top:0.5rem;">
+                            <a href="/metodo-mushuu/" target="_blank" onclick="event.stopPropagation()" class="btn bo btn-sm" style="flex:1; font-size:0.72rem; padding:0.25rem 0.4rem; justify-content:center; color:#0284C7;">
+                                <i class="ph ph-eye"></i> Ver
+                            </a>
+                            <a href="admin.html?tab=paginas&edit=metodo-mushuu" target="_blank" onclick="event.stopPropagation()" class="btn bo btn-sm" style="flex:1; font-size:0.72rem; padding:0.25rem 0.4rem; justify-content:center; color:#7C3AED; background:#FAF5FF;">
+                                <i class="ph ph-pencil"></i> Editar
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Opción 2: Terapia Emocional Evolutiva -->
+                    <div class="landing-card-opt" id="optLandingTee" onclick="selectLandingOption('/TerapiaEmocionalEvolutiva/')" style="background:#fff; border:2px solid #E2E8F0; border-radius:10px; padding:0.9rem; cursor:pointer; transition:all .2s; position:relative;">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.35rem;">
+                            <span style="font-weight:700; font-size:0.88rem; color:#1E293B;">🌳 Terapia Emocional (T.E.E.)</span>
+                            <span class="badge" style="background:#EDE9FE; color:#6B21A8; font-size:0.65rem; font-weight:700; padding:2px 6px; border-radius:4px;">OFICIAL</span>
+                        </div>
+                        <div style="font-size:0.74rem; color:#64748B; line-height:1.35; margin-bottom:0.75rem;">
+                            Landing de alta conversión para diplomados de 2 años (árbol transgeneracional, hipnosis clínica y postulación).
+                        </div>
+                        <div style="display:flex; gap:0.35rem; align-items:center; border-top:1px solid #F1F5F9; padding-top:0.5rem;">
+                            <a href="/TerapiaEmocionalEvolutiva/" target="_blank" onclick="event.stopPropagation()" class="btn bo btn-sm" style="flex:1; font-size:0.72rem; padding:0.25rem 0.4rem; justify-content:center; color:#0284C7;">
+                                <i class="ph ph-eye"></i> Ver
+                            </a>
+                            <a href="admin.html?tab=paginas&edit=terapia-emocional-evolutiva" target="_blank" onclick="event.stopPropagation()" class="btn bo btn-sm" style="flex:1; font-size:0.72rem; padding:0.25rem 0.4rem; justify-content:center; color:#7C3AED; background:#FAF5FF;">
+                                <i class="ph ph-pencil"></i> Editar
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Opción 3: Estándar Escuela -->
+                    <div class="landing-card-opt" id="optLandingStandard" onclick="selectLandingOption('')" style="background:#fff; border:2px solid #E2E8F0; border-radius:10px; padding:0.9rem; cursor:pointer; transition:all .2s; position:relative;">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.35rem;">
+                            <span style="font-weight:700; font-size:0.88rem; color:#1E293B;">📄 Estándar Escuela</span>
+                            <span class="badge" style="background:#F1F5F9; color:#64748B; font-size:0.65rem; font-weight:700; padding:2px 6px; border-radius:4px;">DEFAULT</span>
+                        </div>
+                        <div style="font-size:0.74rem; color:#64748B; line-height:1.35; margin-bottom:0.75rem;">
+                            Ficha clásica del curso (<code>detalle.html</code>) generada automáticamente con el temario, VSL y pasarela de pago.
+                        </div>
+                        <div style="display:flex; gap:0.35rem; align-items:center; border-top:1px solid #F1F5F9; padding-top:0.5rem;">
+                            <button type="button" onclick="event.stopPropagation(); probarLandingPersonalizada();" class="btn bo btn-sm" style="flex:1; font-size:0.72rem; padding:0.25rem 0.4rem; justify-content:center; color:#0284C7;">
+                                <i class="ph ph-eye"></i> Previsualizar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Opción 4: Personalizada / CMS -->
+                    <div class="landing-card-opt" id="optLandingCustom" onclick="selectLandingOption('custom')" style="background:#fff; border:2px solid #E2E8F0; border-radius:10px; padding:0.9rem; cursor:pointer; transition:all .2s; position:relative;">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.35rem;">
+                            <span style="font-weight:700; font-size:0.88rem; color:#1E293B;">⚙️ Personalizada / CMS</span>
+                            <span class="badge" style="background:#FEF3C7; color:#B45309; font-size:0.65rem; font-weight:700; padding:2px 6px; border-radius:4px;">URL O /p/</span>
+                        </div>
+                        <div style="font-size:0.74rem; color:#64748B; line-height:1.35; margin-bottom:0.75rem;">
+                            Usa una página creada en el CMS del panel admin (ej. <code>/p/mi-diplomado</code>) o un enlace web externo.
+                        </div>
+                        <div style="display:flex; gap:0.35rem; align-items:center; border-top:1px solid #F1F5F9; padding-top:0.5rem;">
+                            <span style="font-size:0.72rem; color:var(--l); width:100%; text-align:center;">Configurar URL abajo ↓</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input y selector de ruta -->
+                <div id="customLandingInputBox" style="background:#fff; border:1px solid #E2E8F0; border-radius:8px; padding:0.75rem 0.9rem; display:flex; flex-direction:column; gap:0.4rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; font-weight:600; color:var(--s); flex-wrap:wrap; gap:0.3rem;">
+                        <span>URL activa de la Landing:</span>
+                        <span id="selectedLandingIndicator" style="color:#7C3AED; font-weight:700;">Estándar (detalle.html)</span>
+                    </div>
+                    <div style="display:flex; gap:0.5rem; align-items:center;">
+                        <input class="fc" type="text" id="courseCustomLandingUrl" placeholder="Ruta de la landing (ej: /metodo-mushuu/ o /p/mi-pagina)" oninput="onLandingUrlManualInput()" style="background:#fff; font-size:0.85rem;">
+                        <button type="button" class="btn btn-sm" onclick="probarLandingPersonalizada()" style="white-space:nowrap; background:#FAF5FF; border:1px solid #DDD6FE; color:#7C3AED; font-weight:700; padding:0.55rem 0.9rem;">
+                            <i class="ph ph-arrow-square-out"></i> Probar Link
+                        </button>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.72rem; color:var(--l); margin-top:2px; flex-wrap:wrap; gap:0.3rem;">
+                        <span>💡 Al hacer clic en una tarjeta de arriba, esta ruta se completa automáticamente.</span>
+                        <a href="admin.html?tab=paginas" target="_blank" style="color:#7C3AED; text-decoration:underline; font-weight:600;">Ir al Gestor de Páginas & Landings</a>
+                    </div>
                 </div>
             </div>
             
@@ -1730,6 +1821,7 @@ window.addEventListener('load', async () => {
                             if(vm.landing_personalizada_url && document.getElementById('courseCustomLandingUrl')) {
                                 document.getElementById('courseCustomLandingUrl').value = vm.landing_personalizada_url;
                             }
+                            if (typeof updateLandingCardsHighlight === 'function') updateLandingCardsHighlight();
                             if(vm.testimonios && vm.testimonios.length) {
                                 document.getElementById('testimonioList').innerHTML = ''; // clear any empty default
                                 vm.testimonios.forEach(t => addTestimonio(t));
@@ -1805,6 +1897,7 @@ window.addEventListener('load', async () => {
         }
 
         await loadCurriculum();
+        if (typeof updateLandingCardsHighlight === 'function') updateLandingCardsHighlight();
     }
 
     document.getElementById('lessonModalBg').addEventListener('click', function(e) {
@@ -2056,6 +2149,65 @@ function loadFunnelConfig(fc) {
         fc.preguntas.forEach(q => addFunnelQuestion(q));
     }
     setFunnelMode(fc.modo_inscripcion || 'pago');
+}
+
+function selectLandingOption(val) {
+    const input = document.getElementById('courseCustomLandingUrl');
+    if (!input) return;
+
+    if (val === 'custom') {
+        if (input.value === '/metodo-mushuu/' || input.value === '/TerapiaEmocionalEvolutiva/') {
+            input.value = '';
+        }
+        input.focus();
+    } else {
+        input.value = val;
+    }
+    updateLandingCardsHighlight();
+}
+
+function onLandingUrlManualInput() {
+    updateLandingCardsHighlight();
+}
+
+function updateLandingCardsHighlight() {
+    const input = document.getElementById('courseCustomLandingUrl');
+    const val = (input ? input.value : '').trim();
+    const ind = document.getElementById('selectedLandingIndicator');
+
+    const cardMushuu = document.getElementById('optLandingMushuu');
+    const cardTee = document.getElementById('optLandingTee');
+    const cardStd = document.getElementById('optLandingStandard');
+    const cardCust = document.getElementById('optLandingCustom');
+
+    [cardMushuu, cardTee, cardStd, cardCust].forEach(c => {
+        if (c) {
+            c.style.borderColor = '#E2E8F0';
+            c.style.boxShadow = 'none';
+            c.style.background = '#fff';
+        }
+    });
+
+    const activeStyle = (card) => {
+        if (!card) return;
+        card.style.borderColor = '#7C3AED';
+        card.style.boxShadow = '0 0 0 2px rgba(124, 58, 237, 0.25)';
+        card.style.background = '#FAF5FF';
+    };
+
+    if (val === '/metodo-mushuu/' || val === '/metodo-mushuu' || val.includes('mushuu')) {
+        activeStyle(cardMushuu);
+        if (ind) ind.textContent = '🌸 Método Mushuu (/metodo-mushuu/)';
+    } else if (val === '/TerapiaEmocionalEvolutiva/' || val === '/TerapiaEmocionalEvolutiva' || val.includes('terapia-emocional') || val.includes('TerapiaEmocional')) {
+        activeStyle(cardTee);
+        if (ind) ind.textContent = '🌳 Terapia Emocional Evolutiva (/TerapiaEmocionalEvolutiva/)';
+    } else if (!val) {
+        activeStyle(cardStd);
+        if (ind) ind.textContent = '📄 Estándar Escuela (detalle.html)';
+    } else {
+        activeStyle(cardCust);
+        if (ind) ind.textContent = '⚙️ ' + val;
+    }
 }
 
 function probarLandingPersonalizada() {
