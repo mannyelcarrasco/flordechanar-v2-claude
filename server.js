@@ -3129,38 +3129,50 @@ app.post('/api/admin/ia/pagina', verifyToken, async (req, res) => {
     const isPro = provider === 'gemini' && geminiModel.includes('pro');
     const API_TIMEOUT = isPro ? 120000 : 45000;
 
-    // Construir prompt del sistema — estructurado, incremental, sin razonamiento
-    const systemPrompt = `Eres un generador de HTML estructurado para páginas web. La página se llama: "${titulo || 'Sin título'}".
+    // Determinar si el contenido actual es un documento HTML completo o un fragmento de secciones
+    const lowerCont = String(contenido || '').toLowerCase();
+    const esDocumentoCompleto = lowerCont.includes('<!doctype') || lowerCont.includes('<html') || lowerCont.includes('<head');
+
+    let systemPrompt = '';
+    if (esDocumentoCompleto) {
+        systemPrompt = `Eres un experto senior en diseño web, desarrollo frontend y copywriting de alta conversión para la escuela de terapias "Flor de Chañar" (Chile).
+La página actual es: "${titulo || 'Landing Page'}".
+
+TIPO DE DOCUMENTO:
+El contenido actual es una Landing Page completa (incluye <!DOCTYPE html>, etiquetas <head>, estilos CSS y estructura modular).
+
+REGLAS DE FORMATO Y SALIDA (obligatorias):
+1. Tu respuesta debe comenzar DIRECTAMENTE con la primera etiqueta HTML (por ejemplo <!DOCTYPE html> o <html>). NUNCA agregues texto antes ni después.
+2. NUNCA incluyas explicaciones, razonamientos ni bloques markdown tipo \`\`\`html.
+3. Si el usuario pide mejorar copywriting, persuasión, textos, títulos o llamadas a la acción (CTAs):
+   - Mantén las hojas de estilo (<style>), clases CSS, enlaces a fuentes, SVGs y scripts INTACTOS.
+   - Pule y eleva la redacción: títulos de alto impacto, subtítulos claros, beneficios tangibles, llamados a WhatsApp persuasivos y tono empático y profesional de terapias holísticas.
+4. Si el usuario pide modernizar, reestructurar o limpiar código importado/externo:
+   - Limpia clases obsoletas o shortcodes de WordPress/plugins viejos.
+   - Aplica los colores de la marca: verde #687A61 (primario), crema #F5F0E8 (fondo), dorado #D9A95B (acento), texto oscuro #1E293B.
+   - Asegura diseño 100% responsive con secciones semánticas ordenadas.
+5. Devuelve el documento HTML íntegro y funcional sin truncar.`;
+    } else {
+        systemPrompt = `Eres un generador de HTML estructurado para páginas web de la escuela de terapias "Flor de Chañar". La página se llama: "${titulo || 'Sin título'}".
 
 REGLAS DE FORMATO (obligatorias):
 1. Tu respuesta debe comenzar DIRECTAMENTE con una etiqueta HTML (<section>, <div>, <article>, etc.). NUNCA texto antes.
 2. NUNCA incluyas razonamiento, explicaciones ni comentarios en la salida.
-3. NUNCA uses <!DOCTYPE>, <html>, <head>, <body> ni bloques markdown \`\`\`html.
-4. Si tu respuesta no empieza con "<", es un error grave.
-
-ESTRUCTURA OBLIGATORIA (muy importante para el editor visual):
-5. Organiza el contenido en SECCIONES INDEPENDIENTES. Cada bloque temático debe estar en su propio <section> o <div> con estilos propios.
-6. NUNCA pongas todo el contenido en un solo párrafo o elemento.
-7. Usa esta jerarquía: <section> contiene <div class="container"> que contiene h1/h2/p/ul/etc.
-8. Cada sección debe tener padding propio (mínimo 40px) y fondo propio si corresponde.
-9. Colores de la marca: verde #687A61 (primario), crema #F5F0E8 (fondo), navy #1E3A5F (texto oscuro).
-
-COMPORTAMIENTO INCREMENTAL (crítico cuando hay contenido existente):
-10. Si se te proporciona "CONTENIDO ACTUAL", debes MODIFICAR ÚNICAMENTE lo que el usuario pide. El resto del HTML debe permanecer IDÉNTICO, sin restructurarlo ni re-estilizarlo.
-11. Si el usuario dice "agrega", "cambia solo X", "modifica la sección de...", opera solo sobre esa parte.
-12. Si el usuario pide crear algo desde cero (sin contenido actual o pide "rediseño total"), genera todo nuevo.
-
-SALIDA: HTML estructurado en secciones, comenzando con < inmediatamente.`;
+3. NUNCA uses bloques markdown \`\`\`html.
+4. Si se proporciona CONTENIDO ACTUAL (modificación incremental), modifica lo solicitado respetando el resto del contenido y estilos.
+5. Si es un nuevo diseño desde cero, organízalo en secciones semánticas independientes con diseño responsive y colores de la marca: verde #687A61, crema #F5F0E8, dorado #D9A95B, texto oscuro #1E293B.`;
+    }
 
     const tieneContenido = contenido && contenido.trim().length > 20 && contenido.trim() !== '<p><br></p>';
     const userMsg = tieneContenido
-        ? `MODIFICACIÓN INCREMENTAL — modifica solo lo que se pide, el resto queda igual.
+        ? `OPTIMIZACIÓN / MODIFICACIÓN DE PROPUESTA EXISTENTE:
 INSTRUCCIÓN: ${prompt}
 
-CONTENIDO ACTUAL (modifica sobre esto, no lo reemplaces todo):
-${contenido.slice(0, 8000)}`
-        : `NUEVO DISEÑO — crea el HTML completo desde cero.
-INSTRUCCIÓN: ${prompt}`;
+CONTENIDO ACTUAL A MEJORAR (toma esto como base y devuélvelo mejorado):
+${contenido.slice(0, 60000)}`
+        : `NUEVA PROPUESTA DESDE CERO:
+INSTRUCCIÓN: ${prompt}
+Crea una landing completa, atractiva y de alta conversión con los colores y estilo de Flor de Chañar.`;
 
     try {
         let html = '';
@@ -3174,7 +3186,7 @@ INSTRUCCIÓN: ${prompt}`;
                 headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
                 body: JSON.stringify({
                     model: 'claude-3-5-haiku-20241022',
-                    max_tokens: 4096,
+                    max_tokens: 8192,
                     system: systemPrompt,
                     messages: [{ role: 'user', content: userMsg }]
                 }),
@@ -3194,7 +3206,7 @@ INSTRUCCIÓN: ${prompt}`;
                 headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     model: 'gpt-4o-mini',
-                    max_tokens: 4096,
+                    max_tokens: 8192,
                     messages: [
                         { role: 'system', content: systemPrompt },
                         { role: 'user',   content: userMsg }
@@ -3221,7 +3233,7 @@ INSTRUCCIÓN: ${prompt}`;
                         system_instruction: { parts: [{ text: systemPrompt }] },
                         contents: [{ role: 'user', parts: [{ text: userMsg }] }],
                         generationConfig: {
-                            maxOutputTokens: 4096,
+                            maxOutputTokens: 8192,
                             // Para thinking models (2.5/3.x Pro): desactivar thinking para
                             // obtener HTML directo sin razonamiento interno en la respuesta.
                             // thinkingBudget: 0 → sin thinking; -1 → auto (default)

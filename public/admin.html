@@ -1178,16 +1178,23 @@
                 </div>
             </div>
 
+            <!-- Estado de la Propuesta en el Editor -->
+            <div id="iaDrawerPageStatus" style="font-size:.74rem;background:#F5F3FF;border:1px solid #DDD6FE;border-radius:8px;padding:.5rem .75rem;color:#5B21B6;display:flex;align-items:center;gap:.4rem;line-height:1.4">
+                <i class="ph ph-sparkle"></i> <span>Detectando contenido del editor...</span>
+            </div>
+
             <!-- Plantillas rápidas -->
             <div>
-                <div style="font-size:.7rem;font-weight:700;color:var(--l);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem">Plantillas</div>
+                <div style="font-size:.7rem;font-weight:700;color:var(--l);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem">Acciones Rápidas con IA</div>
                 <div style="display:flex;flex-wrap:wrap;gap:.3rem">
-                    <span class="ia-chip" onclick="iaSetPrompt('Limpia el HTML importado: elimina estilos inline, clases de WordPress y shortcodes. Deja solo contenido semántico con h1-h3, p, ul, blockquote.')">🧹 Limpiar WP</span>
-                    <span class="ia-chip" onclick="iaSetPrompt('Rediseña como landing page de curso con: sección hero con título impactante, 3 beneficios clave, temario en lista, y botón CTA de inscripción.')">🎯 Landing curso</span>
-                    <span class="ia-chip" onclick="iaSetPrompt('Convierte en página institucional profesional: intro con misión, sección de valores, equipo o metodología, y contacto.')">🏫 Institucional</span>
+                    <span class="ia-chip" onclick="iaSetPrompt('Optimiza el copywriting y la persuasión de esta página: escribe títulos principales potentes, resalta beneficios claros y profundos, y haz los llamados a WhatsApp más atractivos sin tocar el diseño ni los estilos.')">🎯 Copywriting & Ventas</span>
+                    <span class="ia-chip" onclick="iaSetPrompt('Limpia el HTML importado de WordPress/otra web: elimina estilos inline, clases obsoletas y shortcodes. Deja solo contenido semántico y responsive.')">🧹 Limpiar WP/Externo</span>
+                    <span class="ia-chip" onclick="iaSetPrompt('Adapta el diseño y textos a la marca Flor de Chañar: usa los colores verde #687A61, crema #F5F0E8, dorado #D9A95B y tono terapéutico profesional.')">🌿 Marca Flor de Chañar</span>
+                    <span class="ia-chip" onclick="iaSetPrompt('Agrega antes del llamado a la acción final una sección moderna de Preguntas Frecuentes (FAQ) en formato acordeón con 5 respuestas clave.')">❓ Agregar FAQ</span>
+                    <span class="ia-chip" onclick="iaSetPrompt('Agrega una sección destacada de Testimonios y Prueba Social con calificaciones de 5 estrellas y sello de garantía institucional.')">🌟 Agregar Testimonios</span>
+                    <span class="ia-chip" onclick="iaSetPrompt('Agrega al final una sección de llamada a la acción (CTA) con título motivador, texto breve y botón de inscripción a WhatsApp.')">📢 Agregar CTA</span>
                     <span class="ia-chip" onclick="iaSetPrompt('Mejora la legibilidad: mejor jerarquía de títulos, párrafos cortos, listas donde corresponda y espaciado visual claro.')">✨ Legibilidad</span>
-                    <span class="ia-chip" onclick="iaSetPrompt('Agrega al final una sección de llamada a la acción (CTA) con título motivador, texto breve y botón de inscripción o contacto.')">📢 Agregar CTA</span>
-                    <span class="ia-chip" onclick="iaSetPrompt('Reestructura el contenido en secciones con separadores visuales claros y agrega íconos descriptivos en cada punto clave.')">🗂 Seccionar</span>
+                    <span class="ia-chip" onclick="iaSetPrompt('Rediseña como landing page completa de curso: hero con título impactante, 3 beneficios clave, temario en lista y botón CTA.')">🚀 Landing Completa</span>
                 </div>
             </div>
 
@@ -1248,6 +1255,191 @@
             <div style="font-size:.75rem;color:var(--l);border-top:1px solid #E5E7EB;padding-top:.65rem;line-height:1.6">
                 <strong style="color:var(--s)">Flujo:</strong> El resultado aparece directo en el editor.
                 Usa <strong>↩ Deshacer</strong> si no te gusta, o escribe una nueva instrucción para seguir refinando.
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Mejorar Propuesta con IA (Soporta Propuesta Existente, Importada desde fuera o Desde Cero) -->
+    <div id="modalMejoraIA" class="modal-bg" style="align-items:center;justify-content:center">
+        <div class="modal" style="max-width:680px;width:95%;max-height:92vh;overflow-y:auto;padding:1.5rem">
+            <!-- Header Modal -->
+            <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:.85rem;border-bottom:1px solid #E5E7EB;margin-bottom:1rem">
+                <div style="display:flex;align-items:center;gap:.65rem">
+                    <div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#7C3AED,#6D28D9);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.3rem">
+                        <i class="ph ph-magic-wand"></i>
+                    </div>
+                    <div>
+                        <h3 style="margin:0;font-size:1.05rem;font-weight:700;color:var(--s)">Optimizar Propuesta con Inteligencia Artificial</h3>
+                        <span style="font-size:.75rem;color:var(--l)">Mejora tu contenido actual, importa desde otra web o crea desde cero</span>
+                    </div>
+                </div>
+                <button type="button" class="btn bo btn-sm" onclick="cerrarModalMejoraIA()" style="border:none;font-size:1.1rem;color:var(--l);cursor:pointer">✕</button>
+            </div>
+
+            <!-- Selector de Pestañas / Casos de Uso -->
+            <div style="display:flex;gap:.4rem;background:#F1F5F9;padding:.3rem;border-radius:10px;margin-bottom:1.15rem">
+                <button type="button" class="plantillas-subtab-btn active" id="tabBtnModPropuesta" onclick="iaCambiarSubtabModal('propuesta')" style="flex:1;justify-content:center;font-size:.78rem">
+                    <i class="ph ph-file-text"></i> 1. Propuesta Actual
+                </button>
+                <button type="button" class="plantillas-subtab-btn" id="tabBtnModImportar" onclick="iaCambiarSubtabModal('importar')" style="flex:1;justify-content:center;font-size:.78rem">
+                    <i class="ph ph-download-simple"></i> 2. Traer de Otro Sitio
+                </button>
+                <button type="button" class="plantillas-subtab-btn" id="tabBtnModCero" onclick="iaCambiarSubtabModal('cero')" style="flex:1;justify-content:center;font-size:.78rem">
+                    <i class="ph ph-sparkle"></i> 3. Desde Cero
+                </button>
+            </div>
+
+            <!-- ════ CASO 1: MEJORAR PROPUESTA ACTUAL ════ -->
+            <div id="subtabModalPropuesta" style="display:block">
+                <!-- Info resumen de lo que hay en el editor -->
+                <div id="modalPropuestaResumen" style="background:#F5F3FF;border:1px solid #DDD6FE;border-radius:10px;padding:.75rem .9rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap">
+                    <div>
+                        <div style="font-size:.68rem;font-weight:700;color:#7C3AED;text-transform:uppercase;letter-spacing:.5px">Contenido Detectado en el Editor</div>
+                        <div style="font-size:.85rem;font-weight:700;color:#4C1D95" id="modalPropuestaTitulo">—</div>
+                        <div style="font-size:.73rem;color:#6B21A8" id="modalPropuestaStats">—</div>
+                    </div>
+                    <span style="font-size:.72rem;background:#EDE9FE;color:#6B21A8;border:1px solid #C4B5FD;padding:.2rem .55rem;border-radius:20px;font-weight:700" id="modalPropuestaBadge">Listo para mejorar</span>
+                </div>
+
+                <div style="font-size:.78rem;font-weight:700;color:var(--s);margin-bottom:.5rem">Selecciona qué deseas que la IA mejore en esta propuesta:</div>
+
+                <!-- Opciones tipo tarjeta -->
+                <div style="display:flex;flex-direction:column;gap:.5rem;margin-bottom:1.15rem">
+                    <label style="display:flex;align-items:flex-start;gap:.65rem;padding:.7rem .85rem;border:1.5px solid #DDD6FE;border-radius:10px;background:#FAF5FF;cursor:pointer;transition:all .15s">
+                        <input type="radio" name="optMejoraTipo" value="copywriting" checked style="accent-color:#7C3AED;margin-top:.2rem">
+                        <div>
+                            <strong style="display:block;font-size:.84rem;color:#4C1D95">🎯 Copywriting & Ventas de Alta Conversión (Recomendado)</strong>
+                            <span style="font-size:.74rem;color:var(--l);line-height:1.4;display:block;margin-top:.15rem">
+                                Mejora los títulos, llamados a WhatsApp, beneficios y textos persuasivos para enganchar y vender más, <strong>manteniendo 100% intacto el diseño, las fotos y el CSS</strong>.
+                            </span>
+                        </div>
+                    </label>
+
+                    <label style="display:flex;align-items:flex-start;gap:.65rem;padding:.7rem .85rem;border:1.5px solid #E2E8F0;border-radius:10px;background:#fff;cursor:pointer;transition:all .15s">
+                        <input type="radio" name="optMejoraTipo" value="modernizar" style="accent-color:#7C3AED;margin-top:.2rem">
+                        <div>
+                            <strong style="display:block;font-size:.84rem;color:var(--s)">✨ Modernizar Estructura y Limpiar Código</strong>
+                            <span style="font-size:.74rem;color:var(--l);line-height:1.4;display:block;margin-top:.15rem">
+                                Reorganiza las secciones, optimiza espaciados, elimina código innecesario y asegura que la propuesta se vea impecable en celulares.
+                            </span>
+                        </div>
+                    </label>
+
+                    <label style="display:flex;align-items:flex-start;gap:.65rem;padding:.7rem .85rem;border:1.5px solid #E2E8F0;border-radius:10px;background:#fff;cursor:pointer;transition:all .15s">
+                        <input type="radio" name="optMejoraTipo" value="marca" style="accent-color:#7C3AED;margin-top:.2rem">
+                        <div>
+                            <strong style="display:block;font-size:.84rem;color:var(--s)">🌿 Adaptar a la Identidad Flor de Chañar</strong>
+                            <span style="font-size:.74rem;color:var(--l);line-height:1.4;display:block;margin-top:.15rem">
+                                Ajusta la paleta de colores de la escuela (verde #687A61, crema #F5F0E8, dorado #D9A95B) y alinea el tono hacia terapias holísticas y bienestar.
+                            </span>
+                        </div>
+                    </label>
+
+                    <label style="display:flex;align-items:flex-start;gap:.65rem;padding:.7rem .85rem;border:1.5px solid #E2E8F0;border-radius:10px;background:#fff;cursor:pointer;transition:all .15s">
+                        <input type="radio" name="optMejoraTipo" value="faq" style="accent-color:#7C3AED;margin-top:.2rem">
+                        <div>
+                            <strong style="display:block;font-size:.84rem;color:var(--s)">❓ Agregar Sección de Preguntas Frecuentes (FAQ)</strong>
+                            <span style="font-size:.74rem;color:var(--l);line-height:1.4;display:block;margin-top:.15rem">
+                                Inserta un bloque elegante en acordeón con las 5 preguntas y respuestas más frecuentes antes del llamado a la acción final.
+                            </span>
+                        </div>
+                    </label>
+
+                    <label style="display:flex;align-items:flex-start;gap:.65rem;padding:.7rem .85rem;border:1.5px solid #E2E8F0;border-radius:10px;background:#fff;cursor:pointer;transition:all .15s">
+                        <input type="radio" name="optMejoraTipo" value="testimonios" style="accent-color:#7C3AED;margin-top:.2rem">
+                        <div>
+                            <strong style="display:block;font-size:.84rem;color:var(--s)">🌟 Agregar Muro de Testimonios y Garantía</strong>
+                            <span style="font-size:.74rem;color:var(--l);line-height:1.4;display:block;margin-top:.15rem">
+                                Suma prueba social con tarjetas de testimonios y un bloque de respaldo institucional.
+                            </span>
+                        </div>
+                    </label>
+
+                    <label style="display:flex;align-items:flex-start;gap:.65rem;padding:.7rem .85rem;border:1.5px solid #E2E8F0;border-radius:10px;background:#fff;cursor:pointer;transition:all .15s">
+                        <input type="radio" name="optMejoraTipo" value="custom" style="accent-color:#7C3AED;margin-top:.2rem">
+                        <div style="flex:1">
+                            <strong style="display:block;font-size:.84rem;color:var(--s)">✍️ Instrucción Personalizada</strong>
+                            <input type="text" id="iaModalCustomPrompt" class="pag-input" style="margin-top:.35rem;font-size:.78rem" placeholder="Ej: Cambia las fechas al 2027 y resalta que incluye certificación...">
+                        </div>
+                    </label>
+                </div>
+
+                <div style="display:flex;align-items:center;justify-content:space-between;padding-top:.85rem;border-top:1px solid #E5E7EB;flex-wrap:wrap;gap:.5rem">
+                    <span style="font-size:.73rem;color:var(--l)">Proveedor: <strong style="color:#7C3AED" id="iaModalProvActual">Gemini / Claude</strong></span>
+                    <button type="button" class="btn bp" id="btnEjecutarMejoraPropuesta" onclick="iaEjecutarMejoraPropuesta()" style="background:#7C3AED;border-color:#7C3AED;color:#fff;font-weight:700">
+                        <i class="ph ph-sparkle"></i> Mejorar Propuesta Ahora
+                    </button>
+                </div>
+            </div>
+
+            <!-- ════ CASO 2: TRAER DE OTRO SITIO / WORDPRESS ════ -->
+            <div id="subtabModalImportar" style="display:none">
+                <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:.75rem .9rem;margin-bottom:1rem">
+                    <strong style="color:#166534;font-size:.82rem;display:block">📥 Traer propuesta desde WordPress, otra web o un documento</strong>
+                    <span style="font-size:.74rem;color:#15803D;line-height:1.4;display:block;margin-top:.15rem">
+                        Pega abajo el código HTML copiado (de Elementor, Divi, WordPress) o simplemente el texto con títulos y temario. La IA limpiará el desorden y lo convertirá en una landing impecable.
+                    </span>
+                </div>
+
+                <div class="pag-field">
+                    <label class="pag-label">Pega el HTML o texto externo aquí:</label>
+                    <textarea id="iaImportTextarea" class="pag-input" style="height:190px;font-family:monospace;font-size:.78rem;line-height:1.4" placeholder="<div class='elementor-widget'>... o pega directamente el texto del curso que copiaste de otra página web"></textarea>
+                </div>
+
+                <div class="pag-field" style="margin-top:.65rem">
+                    <label class="pag-label">¿Cómo deseas que la IA lo procese?</label>
+                    <select id="iaImportModoProceso" class="pag-input" style="font-size:.82rem">
+                        <option value="landing_completa">✨ Convertir en Landing Page de Alta Conversión (Hero, Módulos, Beneficios, CTA Flor de Chañar)</option>
+                        <option value="limpiar_wp">🧹 Limpiar código (eliminar clases viejas de WP y dejar HTML semántico ordenado)</option>
+                        <option value="conservar_texto">📄 Conservar texto fiel pero con diseño visual moderno y responsive</option>
+                    </select>
+                </div>
+
+                <div style="display:flex;justify-content:flex-end;gap:.5rem;padding-top:.85rem;border-top:1px solid #E5E7EB;margin-top:.75rem">
+                    <button type="button" class="btn bp" id="btnEjecutarImportacionExterna" onclick="iaEjecutarImportacionExterna()" style="background:#059669;border-color:#059669;color:#fff;font-weight:700">
+                        <i class="ph ph-magic-wand"></i> Procesar y Cargar en el Editor
+                    </button>
+                </div>
+            </div>
+
+            <!-- ════ CASO 3: DESDE CERO ════ -->
+            <div id="subtabModalCero" style="display:none">
+                <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:.75rem .9rem;margin-bottom:1rem">
+                    <strong style="color:#1D4ED8;font-size:.82rem;display:block">🚀 Generar Landing Completa desde Cero</strong>
+                    <span style="font-size:.74rem;color:#1E40AF;line-height:1.4;display:block;margin-top:.15rem">
+                        Si no tienes nada escrito aún, solo completa los datos básicos y la IA redactará y diseñará la landing page completa con toda su estructura.
+                    </span>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem">
+                    <div class="pag-field" style="grid-column:1/-1">
+                        <label class="pag-label">Nombre del Curso / Taller / Servicio *</label>
+                        <input type="text" id="iaCeroTitulo" class="pag-input" placeholder="Ej: Diplomado en Flores de Bach y Terapia Floral Holística">
+                    </div>
+                    <div class="pag-field">
+                        <label class="pag-label">Sede / Modalidad</label>
+                        <select id="iaCeroSede" class="pag-input">
+                            <option value="Online en Vivo (Google Meet / Zoom)">Online en Vivo (Chile e Internacional)</option>
+                            <option value="Presencial Sede Calama">Presencial Sede Calama</option>
+                            <option value="Presencial Sede La Serena">Presencial Sede La Serena</option>
+                            <option value="Híbrido (Clases Online + Prácticas Presenciales)">Híbrido (Online + Prácticas)</option>
+                        </select>
+                    </div>
+                    <div class="pag-field">
+                        <label class="pag-label">Duración o Carga</label>
+                        <input type="text" id="iaCeroDuracion" class="pag-input" placeholder="Ej: 6 meses (72 horas) o 1 año">
+                    </div>
+                    <div class="pag-field" style="grid-column:1/-1">
+                        <label class="pag-label">Detalles clave / Público objetivo (Opcional)</label>
+                        <textarea id="iaCeroDetalles" class="pag-input" rows="2" placeholder="Ej: Para personas sin experiencia previa que deseen formarse como terapeutas, incluye certificación oficial..."></textarea>
+                    </div>
+                </div>
+
+                <div style="display:flex;justify-content:flex-end;gap:.5rem;padding-top:.85rem;border-top:1px solid #E5E7EB;margin-top:.75rem">
+                    <button type="button" class="btn bp" id="btnEjecutarDesdeCero" onclick="iaEjecutarDesdeCero()" style="background:#7C3AED;border-color:#7C3AED;color:#fff;font-weight:700">
+                        <i class="ph ph-sparkle"></i> Generar Landing Completa
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -4196,7 +4388,10 @@ function pagMostrarEditor(p) {
             </div>
             <div style="display:flex;gap:.45rem;align-items:center;flex-wrap:wrap">
                 <button type="button" class="btn bo btn-sm" onclick="switchSubtabPaginas('plantillas')" style="color:#7C3AED;border-color:#DDD6FE"><i class="ph ph-sparkle"></i> Ver Plantillas</button>
-                <button type="button" class="btn bo btn-sm" onclick="iaOpen()" style="color:#7C3AED;border-color:#DDD6FE"><i class="ph ph-sparkle"></i> IA</button>
+                <button type="button" class="btn bp btn-sm" onclick="iaAbrirMejoraPropuesta('propuesta')" style="background:linear-gradient(135deg,#7C3AED,#6D28D9);border-color:#7C3AED;color:#fff;font-weight:700;box-shadow:0 2px 8px rgba(124,58,237,.25)">
+                    <i class="ph ph-magic-wand"></i> Mejorar con IA
+                </button>
+                <button type="button" class="btn bo btn-sm" onclick="iaOpen()" style="color:#7C3AED;border-color:#DDD6FE"><i class="ph ph-sidebar"></i> Cajón IA</button>
                 ${p ? `<a href="${(p.slug==='terapia-emocional-evolutiva'?'/TerapiaEmocionalEvolutiva/':(p.slug==='metodo-mushuu'?'/metodo-mushuu/':'/p/'+p.slug))}" target="_blank" class="btn bo btn-sm" style="color:#0284C7;border-color:#BAE6FD"><i class="ph ph-eye"></i> Ver en vivo</a>` : ''}
                 ${(p && (p.slug==='terapia-emocional-evolutiva'||p.slug==='metodo-mushuu')) ? '' : `<button type="button" class="btn bd btn-sm" onclick="pagEliminar()" ${!p?'disabled':''}><i class="ph ph-trash"></i></button>`}
                 <button type="button" class="btn bp btn-sm" onclick="pagGuardar()" id="pagBtnGuardar" style="background:#7C3AED;border-color:#7C3AED"><i class="ph ph-floppy-disk"></i> Guardar</button>
@@ -4294,6 +4489,13 @@ function pagMostrarEditor(p) {
                     </button>` : ''}
                     <button id="btnModoQuill" type="button" class="editor-modo-btn ${initialMode==='quill'?'active':''}" onclick="setEditorModo('quill')" title="Editor de Texto Enriquecido estándar (artículos)">
                         <i class="ph ph-text-t"></i> Editor Texto
+                    </button>
+                    <span style="width:1px;height:18px;background:#E5E7EB;margin:0 2px"></span>
+                    <button type="button" class="editor-modo-btn" onclick="iaAbrirMejoraPropuesta('propuesta')" style="background:#FAF5FF;border-color:#C4B5FD;color:#6B21A8;font-weight:700" title="Pasar la propuesta actual por IA para mejorar copy, diseño o secciones">
+                        <i class="ph ph-magic-wand"></i> Mejorar Propuesta con IA
+                    </button>
+                    <button type="button" class="editor-modo-btn" onclick="iaAbrirMejoraPropuesta('importar')" style="border-color:#E2E8F0;color:var(--s)" title="Traer o pegar código/texto de WordPress u otra web">
+                        <i class="ph ph-download-simple"></i> Traer de Otro Sitio
                     </button>
                 </div>
             </div>
@@ -4523,12 +4725,313 @@ function _iaApplyContent(content, modo) {
     }
 }
 
+/* ── Modal de Optimización y Creación con IA ───────────────────────── */
+function iaAbrirMejoraPropuesta(tabInicial = 'auto') {
+    const rawContenido = _pagGetContenido();
+    const tieneContenido = rawContenido && rawContenido.trim().length > 25 && rawContenido.trim() !== '<p><br></p>';
+    const esLanding = _esLandingCompleta(rawContenido);
+
+    // Actualizar datos de la propuesta en el modal
+    const tit = document.getElementById('pagTitulo')?.value?.trim() || _pagActual?.titulo || 'Página Actual';
+    const titEl = document.getElementById('modalPropuestaTitulo');
+    const statsEl = document.getElementById('modalPropuestaStats');
+    const badgeEl = document.getElementById('modalPropuestaBadge');
+
+    if (titEl) titEl.textContent = tit;
+    if (statsEl) {
+        statsEl.textContent = tieneContenido
+            ? `${rawContenido.length.toLocaleString('es-CL')} caracteres · ${esLanding ? 'Landing Page Completa' : 'Contenido / Artículo'}`
+            : 'Sin contenido previo en el editor (Página en blanco)';
+    }
+    if (badgeEl) {
+        badgeEl.textContent = tieneContenido ? (esLanding ? '🌟 Landing Detectada' : '📄 Artículo Detectado') : '🌱 En Blanco';
+        badgeEl.style.background = tieneContenido ? '#EDE9FE' : '#F1F5F9';
+        badgeEl.style.color = tieneContenido ? '#6B21A8' : '#64748B';
+    }
+
+    // Actualizar proveedor actual en el modal
+    const provEl = document.getElementById('iaModalProvActual');
+    if (provEl) {
+        const provLabel = { claude:'Claude (Anthropic)', openai:'ChatGPT (OpenAI)', gemini:'Gemini (Google)', groq:'Groq (LLaMA)' }[_iaProveedor] || _iaProveedor;
+        provEl.textContent = provLabel;
+    }
+
+    // Decidir pestaña inicial
+    let targetTab = 'propuesta';
+    if (tabInicial === 'importar') targetTab = 'importar';
+    else if (tabInicial === 'cero') targetTab = 'cero';
+    else if (tabInicial === 'propuesta') targetTab = 'propuesta';
+    else if (!tieneContenido) targetTab = 'cero';
+
+    iaCambiarSubtabModal(targetTab);
+
+    // Abrir modal
+    const modal = document.getElementById('modalMejoraIA');
+    if (modal) modal.classList.add('open');
+}
+
+function cerrarModalMejoraIA() {
+    const modal = document.getElementById('modalMejoraIA');
+    if (modal) modal.classList.remove('open');
+}
+
+function iaCambiarSubtabModal(subtab) {
+    const tabP = document.getElementById('subtabModalPropuesta');
+    const tabI = document.getElementById('subtabModalImportar');
+    const tabC = document.getElementById('subtabModalCero');
+
+    const btnP = document.getElementById('tabBtnModPropuesta');
+    const btnI = document.getElementById('tabBtnModImportar');
+    const btnC = document.getElementById('tabBtnModCero');
+
+    [tabP, tabI, tabC].forEach(el => { if (el) el.style.display = 'none'; });
+    [btnP, btnI, btnC].forEach(el => { if (el) el.classList.remove('active'); });
+
+    if (subtab === 'propuesta') {
+        if (tabP) tabP.style.display = 'block';
+        if (btnP) btnP.classList.add('active');
+    } else if (subtab === 'importar') {
+        if (tabI) tabI.style.display = 'block';
+        if (btnI) btnI.classList.add('active');
+    } else if (subtab === 'cero') {
+        if (tabC) tabC.style.display = 'block';
+        if (btnC) btnC.classList.add('active');
+        // Pre-cargar título si ya se ingresó en el formulario
+        const tituloActual = document.getElementById('pagTitulo')?.value?.trim();
+        const inputCero = document.getElementById('iaCeroTitulo');
+        if (tituloActual && inputCero && !inputCero.value) inputCero.value = tituloActual;
+    }
+}
+
+async function iaEjecutarMejoraPropuesta() {
+    const rawContenido = _pagGetContenido();
+    if (!rawContenido || rawContenido.trim().length < 15) {
+        alert('El editor aún no tiene contenido cargado. Usa la pestaña "Desde Cero" o "Traer de Otro Sitio".');
+        iaCambiarSubtabModal('cero');
+        return;
+    }
+
+    const tipo = document.querySelector('input[name="optMejoraTipo"]:checked')?.value || 'copywriting';
+    const customText = document.getElementById('iaModalCustomPrompt')?.value?.trim();
+
+    let prompt = '';
+    if (tipo === 'copywriting') {
+        prompt = 'Optimiza y potencia al máximo el COPYWRITING de esta página: escribe títulos de gran impacto y ganchos de alta atención, destaca beneficios claros y profundos de aprendizaje y sanación, y haz los llamados a la acción (CTAs a WhatsApp o matrícula) altamente persuasivos. IMPORTANTE: Mantén 100% intactas las clases CSS, estructura visual y estilos, solo eleva la calidad, claridad y persuasión de los textos.';
+    } else if (tipo === 'modernizar') {
+        prompt = 'Moderniza y limpia la estructura de esta página: haz que el diseño sea fluido, elegante, ordenado, 100% responsivo para móviles y rápido de escanear visualmente. Optimiza espaciados, bloques y jerarquía tipográfica.';
+    } else if (tipo === 'marca') {
+        prompt = 'Adapta toda la propuesta a la identidad visual de la Escuela Flor de Chañar: colores oficiales verde #687A61 primario, crema #F5F0E8 de fondo, dorado #D9A95B de acento, navy #1E293B para textos oscuros, y un tono cálido, terapéutico, empático y profesional.';
+    } else if (tipo === 'faq') {
+        prompt = 'Agrega antes del llamado a la acción final una sección moderna de Preguntas Frecuentes (FAQ) en formato acordeón con las 5 preguntas y respuestas esenciales que resuelvan dudas de matrícula, fechas, modalidad y certificación.';
+    } else if (tipo === 'testimonios') {
+        prompt = 'Agrega una sección destacada de Testimonios y Prueba Social con valoraciones de 5 estrellas de alumnos y un bloque de garantía y respaldo de la Escuela Flor de Chañar.';
+    } else if (tipo === 'custom') {
+        if (!customText) { alert('Por favor escribe tu instrucción personalizada.'); return; }
+        prompt = customText;
+    }
+
+    const btn = document.getElementById('btnEjecutarMejoraPropuesta');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ph ph-spinner"></i> Mejorando propuesta con IA…';
+
+    try {
+        _iaPushUndo();
+        if (_iaUndoStack.length === 1) _iaOriginal = _iaUndoStack[0].content;
+
+        const tk = localStorage.getItem('token');
+        const res = await fetch('/api/admin/ia/pagina', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + tk, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                prompt,
+                contenido: rawContenido,
+                titulo: document.getElementById('pagTitulo')?.value || _pagActual?.titulo || '',
+                provider: _iaProveedor,
+                geminiModel: _iaGeminiModel
+            })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error procesando mejora');
+
+        _iaGenerado = data.html || '';
+        _iaApplyContent(_iaGenerado, _editorModo);
+
+        cerrarModalMejoraIA();
+        setEditorModo('preview');
+
+        const bar = document.getElementById('iaActionBar');
+        if (bar) { bar.style.display = 'flex'; _iaUpdateUndoBtn(); }
+
+        const saveMsg = document.getElementById('pagSaveMsg');
+        if (saveMsg) {
+            saveMsg.style.display = 'block';
+            saveMsg.innerHTML = `<div style="background:#ECFDF5;border:1px solid #A7F3D0;border-radius:8px;padding:.55rem .9rem;font-size:.82rem;color:#065F46">
+                ✨ ¡Propuesta optimizada con éxito! Revisa la vista previa y usa la barra superior para mantener o deshacer.</div>`;
+            setTimeout(() => { saveMsg.style.display = 'none'; }, 6000);
+        }
+    } catch(err) {
+        alert('Error al mejorar propuesta: ' + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="ph ph-sparkle"></i> Mejorar Propuesta Ahora';
+    }
+}
+
+async function iaEjecutarImportacionExterna() {
+    const rawExterno = document.getElementById('iaImportTextarea')?.value?.trim();
+    if (!rawExterno || rawExterno.length < 15) {
+        alert('Pega primero el código HTML o texto traído de otra página web.');
+        return;
+    }
+
+    const modo = document.getElementById('iaImportModoProceso')?.value || 'landing_completa';
+    let prompt = '';
+    if (modo === 'limpiar_wp') {
+        prompt = 'Limpia el siguiente contenido importado de WordPress/otra web: elimina shortcodes, clases de plugins viejos y estilos inline rotos. Organiza el contenido en HTML limpio, estructurado y semántico.';
+    } else if (modo === 'conservar_texto') {
+        prompt = 'Toma el siguiente contenido traído de otra web, conserva fielmente toda su información y textos, pero estrúcturalo en una página web moderna, atractiva y responsive.';
+    } else {
+        prompt = 'Toma el siguiente contenido traído de otra web externa o WordPress. Elimina clases obsoletas de WP y conviértelo en una Landing Page de Alta Conversión moderna, elegante y 100% responsiva para celulares, con Hero destacado, beneficios clave, temario modular y botón de contacto a WhatsApp, usando los colores de la marca Flor de Chañar (#687A61 primario, #F5F0E8 fondo, #D9A95B dorado).';
+    }
+
+    const btn = document.getElementById('btnEjecutarImportacionExterna');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ph ph-spinner"></i> Procesando contenido externo…';
+
+    try {
+        _iaPushUndo();
+        if (_iaUndoStack.length === 1) _iaOriginal = _iaUndoStack[0].content;
+
+        const tk = localStorage.getItem('token');
+        const res = await fetch('/api/admin/ia/pagina', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + tk, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                prompt,
+                contenido: rawExterno,
+                titulo: document.getElementById('pagTitulo')?.value || 'Landing Importada',
+                provider: _iaProveedor,
+                geminiModel: _iaGeminiModel
+            })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error importando');
+
+        _iaGenerado = data.html || '';
+        _iaApplyContent(_iaGenerado, _editorModo);
+
+        cerrarModalMejoraIA();
+        setEditorModo('preview');
+
+        const bar = document.getElementById('iaActionBar');
+        if (bar) { bar.style.display = 'flex'; _iaUpdateUndoBtn(); }
+
+        alert('✅ ¡Contenido externo procesado y cargado en el editor con éxito!');
+    } catch(err) {
+        alert('Error al procesar contenido externo: ' + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="ph ph-magic-wand"></i> Procesar y Cargar en el Editor';
+    }
+}
+
+async function iaEjecutarDesdeCero() {
+    const titulo = document.getElementById('iaCeroTitulo')?.value?.trim();
+    if (!titulo) { alert('Ingresa el nombre del curso, taller o servicio.'); return; }
+    const sede = document.getElementById('iaCeroSede')?.value || 'Online en Vivo';
+    const duracion = document.getElementById('iaCeroDuracion')?.value?.trim() || '6 meses';
+    const detalles = document.getElementById('iaCeroDetalles')?.value?.trim() || '';
+
+    // Autocompletar el título y slug del formulario principal si estaban vacíos
+    const mainTit = document.getElementById('pagTitulo');
+    if (mainTit && (!mainTit.value || mainTit.value === '—')) {
+        mainTit.value = titulo;
+        pagAutoSlug();
+    }
+
+    const prompt = `Crea desde cero una Landing Page completa y de alta conversión para la Escuela Flor de Chañar.
+Nombre del Programa: "${titulo}".
+Modalidad / Sede: "${sede}".
+Duración: "${duracion}".
+Detalles adicionales: "${detalles}".
+
+ESTRUCTURA OBLIGATORIA:
+1. Header / Barra con logo y botón de inscripción rápida.
+2. Hero de alto impacto visual con badge de convocatoria, título principal motivador, subtítulo de valor y botón CTA a WhatsApp.
+3. Cifras de autoridad (alumnos formados, experiencia, certificación).
+4. Pilares de aprendizaje o método terapéutico.
+5. Malla curricular modular (desglose temático atractivo).
+6. Metodología de clases prácticas y fechas.
+7. Sección de Director / Docente.
+8. Aranceles y formas de pago.
+9. Preguntas frecuentes en acordeón.
+10. Footer institucional.
+Aplica los colores de marca: verde #687A61, crema #F5F0E8, dorado #D9A95B y navy #1E293B.`;
+
+    const btn = document.getElementById('btnEjecutarDesdeCero');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ph ph-spinner"></i> Diseñando landing desde cero…';
+
+    try {
+        _iaPushUndo();
+        if (_iaUndoStack.length === 1) _iaOriginal = _iaUndoStack[0].content;
+
+        const tk = localStorage.getItem('token');
+        const res = await fetch('/api/admin/ia/pagina', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + tk, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                prompt,
+                contenido: '',
+                titulo,
+                provider: _iaProveedor,
+                geminiModel: _iaGeminiModel
+            })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error generando landing');
+
+        _iaGenerado = data.html || '';
+        _iaApplyContent(_iaGenerado, _editorModo);
+
+        cerrarModalMejoraIA();
+        setEditorModo('preview');
+
+        const bar = document.getElementById('iaActionBar');
+        if (bar) { bar.style.display = 'flex'; _iaUpdateUndoBtn(); }
+
+        alert('✨ ¡Landing completa generada desde cero con éxito!');
+    } catch(err) {
+        alert('Error al generar desde cero: ' + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="ph ph-sparkle"></i> Generar Landing Completa';
+    }
+}
+
 function iaOpen() {
     const d = document.getElementById('iaDrawer');
     d.classList.add('open');
     d.classList.remove('mini');
     document.querySelector('.main').classList.add('ia-active');
     iaCargarEstadoProveedores();
+
+    const statusEl = document.getElementById('iaDrawerPageStatus');
+    if (statusEl) {
+        const raw = _pagGetContenido();
+        if (raw && raw.trim().length > 25 && raw.trim() !== '<p><br></p>') {
+            const esLanding = _esLandingCompleta(raw);
+            statusEl.innerHTML = `<i class="ph ph-check-circle" style="color:#059669;font-size:1.05rem"></i> <span><strong>Propuesta detectada:</strong> La IA optimizará sobre el contenido actual (${raw.length.toLocaleString('es-CL')} caracteres · ${esLanding ? 'Landing' : 'Artículo'}).</span>`;
+            statusEl.style.background = '#ECFDF5';
+            statusEl.style.borderColor = '#A7F3D0';
+            statusEl.style.color = '#065F46';
+        } else {
+            statusEl.innerHTML = `<i class="ph ph-sparkle" style="color:#7C3AED;font-size:1.05rem"></i> <span><strong>Página en blanco:</strong> La IA creará una propuesta completa desde cero.</span>`;
+            statusEl.style.background = '#F5F3FF';
+            statusEl.style.borderColor = '#DDD6FE';
+            statusEl.style.color = '#5B21B6';
+        }
+    }
 }
 function iaClose(ev) {
     if (ev) ev.stopPropagation();

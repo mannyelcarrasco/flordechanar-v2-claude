@@ -6,6 +6,32 @@
 
 ## ✅ Avances completados
 
+### 🪄 Optimización de Propuestas con IA & Soporte Multiescenario (`admin.html`, `server.js`) (NUEVO)
+- [x] **Soporte Completo para los 3 Escenarios de Creación y Mejora:**
+  1. **📄 Si ya empezaste con el editor (Propuesta Existente):**
+     - Toma el contenido actual del editor y lo optimiza con inteligencia artificial según el objetivo elegido sin perder la estructura ni el diseño base.
+     - Presets a 1 clic:
+       * **🎯 Copywriting & Ventas de Alta Conversión:** Mejora titulares de impacto, ganchos de atención, claridad de beneficios y llamados a la acción (WhatsApp / matrícula), preservando 100% las hojas de estilo y clases CSS.
+       * **✨ Modernizar Estructura y Limpiar Código:** Reorganiza secciones, optimiza espaciados y fluidez en móviles.
+       * **🌿 Adaptar a la Marca Flor de Chañar:** Incorpora la paleta oficial (verde #687A61, crema #F5F0E8, dorado #D9A95B) y tono holístico profesional.
+       * **❓ Agregar Sección de Preguntas Frecuentes (FAQ):** Inserta un acordeón moderno con las 5 dudas y respuestas esenciales.
+       * **🌟 Agregar Muro de Testimonios y Garantía:** Añade prueba social y respaldo institucional de la escuela.
+       * **✍️ Instrucción Personalizada:** Campo libre para pedir ajustes específicos en lenguaje natural.
+  2. **📥 Si te traes la página desde otro lugar (WordPress / Elementor / Texto / Otra Web):**
+     - Nuevo panel de importación asistida: permite pegar el HTML copiado de WordPress/Wix o simplemente un texto con el temario.
+     - La IA elimina código sucio, clases obsoletas y shortcodes, estructurándolo como una Landing Page limpia, responsive y con los colores de Flor de Chañar.
+  3. **🌱 Si comienzas desde cero (Página en Blanco):**
+     - Permite ingresar el nombre del programa, sede/modalidad (Online, Calama, La Serena), duración y público objetivo.
+     - La IA redacta y diseña la landing completa con Hero, Pilares, Malla Curricular, Director, Aranceles y CTA a WhatsApp.
+- [x] **Backend & API (`server.js`):**
+  - Detección inteligente de tipo de documento (`esDocumentoCompleto`): si el HTML contiene `<!DOCTYPE` o `<html>`, el sistema preserva la estructura completa, las hojas de estilo `<style>`, tipografías y scripts, evitando que la IA corte o mutile el diseño.
+  - Ampliación del límite de contexto a 60.000 caracteres (evitando truncamiento en landings extensas).
+  - Aumento de límite de salida a 8.192 tokens en Gemini, Claude y OpenAI para permitir landings íntegras.
+- [x] **Interfaz de Usuario & Accesos Rápidos (`public/admin.html`):**
+  - Nuevo botón principal **`[🪄 Mejorar con IA]`** en la cabecera del editor.
+  - Botones directos **`[🪄 Mejorar Propuesta con IA]`** y **`[📥 Traer de Otro Sitio]`** en la barra de modos.
+  - Modal interactivo con selector de 3 pestañas, diagnóstico de caracteres en vivo y barra de acciones para mantener o deshacer con 1 clic (`_iaUndoStack`).
+
 ### 🖥️ Rediseño y Optimización Integral del Editor de Páginas & Landings (`admin.html`, `server.js`, `pagina.html`) (NUEVO)
 - [x] **Diagnóstico del Fallo de Visualización y Destrucción de Código:**
   - **Causa 1 (Pérdida de estilos e imágenes rotas en la vista previa):** La previsualización anterior inyectaba el HTML en un simple contenedor `<div>` (`pagVistaPrevia.innerHTML = ...`). Al no poseer aislamiento ni etiqueta `<base href="...">`, las rutas relativas (`assets/img/logo-eti.jpg`, `css/styles.css`, `img/...`) intentaban resolverse contra `/admin.html`, provocando iconos de imagen rota, tipografías planas y ausencia total de hojas de estilo.
