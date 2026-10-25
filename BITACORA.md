@@ -1,10 +1,35 @@
 # 📋 Bitácora del Proyecto — Flor de Chañar v2
 **Repositorio:** [mannyelcarrasco/flordechanar-v2-claude](https://github.com/mannyelcarrasco/flordechanar-v2-claude)  
-**Última actualización:** 2026-10-24
+**Última actualización:** 2026-10-25
 
 ---
 
 ## ✅ Avances completados
+
+### 🖥️ Rediseño y Optimización Integral del Editor de Páginas & Landings (`admin.html`, `server.js`, `pagina.html`) (NUEVO)
+- [x] **Diagnóstico del Fallo de Visualización y Destrucción de Código:**
+  - **Causa 1 (Pérdida de estilos e imágenes rotas en la vista previa):** La previsualización anterior inyectaba el HTML en un simple contenedor `<div>` (`pagVistaPrevia.innerHTML = ...`). Al no poseer aislamiento ni etiqueta `<base href="...">`, las rutas relativas (`assets/img/logo-eti.jpg`, `css/styles.css`, `img/...`) intentaban resolverse contra `/admin.html`, provocando iconos de imagen rota, tipografías planas y ausencia total de hojas de estilo.
+  - **Causa 2 (Mutilación del HTML por Quill):** Al cargar una landing page completa en el editor de texto Quill (`new Quill()`), la librería sanitizaba y eliminaba etiquetas fundamentales como `<!DOCTYPE>`, `<head>`, `<style>`, `<header>`, `<nav>`, `<section>`, SVG y clases CSS avanzadas. Al hacer clic en Guardar, la landing quedaba arruinada irreversiblemente.
+  - **Causa 3 (Sin soporte de dispositivos):** No existía forma de comprobar cómo lucía la landing en smartphones (celulares) ni tablets.
+- [x] **Arquitectura de Previsualización de Alta Fidelidad (`admin.html`):**
+  - **Iframe Aislado en Sandbox:** La vista previa ahora se procesa dentro de un `<iframe>` aislado que inyecta automáticamente la etiqueta `<base href="...">` correspondiente según el slug o plantilla (`/TerapiaEmocionalEvolutiva/`, `/metodo-mushuu/`, `/plantillas/...` o `/`). Todas las imágenes, fuentes tipográficas de Google Fonts, estilos CSS, botones y animaciones renderizan con fidelidad absoluta al 100%.
+  - **Barra de Dispositivos Responsive:** Selector rápido en la cabecera para alternar entre:
+    - 🖥️ **Escritorio:** ancho completo (100%).
+    - 💻 **Tablet:** marco de 768px centrado con sombras.
+    - 📱 **Celular / Smartphone:** marco de 390px con estética de dispositivo móvil.
+  - **Herramientas:** Botón para **Refrescar** y botón para **Abrir en Pestaña Nueva** directa.
+- [x] **Edición en Pantalla (Click-to-Edit en Vivo) & Campos Rápidos (`admin.html`):**
+  - **Interruptor de Edición en Pantalla (`contenteditable`):** Al activarse, los títulos, subtítulos, párrafos, badges y botones dentro del iframe se iluminan con un contorno interactivo al pasar el mouse. El administrador puede hacer clic sobre cualquier texto en la landing real, corregirlo directamente en pantalla y los cambios se sincronizan en caliente hacia el código HTML sin tocar una sola etiqueta.
+  - **Panel de Campos Rápidos:** Formulario desplegable que detecta y permite cambiar en 1 clic el **Título Hero H1**, **Subtítulo / Bajada**, **Fecha de Convocatoria** y **WhatsApp de Contacto**.
+- [x] **Vista Dividida (Split View) & Editor de Código Mejorado (`admin.html`):**
+  - **Modo Vista Dividida:** Panel de dos columnas que muestra el editor de código HTML a la izquierda y la vista previa en vivo a la derecha, con sincronización automática mediante *debounce*.
+  - **Formateador HTML:** Botón *"✨ Formatear HTML"* que indenta ordenadamente el código.
+  - **Botón Copiar:** Copia el código limpio completo al portapapeles en 1 clic.
+- [x] **Protección Inteligente de Landings contra Quill (`admin.html`):**
+  - Detección automática `_esLandingCompleta()`. Si una página es una landing, el editor abre por defecto la **Vista Previa en Vivo** y muestra una advertencia de seguridad si se intenta abrir el editor de texto básico (Quill), evitando la corrupción accidental del diseño.
+- [x] **Soporte Servidor y Frontend para Landings en `/p/:slug` (`server.js`, `pagina.html`):**
+  - En `server.js`, el endpoint `GET /p/:slug` detecta si la página solicitada es una landing page completa y la sirve directamente inyectando su `<base href="...">` adecuado, logrando que cualquier landing clonada o personalizada funcione de inmediato.
+  - En `pagina.html`, si la carga se realiza vía SPA/fetch, reemplaza el documento nativamente con `document.open() / document.write()` para preservar el rendimiento, estilos y scripts.
 
 ### 🚀 Integración Total de Landings Oficiales: Edición Directa en CMS y Selector Visual en Cursos (`server.js`, `admin.html`, `curso-crear.html`) (NUEVO)
 - [x] **Disponibilidad y Edición Directa de las Landings Oficiales en el Admin:**

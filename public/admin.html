@@ -172,6 +172,17 @@
         .editor-modo-btn{padding:.3rem .75rem;font-size:.77rem;font-weight:600;border:1.5px solid #E5E7EB;border-radius:var(--rf);background:#fff;cursor:pointer;color:var(--s);transition:all .15s;font-family:var(--f);display:inline-flex;align-items:center;gap:.3rem}
         .editor-modo-btn.active{background:#7C3AED;color:#fff;border-color:#7C3AED}
         .editor-modo-btn:hover:not(.active){border-color:#DDD6FE;color:#7C3AED}
+
+        /* Barra de Dispositivos y Herramientas del Editor de Páginas */
+        .btn-device{padding:.26rem .65rem;font-size:.73rem;font-weight:600;border:1.5px solid #E2E8F0;border-radius:6px;background:#fff;cursor:pointer;color:var(--s);transition:all .15s;display:inline-flex;align-items:center;gap:.3rem}
+        .btn-device.active{background:#7C3AED;color:#fff;border-color:#7C3AED}
+        .btn-device:hover:not(.active){border-color:#DDD6FE;color:#7C3AED}
+        .btn-preview-tool{padding:.26rem .65rem;font-size:.73rem;font-weight:600;border:1.5px solid #E2E8F0;border-radius:6px;background:#fff;cursor:pointer;color:var(--s);transition:all .15s;display:inline-flex;align-items:center;gap:.3rem}
+        .btn-preview-tool:hover{border-color:#DDD6FE;color:#7C3AED;background:#FAF5FF}
+        .code-toolbar-btn{padding:.24rem .55rem;font-size:.72rem;font-weight:600;border:1px solid #475569;border-radius:5px;background:#334155;color:#E2E8F0;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:.3rem}
+        .code-toolbar-btn:hover{background:#475569;color:#fff}
+        .split-view-container{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;min-height:580px}
+        @media(max-width:960px){.split-view-container{grid-template-columns:1fr}}
         /* Panel lista páginas colapsable */
         #pagMainGrid{transition:grid-template-columns .25s ease}
         #pagListPanel{transition:opacity .2s ease,min-width .25s ease}
@@ -3482,7 +3493,9 @@ async function editarLandingOficial(templateId) {
             if (slugEl) slugEl.value = slug;
             const code = document.getElementById('pagCodigoHTML');
             if (code) code.value = d.html || '';
-            setEditorModo('codigo');
+            const splitCode = document.getElementById('pagSplitCodigo');
+            if (splitCode) splitCode.value = d.html || '';
+            setEditorModo('preview');
         } catch(e) {
             alert('Error al abrir la landing: ' + e.message);
         }
@@ -3520,13 +3533,10 @@ async function usarPlantillaComoBase(templateId) {
         // Cargar HTML en el editor de código
         const code = document.getElementById('pagCodigoHTML');
         if (code) code.value = data.html;
+        const splitCode = document.getElementById('pagSplitCodigo');
+        if (splitCode) splitCode.value = data.html;
 
-        // Si estamos en modo Quill, sincronizar
-        if (_editorModo === 'quill' && _pagQuill) {
-            _pagQuill.clipboard.dangerouslyPasteHTML(data.html);
-        } else {
-            setEditorModo('codigo');
-        }
+        setEditorModo('preview');
 
         const msg = document.getElementById('pagSaveMsg');
         if (msg) {
@@ -3580,10 +3590,26 @@ function mostrarVariablesPlantilla(templateId) {
     document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
 
-/* ── Quill & Editor Limpio ───────────────────── */
+/* ── Editor de Páginas & Landings de Alta Fidelidad ─────────────── */
+
+let _previewDevice = 'desktop';
+let _splitDebounceTimer = null;
+
+function _esLandingCompleta(html) {
+    if (!html) return false;
+    const lower = String(html).toLowerCase();
+    return lower.includes('<!doctype') ||
+           lower.includes('<html') ||
+           lower.includes('<header') ||
+           lower.includes('class="hero') ||
+           lower.includes('class="seccion') ||
+           lower.includes('class="nav') ||
+           lower.includes('id="inicio"');
+}
+
 function _initQuill() {
     if (_pagQuill) return;
-    document.querySelectorAll('#editorQuillSection .ql-toolbar').forEach(el => el.remove());
+    document.querySelectorAll('#pagQuillSection .ql-toolbar').forEach(el => el.remove());
     const cont = document.getElementById('pagEditorQuill');
     if (cont) { cont.className = ''; cont.innerHTML = ''; }
     _pagQuill = new Quill('#pagEditorQuill', {
@@ -3603,57 +3629,391 @@ function _initQuill() {
     });
 }
 
+function setPreviewDevice(device) {
+    _previewDevice = device;
+    const wrapper = document.getElementById('pagPreviewFrameWrapper');
+    const btnD = document.getElementById('btnDevDesktop');
+    const btnT = document.getElementById('btnDevTablet');
+    const btnM = document.getElementById('btnDevMobile');
+
+    [btnD, btnT, btnM].forEach(b => b?.classList.remove('active'));
+    if (!wrapper) return;
+
+    if (device === 'desktop') {
+        btnD?.classList.add('active');
+        wrapper.style.width = '100%';
+        wrapper.style.maxWidth = '100%';
+        wrapper.style.borderRadius = '8px';
+        wrapper.style.boxShadow = '0 10px 25px rgba(0,0,0,.2)';
+    } else if (device === 'tablet') {
+        btnT?.classList.add('active');
+        wrapper.style.width = '768px';
+        wrapper.style.maxWidth = '100%';
+        wrapper.style.borderRadius = '14px';
+        wrapper.style.boxShadow = '0 12px 30px rgba(0,0,0,.35)';
+    } else if (device === 'mobile') {
+        btnM?.classList.add('active');
+        wrapper.style.width = '390px';
+        wrapper.style.maxWidth = '100%';
+        wrapper.style.borderRadius = '24px';
+        wrapper.style.boxShadow = '0 0 0 8px #334155, 0 16px 36px rgba(0,0,0,.45)';
+    }
+}
+
+function _obtenerBaseHref(rawHtml, slug) {
+    const s = slug || document.getElementById('pagSlug')?.value?.trim() || (_pagActual?.slug || '');
+    const lower = (rawHtml + ' ' + s).toLowerCase();
+    if (s === 'terapia-emocional-evolutiva' || lower.includes('terapia emocional evolutiva') || lower.includes('t.e.e.')) {
+        return '/TerapiaEmocionalEvolutiva/';
+    } else if (s === 'metodo-mushuu' || lower.includes('método mushuu') || lower.includes('metodo mushuu') || lower.includes('masoterapia')) {
+        return '/metodo-mushuu/';
+    } else if (lower.includes('diplomado-holistico')) {
+        return '/plantillas/diplomado-holistico/';
+    } else if (lower.includes('academia-terapias')) {
+        return '/plantillas/academia-terapias/';
+    }
+    return '/';
+}
+
+function renderizarPreviewIframe(isLiveEditable = false) {
+    const iframe = document.getElementById('pagPreviewIframe');
+    if (!iframe) return;
+
+    const rawHtml = _pagGetContenido();
+    const baseHref = _obtenerBaseHref(rawHtml);
+
+    let processed = rawHtml || '<div style="font-family:sans-serif;padding:3rem 1rem;text-align:center;color:#64748B"><h3 style="margin-bottom:.5rem">Página en Blanco</h3><p style="font-size:.9rem">Escribe código HTML o clona una Plantilla Maestra para comenzar.</p></div>';
+
+    // Inyectar etiqueta <base> para que stylesheets e imágenes relativas resuelvan 100% fieles
+    if (!processed.includes('<base ') && !processed.includes('<base>')) {
+        if (processed.includes('<head>')) {
+            processed = processed.replace('<head>', `<head><base href="${baseHref}">`);
+        } else if (processed.includes('<head ')) {
+            processed = processed.replace(/<head[^>]*>/i, `$&<base href="${baseHref}">`);
+        } else {
+            processed = `<head><base href="${baseHref}"></head>` + processed;
+        }
+    }
+
+    if (isLiveEditable) {
+        const editStyle = `
+            <style id="__admin_edit_styles">
+                [contenteditable="true"] { outline: 1.5px dashed rgba(124,58,237,.35) !important; outline-offset: 2px !important; transition: all .15s !important; border-radius: 4px; }
+                [contenteditable="true"]:hover { outline: 2px dashed #7C3AED !important; background: rgba(124,58,237,.06) !important; cursor: text !important; }
+                [contenteditable="true"]:focus { outline: 2px solid #7C3AED !important; background: rgba(124,58,237,.1) !important; }
+            </style>
+        `;
+        if (processed.includes('</head>')) {
+            processed = processed.replace('</head>', `${editStyle}</head>`);
+        } else {
+            processed = editStyle + processed;
+        }
+    }
+
+    try {
+        const doc = iframe.contentDocument || iframe.contentWindow.document;
+        doc.open();
+        doc.write(processed);
+        doc.close();
+
+        if (isLiveEditable) {
+            setTimeout(() => _conectarInlineEdit(iframe), 120);
+        }
+    } catch(err) {
+        console.warn('Aviso renderizando iframe preview:', err);
+    }
+}
+
+function _conectarInlineEdit(iframe) {
+    try {
+        const doc = iframe.contentDocument || iframe.contentWindow.document;
+        if (!doc || !doc.body) return;
+
+        const editableTags = 'h1, h2, h3, h4, h5, h6, p, .extracto, .hero__title, .hero__desc, .hero__badge-text, .nav__cta, .btn, .precio, .arancel-monto, .fecha, [data-editable]';
+        const els = doc.querySelectorAll(editableTags);
+        els.forEach(el => {
+            el.setAttribute('contenteditable', 'true');
+            el.setAttribute('spellcheck', 'false');
+
+            const onEdit = () => {
+                _sincronizarIframeHaciaCodigo(doc);
+            };
+            el.addEventListener('input', onEdit);
+            el.addEventListener('blur', onEdit);
+        });
+    } catch(e) {
+        console.warn('Aviso en inline edit hook:', e);
+    }
+}
+
+function _sincronizarIframeHaciaCodigo(doc) {
+    try {
+        let cleanHtml = doc.documentElement.outerHTML;
+        cleanHtml = cleanHtml.replace(/<style id="__admin_edit_styles">[\s\S]*?<\/style>/i, '');
+        cleanHtml = cleanHtml.replace(/\s*contenteditable="true"/gi, '');
+        cleanHtml = cleanHtml.replace(/\s*spellcheck="false"/gi, '');
+        cleanHtml = cleanHtml.replace(/<base href="[^"]*">/gi, '');
+
+        const code = document.getElementById('pagCodigoHTML');
+        if (code) {
+            code.value = '<!DOCTYPE html>\n' + cleanHtml.trim();
+        }
+        const splitCode = document.getElementById('pagSplitCodigo');
+        if (splitCode) {
+            splitCode.value = '<!DOCTYPE html>\n' + cleanHtml.trim();
+        }
+
+        const status = document.getElementById('inlineEditStatus');
+        if (status) {
+            status.style.display = 'inline-flex';
+            status.textContent = '✓ Cambios de texto sincronizados';
+            clearTimeout(window._inlineEditTimer);
+            window._inlineEditTimer = setTimeout(() => { status.style.display = 'none'; }, 2500);
+        }
+    } catch(e) {
+        console.warn('Error sincronizando iframe hacia código:', e);
+    }
+}
+
+function toggleInlineEdit(enabled) {
+    renderizarPreviewIframe(enabled);
+}
+
+function recargarPreviewIframe() {
+    const isLive = document.getElementById('chkInlineEdit')?.checked || false;
+    renderizarPreviewIframe(isLive);
+}
+
+function abrirPreviewPestana() {
+    const rawHtml = _pagGetContenido();
+    const baseHref = _obtenerBaseHref(rawHtml);
+    let processed = rawHtml;
+    if (!processed.includes('<base ') && !processed.includes('<base>')) {
+        if (processed.includes('<head>')) processed = processed.replace('<head>', `<head><base href="${baseHref}">`);
+        else if (processed.includes('<head ')) processed = processed.replace(/<head[^>]*>/i, `$&<base href="${baseHref}">`);
+        else processed = `<head><base href="${baseHref}"></head>` + processed;
+    }
+    const blob = new Blob([processed], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+}
+
+function _initSplitView() {
+    const code = document.getElementById('pagCodigoHTML');
+    const splitCode = document.getElementById('pagSplitCodigo');
+    if (code && splitCode) {
+        splitCode.value = code.value;
+    }
+    _renderizarSplitIframe();
+}
+
+function onSplitCodeInput() {
+    const splitCode = document.getElementById('pagSplitCodigo');
+    const code = document.getElementById('pagCodigoHTML');
+    if (splitCode && code) {
+        code.value = splitCode.value;
+    }
+    clearTimeout(_splitDebounceTimer);
+    _splitDebounceTimer = setTimeout(() => {
+        _renderizarSplitIframe();
+    }, 350);
+}
+
+function _renderizarSplitIframe() {
+    const iframe = document.getElementById('pagSplitIframe');
+    if (!iframe) return;
+    const splitCode = document.getElementById('pagSplitCodigo');
+    const rawHtml = splitCode ? splitCode.value : _pagGetContenido();
+    const baseHref = _obtenerBaseHref(rawHtml);
+
+    let processed = rawHtml || '<p style="padding:2rem;text-align:center;color:#64748B">Sin contenido</p>';
+    if (!processed.includes('<base ') && !processed.includes('<base>')) {
+        if (processed.includes('<head>')) processed = processed.replace('<head>', `<head><base href="${baseHref}">`);
+        else if (processed.includes('<head ')) processed = processed.replace(/<head[^>]*>/i, `$&<base href="${baseHref}">`);
+        else processed = `<head><base href="${baseHref}"></head>` + processed;
+    }
+
+    try {
+        const doc = iframe.contentDocument || iframe.contentWindow.document;
+        doc.open();
+        doc.write(processed);
+        doc.close();
+    } catch(e) {}
+}
+
+function formatearCodigoHTML() {
+    const code = document.getElementById('pagCodigoHTML');
+    const splitCode = document.getElementById('pagSplitCodigo');
+    if (!code && !splitCode) return;
+    const target = (splitCode && splitCode.offsetParent) ? splitCode : code;
+    let html = target.value;
+    if (!html.trim()) return;
+
+    // Formateador simple y seguro de etiquetas HTML
+    let tab = '  ';
+    let result = '';
+    let indent = 0;
+
+    html.split(/>\s*</).forEach(element => {
+        if (element.match(/^\/\w/)) indent--;
+        result += '\n' + tab.repeat(Math.max(0, indent)) + '<' + element + '>';
+        if (element.match(/^<?\w[^>]*[^\/]$/) && !element.startsWith('input') && !element.startsWith('img') && !element.startsWith('br') && !element.startsWith('hr') && !element.startsWith('meta') && !element.startsWith('link')) {
+            indent++;
+        }
+    });
+
+    target.value = result.substring(1);
+    if (code) code.value = target.value;
+    if (splitCode) splitCode.value = target.value;
+}
+
+function copiarCodigoHTML() {
+    const code = document.getElementById('pagCodigoHTML');
+    if (!code) return;
+    navigator.clipboard.writeText(code.value).then(() => {
+        alert('📋 ¡Código HTML copiado al portapapeles!');
+    }).catch(() => {
+        code.select();
+        document.execCommand('copy');
+        alert('📋 ¡Código HTML copiado al portapapeles!');
+    });
+}
+
+function toggleCamposRapidosModal() {
+    const pnl = document.getElementById('panelCamposRapidos');
+    if (!pnl) return;
+    const isVis = pnl.style.display !== 'none';
+    if (isVis) {
+        pnl.style.display = 'none';
+    } else {
+        pnl.style.display = 'block';
+        _cargarValoresEnCamposRapidos();
+    }
+}
+
+function _cargarValoresEnCamposRapidos() {
+    const html = _pagGetContenido();
+    // Extraer valores con regex inteligentes
+    const h1Match = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+    const pDescMatch = html.match(/<(?:p|div)[^>]*class="[^"]*(?:hero__desc|extracto|subtitulo)[^"]*"[^>]*>([\s\S]*?)<\/(?:p|div)>/i);
+    const dateMatch = html.match(/<(?:span|div|p)[^>]*class="[^"]*(?:badge|fecha|convocatoria)[^"]*"[^>]*>([\s\S]*?)<\/(?:span|div|p)>/i);
+    const waMatch = html.match(/href="https:\/\/(?:wa\.me|api\.whatsapp\.com\/send\?phone=)(\d+)/i);
+
+    const fldH1 = document.getElementById('qrHeroTitle');
+    const fldDesc = document.getElementById('qrHeroDesc');
+    const fldDate = document.getElementById('qrHeroDate');
+    const fldWa = document.getElementById('qrHeroWa');
+
+    if (fldH1) fldH1.value = h1Match ? h1Match[1].replace(/<[^>]+>/g, '').trim() : '';
+    if (fldDesc) fldDesc.value = pDescMatch ? pDescMatch[1].replace(/<[^>]+>/g, '').trim() : '';
+    if (fldDate) fldDate.value = dateMatch ? dateMatch[1].replace(/<[^>]+>/g, '').trim() : '';
+    if (fldWa) fldWa.value = waMatch ? waMatch[1] : '56984281226';
+}
+
+function aplicarCamposRapidos() {
+    let html = _pagGetContenido();
+    const newH1 = document.getElementById('qrHeroTitle')?.value?.trim();
+    const newDesc = document.getElementById('qrHeroDesc')?.value?.trim();
+    const newDate = document.getElementById('qrHeroDate')?.value?.trim();
+    const newWa = document.getElementById('qrHeroWa')?.value?.trim();
+
+    if (newH1 && html.match(/<h1[^>]*>[\s\S]*?<\/h1>/i)) {
+        html = html.replace(/(<h1[^>]*>)[\s\S]*?(<\/h1>)/i, `$1${escH(newH1)}$2`);
+    }
+    if (newDesc && html.match(/<(?:p|div)[^>]*class="[^"]*(?:hero__desc|extracto|subtitulo)[^"]*"[^>]*>[\s\S]*?<\/(?:p|div)>/i)) {
+        html = html.replace(/(<(?:p|div)[^>]*class="[^"]*(?:hero__desc|extracto|subtitulo)[^"]*"[^>]*>)[\s\S]*?(<\/(?:p|div)>)/i, `$1${escH(newDesc)}$2`);
+    }
+    if (newDate && html.match(/<(?:span|div|p)[^>]*class="[^"]*(?:badge|fecha|convocatoria)[^"]*"[^>]*>[\s\S]*?<\/(?:span|div|p)>/i)) {
+        html = html.replace(/(<(?:span|div|p)[^>]*class="[^"]*(?:badge|fecha|convocatoria)[^"]*"[^>]*>)[\s\S]*?(<\/(?:span|div|p)>)/i, `$1${escH(newDate)}$2`);
+    }
+    if (newWa) {
+        html = html.replace(/https:\/\/(?:wa\.me|api\.whatsapp\.com\/send\?phone=)\d+/g, `https://wa.me/${newWa}`);
+    }
+
+    const code = document.getElementById('pagCodigoHTML');
+    if (code) code.value = html;
+    const splitCode = document.getElementById('pagSplitCodigo');
+    if (splitCode) splitCode.value = html;
+
+    toggleCamposRapidosModal();
+    if (_editorModo === 'preview') renderizarPreviewIframe(document.getElementById('chkInlineEdit')?.checked || false);
+    if (_editorModo === 'split') _renderizarSplitIframe();
+
+    alert('✨ ¡Campos aplicados a la Landing con éxito!');
+}
+
 function setEditorModo(modo) {
     _editorModo = modo;
     localStorage.setItem('editor_modo', modo);
 
-    const prev  = document.getElementById('pagVistaPrevia');
-    const code  = document.getElementById('pagCodigoHTML');
-    const quill = document.getElementById('pagEditorQuill');
-    const btnV  = document.getElementById('btnVistaPrevia');
-    const btnC  = document.getElementById('btnCodigo');
-    const btnQ  = document.getElementById('btnModoQuill');
-    const qtb   = document.querySelector('.ql-toolbar');
+    const prevSection  = document.getElementById('pagPreviewSection');
+    const codeArea     = document.getElementById('pagCodigoSection');
+    const quillSection = document.getElementById('pagQuillSection');
+    const splitSection = document.getElementById('pagSplitSection');
 
-    if (modo === 'codigo') {
-        if (_pagQuill && code && quill && quill.style.display !== 'none') code.value = _pagQuill.root.innerHTML;
-        if (code) code.style.display = 'block';
-        if (quill) quill.style.display = 'none';
-        if (prev) prev.style.display = 'none';
-        if (qtb) qtb.style.display = 'none';
-        if (btnC) btnC.classList.add('active');
-        if (btnV) btnV.classList.remove('active');
-        if (btnQ) btnQ?.classList.remove('active');
-    } else if (modo === 'preview') {
-        if (prev) {
-            prev.innerHTML = _pagGetContenido();
-            prev.style.display = 'block';
+    const btnV = document.getElementById('btnVistaPrevia');
+    const btnC = document.getElementById('btnCodigo');
+    const btnQ = document.getElementById('btnModoQuill');
+    const btnS = document.getElementById('btnSplit');
+
+    [btnV, btnC, btnQ, btnS].forEach(b => b?.classList.remove('active'));
+
+    if (prevSection)  prevSection.style.display  = 'none';
+    if (codeArea)     codeArea.style.display     = 'none';
+    if (quillSection) quillSection.style.display = 'none';
+    if (splitSection) splitSection.style.display = 'none';
+
+    const raw = _pagGetContenido();
+    const isLanding = _esLandingCompleta(raw);
+
+    if (modo === 'preview') {
+        btnV?.classList.add('active');
+        if (prevSection) {
+            prevSection.style.display = 'block';
+            const isLive = document.getElementById('chkInlineEdit')?.checked || false;
+            renderizarPreviewIframe(isLive);
         }
-        if (code) code.style.display = 'none';
-        if (quill) quill.style.display = 'none';
-        if (qtb) qtb.style.display = 'none';
-        if (btnV) btnV.classList.add('active');
-        if (btnC) btnC.classList.remove('active');
-        if (btnQ) btnQ?.classList.remove('active');
-    } else { // quill
-        if (code && code.style.display !== 'none' && _pagQuill) {
-            _pagQuill.clipboard.dangerouslyPasteHTML(code.value);
+    } else if (modo === 'split') {
+        btnS?.classList.add('active');
+        if (splitSection) {
+            splitSection.style.display = 'grid';
+            _initSplitView();
         }
-        if (code) code.style.display = 'none';
-        if (prev) prev.style.display = 'none';
-        if (quill) quill.style.display = 'block';
-        if (qtb) qtb.style.display = 'block';
-        if (btnQ) btnQ?.classList.add('active');
-        if (btnC) btnC.classList.remove('active');
-        if (btnV) btnV.classList.remove('active');
+    } else if (modo === 'codigo') {
+        btnC?.classList.add('active');
+        if (codeArea) codeArea.style.display = 'block';
+    } else if (modo === 'quill') {
+        if (isLanding) {
+            if (!confirm('⚠️ Advertencia: Esta página es una Landing Page completa con grillas y hojas de estilo avanzadas.\n\nEl editor de texto simple (Quill) puede eliminar etiquetas y clases CSS complejas del diseño.\n\n¿Deseas continuar hacia el editor de texto o prefieres quedarte en la Vista Previa / Edición Visual?')) {
+                setEditorModo('preview');
+                return;
+            }
+        }
+        btnQ?.classList.add('active');
+        if (quillSection) {
+            quillSection.style.display = 'block';
+            _initQuill();
+            if (_pagQuill) {
+                const codeVal = document.getElementById('pagCodigoHTML')?.value || '';
+                _pagQuill.clipboard.dangerouslyPasteHTML(codeVal);
+            }
+        }
     }
 }
 
 /* Devuelve el contenido para guardar en DB */
 function _pagGetContenido() {
+    const quillSection = document.getElementById('pagQuillSection');
+    if (quillSection && quillSection.style.display !== 'none' && _pagQuill) {
+        return _pagQuill.root.innerHTML;
+    }
+    const splitSection = document.getElementById('pagSplitSection');
+    if (splitSection && splitSection.style.display !== 'none') {
+        const splitCode = document.getElementById('pagSplitCodigo');
+        if (splitCode) return splitCode.value;
+    }
     const code = document.getElementById('pagCodigoHTML');
-    if (code && code.style.display !== 'none') return code.value;
-    return _pagQuill ? _pagQuill.root.innerHTML : (code ? code.value : '');
+    return code ? code.value : '';
 }
 
 /* ── Importar desde WordPress ───────────────── */
@@ -3820,12 +4180,18 @@ async function pagEditar(id) {
 
 function pagMostrarEditor(p) {
     const panel = document.getElementById('pagEditorPanel');
-    const isCode = _editorModo === 'codigo';
+    const contenidoInicial = (p && p.contenido) || '';
+    const esLanding = _esLandingCompleta(contenidoInicial);
+    const initialMode = esLanding ? 'preview' : (_editorModo || 'quill');
+
     panel.innerHTML = `
         <!-- Cabecera -->
         <div style="display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap;padding-bottom:.75rem;border-bottom:1px solid #E5E7EB">
             <div>
-                <div style="font-size:.72rem;font-weight:700;color:#7C3AED;text-transform:uppercase;letter-spacing:.5px">${p ? 'Editando' : 'Nueva Página'}</div>
+                <div style="display:flex;align-items:center;gap:.4rem">
+                    <span style="font-size:.72rem;font-weight:700;color:#7C3AED;text-transform:uppercase;letter-spacing:.5px">${p ? 'Editando' : 'Nueva Página'}</span>
+                    ${esLanding ? `<span style="background:#EDE9FE;color:#6B21A8;border:1px solid #DDD6FE;border-radius:6px;font-size:.65rem;font-weight:700;padding:1px 6px">🌟 LANDING PAGE DE ALTA CONVERSIÓN</span>` : ''}
+                </div>
                 <div style="font-size:1rem;font-weight:700;color:var(--s);margin-top:.1rem">${p ? p.titulo : '—'}</div>
             </div>
             <div style="display:flex;gap:.45rem;align-items:center;flex-wrap:wrap">
@@ -3871,29 +4237,141 @@ function pagMostrarEditor(p) {
             </div>
         </div>
 
+        <!-- Panel Desplegable: Campos Rápidos de la Landing -->
+        <div id="panelCamposRapidos" style="display:none;background:#FAF5FF;border:1.5px solid #DDD6FE;border-radius:10px;padding:1.1rem;margin-top:.2rem">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+                <div>
+                    <h4 style="margin:0;font-size:.92rem;font-weight:700;color:#4C1D95">🧩 Campos Rápidos de la Landing</h4>
+                    <span style="font-size:.74rem;color:#7C3AED">Edita los textos más importantes de la landing sin tocar código HTML</span>
+                </div>
+                <button type="button" class="btn bo btn-sm" onclick="toggleCamposRapidosModal()" style="color:#6B21A8;border-color:#DDD6FE">✕ Cerrar</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem">
+                <div style="grid-column:1/-1">
+                    <label style="display:block;font-size:.74rem;font-weight:600;color:#5B21B6;margin-bottom:.2rem">Título Principal (Hero H1)</label>
+                    <input type="text" id="qrHeroTitle" class="pag-input" placeholder="Título en la portada...">
+                </div>
+                <div style="grid-column:1/-1">
+                    <label style="display:block;font-size:.74rem;font-weight:600;color:#5B21B6;margin-bottom:.2rem">Subtítulo / Bajada Descriptiva</label>
+                    <textarea id="qrHeroDesc" class="pag-input" rows="2" placeholder="Bajada o descripción del Hero..."></textarea>
+                </div>
+                <div>
+                    <label style="display:block;font-size:.74rem;font-weight:600;color:#5B21B6;margin-bottom:.2rem">Fecha de Convocatoria / Inicios</label>
+                    <input type="text" id="qrHeroDate" class="pag-input" placeholder="Ej: Convocatoria Oficial · Inicio 5 de Abril 2027">
+                </div>
+                <div>
+                    <label style="display:block;font-size:.74rem;font-weight:600;color:#5B21B6;margin-bottom:.2rem">WhatsApp de Contacto (sin +)</label>
+                    <input type="text" id="qrHeroWa" class="pag-input" placeholder="56984281226">
+                </div>
+            </div>
+            <div style="display:flex;justify-content:flex-end;margin-top:.75rem">
+                <button type="button" class="btn bp btn-sm" onclick="aplicarCamposRapidos()" style="background:#7C3AED;border-color:#7C3AED;color:#fff">
+                    <i class="ph ph-check"></i> Aplicar Cambios a la Landing
+                </button>
+            </div>
+        </div>
+
         <!-- CONTENIDO: selector de modo + editores -->
         <div class="pag-field">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;flex-wrap:wrap;gap:.4rem">
-                <label class="pag-label" style="margin:0">Contenido de la Página / Landing</label>
-                <div style="display:flex;align-items:center;gap:.35rem">
+                <div style="display:flex;align-items:center;gap:.5rem">
+                    <label class="pag-label" style="margin:0">Contenido de la Página</label>
+                </div>
+                <div style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap">
                     <span style="font-size:.68rem;color:var(--l);font-weight:600">MODO:</span>
-                    <button id="btnModoQuill" type="button" class="editor-modo-btn ${!isCode?'active':''}" onclick="setEditorModo('quill')">
-                        <i class="ph ph-text-t"></i> Editor Visual
+                    <button id="btnVistaPrevia" type="button" class="editor-modo-btn ${initialMode==='preview'?'active':''}" onclick="setEditorModo('preview')" title="Previsualización 100% exacta con estilos, fuentes e imágenes reales">
+                        <i class="ph ph-eye"></i> Vista Previa
                     </button>
-                    <button id="btnCodigo" type="button" class="editor-modo-btn ${isCode?'active':''}" onclick="setEditorModo('codigo')">
+                    <button id="btnSplit" type="button" class="editor-modo-btn ${initialMode==='split'?'active':''}" onclick="setEditorModo('split')" title="Código a la izquierda y Vista en Vivo a la derecha">
+                        <i class="ph ph-columns"></i> Vista Dividida
+                    </button>
+                    <button id="btnCodigo" type="button" class="editor-modo-btn ${initialMode==='codigo'?'active':''}" onclick="setEditorModo('codigo')" title="Editor de Código HTML completo">
                         <i class="ph ph-code"></i> Código HTML
                     </button>
-                    <button id="btnVistaPrevia" type="button" class="editor-modo-btn" onclick="setEditorModo('preview')">
-                        <i class="ph ph-eye"></i> Vista Previa
+                    ${esLanding ? `
+                    <button id="btnCamposRapidos" type="button" class="editor-modo-btn" onclick="toggleCamposRapidosModal()" style="border-color:#DDD6FE;color:#7C3AED">
+                        <i class="ph ph-pencil-simple"></i> Campos Rápidos
+                    </button>` : ''}
+                    <button id="btnModoQuill" type="button" class="editor-modo-btn ${initialMode==='quill'?'active':''}" onclick="setEditorModo('quill')" title="Editor de Texto Enriquecido estándar (artículos)">
+                        <i class="ph ph-text-t"></i> Editor Texto
                     </button>
                 </div>
             </div>
 
-            <!-- Contenedores de edición -->
-            <div id="editorQuillSection" style="background:#fff">
+            <!-- CONTENEDOR 1: VISTA PREVIA AISLADA (IFRAME) CON DISPOSITIVOS Y EDICIÓN EN PANTALLA -->
+            <div id="pagPreviewSection" style="display:none">
+                <div id="pagPreviewToolbar" style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.5rem .75rem;background:#F8FAFC;border:1.5px solid #E2E8F0;border-bottom:none;border-radius:10px 10px 0 0;flex-wrap:wrap">
+                    <div style="display:flex;align-items:center;gap:.35rem">
+                        <span style="font-size:.72rem;font-weight:700;color:var(--s);text-transform:uppercase;letter-spacing:.5px;margin-right:.25rem">Dispositivo:</span>
+                        <button type="button" class="btn-device active" id="btnDevDesktop" onclick="setPreviewDevice('desktop')" title="Vista Escritorio (100%)">
+                            <i class="ph ph-desktop"></i> Escritorio
+                        </button>
+                        <button type="button" class="btn-device" id="btnDevTablet" onclick="setPreviewDevice('tablet')" title="Vista Tablet (768px)">
+                            <i class="ph ph-device-tablet"></i> Tablet
+                        </button>
+                        <button type="button" class="btn-device" id="btnDevMobile" onclick="setPreviewDevice('mobile')" title="Vista Móvil (390px)">
+                            <i class="ph ph-device-mobile"></i> Celular
+                        </button>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:.5rem">
+                        <label id="lblInlineEdit" style="display:inline-flex;align-items:center;gap:.35rem;font-size:.74rem;font-weight:600;color:#6B21A8;background:#F5F3FF;border:1px solid #DDD6FE;padding:.22rem .5rem;border-radius:6px;cursor:pointer" title="Permite hacer clic sobre cualquier texto o título de la pantalla para editarlo en vivo">
+                            <input type="checkbox" id="chkInlineEdit" onchange="toggleInlineEdit(this.checked)" style="accent-color:#7C3AED">
+                            <span>✏️ Edición en Pantalla</span>
+                        </label>
+                        <span id="inlineEditStatus" style="font-size:.72rem;font-weight:600;color:#059669;display:none">✓ Cambios sincronizados</span>
+                        <button type="button" class="btn-preview-tool" onclick="recargarPreviewIframe()" title="Recargar vista previa">
+                            <i class="ph ph-arrows-clockwise"></i> Refrescar
+                        </button>
+                        <button type="button" class="btn-preview-tool" onclick="abrirPreviewPestana()" title="Abrir en pestaña nueva">
+                            <i class="ph ph-arrow-square-out"></i> Abrir
+                        </button>
+                    </div>
+                </div>
+                <div id="pagPreviewFrameContainer" style="background:#0F172A;padding:12px;border:1.5px solid #E2E8F0;border-radius:0 0 10px 10px;display:flex;justify-content:center;overflow-x:auto;min-height:580px">
+                    <div id="pagPreviewFrameWrapper" style="width:100%;height:640px;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 10px 25px rgba(0,0,0,.2);transition:width .25s ease">
+                        <iframe id="pagPreviewIframe" style="width:100%;height:100%;border:none;display:block"></iframe>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTENEDOR 2: VISTA DIVIDIDA (CÓDIGO IZQ + PREVIEW DER) -->
+            <div id="pagSplitSection" class="split-view-container" style="display:none">
+                <div style="display:flex;flex-direction:column;gap:.4rem">
+                    <div style="display:flex;justify-content:space-between;align-items:center;background:#1E293B;padding:.4rem .65rem;border-radius:8px 8px 0 0">
+                        <span style="font-size:.72rem;font-weight:700;color:#94A3B8;text-transform:uppercase">Editor de Código HTML</span>
+                        <div style="display:flex;gap:.35rem">
+                            <button type="button" class="code-toolbar-btn" onclick="formatearCodigoHTML()" title="Indentar y ordenar código"><i class="ph ph-magic-wand"></i> Formatear</button>
+                            <button type="button" class="code-toolbar-btn" onclick="copiarCodigoHTML()" title="Copiar HTML"><i class="ph ph-copy"></i> Copiar</button>
+                        </div>
+                    </div>
+                    <textarea id="pagSplitCodigo" oninput="onSplitCodeInput()" style="width:100%;height:580px;font-family:Consolas,monospace;font-size:.8rem;padding:.75rem;border:1.5px solid #334155;border-radius:0 0 8px 8px;resize:vertical;outline:none;background:#0F172A;color:#E2E8F0;line-height:1.45" placeholder="Escribe HTML aquí..."></textarea>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:.4rem">
+                    <div style="display:flex;justify-content:space-between;align-items:center;background:#0F172A;padding:.4rem .65rem;border-radius:8px 8px 0 0;border:1px solid #1E293B">
+                        <span style="font-size:.72rem;font-weight:700;color:#94A3B8;text-transform:uppercase">Vista en Vivo Sincronizada</span>
+                        <span style="font-size:.68rem;color:#10B981">● En tiempo real</span>
+                    </div>
+                    <div style="width:100%;height:580px;background:#fff;border-radius:0 0 8px 8px;overflow:hidden;border:1.5px solid #E2E8F0">
+                        <iframe id="pagSplitIframe" style="width:100%;height:100%;border:none;display:block"></iframe>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTENEDOR 3: EDITOR DE CÓDIGO HTML COMPLETO -->
+            <div id="pagCodigoSection" style="display:none">
+                <div style="display:flex;justify-content:space-between;align-items:center;background:#1E293B;padding:.45rem .85rem;border-radius:8px 8px 0 0">
+                    <span style="font-size:.73rem;font-weight:700;color:#94A3B8;text-transform:uppercase">Documento HTML Completo</span>
+                    <div style="display:flex;gap:.4rem">
+                        <button type="button" class="code-toolbar-btn" onclick="formatearCodigoHTML()"><i class="ph ph-magic-wand"></i> Formatear HTML</button>
+                        <button type="button" class="code-toolbar-btn" onclick="copiarCodigoHTML()"><i class="ph ph-copy"></i> Copiar Código</button>
+                    </div>
+                </div>
+                <textarea id="pagCodigoHTML" style="width:100%;min-height:480px;font-family:Consolas,monospace;font-size:.82rem;padding:.85rem;border:1.5px solid #334155;border-radius:0 0 8px 8px;resize:vertical;outline:none;background:#0F172A;color:#E2E8F0;line-height:1.5" placeholder="Pega o edita el código HTML completo aquí..."></textarea>
+            </div>
+
+            <!-- CONTENEDOR 4: EDITOR DE TEXTO ENRIQUECIDO (QUILL) -->
+            <div id="pagQuillSection" style="display:none;background:#fff;border:1.5px solid #E5E7EB;border-radius:8px;padding:.5rem">
                 <div id="pagEditorQuill"></div>
-                <div id="pagVistaPrevia" style="display:none;border:1.5px solid #E5E7EB;border-radius:var(--r);padding:1.5rem 2rem;background:#fff;min-height:260px;font-family:var(--f);line-height:1.75;color:var(--s)"></div>
-                <textarea id="pagCodigoHTML" style="display:none;width:100%;min-height:360px;font-family:Consolas,monospace;font-size:.82rem;padding:.85rem;border:1.5px solid #E5E7EB;border-radius:var(--r);resize:vertical;outline:none;background:#1E293B;color:#E2E8F0;line-height:1.5" placeholder="Pega o edita el código HTML completo aquí..."></textarea>
             </div>
         </div>
 
@@ -3910,14 +4388,15 @@ function pagMostrarEditor(p) {
         </div>
         <div id="pagSaveMsg" style="display:none"></div>`;
 
-    _pagQuill = null;
-    _initQuill();
+    // Cargar contenido sin destruirlo en Quill
     const code = document.getElementById('pagCodigoHTML');
-    if (code) code.value = (p && p.contenido) || '';
-    if (p && p.contenido && _pagQuill) {
-        _pagQuill.clipboard.dangerouslyPasteHTML(p.contenido);
-    }
-    setEditorModo(isCode ? 'codigo' : 'quill');
+    if (code) code.value = contenidoInicial;
+
+    const splitCode = document.getElementById('pagSplitCodigo');
+    if (splitCode) splitCode.value = contenidoInicial;
+
+    _pagQuill = null;
+    setEditorModo(initialMode);
 }
 
 function escH(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
@@ -3968,10 +4447,12 @@ async function pagGuardar() {
 
         const msg = document.getElementById('pagSaveMsg');
         if (msg) {
+            const slugVal = data.slug || slug;
+            const viewUrl = (slugVal === 'terapia-emocional-evolutiva') ? '/TerapiaEmocionalEvolutiva/' : ((slugVal === 'metodo-mushuu') ? '/metodo-mushuu/' : `/p/${slugVal}`);
             msg.style.display = 'block';
             msg.innerHTML = `<div style="background:#ECFDF5;border:1px solid #A7F3D0;border-radius:8px;padding:.55rem .9rem;font-size:.82rem;color:#065F46">
-                ✅ Guardado — <a href="/p/${data.slug||slug}" target="_blank" style="color:#065F46;text-decoration:underline">Ver página →</a></div>`;
-            setTimeout(()=>{ msg.style.display='none'; }, 4000);
+                ✅ Guardado con éxito — <a href="${viewUrl}" target="_blank" style="color:#065F46;font-weight:700;text-decoration:underline">Ver página pública →</a></div>`;
+            setTimeout(()=>{ msg.style.display='none'; }, 5000);
         }
         if (btn) { btn.disabled=false; btn.innerHTML='<i class="ph ph-floppy-disk"></i> Guardar'; }
         await pagCargarLista();
@@ -4013,9 +4494,7 @@ let _iaOriginal    = null; // snapshot ANTES de cualquier generación (para rest
 
 /* Helpers de la pila de deshacer */
 function _iaPushUndo() {
-    const content = _editorModo === 'grapes' && _pagGrapes
-        ? JSON.stringify(_pagGrapes.getProjectData())
-        : (_pagQuill ? _pagQuill.root.innerHTML : '');
+    const content = _pagGetContenido();
     _iaUndoStack.push({ content, modo: _editorModo });
     if (_iaUndoStack.length > 15) _iaUndoStack.shift();
     _iaUpdateUndoBtn();
@@ -4030,16 +4509,17 @@ function _iaUpdateUndoBtn() {
     if (btn) btn.style.opacity = n > 0 ? '1' : '.4';
 }
 function _iaApplyContent(content, modo) {
-    if (modo === 'grapes' && _pagGrapes) {
-        try { _pagGrapes.loadProjectData(JSON.parse(content)); } catch { _pagGrapes.setComponents(content); }
-        _pagGrapesData = null; // el estado restaurado ya está en GrapesJS
-    } else if (_pagQuill) {
+    const codeEl = document.getElementById('pagCodigoHTML');
+    if (codeEl) codeEl.value = content;
+    const splitEl = document.getElementById('pagSplitCodigo');
+    if (splitEl) splitEl.value = content;
+
+    if (_editorModo === 'preview') {
+        renderizarPreviewIframe(document.getElementById('chkInlineEdit')?.checked || false);
+    } else if (_editorModo === 'split') {
+        _renderizarSplitIframe();
+    } else if (_editorModo === 'quill' && _pagQuill) {
         _pagQuill.clipboard.dangerouslyPasteHTML(content);
-        _pagGrapesData = null; // invalidar caché visual al restaurar en Quill
-        const codeEl = document.getElementById('pagCodigoHTML');
-        if (codeEl && codeEl.style.display !== 'none') codeEl.value = content;
-        const prev = document.getElementById('pagVistaPrevia');
-        if (prev && prev.style.display !== 'none') prev.innerHTML = content;
     }
 }
 
@@ -4235,7 +4715,7 @@ function iaGetRequisitos() {
 async function iaGenerar() {
     const promptBase = document.getElementById('iaPromptInput')?.value?.trim();
     if (!promptBase) { alert('Escribe una instrucción primero.'); return; }
-    if (!_pagQuill && !_pagGrapes) { alert('Abre una página para editar primero.'); return; }
+    if (!document.getElementById('pagEditorPanel') || !document.getElementById('pagCodigoHTML')) { alert('Abre una página para editar primero.'); return; }
 
     const requisitos = iaGetRequisitos();
     const prompt = requisitos ? `${promptBase}\n\nREQUISITOS OBLIGATORIOS:\n${requisitos}` : promptBase;
@@ -4246,9 +4726,7 @@ async function iaGenerar() {
     if (_iaUndoStack.length === 1) _iaOriginal = _iaUndoStack[0].content;
 
     // Contenido actual para enviarlo a la IA como contexto
-    const contenidoActual = _editorModo === 'grapes' && _pagGrapes
-        ? _pagGrapes.getHtml()
-        : (_pagQuill ? _pagQuill.root.innerHTML : '');
+    const contenidoActual = _pagGetContenido();
 
     const btn   = document.getElementById('iaBtnGen');
     const msg   = document.getElementById('iaDrawerMsg');
@@ -4279,18 +4757,8 @@ async function iaGenerar() {
 
         _iaGenerado = data.html || '';
 
-        // Aplicar directo al editor activo
-        if (_editorModo === 'grapes' && _pagGrapes) {
-            _pagGrapes.setComponents(_iaGenerado);
-            _pagGrapesData = null; // invalidar caché — el estado nuevo ya está en GrapesJS
-        } else if (_pagQuill) {
-            _pagQuill.clipboard.dangerouslyPasteHTML(_iaGenerado);
-            _pagGrapesData = null; // invalidar caché — al volver a visual se importará desde Quill
-            const codeEl = document.getElementById('pagCodigoHTML');
-            if (codeEl && codeEl.style.display !== 'none') codeEl.value = _iaGenerado;
-            const prev = document.getElementById('pagVistaPrevia');
-            if (prev && prev.style.display !== 'none') prev.innerHTML = _iaGenerado;
-        }
+        // Aplicar directo al editor activo y sincronizar vistas
+        _iaApplyContent(_iaGenerado, _editorModo);
 
         // Mostrar barra de acciones en el editor
         const bar = document.getElementById('iaActionBar');

@@ -261,18 +261,32 @@ async function cargarPagina() {
         );
 
         if (esLandingCompleta) {
-            // Ocultar wrapper y navegación genérica de blog para permitir diseño 100% full-width
-            document.querySelector('.top-nav')?.remove();
-            document.querySelector('.page-footer')?.remove();
-            document.getElementById('pageHero')?.remove();
-            const wrap = document.querySelector('.page-wrap');
-            if (wrap) {
-                wrap.style.maxWidth = '100%';
-                wrap.style.padding = '0';
-                wrap.style.margin = '0';
+            let baseHref = '/';
+            const lowerCont = p.contenido.toLowerCase();
+            if (slug === 'terapia-emocional-evolutiva' || lowerCont.includes('terapia emocional evolutiva')) {
+                baseHref = '/TerapiaEmocionalEvolutiva/';
+            } else if (slug === 'metodo-mushuu' || lowerCont.includes('método mushuu') || lowerCont.includes('metodo mushuu')) {
+                baseHref = '/metodo-mushuu/';
+            } else if (lowerCont.includes('diplomado-holistico')) {
+                baseHref = '/plantillas/diplomado-holistico/';
+            } else if (lowerCont.includes('academia-terapias')) {
+                baseHref = '/plantillas/academia-terapias/';
             }
-            document.body.style.background = 'transparent';
-            document.getElementById('pageMain').innerHTML = p.contenido;
+
+            let html = p.contenido;
+            if (!html.includes('<base ') && !html.includes('<base>')) {
+                if (html.includes('<head>')) {
+                    html = html.replace('<head>', `<head><base href="${baseHref}">`);
+                } else if (html.includes('<head ')) {
+                    html = html.replace(/<head[^>]*>/i, `$&<base href="${baseHref}">`);
+                } else {
+                    html = `<head><base href="${baseHref}"></head>` + html;
+                }
+            }
+            document.open();
+            document.write(html);
+            document.close();
+            return;
         } else {
             // Hero estándar
             const hero = document.getElementById('pageHero');

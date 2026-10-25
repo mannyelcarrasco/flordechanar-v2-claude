@@ -4364,8 +4364,48 @@ app.get(['/metodo-mushuu', '/metodo-mushuu/', '/masoterapia'], (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'metodo-mushuu', 'index.html'));
 });
 
-// Páginas CMS públicas — /p/:slug
-app.get('/p/:slug', (req, res) => {
+// Páginas CMS públicas — /p/:slug (con soporte para landings completas y plantillas)
+app.get('/p/:slug', async (req, res, next) => {
+    try {
+        if (pool) {
+            const [[page]] = await pool.query("SELECT contenido, estado FROM paginas WHERE slug=?", [req.params.slug]);
+            if (page && page.estado === 'publicado' && page.contenido) {
+                const lower = page.contenido.toLowerCase();
+                const esLanding = lower.includes('<!doctype') ||
+                                  lower.includes('<header') ||
+                                  lower.includes('class="hero') ||
+                                  lower.includes('class="seccion') ||
+                                  lower.includes('class="nav') ||
+                                  lower.includes('<html');
+                if (esLanding) {
+                    let baseHref = '/';
+                    if (req.params.slug === 'terapia-emocional-evolutiva' || lower.includes('terapia emocional evolutiva')) {
+                        baseHref = '/TerapiaEmocionalEvolutiva/';
+                    } else if (req.params.slug === 'metodo-mushuu' || lower.includes('método mushuu') || lower.includes('metodo mushuu')) {
+                        baseHref = '/metodo-mushuu/';
+                    } else if (lower.includes('diplomado-holistico')) {
+                        baseHref = '/plantillas/diplomado-holistico/';
+                    } else if (lower.includes('academia-terapias')) {
+                        baseHref = '/plantillas/academia-terapias/';
+                    }
+
+                    let html = page.contenido;
+                    if (!html.includes('<base ') && !html.includes('<base>')) {
+                        if (html.includes('<head>')) {
+                            html = html.replace('<head>', `<head><base href="${baseHref}">`);
+                        } else if (html.includes('<head ')) {
+                            html = html.replace(/<head[^>]*>/i, `$&<base href="${baseHref}">`);
+                        } else {
+                            html = `<head><base href="${baseHref}"></head>` + html;
+                        }
+                    }
+                    return res.send(html);
+                }
+            }
+        }
+    } catch(e) {
+        console.warn('Aviso sirviendo landing /p/:slug:', e.message);
+    }
     res.sendFile(path.join(__dirname, 'public', 'pagina.html'));
 });
 
