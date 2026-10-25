@@ -632,6 +632,10 @@ async function initDB() {
             console.warn('Aviso en auto-seeding de landings en paginas:', seedErr.message);
         }
 
+        try {
+            await getIaApiKeys();
+        } catch (iaKeyErr) {}
+
     } catch (err) {
         dbInitError = err;
         console.error('Database initialization error:', err);
@@ -684,6 +688,46 @@ app.post('/api/upload', verifyToken, (req, res) => {
 // --- Helpers de IA ---
 let pdfParse = null;
 try { pdfParse = require('pdf-parse'); } catch (e) { console.warn("pdf-parse no instalado aún"); }
+
+// Obtener claves de IA desde process.env Y/O desde la base de datos (tabla configuracion)
+async function getIaApiKeys() {
+    const keys = {
+        gemini: (process.env.GEMINI_API_KEY || '').trim(),
+        claude: (process.env.ANTHROPIC_API_KEY || '').trim(),
+        openai: (process.env.OPENAI_API_KEY || '').trim(),
+        groq:   (process.env.GROQ_API_KEY || '').trim(),
+    };
+    if (pool) {
+        try {
+            const [rows] = await pool.query(
+                "SELECT clave, valor FROM configuracion WHERE clave IN ('ia_gemini_key','ia_anthropic_key','ia_openai_key','ia_groq_key')"
+            );
+            rows.forEach(r => {
+                const val = (r.valor || '').trim();
+                if (!val) return;
+                if (r.clave === 'ia_gemini_key' && !keys.gemini) {
+                    keys.gemini = val;
+                    process.env.GEMINI_API_KEY = val;
+                }
+                if (r.clave === 'ia_anthropic_key' && !keys.claude) {
+                    keys.claude = val;
+                    process.env.ANTHROPIC_API_KEY = val;
+                }
+                if (r.clave === 'ia_openai_key' && !keys.openai) {
+                    keys.openai = val;
+                    process.env.OPENAI_API_KEY = val;
+                }
+                if (r.clave === 'ia_groq_key' && !keys.groq) {
+                    keys.groq = val;
+                    process.env.GROQ_API_KEY = val;
+                }
+            });
+        } catch (e) {
+            console.error('[IA] Error leyendo configuracion de claves:', e.message);
+        }
+    }
+    return keys;
+}
 
 app.post('/api/ai/generar-ventas', verifyToken, (req, res) => {
     upload.single('file')(req, res, async (err) => {
@@ -739,8 +783,9 @@ Usa un tono profesional, inspirador y empático.
 Información del curso:
 ${fullContext}`;
 
-            const openaiKey = process.env.OPENAI_API_KEY;
-            const geminiKey = process.env.GEMINI_API_KEY;
+            const keys = await getIaApiKeys();
+            const openaiKey = keys.openai;
+            const geminiKey = keys.gemini;
             let aiResponse = "";
 
             if (openaiKey) {
@@ -3073,19 +3118,65 @@ app.get('/api/plantillas/:id/contenido', verifyToken, async (req, res) => {
 // GET /api/admin/ia/proveedores — qué proveedores tienen API key configurada
 app.get('/api/admin/ia/proveedores', verifyToken, async (req, res) => {
     if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Sin acceso' });
+    const keys = await getIaApiKeys();
     res.json({
-        claude:  !!process.env.ANTHROPIC_API_KEY,
-        openai:  !!process.env.OPENAI_API_KEY,
-        gemini:  !!process.env.GEMINI_API_KEY,
-        groq:    !!process.env.GROQ_API_KEY,
+        claude:  !!keys.claude,
+        openai:  !!keys.openai,
+        gemini:  !!keys.gemini,
+        groq:    !!keys.groq,
     });
+});
+
+// POST /api/admin/ia/guardar-key — Guardar o actualizar API Key de un proveedor directamente desde el panel admin
+app.post('/api/admin/ia/guardar-key', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Sin acceso' });
+    const { provider, key } = req.body;
+    const prov = String(provider || '').toLowerCase().trim();
+    const cleanKey = String(key || '').trim();
+
+    const provMap = {
+        gemini: { dbKey: 'ia_gemini_key',    envName: 'GEMINI_API_KEY' },
+        claude: { dbKey: 'ia_anthropic_key', envName: 'ANTHROPIC_API_KEY' },
+        openai: { dbKey: 'ia_openai_key',    envName: 'OPENAI_API_KEY' },
+        groq:   { dbKey: 'ia_groq_key',      envName: 'GROQ_API_KEY' },
+    };
+
+    if (!provMap[prov]) {
+        return res.status(400).json({ error: `Proveedor inválido: ${prov}` });
+    }
+
+    const { dbKey, envName } = provMap[prov];
+
+    try {
+        if (!cleanKey) {
+            await pool.query('DELETE FROM configuracion WHERE clave = ?', [dbKey]);
+            delete process.env[envName];
+            return res.json({ ok: true, provider: prov, active: false, mensaje: `Clave de ${prov} eliminada.` });
+        }
+
+        await pool.query(
+            'INSERT INTO configuracion (clave, valor) VALUES (?, ?) ON DUPLICATE KEY UPDATE valor = ?',
+            [dbKey, cleanKey, cleanKey]
+        );
+        process.env[envName] = cleanKey;
+
+        res.json({
+            ok: true,
+            provider: prov,
+            active: true,
+            mensaje: `Clave de ${prov} guardada correctamente.`
+        });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
 });
 
 // GET /api/admin/ia/gemini-modelos — lista los modelos Gemini disponibles para esta API key
 app.get('/api/admin/ia/gemini-modelos', verifyToken, async (req, res) => {
     if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Sin acceso' });
-    const key = process.env.GEMINI_API_KEY;
-    if (!key) return res.status(400).json({ error: 'GEMINI_API_KEY no configurada' });
+    const keys = await getIaApiKeys();
+    const key = keys.gemini;
+    if (!key) return res.status(400).json({ error: 'GEMINI_API_KEY no configurada. Puedes ingresarla directamente en la ventana de IA.' });
     try {
         const r = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models?key=${key}&pageSize=50`,
@@ -3123,10 +3214,31 @@ app.get('/api/admin/ia/gemini-modelos', verifyToken, async (req, res) => {
 // POST /api/admin/ia/pagina  — Asistente IA multi-proveedor
 app.post('/api/admin/ia/pagina', verifyToken, async (req, res) => {
     if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Sin acceso' });
-    const { prompt, contenido, titulo, provider = 'claude', geminiModel = 'gemini-2.0-flash' } = req.body;
+    const { prompt, contenido, titulo, provider = 'gemini', geminiModel = 'gemini-2.0-flash' } = req.body;
     if (!prompt) return res.status(400).json({ error: 'Falta el prompt' });
+
+    const keys = await getIaApiKeys();
+
+    // Detección y fallback automático inteligente:
+    let activeProvider = String(provider || 'gemini').toLowerCase().trim();
+    let fallbackUsed = false;
+
+    if (!keys[activeProvider]) {
+        const ordenFallback = ['gemini', 'openai', 'groq', 'claude'];
+        const disponible = ordenFallback.find(p => !!keys[p]);
+        if (disponible) {
+            console.log(`[IA] Proveedor solicitado '${activeProvider}' sin clave. Usando fallback automático a '${disponible}'.`);
+            activeProvider = disponible;
+            fallbackUsed = true;
+        } else {
+            return res.status(400).json({
+                error: 'No hay ninguna API Key de IA configurada en el servidor ni en la base de datos. Puedes configurar tu clave gratuita de Google Gemini (desde aistudio.google.com) directamente en la ventana de IA para comenzar.'
+            });
+        }
+    }
+
     // Timeout adaptivo: modelos Pro son más lentos (hasta 2 min), flash es rápido
-    const isPro = provider === 'gemini' && geminiModel.includes('pro');
+    const isPro = activeProvider === 'gemini' && geminiModel.includes('pro');
     const API_TIMEOUT = isPro ? 120000 : 45000;
 
     // Determinar si el contenido actual es un documento HTML completo o un fragmento de secciones
@@ -3178,9 +3290,9 @@ Crea una landing completa, atractiva y de alta conversión con los colores y est
         let html = '';
 
         /* ── Claude (Anthropic) ── */
-        if (provider === 'claude') {
-            const key = process.env.ANTHROPIC_API_KEY;
-            if (!key) return res.status(400).json({ error: 'Agrega ANTHROPIC_API_KEY en EasyPanel → Variables de entorno.' });
+        if (activeProvider === 'claude') {
+            const key = keys.claude;
+            if (!key) return res.status(400).json({ error: 'Agrega ANTHROPIC_API_KEY en variables de entorno o guárdala en el panel de IA.' });
             const r = await fetch('https://api.anthropic.com/v1/messages', {
                 method: 'POST',
                 headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
@@ -3198,9 +3310,9 @@ Crea una landing completa, atractiva y de alta conversión con los colores y est
         }
 
         /* ── ChatGPT (OpenAI) ── */
-        else if (provider === 'openai') {
-            const key = process.env.OPENAI_API_KEY;
-            if (!key) return res.status(400).json({ error: 'Agrega OPENAI_API_KEY en EasyPanel → Variables de entorno.' });
+        else if (activeProvider === 'openai') {
+            const key = keys.openai;
+            if (!key) return res.status(400).json({ error: 'Agrega OPENAI_API_KEY en variables de entorno o guárdala en el panel de IA.' });
             const r = await fetch('https://api.openai.com/v1/chat/completions', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
@@ -3220,9 +3332,9 @@ Crea una landing completa, atractiva y de alta conversión con los colores y est
         }
 
         /* ── Gemini (Google) ── */
-        else if (provider === 'gemini') {
-            const key = process.env.GEMINI_API_KEY;
-            if (!key) return res.status(400).json({ error: 'Agrega GEMINI_API_KEY en EasyPanel → Variables de entorno.' });
+        else if (activeProvider === 'gemini') {
+            const key = keys.gemini;
+            if (!key) return res.status(400).json({ error: 'Agrega GEMINI_API_KEY en variables de entorno o guárdala en el panel de IA.' });
             const GEMINI_MODEL = geminiModel || 'gemini-2.0-flash';
             const r = await fetch(
                 `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`,
@@ -3253,9 +3365,9 @@ Crea una landing completa, atractiva y de alta conversión con los colores y est
         }
 
         /* ── Groq (LLaMA) ── */
-        else if (provider === 'groq') {
-            const key = process.env.GROQ_API_KEY;
-            if (!key) return res.status(400).json({ error: 'Agrega GROQ_API_KEY en EasyPanel → Variables de entorno.' });
+        else if (activeProvider === 'groq') {
+            const key = keys.groq;
+            if (!key) return res.status(400).json({ error: 'Agrega GROQ_API_KEY en variables de entorno o guárdala en el panel de IA.' });
             const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
@@ -3275,7 +3387,7 @@ Crea una landing completa, atractiva y de alta conversión con los colores y est
         }
 
         else {
-            return res.status(400).json({ error: `Proveedor desconocido: ${provider}` });
+            return res.status(400).json({ error: `Proveedor desconocido: ${activeProvider}` });
         }
 
         // ── Limpieza robusta de la respuesta ──────────────────────────────
@@ -3292,7 +3404,15 @@ Crea una landing completa, atractiva y de alta conversión con los colores y est
         if (lastTag !== -1 && lastTag < html.length - 1) html = html.slice(0, lastTag + 1);
         html = html.trim();
         // ─────────────────────────────────────────────────────────────────
-        res.json({ ok: true, html, provider });
+        res.json({
+            ok: true,
+            html,
+            provider: activeProvider,
+            fallbackUsed,
+            fallbackMsg: fallbackUsed
+                ? `Se usó ${activeProvider} automáticamente porque tu proveedor seleccionado no tenía API Key.`
+                : null
+        });
 
     } catch (e) {
         res.status(500).json({ error: e.message });

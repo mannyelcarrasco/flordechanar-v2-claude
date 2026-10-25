@@ -6,7 +6,26 @@
 
 ## ✅ Avances completados
 
-### 🪄 Optimización de Propuestas con IA & Soporte Multiescenario (`admin.html`, `server.js`) (NUEVO)
+### 🔑 Selector Visual de Motores IA, Fallback Automático y Guardado de Claves en Base de Datos (`server.js`, `admin.html`) (NUEVO)
+- [x] **Diagnóstico y Corrección del Error `ANTHROPIC_API_KEY en EasyPanel`:**
+  - El error ocurría porque el selector de IA del panel mantenía por defecto el proveedor en `claude` (Anthropic). Si el servidor no tenía configurada esa variable de entorno específica, el endpoint detenía la ejecución de inmediato con un error 400.
+  - El sistema carecía de un mecanismo de respaldo (*fallback*) a otros proveedores activos (Gemini, OpenAI, Groq) y el modal no permitía alternar el motor de IA de forma visual ni guardar claves desde la interfaz.
+- [x] **Fallback Inteligente y Auto-recuperación en Backend (`server.js`):**
+  - Si el usuario solicita un proveedor cuya API Key no está presente, el servidor ahora busca y conmuta automáticamente al primer motor con clave configurada (orden: **Google Gemini → OpenAI → Groq → Claude**).
+  - La respuesta informa al cliente qué motor se utilizó (`fallbackUsed: true`, `fallbackMsg`) evitando cualquier interrupción o alerta de error.
+  - El proveedor predeterminado se configuró en **Google Gemini** (gratuito, con contexto masivo y alta velocidad).
+- [x] **Gestión y Guardado de API Keys Directo en Base de Datos (`server.js`, tabla `configuracion`):**
+  - Nuevo endpoint `POST /api/admin/ia/guardar-key`: permite a los administradores registrar, actualizar o revocar claves para Gemini, Claude, OpenAI y Groq directamente desde el panel web.
+  - Persistencia bidireccional: las claves se almacenan en la tabla MySQL `configuracion` (`ia_gemini_key`, `ia_anthropic_key`, etc.) y se cargan dinámicamente en la memoria del proceso (`process.env`), permitiendo su uso inmediato **sin necesidad de reiniciar contenedores ni ingresar a EasyPanel**.
+  - `initDB()` precarga las claves almacenadas al arrancar el servidor.
+- [x] **Interfaz Visual en Modal `#modalMejoraIA` (`public/admin.html`):**
+  - **Selector de Motor IA:** 4 botones interactivos (`🤖 Google Gemini`, `🧠 Claude`, `⚡ ChatGPT`, `🚀 Groq`) con insignia de estado en tiempo real (`✅ Activo` o `⚠️ Sin Clave`).
+  - **Caja Desplegable "Configurar / Guardar Clave":** Formulario rápido integrado en el modal donde el usuario puede pegar su clave API (ej. la de Google AI Studio gratuita), guardarla con 1 clic y dejar el sistema 100% operativo al instante.
+  - Enlace directo a Google AI Studio (`aistudio.google.com/app/apikey`) para obtener la clave gratuita en menos de 1 minuto.
+  - Indicador dinámico del motor activo en el pie de las 3 pestañas (*Propuesta Actual*, *Traer de Otro Sitio*, *Desde Cero*).
+  - Detección automática al abrir el modal: si ningún proveedor tiene clave, el panel de configuración se despliega automáticamente para guiar al usuario.
+
+### 🪄 Optimización de Propuestas con IA & Soporte Multiescenario (`admin.html`, `server.js`)
 - [x] **Soporte Completo para los 3 Escenarios de Creación y Mejora:**
   1. **📄 Si ya empezaste con el editor (Propuesta Existente):**
      - Toma el contenido actual del editor y lo optimiza con inteligencia artificial según el objetivo elegido sin perder la estructura ni el diseño base.
