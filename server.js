@@ -21,6 +21,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
+// Cabeceras de seguridad HTTP para evitar alertas en navegadores móviles y antivirus
+app.use((req, res, next) => {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    next();
+});
+
 // Redireccionar accesos a /mi-cuenta al sitio antiguo (WordPress en web1)
 app.use('/mi-cuenta', (req, res) => {
     res.redirect(301, 'https://web1.flordechanar.cl' + req.originalUrl);

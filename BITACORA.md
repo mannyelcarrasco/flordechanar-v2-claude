@@ -1,10 +1,28 @@
 # 📋 Bitácora del Proyecto — Flor de Chañar v2
 **Repositorio:** [mannyelcarrasco/flordechanar-v2-claude](https://github.com/mannyelcarrasco/flordechanar-v2-claude)  
-**Última actualización:** 2026-10-25
+**Última actualización:** 2026-10-29
 
 ---
 
 ## ✅ Avances completados
+
+### 🛡️ Auditoría de Seguridad Web, Diagnóstico de Bloqueos en Celulares y Blindaje HSTS (`server.js`, `.htaccess`) (NUEVO)
+- [x] **Auditoría de Seguridad y Reputación del Dominio (`flordechanar.cl` y `web1.flordechanar.cl`):**
+  - **Google Safe Browsing:** Estado limpio (`sb.ssr` código 1, sin malware ni phishing detectado).
+  - **Sucuri SiteCheck:** Calificación Domain A (limpio, sin listas negras ni inyecciones).
+  - **URLVoid (36 motores de seguridad):** Puntuación perfecta 0/36 detecciones.
+  - **Certificados SSL:** Ambos certificados Let's Encrypt (ECDSA YE2) válidos y vigentes hasta dic-2026 / ene-2027.
+- [x] **Diagnóstico de las Causas de Bloqueo / Advertencia "Sitio Inseguro" en Celulares:**
+  1. **Reputación residual en antivirus móviles (Samsung / Xiaomi / Avast / McAfee):**
+     - Los celulares **Samsung Galaxy** integran de fábrica *Smart Protection / Device Care* impulsado por **McAfee**.
+     - Los celulares **Xiaomi / Redmi** integran *Seguridad MIUI* con el motor de **Avast**.
+     - Cuando el WordPress antiguo tuvo plugins vulnerables en el pasado, McAfee y Avast registraron el dominio en sus listas negras. A diferencia de Google, estas compañías **no limpian automáticamente** su base de datos al cambiar de plataforma a menos que se envíe una solicitud de reclasificación o pase un tiempo prolongado.
+  2. **Caché persistente en navegadores móviles:** Celulares que intentaron ingresar durante el periodo de infección o cambio de DNS conservan la advertencia en su caché de certificados/DNS local.
+  3. **Filtro de seguridad en redes móviles (4G/5G de operadoras):** Servicios tipo "Navegación Segura" de compañías como Entel, Claro o Movistar que bloquean dominios con historial negativo previo.
+- [x] **Blindaje de Cabeceras de Seguridad y Forzado HTTPS (`server.js`, `.htaccess`):**
+  - **Cabecera HSTS activada (`server.js`):** Inyección de `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload` para obligar a todos los dispositivos móviles a conectarse exclusivamente mediante HTTPS cifrado.
+  - **Cabeceras anti-sniffing y aislamiento:** `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN` y `Referrer-Policy: strict-origin-when-cross-origin`.
+  - **Redirección forzada en `.htaccess`:** Reglas RewriteCond en LiteSpeed para asegurar que ninguna petición en puerto 80 / HTTP pase sin cifrar.
 
 ### 🔑 Selector Visual de Motores IA, Fallback Automático y Guardado de Claves en Base de Datos (`server.js`, `admin.html`) (NUEVO)
 - [x] **Diagnóstico y Corrección del Error `ANTHROPIC_API_KEY en EasyPanel`:**

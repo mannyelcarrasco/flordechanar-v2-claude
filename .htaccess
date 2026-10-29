@@ -1,5 +1,11 @@
 RewriteEngine On
 
+# Forzar HTTPS si la petición llega en HTTP sin cifrar
+RewriteCond %{HTTPS} off [OR]
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
 # Si el archivo solicitado existe dentro de la carpeta /public, se sirve desde ahí.
 # Esto soluciona el error 404 en Hostinger (LiteSpeed) para archivos estáticos (.html, .css, .js)
 RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -f
