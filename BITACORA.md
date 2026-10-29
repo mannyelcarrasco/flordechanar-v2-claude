@@ -6,7 +6,15 @@
 
 ## ✅ Avances completados
 
-### 🛡️ Auditoría de Seguridad Web, Diagnóstico de Bloqueos en Celulares y Blindaje HSTS (`server.js`, `.htaccess`) (NUEVO)
+### 🔒 Corrección de Vulnerabilidades Reportadas por Hostinger (`package.json`, `package-lock.json`) (NUEVO)
+- [x] **Remediación de Vulnerabilidades Detectadas en hPanel / npm audit:**
+  - **`proxy-addr` (Crítico - CVE-2026-90711):** Mitigación de spoofing de IP en subredes IPv6. Forzada versión segura `^2.0.8` mediante `overrides` en `package.json`.
+  - **`mysql2` (Alto - GHSA-3f6p-5ww8-9rcr):** Mitigación de degradación de plugin de autenticación (`mysql_clear_password`). Actualizado de `3.20.0` a `3.24.6` (>= 3.22.0).
+  - **`mysql2` (Moderado - GHSA-rgwj-5xj2-c3m3):** Mitigación de DoS por compresión zlib desmedida. Actualizado a `3.24.6` (>= 3.23.1).
+  - **Otras dependencias auditadas:** `body-parser`, `ip-address`, `multer` y `qs` actualizadas a sus versiones parcheadas sin vulnerabilidades.
+  - **Resultado de auditoría:** **`found 0 vulnerabilities`** (109 paquetes auditados limpios).
+
+### 🛡️ Auditoría de Seguridad Web, Diagnóstico de Bloqueos en Celulares y Blindaje HSTS (`server.js`, `.htaccess`)
 - [x] **Auditoría de Seguridad y Reputación del Dominio (`flordechanar.cl` y `web1.flordechanar.cl`):**
   - **Google Safe Browsing:** Estado limpio (`sb.ssr` código 1, sin malware ni phishing detectado).
   - **Sucuri SiteCheck:** Calificación Domain A (limpio, sin listas negras ni inyecciones).
