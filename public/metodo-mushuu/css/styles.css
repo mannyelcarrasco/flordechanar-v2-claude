@@ -3,10 +3,32 @@
    Colores y tipografías: modifica aquí para cambiar todo el sitio
    ========================================================= */
 :root {
+  /* =========================================================
+     PALETA DE COLORES
+     Para REVERTIR a la paleta original muy oscura:
+     Simplemente intercambia el comentario entre ambos bloques.
+     ========================================================= */
+
+  /* --- [ORIGINAL OSCURO PROFUNDO] (Descomentar para volver) ---
   --fondo: #160c20;
   --fondo-header: rgba(22, 12, 32, 0.82);
   --fondo-tarjeta: rgba(42, 24, 64, 0.45);
   --fondo-oscuro: rgba(10, 5, 16, 0.4);
+  --gradiente-1: rgba(42, 24, 64, 0.55);
+  --gradiente-2: rgba(36, 20, 58, 0.5);
+  --morado-modulo: #3d1d55;
+  ------------------------------------------------------------- */
+
+  /* --- [ACTUAL: MORADO AMATISTA / CIRUELA SUAVE ACLARADO] --- */
+  --fondo: #271738;
+  --fondo-header: rgba(39, 23, 56, 0.88);
+  --fondo-tarjeta: rgba(65, 39, 94, 0.52);
+  --fondo-oscuro: rgba(22, 13, 32, 0.45);
+  --gradiente-1: rgba(72, 40, 104, 0.60);
+  --gradiente-2: rgba(58, 30, 86, 0.55);
+  --morado-modulo: #532873;
+  /* ---------------------------------------------------------- */
+
   --dorado: #d9a95b;
   --dorado-texto: #e2b66c;
   --dorado-claro: #f3d49a;
@@ -16,7 +38,6 @@
   --texto-suave: #ddd0e6;
   --texto-tenue: #cdbcdc;
   --linea: rgba(217, 169, 91, 0.35);
-  --morado-modulo: #3d1d55;
   --cobre-modulo: #8a4a2c;
   --azul-modulo: #1d4a6b;
   --serif: 'Playfair Display', Georgia, serif;
@@ -30,8 +51,8 @@ body {
   margin: 0;
   background-color: var(--fondo);
   background-image:
-    radial-gradient(ellipse at 15% 0%, rgba(42,24,64,0.55) 0%, transparent 55%),
-    radial-gradient(ellipse at 100% 60%, rgba(36,20,58,0.5) 0%, transparent 50%),
+    radial-gradient(ellipse at 15% 0%, var(--gradiente-1) 0%, transparent 55%),
+    radial-gradient(ellipse at 100% 60%, var(--gradiente-2) 0%, transparent 50%),
     url('../img/fondo-textura.jpg');
   background-size: auto, auto, 1200px auto;
   background-repeat: no-repeat, no-repeat, repeat;
@@ -62,6 +83,7 @@ p { margin: 0; text-wrap: pretty; }
 .header-linea { position: absolute; left: 0; right: 0; top: 100%; height: 34px; display: flex; pointer-events: none; }
 .header-linea .tramo-bajo { width: calc(max(0px, (100% - var(--ancho)) / 2) + 330px); height: 34px; background: var(--fondo-header); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-bottom: 1px solid var(--dorado); }
 .header-linea svg { flex: none; display: block; overflow: visible; }
+.header-linea svg path:first-child { fill: var(--fondo-header); }
 .header-linea .tramo-alto { flex: 1; height: 1px; background: var(--dorado); }
 .header-inner { display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; padding-top: 14px; padding-bottom: 14px; }
 .marca { display: flex; align-items: center; gap: 14px; position: relative; z-index: 1; margin: -6px 0 -34px; }
@@ -146,7 +168,7 @@ p { margin: 0; text-wrap: pretty; }
 .formulario { display: flex; flex-direction: column; gap: 18px; }
 .formulario label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: var(--texto-tenue); }
 .formulario input, .formulario select { padding: 14px 16px; background: transparent; border: 1px solid rgba(217,169,91,0.45); color: var(--texto); outline: none; border-radius: 0; }
-.formulario select { background: #1c1027; }
+.formulario select { background: var(--fondo); }
 .formulario input:focus, .formulario select:focus { border-color: var(--dorado-texto); }
 .formulario .btn { align-self: flex-start; margin-top: 6px; }
 .formulario .btn:disabled { opacity: 0.7; cursor: not-allowed; }
