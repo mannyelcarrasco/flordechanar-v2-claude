@@ -105,7 +105,10 @@ document.addEventListener('DOMContentLoaded', () => {
         <button class="mhd-btn" id="mhdMenu" aria-label="Abrir menú">
             <i class="ph ph-list"></i>
         </button>
-        <span class="mhd-title">Flor de Chañar</span>
+        <a href="dashboard.html" class="mhd-brand">
+            <img src="/logo.png" alt="Flor de Chañar" class="mhd-logo">
+            <span class="mhd-title">Flor de Chañar</span>
+        </a>
         <a href="configuracion.html" class="mhd-btn" aria-label="Configuración">
             <i class="ph ph-user-circle"></i>
         </a>`;

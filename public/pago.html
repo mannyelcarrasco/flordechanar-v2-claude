@@ -9,7 +9,7 @@
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:'Segoe UI',sans-serif;background:#F8FAFC;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem}
     .logo{display:flex;align-items:center;gap:.6rem;margin-bottom:2rem;color:#3B6B4A;font-size:1.15rem;font-weight:700;text-decoration:none}
-    .logo img{height:36px;border-radius:50%}
+    .logo img{height:36px;width:36px;border-radius:50%;object-fit:cover;flex-shrink:0;}
     .card{background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.08);width:100%;max-width:480px;overflow:hidden}
     .card-hd{background:linear-gradient(135deg,#3B6B4A,#5A8A68);color:#fff;padding:1.8rem 2rem}
     .card-hd h1{font-size:1.3rem;font-weight:700;margin-bottom:.25rem}
@@ -64,7 +64,7 @@
 <body>
 
 <a href="index.html" class="logo">
-    <img src="logo.png" alt="Logo" onerror="this.style.display='none'">
+    <img src="/logo.png" alt="Logo" onerror="this.style.display='none'">
     Flor de Chañar
 </a>
 

@@ -1,10 +1,39 @@
 # 📋 Bitácora del Proyecto — Flor de Chañar v2
 **Repositorio:** [mannyelcarrasco/flordechanar-v2-claude](https://github.com/mannyelcarrasco/flordechanar-v2-claude)  
-**Última actualización:** 2026-10-29
+**Última actualización:** 2026-10-30
 
 ---
 
 ## ✅ Avances completados
+
+### 📱 Corrección Integral de Visualización del Logo en Vista de Celular / Móvil (`index.html`, `escuela.html`, `terapias.html`, `detalle.html`, `shared.js`, `shared.css`, `login.html`, `pagina.html`) (NUEVO)
+- [x] **Diagnóstico del Fallo de Visualización en Celulares:**
+  - **Causa 1 (Colisión y desborde en el Navbar Público - `index.html`, `escuela.html`, `terapias.html`):** La tipografía del logo (`font-size: 1.5rem`), la imagen fija de 52px y el padding del contenedor de 48px sumaban más de 340px de ancho. En celulares de 360px a 390px, al no existir reglas responsive para `.logo` ni `flex-shrink: 0`, el logo colisionaba con los botones del header, el texto se partía en dos líneas o la imagen se encogía y desaparecía.
+  - **Causa 2 (Colapso total del Header en `detalle.html`):** La página de detalle de cursos carecía de `@media (max-width: 768px)` para la cabecera. Todos los enlaces de navegación de escritorio (`Inicio`, `Terapias`, `Escuela`, `Sedes`, `Contacto`, `Iniciar Sesión`) permanecían visibles a pantalla completa en celulares, aplastando y expulsando el logo fuera de la pantalla.
+  - **Causa 3 (Ausencia de Logo en Header Móvil del LMS - `shared.js`, `shared.css`):** En todos los paneles internos (`dashboard.html`, `admin.html`, `profesor.html`, `clase-vivo.html`, `configuracion.html`, `materiales.html`, `ranking.html`, etc.), al abrir en móvil el sidebar se oculta y la barra superior inyectada (`.mhd`) solo renderizaba un texto plano `"Flor de Chañar"`, sin etiqueta `<img>` para el logo.
+  - **Causa 4 (Ocultamiento del Brand Panel en `login.html`):** En móviles, `@media (max-width: 768px)` aplicaba `display: none` al `.brand-panel` completo (donde estaba la marca y el logo), dejando el formulario flotando sin identidad institucional.
+  - **Causa 5 (Rutas relativas `src="logo.png"`):** Al navegar desde URLs con barra final o subrutas, las rutas relativas no resolvían la raíz.
+- [x] **Solución y Adaptabilidad Responsive Implementadas:**
+  - **Páginas Públicas (`index.html`, `escuela.html`, `terapias.html`):**
+    - Cabecera móvil optimizada a 68px de altura y padding lateral ajustado a 1rem.
+    - Regla responsive `@media (max-width: 768px)` con `.logo { font-size: 1.15rem; gap: 0.45rem; flex-shrink: 0; white-space: nowrap; }`.
+    - Logo `<img>` protegido con `height: 42px !important; width: 42px !important; min-width: 42px !important; flex-shrink: 0; object-fit: cover; border-radius: 50%`.
+    - Soporte ultra-compacto `@media (max-width: 380px)` (36px de logo y 1.02rem font-size).
+    - Desplegable móvil `.nav-links.mob-open` sincronizado exactamente a `top: 68px`.
+    - Estandarización a ruta absoluta `/logo.png`.
+  - **Página de Detalle de Cursos (`detalle.html`):**
+    - Incorporación completa de media queries responsive para el header.
+    - Ocultamiento de links de escritorio y botón de aula en móviles, activación del botón hamburguesa interactivo (`.mobile-menu-btn`).
+    - Logo asegurado a 42px con borde circular y tipografía serif responsiva.
+  - **Paneles LMS, Aula Virtual y Admin (`shared.js`, `shared.css`):**
+    - Inclusión del logo oficial en la cabecera móvil `.mhd` (`.mhd-brand` con `<img src="/logo.png" class="mhd-logo">` y título enlazado).
+    - Estilo `.mhd-logo` circular (32px, fondo blanco, sombra sutil) visible en todos los teléfonos.
+  - **Portal de Acceso / Login (`login.html`):**
+    - Nuevo bloque de marca superior `.mobile-logo-bar` con el logo circular de 44px y tipografía oficial visible en la parte superior del formulario al consultar desde un smartphone.
+  - **Páginas CMS Dinámicas (`pagina.html`):**
+    - Sustitución de icono plano por la imagen oficial del logo `/logo.png` con protección `flex-shrink: 0`.
+  - **Pasarela y Formularios (`pago.html`, `pago-exitoso.html`, `suscripcion.html`):**
+    - Rutas absolutas `/logo.png` y proporciones cuadradas `36x36px` con `object-fit: cover`.
 
 ### 🔒 Corrección de Vulnerabilidades Reportadas por Hostinger (`package.json`, `package-lock.json`) (NUEVO)
 - [x] **Remediación de Vulnerabilidades Detectadas en hPanel / npm audit:**

@@ -190,6 +190,15 @@ tr:hover td { background:#FAFAF8; }
     align-items:center; padding:0 1rem; gap:.75rem;
     box-shadow:0 2px 8px rgba(0,0,0,.25);
 }
+.mhd-brand {
+    display:flex; align-items:center; gap:.55rem;
+    flex:1; min-width:0; text-decoration:none;
+}
+.mhd-logo {
+    width:32px; height:32px; border-radius:50%;
+    object-fit:cover; flex-shrink:0; background:#fff;
+    box-shadow:0 1px 4px rgba(0,0,0,.2);
+}
 .mhd-title {
     color:#fff; font-family:var(--serif); font-size:1rem;
     font-weight:700; flex:1; white-space:nowrap;

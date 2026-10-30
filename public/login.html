@@ -97,10 +97,35 @@
 
         .panel-hidden { display: none; }
 
+        .mobile-logo-bar { display: none; }
+
         @media (max-width: 768px) {
             body { grid-template-columns: 1fr; }
             .brand-panel { display: none; }
-            .form-panel { padding: 2rem 1.5rem; }
+            .form-panel { padding: 4.5rem 1.5rem 2rem; }
+            .mobile-logo-bar {
+                display: flex;
+                justify-content: center;
+                margin-bottom: 1.5rem;
+            }
+            .mobile-logo-link {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.6rem;
+                font-family: var(--font-serif);
+                font-size: 1.35rem;
+                font-weight: 700;
+                color: var(--color-primary-dark);
+                text-decoration: none;
+            }
+            .mobile-logo-link img {
+                width: 44px;
+                height: 44px;
+                border-radius: 50%;
+                object-fit: cover;
+                background: #fff;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            }
         }
     </style>
 </head>
@@ -124,6 +149,14 @@
     <a href="escuela.html" class="back-link"><i class="ph ph-arrow-left"></i> Volver a la Escuela</a>
 
     <div class="form-container">
+        <!-- Mobile Logo (visible solo en celulares) -->
+        <div class="mobile-logo-bar">
+            <a href="escuela.html" class="mobile-logo-link">
+                <img src="/logo.png" alt="Flor de Chañar">
+                <span>Flor de Chañar</span>
+            </a>
+        </div>
+
         <!-- Tabs -->
         <div class="auth-tabs">
             <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Iniciar Sesión</button>
