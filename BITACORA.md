@@ -6,7 +6,23 @@
 
 ## ✅ Avances completados
 
-### 📱 Corrección Integral de Visualización del Logo en Vista de Celular / Móvil (`index.html`, `escuela.html`, `terapias.html`, `detalle.html`, `shared.js`, `shared.css`, `login.html`, `pagina.html`) (NUEVO)
+### 🔗 Corrección Integral de Enrutamiento y Enlaces de "Terapias" y "Escuela" (`server.js`, `.htaccess`, `index.html`, `escuela.html`, `terapias.html`, `detalle.html`, `login.html`, `pagina.html`, paneles LMS) (NUEVO)
+- [x] **Diagnóstico del Fallo de Navegación (Redirección indeseada a Portada / Página Principal):**
+  - **Causa 1 (Ausencia de soporte para URLs limpias en Express - `server.js`):** El middleware `express.static` no tenía habilitado `{ extensions: ['html'] }` y no existían rutas definidas para `/terapias`, `/terapias/`, `/escuela` o `/escuela/`. Al ingresar a dichas rutas sin extensión, la petición caía en el fallback SPA `app.get(/.*/, ...)` que servía siempre `public/index.html` (la página principal).
+  - **Causa 2 (Reglas de reescritura estrictas en `.htaccess` de LiteSpeed / Hostinger):** El archivo `.htaccess` sólo evaluaba `RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -f` (coincidencia de archivo exacta). Peticiones como `flordechanar.cl/terapias` o `flordechanar.cl/escuela` no coincidían con ningún archivo físico sin extensión, traspasando la solicitud al servidor Node.js que devolvía la portada.
+  - **Causa 3 (Rutas relativas en enlaces de navegación):** Los enlaces del navbar, menú móvil, tarjetas y footer estaban escritos como `href="terapias.html"`, `href="escuela.html"` y `href="index.html"`. Al navegar desde rutas anidadas (ej. `/metodo-mushuu/`, `/TerapiaEmocionalEvolutiva/`, `/p/:slug`), el navegador intentaba resolver `/metodo-mushuu/terapias.html`, fallaba y caía en el fallback de la página principal.
+- [x] **Solución Implementada en Backend, Servidor Web y Frontend:**
+  - **Backend (`server.js`):**
+    - Activado soporte de extensiones automáticas: `app.use(express.static(..., { extensions: ['html'] }))`.
+    - Agregado mapa de rutas limpias explícitas con y sin barra final para todas las páginas públicas del sistema: `/terapias`, `/terapias/` (sirve `terapias.html`), `/escuela`, `/escuela/` (sirve `escuela.html`), `/detalle`, `/login`, `/admin`, `/dashboard`, etc.
+  - **Servidor Web LiteSpeed (`.htaccess`):**
+    - Añadidas reglas de reescritura para URLs limpias sin extensión (`RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI}.html -f` -> `public/$1.html [L]`).
+    - Añadida regla de reescritura para URLs limpias con barra final (`RewriteCond %{REQUEST_URI} ^/(.+)/$` -> `public/%1.html [L]`).
+  - **Estandarización de Enlaces en Frontend (`index.html`, `escuela.html`, `terapias.html`, `detalle.html`, `login.html`, `pagina.html`, etc.):**
+    - Sustituidas todas las rutas relativas por rutas absolutas a la raíz: `/`, `/terapias.html`, `/escuela.html`.
+    - Garantizada navegación directa, instantánea e inmune al subdirectorio desde el cual se acceda.
+
+### 📱 Corrección Integral de Visualización del Logo en Vista de Celular / Móvil (`index.html`, `escuela.html`, `terapias.html`, `detalle.html`, `shared.js`, `shared.css`, `login.html`, `pagina.html`)
 - [x] **Diagnóstico del Fallo de Visualización en Celulares:**
   - **Causa 1 (Colisión y desborde en el Navbar Público - `index.html`, `escuela.html`, `terapias.html`):** La tipografía del logo (`font-size: 1.5rem`), la imagen fija de 52px y el padding del contenedor de 48px sumaban más de 340px de ancho. En celulares de 360px a 390px, al no existir reglas responsive para `.logo` ni `flex-shrink: 0`, el logo colisionaba con los botones del header, el texto se partía en dos líneas o la imagen se encogía y desaparecía.
   - **Causa 2 (Colapso total del Header en `detalle.html`):** La página de detalle de cursos carecía de `@media (max-width: 768px)` para la cabecera. Todos los enlaces de navegación de escritorio (`Inicio`, `Terapias`, `Escuela`, `Sedes`, `Contacto`, `Iniciar Sesión`) permanecían visibles a pantalla completa en celulares, aplastando y expulsando el logo fuera de la pantalla.

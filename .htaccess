@@ -6,10 +6,19 @@ RewriteCond %{HTTP:X-Forwarded-Proto} !https
 RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/
 RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-# Si el archivo solicitado existe dentro de la carpeta /public, se sirve desde ahí.
-# Esto soluciona el error 404 en Hostinger (LiteSpeed) para archivos estáticos (.html, .css, .js)
+# 1. Si el archivo solicitado existe directamente dentro de /public (ej. /terapias.html, /logo.png, /style.css)
 RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -f
 RewriteRule ^(.*)$ public/$1 [L]
 
+# 2. Soporte para URLs limpias sin .html (ej. /terapias -> public/terapias.html, /escuela -> public/escuela.html)
+RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI}.html -f
+RewriteRule ^(.*)$ public/$1.html [L]
+
+# 3. Soporte para URLs limpias con barra final (ej. /terapias/ -> public/terapias.html)
+RewriteCond %{REQUEST_URI} ^/(.+)/$
+RewriteCond %{DOCUMENT_ROOT}/public/%1.html -f
+RewriteRule ^(.+)/$ public/%1.html [L]
+
+# 4. Si es un directorio real dentro de /public (ej. /metodo-mushuu/)
 RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -d
 RewriteRule ^(.*)$ public/$1/ [L]

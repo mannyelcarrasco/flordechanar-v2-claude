@@ -97,8 +97,8 @@ app.get('/uploads/:filename', (req, res, next) => {
     return res.redirect(302, 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=600&q=80');
 });
 
-// Serve static frontend files from 'public' directory
-app.use(express.static(path.join(__dirname, 'public')));
+// Serve static frontend files from 'public' directory with .html extension support
+app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
 
 // Rate limiter for login endpoint
 const loginLimiter = rateLimit({
@@ -4548,6 +4548,37 @@ app.get('/p/:slug', async (req, res, next) => {
         console.warn('Aviso sirviendo landing /p/:slug:', e.message);
     }
     res.sendFile(path.join(__dirname, 'public', 'pagina.html'));
+});
+
+// Rutas limpias directas para páginas HTML (con y sin barra final)
+const staticHtmlPages = [
+    { paths: ['/terapias', '/terapias/'], file: 'terapias.html' },
+    { paths: ['/escuela', '/escuela/'], file: 'escuela.html' },
+    { paths: ['/detalle', '/detalle/'], file: 'detalle.html' },
+    { paths: ['/login', '/login/'], file: 'login.html' },
+    { paths: ['/dashboard', '/dashboard/'], file: 'dashboard.html' },
+    { paths: ['/admin', '/admin/'], file: 'admin.html' },
+    { paths: ['/profesor', '/profesor/'], file: 'profesor.html' },
+    { paths: ['/curso', '/curso/'], file: 'curso.html' },
+    { paths: ['/curso-crear', '/curso-crear/'], file: 'curso-crear.html' },
+    { paths: ['/evaluacion', '/evaluacion/'], file: 'evaluacion.html' },
+    { paths: ['/eval-crear', '/eval-crear/'], file: 'eval-crear.html' },
+    { paths: ['/eval-revisar', '/eval-revisar/'], file: 'eval-revisar.html' },
+    { paths: ['/clase-vivo', '/clase-vivo/'], file: 'clase-vivo.html' },
+    { paths: ['/materiales', '/materiales/'], file: 'materiales.html' },
+    { paths: ['/foro', '/foro/'], file: 'foro.html' },
+    { paths: ['/ranking', '/ranking/'], file: 'ranking.html' },
+    { paths: ['/configuracion', '/configuracion/'], file: 'configuracion.html' },
+    { paths: ['/pago', '/pago/'], file: 'pago.html' },
+    { paths: ['/pago-exitoso', '/pago-exitoso/'], file: 'pago-exitoso.html' },
+    { paths: ['/suscripcion', '/suscripcion/'], file: 'suscripcion.html' },
+    { paths: ['/pagina', '/pagina/'], file: 'pagina.html' },
+];
+
+staticHtmlPages.forEach(({ paths, file }) => {
+    app.get(paths, (req, res) => {
+        res.sendFile(path.join(__dirname, 'public', file));
+    });
 });
 
 // Frontend fallback
