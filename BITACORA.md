@@ -6,6 +6,24 @@
 
 ## ✅ Avances completados
 
+### 🎯 Vinculación Total de la Landing Estándar de Escuela con la URL Amigable (`/curso/:slug`) (`public/curso-crear.html`, `public/detalle.html`, `public/admin.html`, `.htaccess`) (NUEVO)
+- [x] **Diagnóstico del Enlace en la Landing Estándar:**
+  - **Causa 1 (Previsualización en Formulario de Creación/Edición):** En `public/curso-crear.html`, la función `probarLandingPersonalizada()` abría fijamente `detalle.html?id=` cuando el campo de landing personalizada estaba vacío (modo Estándar). Por ende, al hacer clic en "Previsualizar" en la tarjeta "Estándar Escuela" o "Probar Link", el navegador abría la URL con ID numérico antiguo.
+  - **Causa 2 (Bypass de LiteSpeed sobre Node.js para archivos físicos):** Al solicitar directamente `detalle.html` en el navegador, el servidor web LiteSpeed servía el archivo HTML estático de inmediato por coincidencia de archivo físico (`-f`), sin llegar al backend Express donde residía la redirección 301 de `server.js`.
+  - **Causa 3 (Falta de reescritura de URL en caliente):** `detalle.html` cargaba el curso pero no actualizaba dinámicamente la barra de direcciones del navegador con el slug limpio del curso.
+- [x] **Solución y Vinculación Implementadas:**
+  - **En `public/curso-crear.html`:**
+    * Función `probarLandingPersonalizada()` actualizada: Si no hay landing personalizada externa, lee inmediatamente el slug del campo `#courseSlug` o ID y abre la URL limpia `/curso/:slug` (ej. `/curso/terapeuta-en-masoterapia-y-reflexologia-holistica-2027`).
+    * Tarjeta "Estándar Escuela" actualizada: ahora indica explícitamente `Ficha oficial del curso (/curso/:slug) generada automáticamente...`.
+    * Indicador dinámico de URL activa: muestra en vivo la ruta limpia oficial `📄 Estándar Escuela (/curso/:slug)` y se sincroniza en tiempo real al escribir el título o slug.
+    * Corrección de estilos CSS en el input `#courseSlug` (`flex: 1; min-width: 0`) para evitar que el texto largo se corte o solape visualmente con el prefijo o botón `[Auto]`.
+  - **En `public/detalle.html`:**
+    * Inyección de `window.history.replaceState`: Si cualquier usuario entra a través de una URL antigua (`/detalle.html?id=25`, `/detalle?id=25` o `/curso/25`), en cuanto se cargan los datos del curso, la barra del navegador se actualiza instantáneamente y de forma transparente a la URL limpia `/curso/:slug` sin recargar la página.
+  - **En `.htaccess` (LiteSpeed / Apache en Hostinger):**
+    * Regla de reescritura directa añadida: `RewriteRule ^(curso|cursos)/([^/]+)/?$ public/detalle.html [L,QSA]`, permitiendo que LiteSpeed sirva la ficha oficial del curso en cualquier URL `/curso/:slug` conservando el slug intacto en la barra de direcciones.
+  - **En `public/admin.html`:**
+    * Actualizado mensaje informativo de landing estándar haciendo referencia a la ruta oficial `/curso/:slug`.
+
 ### 🚀 URLs Amigables para Cursos (`/curso/:slug`), Metadatos Dinámicos SSR, Mecanismo Automatizado de SEO, Sitemap XML y Centro SEO en Admin (`server.js`, `detalle.html`, `curso-crear.html`, `admin.html`, `escuela.html`, `terapias.html`, `index.html`, `robots.txt`, `sitemap.xml`) (NUEVO)
 - [x] **URLs Amigables y Limpias para Posicionamiento en Buscadores (SEO Slugs):**
   - **Problema previo:** Las páginas de cursos usaban URLs genéricas con parámetros numéricos opacos (ej. `flordechanar.cl/detalle.html?id=13`), lo que impedía que Google, Bing y los motores de búsqueda reconocieran las palabras clave del programa formativo, sede física o año en la URL.

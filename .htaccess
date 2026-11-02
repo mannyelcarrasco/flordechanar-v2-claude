@@ -22,3 +22,6 @@ RewriteRule ^(.+)/$ public/%1.html [L]
 # 4. Si es un directorio real dentro de /public (ej. /metodo-mushuu/)
 RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -d
 RewriteRule ^(.*)$ public/$1/ [L]
+
+# 5. URLs amigables para cursos individuales (ej. /curso/:slug o /cursos/:slug -> public/detalle.html)
+RewriteRule ^(curso|cursos)/([^/]+)/?$ public/detalle.html [L,QSA]

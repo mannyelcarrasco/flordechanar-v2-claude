@@ -388,6 +388,17 @@
 
         function renderCourse(c) {
             document.title = c.titulo + " | Flor de Chañar";
+
+            // Sincronizar URL amigable oficial en la barra de direcciones del navegador
+            if (c.slug) {
+                if (window.location.pathname.includes('detalle.html') || window.location.search.includes('id=') || window.location.pathname === '/curso/' + c.id || window.location.pathname === '/cursos/' + c.id) {
+                    window.history.replaceState({ cursoId: c.id }, '', '/curso/' + c.slug);
+                }
+            } else if (c.id) {
+                if (window.location.pathname.includes('detalle.html') || window.location.search.includes('id=')) {
+                    window.history.replaceState({ cursoId: c.id }, '', '/curso/' + c.id);
+                }
+            }
             
             // Hero
             const defaultHero = 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1200&q=80';
