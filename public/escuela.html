@@ -3,7 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Escuela Online | Flor de Chañar</title>
+    <title>Escuela de Terapias y Bienestar | Flor de Chañar</title>
+    <meta name="description" content="Formación profesional certificada en Masoterapia, Terapia Emocional Evolutiva y Terapias Holísticas. Sedes presenciales en La Serena, Calama y modalidad Online.">
+    <meta name="keywords" content="escuela de masoterapia la serena, cursos masoterapia calama, diplomado terapia emocional, cursos holísticos chile, flor de chañar escuela">
+    <link rel="canonical" href="https://flordechanar.cl/escuela">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Escuela de Terapias y Bienestar | Flor de Chañar">
+    <meta property="og:description" content="Cursos y diplomados certificados en Terapias Complementarias, Masoterapia Profesional y Bienestar Integral en La Serena, Calama y Online.">
+    <meta property="og:image" content="https://flordechanar.cl/img/banners/banner-spa-zen.jpg">
+    <meta property="og:url" content="https://flordechanar.cl/escuela">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="es_CL">
+    <meta property="og:site_name" content="Flor de Chañar">
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Escuela de Terapias y Bienestar | Flor de Chañar">
+    <meta name="twitter:description" content="Formación profesional certificada en Masoterapia y Terapias Holísticas en Chile.">
+    <meta name="twitter:image" content="https://flordechanar.cl/img/banners/banner-spa-zen.jpg">
+
+    <!-- Schema.org JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "EducationalOrganization",
+      "name": "Escuela Flor de Chañar",
+      "url": "https://flordechanar.cl/escuela",
+      "logo": "https://flordechanar.cl/logo.png",
+      "description": "Escuela de formación profesional en terapias complementarias y holísticas.",
+      "telephone": "+56984281226",
+      "address": [
+        {
+          "@type": "PostalAddress",
+          "addressLocality": "La Serena",
+          "addressRegion": "Coquimbo",
+          "addressCountry": "CL"
+        },
+        {
+          "@type": "PostalAddress",
+          "addressLocality": "Calama",
+          "addressRegion": "Antofagasta",
+          "addressCountry": "CL"
+        }
+      ]
+    }
+    </script>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -545,7 +590,9 @@
                     if (curso.ventas_meta) {
                         try { parsedVm = typeof curso.ventas_meta === 'string' ? JSON.parse(curso.ventas_meta) : curso.ventas_meta; } catch(e) {}
                     }
-                    const targetLandingUrl = (parsedVm && parsedVm.landing_personalizada_url) ? parsedVm.landing_personalizada_url : `detalle.html?id=${curso.id}`;
+                    const targetLandingUrl = (parsedVm && parsedVm.landing_personalizada_url) 
+                        ? parsedVm.landing_personalizada_url 
+                        : (curso.slug ? `/curso/${curso.slug}` : `/curso/${curso.id}`);
                     const ctaLabel = 'Ver detalles';
                     const ctaOnclick = `location.href='${targetLandingUrl}'`;
                     let matriculaCardHtml = '';

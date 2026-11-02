@@ -1,0 +1,22 @@
+User-agent: *
+Allow: /
+Allow: /curso/
+Allow: /cursos/
+Allow: /p/
+Allow: /escuela
+Allow: /terapias
+Allow: /metodo-mushuu/
+Allow: /TerapiaEmocionalEvolutiva/
+Disallow: /admin
+Disallow: /admin.html
+Disallow: /dashboard
+Disallow: /profesor
+Disallow: /curso-crear
+Disallow: /evaluacion
+Disallow: /eval-crear
+Disallow: /eval-revisar
+Disallow: /api/admin/
+Disallow: /api/evaluaciones/
+Disallow: /api/auth/
+
+Sitemap: https://flordechanar.cl/sitemap.xml

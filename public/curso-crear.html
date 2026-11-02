@@ -192,8 +192,47 @@
                 <h3>Información Básica del Curso</h3>
             </div>
 
-            <div class="fg"><label class="fl">Título del curso <span style="color:var(--err)">*</span></label><input class="fc" type="text" id="courseTitle" placeholder="Ej: Diplomado en Terapia Energética Integral" oninput="updateChecklist()"></div>
-            <div class="fg"><label class="fl">Subtítulo / descripción corta</label><input class="fc" type="text" id="courseSubtitle" placeholder="Ej: Aprende a dominar las técnicas de armonización y equilibrio holístico" oninput="updateChecklist()"></div>
+            <div class="fg"><label class="fl">Título del curso <span style="color:var(--err)">*</span></label><input class="fc" type="text" id="courseTitle" placeholder="Ej: Diplomado en Terapia Energética Integral" oninput="onCourseTitleInput()"></div>
+            <div class="fg"><label class="fl">Subtítulo / descripción corta</label><input class="fc" type="text" id="courseSubtitle" placeholder="Ej: Aprende a dominar las técnicas de armonización y equilibrio holístico" oninput="updateChecklist(); updateGooglePreview();"></div>
+
+            <!-- ENLACE AMIGABLE Y OPTIMIZACIÓN SEO -->
+            <div class="fg" style="background:#F0FDF4; border:1.5px solid #BBF7D0; border-radius:12px; padding:1.2rem; margin-top:0.75rem; margin-bottom:1.25rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem; flex-wrap:wrap; gap:0.5rem;">
+                    <label class="fl" style="margin-bottom:0; font-weight:700; color:#166534; display:flex; align-items:center; gap:0.4rem; font-size:0.92rem;">
+                        <i class="ph-bold ph-globe"></i> Enlace Web Amigable & Posicionamiento SEO (Slug)
+                    </label>
+                    <span style="font-size:0.74rem; color:#15803D; font-weight:700; background:#DCFCE7; padding:2px 8px; border-radius:99px;"><i class="ph-fill ph-check-circle"></i> Clave para posicionar en Google</span>
+                </div>
+                <p style="font-size:0.78rem; color:#166534; margin:0 0 0.65rem 0; line-height:1.4;">
+                    Esta será la dirección web pública de ventas del curso en internet. Google leerá estas palabras clave para recomendar el curso en búsquedas de La Serena, Calama y Chile.
+                </p>
+                <div style="display:flex; gap:0.5rem; align-items:center;">
+                    <span style="font-size:0.85rem; color:#475569; background:#ffffff; border:1px solid #CBD5E1; padding:0.55rem 0.75rem; border-radius:8px; white-space:nowrap; font-weight:600;">flordechanar.cl/curso/</span>
+                    <input class="fc" type="text" id="courseSlug" placeholder="programa-masoterapia-profesional-la-serena-2027" style="font-family:monospace; font-size:0.88rem; font-weight:600; color:#0F172A;" oninput="onCourseSlugInput()">
+                    <button type="button" class="btn btn-sm" onclick="autoGenerateSlug(true)" style="background:#DCFCE7; color:#166534; border:1px solid #86EFAC; white-space:nowrap; font-weight:700;" title="Regenerar slug automáticamente desde el título">
+                        <i class="ph ph-arrows-clockwise"></i> Auto
+                    </button>
+                </div>
+
+                <!-- Google Search Snippet Preview -->
+                <div style="margin-top:1rem; background:#ffffff; border:1px solid #E2E8F0; border-radius:10px; padding:1rem; box-shadow:0 4px 12px rgba(0,0,0,0.03);">
+                    <div style="font-size:0.7rem; color:#64748B; text-transform:uppercase; font-weight:700; margin-bottom:0.4rem; display:flex; align-items:center; gap:0.35rem;">
+                        <i class="ph-fill ph-google-logo" style="color:#4285F4; font-size:0.9rem"></i> Vista Previa en Resultados de Google
+                    </div>
+                    <div id="googlePreviewTitle" style="color:#1a0dab; font-size:1.1rem; font-family:arial,sans-serif; cursor:pointer; line-height:1.3; font-weight:500;">Título del Curso | Flor de Chañar</div>
+                    <div id="googlePreviewUrl" style="color:#202124; font-size:0.8rem; font-family:arial,sans-serif; margin-top:0.2rem; word-break:break-all;">
+                        https://flordechanar.cl › curso › <span id="googlePreviewSlug" style="color:#166534; font-weight:600;">url-amigable-del-curso</span>
+                    </div>
+                    <div id="googlePreviewDesc" style="color:#4d5156; font-size:0.84rem; font-family:arial,sans-serif; margin-top:0.35rem; line-height:1.4;">
+                        Aprende con los mejores docentes en Flor de Chañar. Conoce el temario, modalidad presencial u online y solicita tu admisión.
+                    </div>
+                </div>
+
+                <!-- Checklist Auditoría SEO del Curso -->
+                <div id="seoAuditBadges" style="margin-top:0.85rem; display:flex; gap:0.5rem; flex-wrap:wrap; font-size:0.75rem;">
+                    <!-- Insignias generadas en tiempo real -->
+                </div>
+            </div>
             <div class="fg"><label class="fl">Descripción corta (Tarjeta)</label><textarea class="fc" id="courseDesc" rows="2" placeholder="Describe brevemente el curso..."></textarea></div>
 
 
@@ -1563,6 +1602,96 @@ function togglePrice() {
     updateChecklist();
 }
 
+// --- HERRAMIENTAS SEO Y SLUG ---
+let slugManuallyEdited = false;
+
+function slugifyText(text) {
+    if (!text) return '';
+    return text
+        .toString()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9\s-]/g, '')
+        .trim()
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .slice(0, 200);
+}
+
+function onCourseTitleInput() {
+    updateChecklist();
+    if (!slugManuallyEdited) {
+        autoGenerateSlug(false);
+    }
+    updateGooglePreview();
+}
+
+function onCourseSlugInput() {
+    slugManuallyEdited = true;
+    const el = document.getElementById('courseSlug');
+    if (el) {
+        el.value = el.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
+    }
+    updateGooglePreview();
+}
+
+function autoGenerateSlug(force = false) {
+    if (force) slugManuallyEdited = false;
+    const title = document.getElementById('courseTitle').value;
+    const slugEl = document.getElementById('courseSlug');
+    if (slugEl) {
+        slugEl.value = slugifyText(title);
+        updateGooglePreview();
+    }
+}
+
+function updateGooglePreview() {
+    const title = (document.getElementById('courseTitle')?.value || '').trim() || 'Título del Curso';
+    const sub = (document.getElementById('courseSubtitle')?.value || '').trim();
+    const desc = (document.getElementById('courseDesc')?.value || '').trim();
+    const slug = (document.getElementById('courseSlug')?.value || '').trim() || 'url-del-curso';
+
+    const pTitle = document.getElementById('googlePreviewTitle');
+    const pSlug = document.getElementById('googlePreviewSlug');
+    const pDesc = document.getElementById('googlePreviewDesc');
+
+    if (pTitle) pTitle.textContent = `${title} | Flor de Chañar`;
+    if (pSlug) pSlug.textContent = slug;
+    if (pDesc) {
+        const fullDesc = sub || desc || 'Aprende con los mejores docentes en Flor de Chañar. Conoce el temario, modalidad presencial u online y solicita tu admisión.';
+        pDesc.textContent = fullDesc.slice(0, 160) + (fullDesc.length > 160 ? '...' : '');
+    }
+
+    // Actualizar Badges de Auditoría SEO
+    const badgesBox = document.getElementById('seoAuditBadges');
+    if (badgesBox) {
+        let bHtml = '';
+        // 1. Título
+        if (title.length >= 25 && title.length <= 70) {
+            bHtml += `<span style="background:#DCFCE7;color:#166534;padding:3px 8px;border-radius:6px;font-weight:600;"><i class="ph-bold ph-check"></i> Título SEO (${title.length} car.)</span>`;
+        } else {
+            bHtml += `<span style="background:#FEF3C7;color:#92400E;padding:3px 8px;border-radius:6px;font-weight:600;"><i class="ph-bold ph-warning"></i> Longitud título (${title.length}/60 óptimo)</span>`;
+        }
+
+        // 2. Slug
+        if (slug && slug.length >= 4 && !/[^a-z0-9-]/.test(slug)) {
+            bHtml += `<span style="background:#DCFCE7;color:#166534;padding:3px 8px;border-radius:6px;font-weight:600;"><i class="ph-bold ph-check"></i> URL limpia</span>`;
+        } else {
+            bHtml += `<span style="background:#FEE2E2;color:#991B1B;padding:3px 8px;border-radius:6px;font-weight:600;"><i class="ph-bold ph-x"></i> URL incompleta</span>`;
+        }
+
+        // 3. Subtítulo / Meta Descripción
+        if (sub.length >= 40 && sub.length <= 160) {
+            bHtml += `<span style="background:#DCFCE7;color:#166534;padding:3px 8px;border-radius:6px;font-weight:600;"><i class="ph-bold ph-check"></i> Meta descripción (${sub.length} car.)</span>`;
+        } else {
+            bHtml += `<span style="background:#FEF3C7;color:#92400E;padding:3px 8px;border-radius:6px;font-weight:600;"><i class="ph-bold ph-info"></i> Bajada SEO (${sub.length}/140 óptimo)</span>`;
+        }
+
+        badgesBox.innerHTML = bHtml;
+    }
+}
+
 function updateChecklist() {
     const title = document.getElementById('courseTitle').value.trim();
     const cat = document.getElementById('courseCategory').value;
@@ -1767,9 +1896,14 @@ window.addEventListener('load', async () => {
                 } else {
                     const c = await res.json();
                     document.getElementById('courseTitle').value = c.titulo || '';
+                    if (document.getElementById('courseSlug')) {
+                        document.getElementById('courseSlug').value = c.slug || '';
+                        if (c.slug) slugManuallyEdited = true;
+                    }
                     if (document.getElementById('courseSubtitle')) {
                         document.getElementById('courseSubtitle').value = c.subtitulo || '';
                     }
+                    updateGooglePreview();
                     document.getElementById('courseDesc').value = c.descripcion || '';
                     document.getElementById('courseDescVentas').value = c.descripcion_ventas || '';
                     if (document.getElementById('courseFechaInicioClases')) {
@@ -2289,6 +2423,7 @@ async function saveDraft() {
 
         const payload = {
             titulo: title,
+            slug: document.getElementById('courseSlug') ? document.getElementById('courseSlug').value.trim() : null,
             subtitulo: subtitle,
             descripcion: desc,
             descripcion_ventas: document.getElementById('courseDescVentas').value,
@@ -2375,6 +2510,7 @@ async function publishCourse(estadoFinal = 'publicado') {
 
         const payload = {
             titulo: title,
+            slug: document.getElementById('courseSlug') ? document.getElementById('courseSlug').value.trim() : null,
             subtitulo: subtitle,
             descripcion: desc,
             descripcion_ventas: document.getElementById('courseDescVentas').value,

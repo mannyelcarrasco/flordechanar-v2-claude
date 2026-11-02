@@ -1,10 +1,43 @@
 # 📋 Bitácora del Proyecto — Flor de Chañar v2
 **Repositorio:** [mannyelcarrasco/flordechanar-v2-claude](https://github.com/mannyelcarrasco/flordechanar-v2-claude)  
-**Última actualización:** 2026-10-30
+**Última actualización:** 2026-11-02
 
 ---
 
 ## ✅ Avances completados
+
+### 🚀 URLs Amigables para Cursos (`/curso/:slug`), Metadatos Dinámicos SSR, Mecanismo Automatizado de SEO, Sitemap XML y Centro SEO en Admin (`server.js`, `detalle.html`, `curso-crear.html`, `admin.html`, `escuela.html`, `terapias.html`, `index.html`, `robots.txt`, `sitemap.xml`) (NUEVO)
+- [x] **URLs Amigables y Limpias para Posicionamiento en Buscadores (SEO Slugs):**
+  - **Problema previo:** Las páginas de cursos usaban URLs genéricas con parámetros numéricos opacos (ej. `flordechanar.cl/detalle.html?id=13`), lo que impedía que Google, Bing y los motores de búsqueda reconocieran las palabras clave del programa formativo, sede física o año en la URL.
+  - **Solución implementada:**
+    - Se agregó la columna `slug VARCHAR(300) UNIQUE` a la tabla `cursos` en `server.js` (con índice único y auto-generación en migraciones).
+    - Nueva ruta amigable oficial de cursos: `/curso/:slug` (ej. `/curso/programa-de-estudio-terapeuta-en-masoterapia-profesional-presencial-la-serena-2027`).
+    - Soporte transparente para `/cursos/:slug` y `/curso/:id`.
+    - **Redirección 301 Permanente:** Cualquier petición entrante a la URL antigua (`flordechanar.cl/detalle.html?id=13` o `/detalle?id=13`) es redirigida permanentemente (301) hacia `/curso/:slug`, traspasando todo el posicionamiento y pagerank hacia la nueva URL sin romper enlaces existentes ni compartidos en redes sociales.
+- [x] **Server-Side Rendering (SSR) de Metadatos SEO y Datos Estructurados:**
+  - Al ingresar a `/curso/:slug`, el servidor inyecta dinámicamente en el `<head>` antes de enviar la respuesta al navegador:
+    * `<title>[Título del Curso] | Flor de Chañar</title>`.
+    * `<meta name="description">` y `<meta name="keywords">` basados en el subtítulo, descripción y sede.
+    * `<link rel="canonical" href="https://flordechanar.cl/curso/:slug">`.
+    * Metadatos **Open Graph** (`og:title`, `og:description`, `og:image`, `og:url`) para previsualizaciones ricas y atractivas al compartir en WhatsApp, Facebook y LinkedIn.
+    * **Twitter Cards** con tarjeta grande `summary_large_image`.
+    * **Datos Estructurados Schema.org (JSON-LD)** tipo `Course`, `Product` y `EducationalOrganization` con precios, modalidad, certificación y disponibilidad de cupos para Rich Snippets en Google.
+    * Inyección de `window.__INITIAL_COURSE__` para carga instantánea en el navegador con *Zero Layout Shift*.
+- [x] **Mecanismo Automatizado de Generación de Sitemap y Robots:**
+  - **Sitemap Dinámico (`/sitemap.xml`):** Generador dinámico en tiempo real que consulta cursos publicados, páginas del CMS y landings estáticas, asignando fechas de modificación, frecuencias de actualización y prioridades. También persiste automáticamente `public/sitemap.xml`.
+  - **`public/robots.txt`:** Configuración de directivas de rastreo que habilita indexación de cursos y páginas públicas, protegiendo rutas privadas del panel administrativo y aula, y vinculando `https://flordechanar.cl/sitemap.xml`.
+  - **Notificación y Ping Automático a Google:** Endpoint `POST /api/admin/seo/ping-google` para notificar a Google y Bing cada vez que se actualiza o publica contenido.
+- [x] **Herramientas de Auditoría y Creación SEO en el Panel de Administración:**
+  - **En `curso-crear.html`:**
+    * Campo editable para el **Slug / URL amigable** del curso con botón `[Auto]` y conversión automática en tiempo real desde el título.
+    * **Vista Previa en Resultados de Google (Snippet Preview):** Muestra en vivo exactamente cómo lucirá el enlace azul, la ruta en migas de pan y la descripción en el buscador de Google.
+    * **Insignias de Auditoría SEO:** Chequeos en vivo de longitud de título (30-60 caracteres), URL amigable limpia y meta descripción adecuada.
+  - **En `admin.html`:**
+    * En el catálogo de cursos se muestra la píldora verde `🔗 /curso/:slug` con botón para copiar el enlace directo en 1 clic.
+    * Nueva sub-pestaña **`🚀 SEO & Buscadores`** en Ajustes (`#spanel-seo`) con métricas en tiempo real de cursos indexados, enlaces directos a `sitemap.xml` y `robots.txt`, botón para *Asignar Slugs Faltantes*, botón para *Notificar a Google (Ping)* y tabla de auditoría con puntuaciones SEO porcentuales por curso.
+- [x] **Optimización de Metadatos en Páginas Principales:**
+  - Inclusión de metadatos Open Graph, Twitter Cards, Canonical links y Schema.org JSON-LD (`EducationalOrganization`, `HealthAndBeautyBusiness`) en `index.html`, `escuela.html` y `terapias.html`.
+  - Actualización de los enlaces del catálogo en `escuela.html` para abrir directamente `/curso/:slug`.
 
 ### 🔗 Corrección Integral de Enrutamiento y Enlaces de "Terapias" y "Escuela" (`server.js`, `.htaccess`, `index.html`, `escuela.html`, `terapias.html`, `detalle.html`, `login.html`, `pagina.html`, paneles LMS) (NUEVO)
 - [x] **Diagnóstico del Fallo de Navegación (Redirección indeseada a Portada / Página Principal):**

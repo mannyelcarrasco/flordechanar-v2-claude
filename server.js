@@ -111,6 +111,22 @@ const loginLimiter = rateLimit({
 
 // Create DB Connection Pool
 const DB_NAME = process.env.DB_NAME || 'flordechanar';
+
+// Generador de slugs amigables para URLs y SEO
+function generarSlug(texto) {
+    if (!texto) return '';
+    return texto
+        .toString()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9\s-]/g, '')
+        .trim()
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .slice(0, 200);
+}
+
 const dbConfig = {
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
@@ -363,6 +379,8 @@ async function initDB() {
             `ALTER TABLE lecciones ADD COLUMN duracion VARCHAR(50)`,
             `ALTER TABLE lecciones ADD COLUMN visibilidad VARCHAR(10) DEFAULT 'privada'`,
             `ALTER TABLE cursos ADD COLUMN subtitulo VARCHAR(500)`,
+            `ALTER TABLE cursos ADD COLUMN slug VARCHAR(300)`,
+            `ALTER TABLE cursos ADD UNIQUE INDEX idx_cursos_slug (slug)`,
             `ALTER TABLE cursos MODIFY COLUMN estado ENUM('borrador','publicado','archivado','interno') DEFAULT 'borrador'`,
             `ALTER TABLE cursos ADD COLUMN tipo_acceso VARCHAR(20) DEFAULT 'gratis'`,
             `ALTER TABLE cursos ADD COLUMN categoria VARCHAR(100)`,
@@ -636,6 +654,26 @@ async function initDB() {
                         await pool.query("UPDATE cursos SET ventas_meta = ? WHERE id = ?", [JSON.stringify(vm), c.id]);
                     }
                 }
+            }
+
+            // Auto-generar slugs amigables para cursos existentes que no tengan
+            try {
+                const [cursosSinSlug] = await pool.query("SELECT id, titulo FROM cursos WHERE slug IS NULL OR slug = ''");
+                for (const c of cursosSinSlug) {
+                    let baseSlug = generarSlug(c.titulo || `curso-${c.id}`);
+                    let finalSlug = baseSlug;
+                    let counter = 1;
+                    while (true) {
+                        const [dups] = await pool.query("SELECT id FROM cursos WHERE slug = ? AND id != ?", [finalSlug, c.id]);
+                        if (!dups.length) break;
+                        counter++;
+                        finalSlug = `${baseSlug}-${counter}`;
+                    }
+                    await pool.query("UPDATE cursos SET slug = ? WHERE id = ?", [finalSlug, c.id]);
+                    console.log(`Auto-asignado slug '${finalSlug}' al curso ID ${c.id}`);
+                }
+            } catch (slugErr) {
+                console.warn('Aviso auto-generando slugs de cursos:', slugErr.message);
             }
         } catch (seedErr) {
             console.warn('Aviso en auto-seeding de landings en paginas:', seedErr.message);
@@ -1041,7 +1079,7 @@ app.get('/api/cursos', async (req, res) => {
     try {
         if (!pool) return res.status(500).json({ error: 'Database not connected' });
         const [cursos] = await pool.query(`
-            SELECT c.id, c.titulo, c.subtitulo, c.descripcion, c.precio, c.tiene_matricula, c.valor_matricula, c.cobra_matricula,
+            SELECT c.id, c.slug, c.titulo, c.subtitulo, c.descripcion, c.precio, c.tiene_matricula, c.valor_matricula, c.cobra_matricula,
                    c.tipo_acceso, c.portada_url, c.modalidad, c.dias_clase, c.horario_clase, c.sede, c.horarios_sedes,
                    c.texto_opciones_extra, c.ventas_meta, c.duracion_total, c.categoria, c.fecha_inicio_ventas,
                    c.fecha_inicio_clases, c.fecha_fin_clases, c.cupos, c.cupos_ocupados, c.cupos_agotados_forzado, c.atendia_event_id, u.nombre as profesor,
@@ -1067,7 +1105,7 @@ app.post('/api/cursos', verifyToken, async (req, res) => {
     if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
     try {
         const { 
-            titulo, subtitulo, descripcion, precio, precio_mensual, tiene_matricula, valor_matricula, cobra_matricula, portada_url, estado, meet_url, es_ciclico, 
+            titulo, slug, subtitulo, descripcion, precio, precio_mensual, tiene_matricula, valor_matricula, cobra_matricula, portada_url, estado, meet_url, es_ciclico, 
             tipo_acceso, categoria, nivel, duracion_total, idioma, descripcion_ventas, 
             ventas_meta, certificacion, modalidad, profesor_id, dias_clase, horario_clase, sede, texto_opciones_extra, salas_virtuales,
             fecha_inicio_ventas, fecha_inicio_clases, fecha_fin_clases, cupos, cupos_ocupados, cupos_agotados_forzado, muestra_gratuita, horarios_sedes, atendia_event_id
@@ -1076,12 +1114,25 @@ app.post('/api/cursos', verifyToken, async (req, res) => {
         const estadosPermitidos = ['borrador', 'publicado', 'archivado', 'interno'];
         if (estado && !estadosPermitidos.includes(estado)) return res.status(400).json({ error: 'Estado inválido' });
         
+        // Generar o validar slug amigable único para SEO
+        let finalSlug = generarSlug(slug || titulo || 'curso');
+        if (finalSlug) {
+            let baseSlug = finalSlug;
+            let counter = 1;
+            while (true) {
+                const [dups] = await pool.query("SELECT id FROM cursos WHERE slug = ?", [finalSlug]);
+                if (!dups.length) break;
+                counter++;
+                finalSlug = `${baseSlug}-${counter}`;
+            }
+        }
+
         const [result] = await pool.query(
             `INSERT INTO cursos 
-             (titulo, subtitulo, descripcion, precio, tiene_matricula, valor_matricula, cobra_matricula, portada_url, estado, meet_url, es_ciclico, tipo_acceso, categoria, nivel, duracion_total, idioma, descripcion_ventas, ventas_meta, certificacion, modalidad, profesor_id, dias_clase, horario_clase, sede, texto_opciones_extra, salas_virtuales, fecha_inicio_ventas, fecha_inicio_clases, fecha_fin_clases, cupos, cupos_ocupados, cupos_agotados_forzado, muestra_gratuita, horarios_sedes, atendia_event_id) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             (titulo, slug, subtitulo, descripcion, precio, tiene_matricula, valor_matricula, cobra_matricula, portada_url, estado, meet_url, es_ciclico, tipo_acceso, categoria, nivel, duracion_total, idioma, descripcion_ventas, ventas_meta, certificacion, modalidad, profesor_id, dias_clase, horario_clase, sede, texto_opciones_extra, salas_virtuales, fecha_inicio_ventas, fecha_inicio_clases, fecha_fin_clases, cupos, cupos_ocupados, cupos_agotados_forzado, muestra_gratuita, horarios_sedes, atendia_event_id) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-                titulo, subtitulo || null, descripcion, precio || 0, tiene_matricula ? 1 : 0, parseInt(valor_matricula) || 0, cobra_matricula !== undefined ? (cobra_matricula ? 1 : 0) : 1, portada_url || null, estado || 'borrador', meet_url || null, es_ciclico ? 1 : 0,
+                titulo, finalSlug, subtitulo || null, descripcion, precio || 0, tiene_matricula ? 1 : 0, parseInt(valor_matricula) || 0, cobra_matricula !== undefined ? (cobra_matricula ? 1 : 0) : 1, portada_url || null, estado || 'borrador', meet_url || null, es_ciclico ? 1 : 0,
                 tipo_acceso || 'gratis', categoria || null, nivel || null, duracion_total || null, idioma || null,
                 descripcion_ventas || null, ventas_meta ? JSON.stringify(ventas_meta) : null, certificacion ? 1 : 0, modalidad || 'Online (Grabado)',
                 profesor_id || req.usuario.id, dias_clase || null, horario_clase || null, sede || null, texto_opciones_extra ? 1 : 0, salas_virtuales ? JSON.stringify(salas_virtuales) : null,
@@ -1096,7 +1147,7 @@ app.post('/api/cursos', verifyToken, async (req, res) => {
                 [`Mensualidad - ${titulo.substring(0, 100)}`, 'Suscripción mensual al curso', 'mensual', montoMensual, newCursoId]
             );
         }
-        res.json({ success: true, id: newCursoId });
+        res.json({ success: true, id: newCursoId, slug: finalSlug });
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: 'Error al crear curso' });
@@ -1217,15 +1268,17 @@ app.get('/api/cursos/:id/progreso', verifyToken, async (req, res) => {
     }
 });
 
-// Obtener Curso Público por ID (Para la Landing Page)
-app.get('/api/cursos/publico/:id', async (req, res) => {
+// Obtener Curso Público por ID o Slug (Para la Landing Page y SEO)
+app.get('/api/cursos/publico/:idOrSlug', async (req, res) => {
     try {
+        const param = req.params.idOrSlug;
+        const isNumeric = /^\d+$/.test(param);
         const [cursos] = await pool.query(
             `SELECT c.*, u.nombre as profesor_nombre
              FROM cursos c
              LEFT JOIN usuarios u ON c.profesor_id = u.id
-             WHERE c.id = ? AND c.estado IN ('publicado', 'interno')`,
-            [req.params.id]
+             WHERE (c.id = ? OR c.slug = ?) AND c.estado IN ('publicado', 'interno') LIMIT 1`,
+            [isNumeric ? parseInt(param) : 0, param]
         );
         if (cursos.length === 0) return res.status(404).json({ error: 'Curso no encontrado o no disponible' });
         
@@ -1266,8 +1319,22 @@ app.get('/api/cursos/:id', verifyToken, async (req, res) => {
 app.put('/api/cursos/:id', verifyToken, async (req, res) => {
     if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
     try {
-        const { titulo, subtitulo, descripcion, precio, precio_mensual, tiene_matricula, valor_matricula, cobra_matricula, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas, ventas_meta, es_ciclico, meet_url, salas_virtuales, dias_clase, horario_clase, sede, texto_opciones_extra, fecha_inicio_ventas, fecha_inicio_clases, fecha_fin_clases, cupos, cupos_ocupados, cupos_agotados_forzado, muestra_gratuita, horarios_sedes, atendia_event_id } = req.body;
+        const { titulo, slug, subtitulo, descripcion, precio, precio_mensual, tiene_matricula, valor_matricula, cobra_matricula, tipo_acceso, portada_url, estado, profesor_id, categoria, nivel, duracion_total, idioma, certificacion, modalidad, descripcion_ventas, ventas_meta, es_ciclico, meet_url, salas_virtuales, dias_clase, horario_clase, sede, texto_opciones_extra, fecha_inicio_ventas, fecha_inicio_clases, fecha_fin_clases, cupos, cupos_ocupados, cupos_agotados_forzado, muestra_gratuita, horarios_sedes, atendia_event_id } = req.body;
         let profAsignado = req.usuario.rol === 'admin' ? (profesor_id || req.usuario.id) : req.usuario.id;
+
+        // Sanitizar y validar slug amigable único para SEO
+        let finalSlug = slug !== undefined && slug !== null && slug.trim() !== '' ? generarSlug(slug) : null;
+        if (!finalSlug && titulo) finalSlug = generarSlug(titulo);
+        if (finalSlug) {
+            let baseSlug = finalSlug;
+            let counter = 1;
+            while (true) {
+                const [dups] = await pool.query("SELECT id FROM cursos WHERE slug = ? AND id != ?", [finalSlug, req.params.id]);
+                if (!dups.length) break;
+                counter++;
+                finalSlug = `${baseSlug}-${counter}`;
+            }
+        }
 
         let vMetaStr = null;
         if(ventas_meta) {
@@ -1283,8 +1350,8 @@ app.put('/api/cursos/:id', verifyToken, async (req, res) => {
         }
 
         await pool.query(
-            'UPDATE cursos SET titulo = ?, subtitulo = ?, descripcion = ?, precio = ?, tiene_matricula = ?, valor_matricula = ?, cobra_matricula = ?, tipo_acceso = ?, portada_url = ?, estado = ?, profesor_id = ?, categoria = ?, nivel = ?, duracion_total = ?, idioma = ?, certificacion = ?, modalidad = ?, descripcion_ventas = ?, ventas_meta = ?, es_ciclico = ?, meet_url = ?, salas_virtuales = ?, dias_clase = ?, horario_clase = ?, sede = ?, texto_opciones_extra = ?, fecha_inicio_ventas = ?, fecha_inicio_clases = ?, fecha_fin_clases = ?, cupos = ?, cupos_ocupados = ?, cupos_agotados_forzado = ?, muestra_gratuita = ?, horarios_sedes = ?, atendia_event_id = ? WHERE id = ?',
-            [titulo, subtitulo || null, descripcion, precio, tiene_matricula ? 1 : 0, parseInt(valor_matricula) || 0, cobra_matricula !== undefined ? (cobra_matricula ? 1 : 0) : 1, tipo_acceso || 'gratis', portada_url, estado, profAsignado, categoria||null, nivel||null, duracion_total||null, idioma||null, certificacion ? 1 : 0, modalidad||'Online (Grabado)', descripcion_ventas||null, vMetaStr, es_ciclico ? 1 : 0, meet_url || null, salasStr, dias_clase||null, horario_clase||null, sede||null, texto_opciones_extra ? 1 : 0, fecha_inicio_ventas||null, fecha_inicio_clases||null, fecha_fin_clases||null, parseInt(cupos)||0, parseInt(cupos_ocupados)||0, cupos_agotados_forzado ? 1 : 0, muestra_gratuita||'ninguna', hrSedesStr, atendia_event_id !== undefined ? (parseInt(atendia_event_id) || null) : null, req.params.id]
+            'UPDATE cursos SET titulo = ?, slug = COALESCE(?, slug), subtitulo = ?, descripcion = ?, precio = ?, tiene_matricula = ?, valor_matricula = ?, cobra_matricula = ?, tipo_acceso = ?, portada_url = ?, estado = ?, profesor_id = ?, categoria = ?, nivel = ?, duracion_total = ?, idioma = ?, certificacion = ?, modalidad = ?, descripcion_ventas = ?, ventas_meta = ?, es_ciclico = ?, meet_url = ?, salas_virtuales = ?, dias_clase = ?, horario_clase = ?, sede = ?, texto_opciones_extra = ?, fecha_inicio_ventas = ?, fecha_inicio_clases = ?, fecha_fin_clases = ?, cupos = ?, cupos_ocupados = ?, cupos_agotados_forzado = ?, muestra_gratuita = ?, horarios_sedes = ?, atendia_event_id = ? WHERE id = ?',
+            [titulo, finalSlug, subtitulo || null, descripcion, precio, tiene_matricula ? 1 : 0, parseInt(valor_matricula) || 0, cobra_matricula !== undefined ? (cobra_matricula ? 1 : 0) : 1, tipo_acceso || 'gratis', portada_url, estado, profAsignado, categoria||null, nivel||null, duracion_total||null, idioma||null, certificacion ? 1 : 0, modalidad||'Online (Grabado)', descripcion_ventas||null, vMetaStr, es_ciclico ? 1 : 0, meet_url || null, salasStr, dias_clase||null, horario_clase||null, sede||null, texto_opciones_extra ? 1 : 0, fecha_inicio_ventas||null, fecha_inicio_clases||null, fecha_fin_clases||null, parseInt(cupos)||0, parseInt(cupos_ocupados)||0, cupos_agotados_forzado ? 1 : 0, muestra_gratuita||'ninguna', hrSedesStr, atendia_event_id !== undefined ? (parseInt(atendia_event_id) || null) : null, req.params.id]
         );
 
         // Sincronizar plan de mensualidad si viene precio_mensual en el body
@@ -3124,6 +3191,141 @@ app.get('/api/plantillas/:id/contenido', verifyToken, async (req, res) => {
     }
 });
 
+// --- CENTRO Y HERRAMIENTAS DE AUTOMATIZACIÓN SEO ---
+
+// GET /api/admin/seo/status — Diagnóstico completo del estado SEO del sitio
+app.get('/api/admin/seo/status', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Sin acceso' });
+    try {
+        const [cursos] = await pool.query(
+            "SELECT id, titulo, slug, estado, portada_url, subtitulo, sede, modalidad, precio, cupos FROM cursos ORDER BY id DESC"
+        );
+        const [paginas] = await pool.query(
+            "SELECT id, titulo, slug, estado, portada_url, meta_desc FROM paginas ORDER BY id DESC"
+        );
+
+        const cursosPublicados = cursos.filter(c => c.estado === 'publicado');
+        const paginasPublicadas = paginas.filter(p => p.estado === 'publicado');
+
+        // Auditoría SEO granular de cursos
+        const auditoria = cursos.map(c => {
+            const checks = [];
+            let score = 100;
+
+            if (!c.slug) {
+                checks.push({ tipo: 'error', mensaje: 'Sin URL amigable (Slug pendiente)' });
+                score -= 30;
+            } else {
+                checks.push({ tipo: 'ok', mensaje: `Slug: /curso/${c.slug}` });
+            }
+
+            if (!c.subtitulo || c.subtitulo.trim().length < 20) {
+                checks.push({ tipo: 'warn', mensaje: 'Subtítulo / bajada SEO muy breve (recomendado 80-160 caracteres)' });
+                score -= 20;
+            } else {
+                checks.push({ tipo: 'ok', mensaje: 'Meta descripción optimizada' });
+            }
+
+            if (!c.portada_url) {
+                checks.push({ tipo: 'warn', mensaje: 'Falta imagen de portada (necesaria para Google y WhatsApp)' });
+                score -= 20;
+            } else {
+                checks.push({ tipo: 'ok', mensaje: 'Imagen de portada configurada' });
+            }
+
+            if (!c.sede && !c.modalidad) {
+                checks.push({ tipo: 'warn', mensaje: 'Falta especificar sede física o modalidad (vital para búsquedas locales)' });
+                score -= 15;
+            } else {
+                checks.push({ tipo: 'ok', mensaje: `Sede/Modalidad: ${c.sede || c.modalidad}` });
+            }
+
+            if (!c.precio && c.tipo_acceso !== 'gratis') {
+                checks.push({ tipo: 'warn', mensaje: 'Sin precio definido' });
+                score -= 15;
+            }
+
+            return {
+                id: c.id,
+                titulo: c.titulo,
+                slug: c.slug || null,
+                estado: c.estado,
+                url: `/curso/${c.slug || c.id}`,
+                score: Math.max(0, score),
+                checks
+            };
+        });
+
+        res.json({
+            sitemap_url: 'https://flordechanar.cl/sitemap.xml',
+            robots_url: 'https://flordechanar.cl/robots.txt',
+            cursos_totales: cursos.length,
+            cursos_publicados: cursosPublicados.length,
+            paginas_publicadas: paginasPublicadas.length,
+            auditoria
+        });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// POST /api/admin/seo/ping-google — Notificar a Google y Bing sobre sitemap actualizado
+app.post('/api/admin/seo/ping-google', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Sin acceso' });
+    try {
+        const sitemapUrl = encodeURIComponent('https://flordechanar.cl/sitemap.xml');
+        const endpoints = [
+            { nombre: 'Google', url: `https://www.google.com/ping?sitemap=${sitemapUrl}` },
+            { nombre: 'Bing / Yahoo', url: `https://www.bing.com/ping?sitemap=${sitemapUrl}` }
+        ];
+
+        const resultados = [];
+        for (const ep of endpoints) {
+            try {
+                const pingRes = await fetch(ep.url, { method: 'GET', signal: AbortSignal.timeout(5000) });
+                resultados.push({ motor: ep.nombre, ok: pingRes.ok, status: pingRes.status });
+            } catch (pErr) {
+                resultados.push({ motor: ep.nombre, ok: false, error: pErr.message });
+            }
+        }
+
+        res.json({
+            ok: true,
+            mensaje: 'Petición de indexación enviada a los buscadores.',
+            resultados
+        });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// POST /api/admin/seo/regenerar-slugs — Asignar URLs amigables a todos los cursos pendientes
+app.post('/api/admin/seo/regenerar-slugs', verifyToken, async (req, res) => {
+    if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Sin acceso' });
+    try {
+        const [cursos] = await pool.query("SELECT id, titulo, slug FROM cursos");
+        let generados = 0;
+        for (const c of cursos) {
+            if (!c.slug || c.slug.trim() === '') {
+                let baseSlug = generarSlug(c.titulo || `curso-${c.id}`);
+                let finalSlug = baseSlug;
+                let counter = 1;
+                while (true) {
+                    const [dups] = await pool.query("SELECT id FROM cursos WHERE slug = ? AND id != ?", [finalSlug, c.id]);
+                    if (!dups.length) break;
+                    counter++;
+                    finalSlug = `${baseSlug}-${counter}`;
+                }
+                await pool.query("UPDATE cursos SET slug = ? WHERE id = ?", [finalSlug, c.id]);
+                generados++;
+            }
+        }
+        res.json({ ok: true, generados, total_cursos: cursos.length });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // GET /api/admin/ia/proveedores — qué proveedores tienen API key configurada
 app.get('/api/admin/ia/proveedores', verifyToken, async (req, res) => {
     if (req.usuario.rol !== 'admin') return res.status(403).json({ error: 'Sin acceso' });
@@ -4550,11 +4752,279 @@ app.get('/p/:slug', async (req, res, next) => {
     res.sendFile(path.join(__dirname, 'public', 'pagina.html'));
 });
 
+// Servir Página Pública del Curso con SEO Completo (Server-Side Rendering de Metadatos + Schema.org)
+async function serveCoursePage(req, res, next) {
+    try {
+        const idOrSlug = req.params.idOrSlug;
+        if (!idOrSlug) return next();
+
+        // Si es un archivo estático o extensión no HTML
+        if (idOrSlug.includes('.') && !idOrSlug.endsWith('.html')) {
+            return next();
+        }
+
+        if (!pool) {
+            return res.sendFile(path.join(__dirname, 'public', 'detalle.html'));
+        }
+
+        const isNumeric = /^\d+$/.test(idOrSlug);
+        const [cursos] = await pool.query(
+            `SELECT c.*, u.nombre as profesor_nombre
+             FROM cursos c
+             LEFT JOIN usuarios u ON c.profesor_id = u.id
+             WHERE (c.id = ? OR c.slug = ?) AND c.estado IN ('publicado', 'interno') LIMIT 1`,
+            [isNumeric ? parseInt(idOrSlug) : 0, idOrSlug]
+        );
+
+        if (!cursos.length) {
+            return next();
+        }
+
+        const curso = cursos[0];
+
+        // Redirigir 301 si se accedió por ID pero ya existe slug amigable
+        if (isNumeric && curso.slug && curso.slug !== idOrSlug) {
+            return res.redirect(301, `/curso/${curso.slug}`);
+        }
+
+        const [planes] = await pool.query('SELECT * FROM planes WHERE curso_id = ? AND activo = 1', [curso.id]);
+        curso.planes = planes;
+        curso.portada_url = normalizePortadaUrl(curso.portada_url);
+
+        const detallePath = path.join(__dirname, 'public', 'detalle.html');
+        let html = fs.readFileSync(detallePath, 'utf8');
+
+        // Construcción de Metadatos SEO
+        const cleanTitle = (curso.titulo || 'Curso Profesional').replace(/["<>]/g, '').trim();
+        const rawDesc = curso.subtitulo || curso.descripcion || 'Formación y certificación profesional en Flor de Chañar - Escuela de Terapias y Bienestar.';
+        const cleanDesc = rawDesc.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim().slice(0, 160);
+        const canonicalUrl = `https://flordechanar.cl/curso/${curso.slug || curso.id}`;
+
+        let coverImg = curso.portada_url || '/logo.png';
+        if (coverImg.startsWith('/')) coverImg = 'https://flordechanar.cl' + coverImg;
+
+        const keywords = [
+            cleanTitle.toLowerCase(),
+            curso.categoria || '',
+            curso.sede || '',
+            curso.modalidad || '',
+            'flor de chañar',
+            'la serena',
+            'calama',
+            'cursos terapias chile',
+            'masoterapia la serena',
+            'capacitacion bienestar'
+        ].filter(Boolean).join(', ');
+
+        const schemaData = {
+            "@context": "https://schema.org",
+            "@type": "Course",
+            "name": cleanTitle,
+            "description": cleanDesc,
+            "provider": {
+                "@type": "EducationalOrganization",
+                "name": "Flor de Chañar - Escuela y Centro de Terapias",
+                "sameAs": "https://flordechanar.cl"
+            },
+            "image": coverImg,
+            "url": canonicalUrl,
+            "offers": {
+                "@type": "Offer",
+                "price": curso.precio || 0,
+                "priceCurrency": "CLP",
+                "availability": (curso.cupos_agotados_forzado || (curso.cupos > 0 && (curso.cupos_ocupados >= curso.cupos)))
+                    ? "https://schema.org/SoldOut"
+                    : "https://schema.org/InStock",
+                "url": canonicalUrl
+            }
+        };
+
+        if (curso.certificacion) {
+            schemaData.educationalCredentialAwarded = "Certificación Oficial Flor de Chañar";
+        }
+        if (curso.modalidad) {
+            schemaData.hasCourseInstance = {
+                "@type": "CourseInstance",
+                "courseMode": curso.modalidad,
+                "location": curso.sede ? {
+                    "@type": "Place",
+                    "name": `Sede Flor de Chañar ${curso.sede}`,
+                    "address": {
+                        "@type": "PostalAddress",
+                        "addressLocality": curso.sede,
+                        "addressCountry": "CL"
+                    }
+                } : undefined
+            };
+        }
+
+        const seoBlock = `
+    <!-- Metadatos SEO Automáticos Flor de Chañar -->
+    <base href="/">
+    <title>${cleanTitle} | Flor de Chañar</title>
+    <meta name="description" content="${cleanDesc}">
+    <meta name="keywords" content="${keywords}">
+    <link rel="canonical" href="${canonicalUrl}">
+    
+    <!-- Open Graph (Facebook, WhatsApp, Redes Sociales) -->
+    <meta property="og:title" content="${cleanTitle} | Flor de Chañar">
+    <meta property="og:description" content="${cleanDesc}">
+    <meta property="og:image" content="${coverImg}">
+    <meta property="og:url" content="${canonicalUrl}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Flor de Chañar">
+    <meta property="og:locale" content="es_CL">
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="${cleanTitle} | Flor de Chañar">
+    <meta name="twitter:description" content="${cleanDesc}">
+    <meta name="twitter:image" content="${coverImg}">
+
+    <!-- Datos Estructurados Schema.org (Google Rich Snippets) -->
+    <script type="application/ld+json">
+    ${JSON.stringify(schemaData, null, 2)}
+    </script>
+
+    <!-- Datos precargados en servidor (Zero Layout Shift) -->
+    <script>
+        window.__INITIAL_COURSE__ = ${JSON.stringify(curso)};
+    </script>
+`;
+
+        html = html.replace(/<title>.*?<\/title>/i, '');
+        html = html.replace('</head>', `${seoBlock}\n</head>`);
+
+        res.set('Content-Type', 'text/html; charset=utf-8');
+        return res.send(html);
+    } catch (e) {
+        console.error('Error sirviendo página de curso SEO:', e);
+        res.sendFile(path.join(__dirname, 'public', 'detalle.html'));
+    }
+}
+
+// Redirigir visitas antiguas de detalle.html al nuevo slug amigable (SEO 301)
+async function handleDetalleRedirect(req, res, next) {
+    const courseId = req.query.id;
+    if (courseId && pool) {
+        try {
+            const isNumeric = /^\d+$/.test(courseId);
+            const [cursos] = await pool.query(
+                "SELECT slug FROM cursos WHERE (id = ? OR slug = ?) LIMIT 1",
+                [isNumeric ? parseInt(courseId) : 0, courseId]
+            );
+            if (cursos.length && cursos[0].slug) {
+                return res.redirect(301, `/curso/${cursos[0].slug}`);
+            }
+        } catch(e) {}
+    }
+    res.sendFile(path.join(__dirname, 'public', 'detalle.html'));
+}
+
+// Servir y generar Sitemap XML dinámico y automatizado
+async function serveSitemap(req, res) {
+    try {
+        const siteUrl = 'https://flordechanar.cl';
+        const now = new Date().toISOString().split('T')[0];
+
+        const staticPages = [
+            { loc: `${siteUrl}/`, changefreq: 'daily', priority: '1.0' },
+            { loc: `${siteUrl}/escuela`, changefreq: 'daily', priority: '0.9' },
+            { loc: `${siteUrl}/terapias`, changefreq: 'daily', priority: '0.9' },
+            { loc: `${siteUrl}/metodo-mushuu/`, changefreq: 'weekly', priority: '0.85' },
+            { loc: `${siteUrl}/TerapiaEmocionalEvolutiva/`, changefreq: 'weekly', priority: '0.85' },
+            { loc: `${siteUrl}/login`, changefreq: 'monthly', priority: '0.3' }
+        ];
+
+        let cursosUrls = [];
+        if (pool) {
+            try {
+                const [cursos] = await pool.query(
+                    "SELECT id, slug, creado_en FROM cursos WHERE estado='publicado'"
+                );
+                cursosUrls = cursos.map(c => {
+                    const slugOrId = c.slug || c.id;
+                    const modDate = c.creado_en ? new Date(c.creado_en).toISOString().split('T')[0] : now;
+                    return {
+                        loc: `${siteUrl}/curso/${slugOrId}`,
+                        lastmod: modDate,
+                        changefreq: 'weekly',
+                        priority: '0.9'
+                    };
+                });
+            } catch (e) {
+                console.warn('Aviso obteniendo cursos para sitemap:', e.message);
+            }
+        }
+
+        let paginasUrls = [];
+        if (pool) {
+            try {
+                const [paginas] = await pool.query(
+                    "SELECT slug, creado_en FROM paginas WHERE estado='publicado'"
+                );
+                paginasUrls = paginas.map(p => {
+                    const modDate = p.creado_en ? new Date(p.creado_en).toISOString().split('T')[0] : now;
+                    return {
+                        loc: `${siteUrl}/p/${p.slug}`,
+                        lastmod: modDate,
+                        changefreq: 'weekly',
+                        priority: '0.8'
+                    };
+                });
+            } catch (e) {
+                console.warn('Aviso obteniendo páginas para sitemap:', e.message);
+            }
+        }
+
+        const allUrls = [...staticPages, ...cursosUrls, ...paginasUrls];
+
+        const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${allUrls.map(u => `  <url>
+    <loc>${u.loc}</loc>
+    ${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : `<lastmod>${now}</lastmod>`}
+    <changefreq>${u.changefreq}</changefreq>
+    <priority>${u.priority}</priority>
+  </url>`).join('\n')}
+</urlset>`;
+
+        res.set('Content-Type', 'application/xml; charset=utf-8');
+        res.set('Cache-Control', 'public, max-age=3600');
+        res.send(xml);
+
+        // Guardar copia física en public/sitemap.xml
+        try {
+            fs.writeFileSync(path.join(__dirname, 'public', 'sitemap.xml'), xml, 'utf8');
+        } catch(wErr) {}
+    } catch(err) {
+        console.error('Error generando sitemap:', err);
+        res.status(500).send('Error generando sitemap.xml');
+    }
+}
+
+// Servir robots.txt
+function serveRobots(req, res) {
+    const robotsPath = path.join(__dirname, 'public', 'robots.txt');
+    if (fs.existsSync(robotsPath)) {
+        res.set('Content-Type', 'text/plain; charset=utf-8');
+        return res.sendFile(robotsPath);
+    }
+    const defaultRobots = `User-agent: *\nAllow: /\nAllow: /curso/\nAllow: /cursos/\nAllow: /p/\nDisallow: /admin\nSitemap: https://flordechanar.cl/sitemap.xml\n`;
+    res.set('Content-Type', 'text/plain; charset=utf-8');
+    res.send(defaultRobots);
+}
+
+// Rutas SEO para Cursos, Sitemap y Robots
+app.get(['/curso/:idOrSlug', '/cursos/:idOrSlug'], serveCoursePage);
+app.get(['/detalle.html', '/detalle', '/detalle/'], handleDetalleRedirect);
+app.get('/sitemap.xml', serveSitemap);
+app.get('/robots.txt', serveRobots);
+
 // Rutas limpias directas para páginas HTML (con y sin barra final)
 const staticHtmlPages = [
     { paths: ['/terapias', '/terapias/'], file: 'terapias.html' },
     { paths: ['/escuela', '/escuela/'], file: 'escuela.html' },
-    { paths: ['/detalle', '/detalle/'], file: 'detalle.html' },
     { paths: ['/login', '/login/'], file: 'login.html' },
     { paths: ['/dashboard', '/dashboard/'], file: 'dashboard.html' },
     { paths: ['/admin', '/admin/'], file: 'admin.html' },

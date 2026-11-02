@@ -691,6 +691,9 @@
             <button id="stab-sedes" class="stab" onclick="switchStab('sedes')">
                 <i class="ph ph-map-pin"></i> Sedes Físicas
             </button>
+            <button id="stab-seo" class="stab" onclick="switchStab('seo')">
+                <i class="ph ph-rocket-launch"></i> 🚀 SEO & Buscadores
+            </button>
         </div>
 
         <!-- SUB-PANEL: General -->
@@ -1006,6 +1009,107 @@
                 <div style="margin-top:1.5rem;text-align:right">
                     <button class="btn bp" onclick="guardarSedesGlobales()"><i class="ph ph-floppy-disk"></i> Guardar Sedes</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- SUB-PANEL: SEO & Posicionamiento en Buscadores -->
+        <div id="spanel-seo" style="display:none;max-width:980px">
+            <div class="tw" style="padding:1.75rem;margin-bottom:1.5rem">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;margin-bottom:1.25rem">
+                    <div>
+                        <h3 style="font-size:1.15rem;margin:0;display:flex;align-items:center;gap:.5rem;color:var(--color-secondary,#1e293b)">
+                            <i class="ph-bold ph-rocket-launch" style="color:#16A34A"></i> Centro de Posicionamiento SEO & Indexación
+                        </h3>
+                        <p style="font-size:.84rem;color:var(--l,#64748b);margin:.3rem 0 0">
+                            Mecanismo automatizado para posicionar Flor de Chañar en Google, Bing y WhatsApp con URLs amigables, Sitemap dinámico y datos estructurados.
+                        </p>
+                    </div>
+                    <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+                        <button class="btn btn-sm" onclick="cargarSeoStatus()" style="background:#F1F5F9;color:#334155;border:1px solid #CBD5E1">
+                            <i class="ph ph-arrows-clockwise"></i> Refrescar
+                        </button>
+                        <button class="btn btn-sm" onclick="pingGoogleSitemap()" style="background:#DCFCE7;color:#166534;border:1px solid #86EFAC;font-weight:700">
+                            <i class="ph ph-broadcast"></i> Notificar a Google (Ping)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tarjetas de Métricas SEO -->
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem">
+                    <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:1rem;text-align:center">
+                        <div style="font-size:0.75rem;color:#64748B;font-weight:700;text-transform:uppercase">Cursos Indexables</div>
+                        <div id="seoMetricCursos" style="font-size:1.8rem;font-weight:800;color:#0F172A;margin:0.25rem 0">—</div>
+                        <div style="font-size:0.72rem;color:#16A34A;font-weight:600"><i class="ph ph-check-circle"></i> En /sitemap.xml</div>
+                    </div>
+                    <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:1rem;text-align:center">
+                        <div style="font-size:0.75rem;color:#64748B;font-weight:700;text-transform:uppercase">Páginas CMS Indexables</div>
+                        <div id="seoMetricPaginas" style="font-size:1.8rem;font-weight:800;color:#0F172A;margin:0.25rem 0">—</div>
+                        <div style="font-size:0.72rem;color:#16A34A;font-weight:600"><i class="ph ph-check-circle"></i> En /sitemap.xml</div>
+                    </div>
+                    <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:1rem;text-align:center">
+                        <div style="font-size:0.75rem;color:#64748B;font-weight:700;text-transform:uppercase">Sitemap XML</div>
+                        <div style="font-size:1.05rem;font-weight:800;color:#166534;margin:0.5rem 0">
+                            <a href="/sitemap.xml" target="_blank" style="color:#166534;text-decoration:underline">sitemap.xml ↗</a>
+                        </div>
+                        <div style="font-size:0.72rem;color:#64748B">Actualización 100% en vivo</div>
+                    </div>
+                    <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:1rem;text-align:center">
+                        <div style="font-size:0.75rem;color:#64748B;font-weight:700;text-transform:uppercase">Robots.txt</div>
+                        <div style="font-size:1.05rem;font-weight:800;color:#0369A1;margin:0.5rem 0">
+                            <a href="/robots.txt" target="_blank" style="color:#0369A1;text-decoration:underline">robots.txt ↗</a>
+                        </div>
+                        <div style="font-size:0.72rem;color:#64748B">Rastreo habilitado</div>
+                    </div>
+                </div>
+
+                <!-- Barra de Acciones Rápidas -->
+                <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:1rem;margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.75rem">
+                    <div>
+                        <div style="font-size:0.85rem;font-weight:700;color:#166534;display:flex;align-items:center;gap:0.35rem">
+                            <i class="ph-bold ph-magic-wand"></i> Auto-generador de URLs amigables
+                        </div>
+                        <div style="font-size:0.76rem;color:#15803D">
+                            Si tienes cursos antiguos con URL como detalle.html?id=13, este botón les asigna automáticamente su slug amigable.
+                        </div>
+                    </div>
+                    <button class="btn btn-sm" onclick="autoAsignarSlugsCursos()" style="background:#16A34A;color:#fff;border:none;font-weight:700">
+                        <i class="ph ph-lightning"></i> Asignar Slugs Faltantes
+                    </button>
+                </div>
+
+                <!-- Tabla de Auditoría SEO de Cursos -->
+                <h4 style="font-size:0.95rem;margin-bottom:0.75rem;color:var(--color-secondary,#1e293b);display:flex;align-items:center;gap:0.4rem">
+                    <i class="ph ph-list-checks"></i> Auditoría de Cursos y Optimización SEO
+                </h4>
+                <div style="overflow-x:auto">
+                    <table style="width:100%;border-collapse:collapse;font-size:0.82rem">
+                        <thead>
+                            <tr style="background:#F8FAFC;border-bottom:1.5px solid #E2E8F0;text-align:left">
+                                <th style="padding:0.6rem 0.75rem">Curso</th>
+                                <th style="padding:0.6rem 0.75rem">URL Amigable (Slug)</th>
+                                <th style="padding:0.6rem 0.75rem">Puntuación SEO</th>
+                                <th style="padding:0.6rem 0.75rem">Diagnóstico</th>
+                                <th style="padding:0.6rem 0.75rem;text-align:right">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="seoAuditTableBody">
+                            <tr><td colspan="5" style="text-align:center;padding:1.5rem;color:#64748B"><i class="ph ph-spinner ph-spin"></i> Cargando auditoría...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Guía Práctica de 3 Pasos para Google -->
+                <div style="margin-top:2rem;background:#F1F5F9;border-radius:10px;padding:1.2rem;border:1px solid #CBD5E1">
+                    <h5 style="font-size:0.88rem;color:#0F172A;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.35rem">
+                        <i class="ph-bold ph-lightbulb" style="color:#D97706"></i> Recomendaciones para maximizar el posicionamiento en Google
+                    </h5>
+                    <ol style="font-size:0.8rem;color:#334155;line-height:1.6;margin:0;padding-left:1.2rem">
+                        <li><strong>Google Search Console:</strong> Ingresa a <a href="https://search.google.com/search-console" target="_blank" style="color:#2563EB;text-decoration:underline">search.google.com/search-console</a>, añade <code>https://flordechanar.cl</code> y en "Sitemaps" envía la URL: <code>https://flordechanar.cl/sitemap.xml</code>.</li>
+                        <li><strong>Google Perfil de Negocio (Google Maps):</strong> Asegúrate de que las fichas de Google Maps de <strong>Flor de Chañar La Serena</strong> y <strong>Flor de Chañar Calama</strong> tengan enlazado el sitio web <code>https://flordechanar.cl</code>. Esto impulsa los cursos presenciales en búsquedas locales.</li>
+                        <li><strong>Palabras clave en títulos:</strong> Incluye en el título de cada curso la especialidad, la modalidad y la ciudad (ej: <em>Terapeuta en Masoterapia Presencial La Serena</em>) para captar alumnos que buscan capacitaciones en su región.</li>
+                    </ol>
+                </div>
+
             </div>
         </div>
 
@@ -2176,6 +2280,112 @@ function switchStab(id) {
     if (id === 'banner') loadBannerSettings();
     // Si banner terapias, cargar datos del banner de terapias
     if (id === 'banner-terapias') loadTerapiasBannerSettings();
+    // Si SEO, cargar diagnóstico y auditoría SEO
+    if (id === 'seo') cargarSeoStatus();
+}
+
+// ── Herramientas Centro SEO & Posicionamiento ───────────────
+async function cargarSeoStatus() {
+    const token = localStorage.getItem('token');
+    const tbody = document.getElementById('seoAuditTableBody');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:1.5rem;color:#64748B"><i class="ph ph-spinner ph-spin"></i> Cargando auditoría...</td></tr>';
+    try {
+        const res = await fetch('/api/admin/seo/status', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) throw new Error('Error ' + res.status);
+        const data = await res.json();
+
+        const mCur = document.getElementById('seoMetricCursos');
+        const mPag = document.getElementById('seoMetricPaginas');
+        if (mCur) mCur.textContent = data.cursos_publicados;
+        if (mPag) mPag.textContent = data.paginas_publicadas;
+
+        if (tbody) {
+            if (!data.auditoria || !data.auditoria.length) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:1.5rem;color:#64748B">No hay cursos registrados.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = data.auditoria.map(c => {
+                const scoreColor = c.score >= 80 ? '#16A34A' : (c.score >= 50 ? '#D97706' : '#DC2626');
+                const checksHtml = (c.checks || []).map(ch => {
+                    const icon = ch.tipo === 'ok' ? 'ph-check-circle' : (ch.tipo === 'warn' ? 'ph-warning' : 'ph-x-circle');
+                    const color = ch.tipo === 'ok' ? '#16A34A' : (ch.tipo === 'warn' ? '#D97706' : '#DC2626');
+                    return `<div style="font-size:0.73rem;color:${color};display:flex;align-items:center;gap:3px"><i class="ph ${icon}"></i> ${ch.mensaje}</div>`;
+                }).join('');
+
+                return `
+                    <tr style="border-bottom:1px solid #F1F5F9">
+                        <td style="padding:0.75rem">
+                            <div style="font-weight:700;color:#0F172A">${c.titulo}</div>
+                            <span style="font-size:0.7rem;color:#64748B;background:#F1F5F9;padding:1px 6px;border-radius:4px">${c.estado}</span>
+                        </td>
+                        <td style="padding:0.75rem">
+                            ${c.slug ? `
+                                <a href="${c.url}" target="_blank" style="font-family:monospace;font-size:0.78rem;color:#166534;background:#DCFCE7;padding:3px 8px;border-radius:6px;text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:3px">
+                                    <i class="ph-bold ph-globe"></i> ${c.url}
+                                </a>` : `
+                                <span style="font-size:0.75rem;color:#DC2626;background:#FEE2E2;padding:2px 6px;border-radius:4px;font-weight:600">Sin Slug</span>`
+                            }
+                        </td>
+                        <td style="padding:0.75rem">
+                            <span style="font-weight:800;color:${scoreColor};font-size:0.95rem">${c.score}%</span>
+                        </td>
+                        <td style="padding:0.75rem">
+                            ${checksHtml}
+                        </td>
+                        <td style="padding:0.75rem;text-align:right">
+                            <a href="curso-crear.html?id=${c.id}" class="btn btn-sm" style="background:#F1F5F9;color:#334155;border:1px solid #CBD5E1">
+                                <i class="ph ph-pencil"></i> Optimizar
+                            </a>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+    } catch(err) {
+        if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:1.5rem;color:#DC2626">Error al cargar datos SEO: ${err.message}</td></tr>`;
+    }
+}
+
+async function pingGoogleSitemap() {
+    const token = localStorage.getItem('token');
+    showToast('Enviando notificación a Google y Bing...');
+    try {
+        const res = await fetch('/api/admin/seo/ping-google', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (res.ok) {
+            showToast('🚀 Notificación de sitemap enviada a los buscadores');
+        } else {
+            showToast('⚠️ Error: ' + (data.error || 'No se pudo notificar'));
+        }
+    } catch (e) {
+        showToast('⚠️ Error de conexión');
+    }
+}
+
+async function autoAsignarSlugsCursos() {
+    const token = localStorage.getItem('token');
+    showToast('Generando slugs amigables...');
+    try {
+        const res = await fetch('/api/admin/seo/regenerar-slugs', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (res.ok) {
+            showToast(`✅ ${data.generados} URLs amigables generadas`);
+            cargarSeoStatus();
+            if (typeof loadCursos === 'function') loadCursos();
+        } else {
+            showToast('⚠️ ' + (data.error || 'Error'));
+        }
+    } catch (e) {
+        showToast('⚠️ Error de conexión');
+    }
 }
 
 // ── Banner Principal de Escuela ─────────────────────────
@@ -3517,7 +3727,8 @@ async function renderAdminCourses() {
                 flujoBadge = '<div style="margin-top:.25rem;font-size:.7rem;color:#0284C7;font-weight:700"><i class="ph-fill ph-arrows-split"></i> Flujo: Pago + Formulario</div>';
             }
 
-            let landingUrl = `detalle.html?id=${c.id}`;
+            const seoSlugUrl = c.slug ? `/curso/${c.slug}` : `/curso/${c.id}`;
+            let landingUrl = seoSlugUrl;
             let isCustomLanding = false;
             let landingLabel = 'Estándar';
             if (c.ventas_meta) {
@@ -3546,7 +3757,15 @@ async function renderAdminCourses() {
                     <td>
                         <div class="tn">${c.titulo}</div>
                         ${c.subtitulo ? `<div style="font-size:.74rem;color:#64748B;line-height:1.3;margin-top:2px">${c.subtitulo}</div>` : ''}
-                        <div class="ts">${priceFmt}</div>
+                        <div style="margin-top:3px;display:flex;align-items:center;gap:4px">
+                            <a href="${seoSlugUrl}" target="_blank" style="font-size:.7rem;color:#166534;background:#DCFCE7;padding:2px 6px;border-radius:4px;text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:3px" title="Ver URL amigable del curso">
+                                <i class="ph-bold ph-globe"></i> ${seoSlugUrl}
+                            </a>
+                            <button type="button" class="btn btn-sm" onclick="navigator.clipboard.writeText('https://flordechanar.cl${seoSlugUrl}'); showToast('URL copiada al portapapeles');" style="padding:1px 5px;font-size:.68rem;background:#F1F5F9;border:1px solid #CBD5E1;cursor:pointer" title="Copiar enlace amigable">
+                                <i class="ph ph-copy"></i>
+                            </button>
+                        </div>
+                        <div class="ts" style="margin-top:2px">${priceFmt}</div>
                     </td>
                     <td>${c.profesor || 'Admin'}</td>
                     <td>

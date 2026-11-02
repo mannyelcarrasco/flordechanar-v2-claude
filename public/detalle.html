@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <link rel="stylesheet" href="shared.css">
+    <link rel="stylesheet" href="/shared.css">
 
     <style>
         :root {
@@ -320,18 +320,50 @@
 
         let currentCourse = null;
 
+        async function fetchAndRenderCurriculum(courseId) {
+            try {
+                const curRes = await fetch('/api/cursos/' + courseId + '/curriculum');
+                if (curRes.ok) {
+                    const curriculum = await curRes.json();
+                    renderCurriculum(curriculum);
+                }
+            } catch(e) {
+                console.error('Fetch curriculum error:', e);
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
+            // 1. Si los datos ya fueron inyectados por SSR (Server-Side Rendering SEO)
+            if (window.__INITIAL_COURSE__) {
+                currentCourse = window.__INITIAL_COURSE__;
+                try {
+                    renderCourse(currentCourse);
+                } catch(e) {
+                    console.error('Render course error (SSR):', e);
+                }
+                fetchAndRenderCurriculum(currentCourse.id);
+                return;
+            }
+
+            // 2. Si se navega vía cliente, detectar por Query Param o por Path (/curso/:slug)
             const urlParams = new URLSearchParams(window.location.search);
-            const courseId = urlParams.get('id');
+            let courseParam = urlParams.get('id') || urlParams.get('slug');
             
-            if (!courseId) {
+            if (!courseParam) {
+                const pathParts = window.location.pathname.split('/').filter(Boolean);
+                if (pathParts.length >= 2 && (pathParts[0] === 'curso' || pathParts[0] === 'cursos')) {
+                    courseParam = decodeURIComponent(pathParts[1]);
+                }
+            }
+
+            if (!courseParam) {
                 document.getElementById('loading').innerHTML = '⚠️ Curso no encontrado.';
                 return;
             }
 
             try {
-                // Fetch public course data
-                const res = await fetch('/api/cursos/publico/' + courseId);
+                // Fetch public course data por ID o por Slug
+                const res = await fetch('/api/cursos/publico/' + encodeURIComponent(courseParam));
                 if (!res.ok) {
                     document.getElementById('loading').innerHTML = '⚠️ Curso no encontrado o no disponible.';
                     return;
@@ -351,16 +383,7 @@
                 return;
             }
 
-            try {
-                // Fetch curriculum
-                const curRes = await fetch('/api/cursos/' + courseId + '/curriculum');
-                if (curRes.ok) {
-                    const curriculum = await curRes.json();
-                    renderCurriculum(curriculum);
-                }
-            } catch(e) {
-                console.error('Fetch curriculum error:', e);
-            }
+            fetchAndRenderCurriculum(currentCourse.id);
         });
 
         function renderCourse(c) {
@@ -543,14 +566,14 @@
                 const mainPlan = c.planes[0];
                 document.getElementById('cPrice').innerHTML = `${fmt(mainPlan.monto)} <span style="font-size:1rem;color:var(--color-text-light);font-weight:400">/ ${mainPlan.periodo}</span>`;
                 
-                const mainUrl = `pago.html?tipo=suscripcion&id=${c.id}&plan_id=${mainPlan.id}`;
+                const mainUrl = `/pago.html?tipo=suscripcion&id=${c.id}&plan_id=${mainPlan.id}`;
                 const mainLabel = `Suscripción ${fmt(mainPlan.monto)} / ${mainPlan.periodo}`;
                 payButtonsHtml += `<a href="${mainUrl}" onclick="startCheckoutFlow(event, '${mainUrl}', '${mainLabel.replace(/'/g, "\\'")}', false)" class="btn btn-primary" style="margin-bottom:0.5rem; padding: 1rem;">Suscribirme Ahora</a>`;
                 
                 if (c.planes.length > 1) {
                     for (let i = 1; i < c.planes.length; i++) {
                         let p = c.planes[i];
-                        const pUrl = `pago.html?tipo=suscripcion&id=${c.id}&plan_id=${p.id}`;
+                        const pUrl = `/pago.html?tipo=suscripcion&id=${c.id}&plan_id=${p.id}`;
                         const pLabel = `Plan ${p.nombre}: ${fmt(p.monto)} / ${p.periodo}`;
                         payButtonsHtml += `<a href="${pUrl}" onclick="startCheckoutFlow(event, '${pUrl}', '${pLabel.replace(/'/g, "\\'")}', false)" class="btn" style="background:#E2E8F0;color:var(--color-secondary);margin-bottom:0.5rem;font-size:0.85rem">${pLabel}</a>`;
                     }
@@ -568,7 +591,7 @@
                     payButtonsHtml = `<a href="#" class="btn btn-primary" onclick="handleBuy(event)">Inscribirme Gratis</a>`;
                 } else if (c.tipo_acceso === 'suscripcion') {
                     document.getElementById('cPrice').textContent = 'Suscripción';
-                    const subUrl = `pago.html?tipo=suscripcion&id=${c.id}`;
+                    const subUrl = `/pago.html?tipo=suscripcion&id=${c.id}`;
                     payButtonsHtml = `<a href="${subUrl}" onclick="startCheckoutFlow(event, '${subUrl}', 'Suscripción al curso', false)" class="btn btn-primary">Ver Planes</a>`;
                 } else {
                     document.getElementById('cPrice').textContent = fmt(c.precio);
@@ -769,10 +792,10 @@
             if (isGratis) {
                 startCheckoutFlow(e, null, 'Gratis', true);
             } else if (currentCourse.tipo_acceso === 'suscripcion') {
-                const subUrl = 'pago.html?tipo=suscripcion&id=' + currentCourse.id;
+                const subUrl = '/pago.html?tipo=suscripcion&id=' + currentCourse.id;
                 startCheckoutFlow(e, subUrl, 'Suscripción', false);
             } else {
-                const buyUrl = 'pago.html?tipo=curso&id=' + currentCourse.id;
+                const buyUrl = '/pago.html?tipo=curso&id=' + currentCourse.id;
                 startCheckoutFlow(e, buyUrl, `Pago único ${fmt(currentCourse.precio)}`, false);
             }
         }
