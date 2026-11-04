@@ -6,6 +6,21 @@
 
 ## ✅ Avances completados
 
+### 🛡️ Corrección de Sobrescritura de Portadas en Arranque del Servidor y Persistencia de Imágenes (`server.js`, `public/curso-crear.html`) (NUEVO)
+- [x] **Diagnóstico de la Reversión de la Portada en Cursos (ej. Drenaje Linfático):**
+  - **Causa Raíz Principal en `server.js` (`initDB()`):** Existían consultas SQL `UPDATE cursos SET portada_url = ...` de migraciones antiguas que se ejecutaban forzosamente en cada arranque o reinicio del contenedor (por ejemplo tras cada despliegue de Git en EasyPanel).
+  - En particular, las sentencias ejecutaban:
+    * `SET portada_url = '/img/cursos/masoterapia-calama-2026.png' WHERE id = 25 OR titulo LIKE '%Calama%' OR (titulo LIKE '%Reflexolog%' AND portada_url NOT LIKE '/img/%')`
+    * `SET portada_url = 'https://web1.flordechanar.cl/wp-content/uploads/2024/04/4472777.jpg' WHERE (id = 27 OR titulo LIKE '%Masoterapia Profesional%Online%') AND (portada_url LIKE '%4472777.jpg%' OR portada_url LIKE '/uploads/%' OR portada_url IS NULL)`
+  - Si el curso guardado (como Drenaje Linfático) coincidía por ID, sede o título, o contenía una imagen subida recientemente en `/uploads/`, el arranque del servidor sobreescribía la imagen recién guardada volviendo a la imagen predeterminada anterior.
+- [x] **Solución en Backend (`server.js`):**
+  - Se eliminaron definitivamente las consultas SQL destructivas en `initDB()`. Ahora el servidor respeta de forma permanente la imagen de portada configurada y guardada por el usuario en base de datos sin alterarla en ningún reinicio.
+  - Se conservó únicamente la normalización de dominios caídos de WordPress (`i0.wp.com` a `web1.flordechanar.cl`) que no afecta imágenes subidas.
+- [x] **Mejoras en el Frontend del Formulario de Creación/Edición (`public/curso-crear.html`):**
+  - **Control de Estado de Subida (`isUploadingCover`):** Al guardar borrador o publicar, el sistema verifica que la imagen no esté en proceso de subida activa, evitando enviar URLs temporales o estados incompletos.
+  - **Aislamiento de Objetos Blob:** La previsualización inmediata local (`URL.createObjectURL`) ya no contamina los campos de texto ni permite que una URL `blob:` se envíe por error a la base de datos.
+  - **Sincronización Bidireccional Segura:** La función `getValidPortadaUrl()` prioriza la URL final retornada por el servidor (`/uploads/...`) o la URL remota válida ingresada en el input directo, asegurando persistencia íntegra.
+
 ### 📄 Programa o Dossier del Curso Descargable en PDF en la Landing (`public/curso-crear.html`, `public/detalle.html`, `public/admin.html`) (NUEVO)
 - [x] **Subida y Gestión del PDF en el Formulario del Curso (`public/curso-crear.html`):**
   - En la Sección 5 (*Página de Ventas / Landing*), se agregó un módulo dedicado para subir el **Programa, Dossier o Brochure del Curso en formato PDF**.

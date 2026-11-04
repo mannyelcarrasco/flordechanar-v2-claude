@@ -1560,14 +1560,16 @@ function updateStateBadge(estado) {
     }
 }
 
-function syncCoverUI(url) {
+let isUploadingCover = false;
+
+function syncCoverUI(url, isBlob = false) {
     const prev = document.getElementById('coverPreview');
     const actions = document.getElementById('coverActions');
     const drop = document.getElementById('coverDrop');
     const sbImg = document.getElementById('sidebarPreviewImg');
     const sbThumb = document.getElementById('previewThumb');
     const urlInput = document.getElementById('coverUrlInput');
-    if (urlInput && urlInput !== document.activeElement) {
+    if (urlInput && urlInput !== document.activeElement && !isBlob) {
         urlInput.value = url || '';
     }
 
@@ -1590,9 +1592,15 @@ function syncCoverUI(url) {
 
 function applyDirectCoverUrl(url) {
     const clean = (url || '').trim();
-    if (!clean) return;
+    if (!clean) {
+        currentCoverUrl = null;
+        syncCoverUI(null);
+        updateChecklist();
+        return;
+    }
+    if (clean.startsWith('blob:')) return;
     currentCoverUrl = clean;
-    syncCoverUI(clean);
+    syncCoverUI(clean, false);
     updateChecklist();
 }
 
@@ -1605,14 +1613,27 @@ function removeCoverImage() {
     updateChecklist();
 }
 
+function getValidPortadaUrl() {
+    if (currentCoverUrl && !currentCoverUrl.startsWith('blob:')) {
+        return currentCoverUrl;
+    }
+    const urlInput = document.getElementById('coverUrlInput');
+    const val = urlInput ? urlInput.value.trim() : '';
+    if (val && !val.startsWith('blob:')) {
+        return val;
+    }
+    return null;
+}
+
 async function uploadCover(input) {
     const file = input && input.files ? input.files[0] : null;
     if (!file) return;
 
-    // Show local preview immediately
-    syncCoverUI(URL.createObjectURL(file));
+    isUploadingCover = true;
+    const blobUrl = URL.createObjectURL(file);
+    syncCoverUI(blobUrl, true);
 
-    showToast('Subiendo imagen...');
+    showToast('Subiendo imagen de portada...');
     try {
         const formData = new FormData();
         formData.append('file', file);
@@ -1625,12 +1646,16 @@ async function uploadCover(input) {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Error al subir');
         currentCoverUrl = data.url;
-        syncCoverUI(data.url);
+        syncCoverUI(data.url, false);
+        const urlInput = document.getElementById('coverUrlInput');
+        if (urlInput) urlInput.value = data.url;
         updateChecklist();
         showToast('✅ Portada subida correctamente');
     } catch (e) {
         showToast('⚠️ ' + e.message);
-        syncCoverUI(currentCoverUrl);
+        syncCoverUI(currentCoverUrl, false);
+    } finally {
+        isUploadingCover = false;
     }
 }
 
@@ -2633,6 +2658,12 @@ async function saveDraft() {
     const monthlyRaw = document.getElementById('courseMonthlyPrice') ? document.getElementById('courseMonthlyPrice').value : '';
     const precio_mensual = monthlyRaw ? parseInt(monthlyRaw) : 0;
 
+    if (isUploadingCover) {
+        showToast('⏳ Espera a que termine de subirse la imagen de portada...');
+        return;
+    }
+    const portada_url = getValidPortadaUrl();
+
     try {
         const token = localStorage.getItem('token');
         const url = currentCourseId ? '/api/cursos/' + currentCourseId : '/api/cursos';
@@ -2663,7 +2694,7 @@ async function saveDraft() {
             horarios_sedes: horariosSedesData,
             sede: (horariosSedesData.sedes && horariosSedesData.sedes.length > 0) ? horariosSedesData.sedes.map(s => s.nombre).join(', ') : null,
             tipo_acceso: document.getElementById('accessType').value,
-            portada_url: currentCoverUrl || null,
+            portada_url: portada_url,
             estado: 'borrador',
             categoria: document.getElementById('courseCategory').value,
             nivel: document.getElementById('courseLevel').value,
@@ -2712,13 +2743,18 @@ async function publishCourse(estadoFinal = 'publicado') {
     const title = document.getElementById('courseTitle').value.trim();
     if(!title) { showToast('⚠️ Agrega un título antes de publicar'); return; }
 
+    if (isUploadingCover) {
+        showToast('⏳ Espera a que termine de subirse la imagen de portada...');
+        return;
+    }
+
     const subtitle = document.getElementById('courseSubtitle') ? document.getElementById('courseSubtitle').value.trim() : '';
     const desc = document.getElementById('courseDesc') ? document.getElementById('courseDesc').value : document.querySelector('textarea.fc').value;
     const priceRaw = document.getElementById('coursePrice').value;
     const price = priceRaw ? parseInt(priceRaw) : 0;
     const monthlyRaw = document.getElementById('courseMonthlyPrice') ? document.getElementById('courseMonthlyPrice').value : '';
     const precio_mensual = monthlyRaw ? parseInt(monthlyRaw) : 0;
-    const portada_url = currentCoverUrl || null;
+    const portada_url = getValidPortadaUrl();
 
     try {
         const token = localStorage.getItem('token');

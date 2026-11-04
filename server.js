@@ -571,30 +571,15 @@ async function initDB() {
             console.log('Admin password forcefully reset to admin123');
         }
 
-        // Auto-reparación y migración de URLs de portadas de cursos (Wordpress a web1 / portadas perdidas)
+        // Auto-reparación no destructiva de URLs legadas de portadas de cursos (Wordpress a web1)
         try {
             await pool.query(`
                 UPDATE cursos 
                 SET portada_url = REPLACE(REPLACE(portada_url, 'https://i0.wp.com/flordechanar.cl/wp-content/', 'https://web1.flordechanar.cl/wp-content/'), 'https://flordechanar.cl/wp-content/', 'https://web1.flordechanar.cl/wp-content/')
                 WHERE portada_url LIKE '%flordechanar.cl/wp-content/%'
             `);
-            await pool.query(`
-                UPDATE cursos 
-                SET portada_url = '/img/cursos/masoterapia-la-serena-2026.png'
-                WHERE id = 13 OR titulo LIKE '%Masoterapia%La Serena%'
-            `);
-            await pool.query(`
-                UPDATE cursos 
-                SET portada_url = '/img/cursos/masoterapia-calama-2026.png'
-                WHERE id = 25 OR titulo LIKE '%Calama%' OR (titulo LIKE '%Reflexolog%' AND portada_url NOT LIKE '/img/%')
-            `);
-            await pool.query(`
-                UPDATE cursos 
-                SET portada_url = 'https://web1.flordechanar.cl/wp-content/uploads/2024/04/4472777.jpg'
-                WHERE (id = 27 OR titulo LIKE '%Masoterapia Profesional%Online%') AND (portada_url LIKE '%4472777.jpg%' OR portada_url LIKE '/uploads/%' OR portada_url IS NULL)
-            `);
         } catch (migrErr) {
-            console.warn('Aviso en auto-reparación de portadas:', migrErr.message);
+            console.warn('Aviso en migración de URLs de portadas:', migrErr.message);
         }
 
         // Auto-seeding de las Landings Oficiales (T.E.E. y Método Mushuu) en la tabla 'paginas' para poder editarlas directamente en el admin
