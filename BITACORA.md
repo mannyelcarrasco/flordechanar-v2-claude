@@ -1,12 +1,29 @@
 # 📋 Bitácora del Proyecto — Flor de Chañar v2
 **Repositorio:** [mannyelcarrasco/flordechanar-v2-claude](https://github.com/mannyelcarrasco/flordechanar-v2-claude)  
-**Última actualización:** 2026-11-02
+**Última actualización:** 2026-11-04
 
 ---
 
 ## ✅ Avances completados
 
-### 🎯 Vinculación Total de la Landing Estándar de Escuela con la URL Amigable (`/curso/:slug`) (`public/curso-crear.html`, `public/detalle.html`, `public/admin.html`, `.htaccess`) (NUEVO)
+### 🛡️ Corrección de Sobrescritura Involuntaria de Landings en Cursos y Modal de Asignación Rápida (`server.js`, `public/admin.html`) (NUEVO)
+- [x] **Diagnóstico del Fallo (Reversión persistente a "Landing: 🌸 Método Mushuu"):**
+  - **Causa Raíz en `server.js` (`initDB`):** Existía un bucle residual de auto-asociación que se ejecutaba en el arranque del servidor (`initDB()`). Al iterar sobre los cursos, si `!vm.landing_personalizada_url` (condición que se cumple cuando el usuario elige la landing "Estándar Escuela" o deja el campo vacío), el script evaluaba el título del curso: si contenía la palabra `"masoterapia"` o `"mushuu"`, ejecutaba automáticamente `UPDATE cursos SET ventas_meta = ?` asignando forzosamente `/metodo-mushuu/`. Lo mismo ocurría para cursos con `"terapia emocional"` asignándoles `/TerapiaEmocionalEvolutiva/`.
+  - Cada vez que el servidor se reiniciaba (por redeploy, EasyPanel, o recarga del proceso), los cursos de masoterapia que el usuario había configurado como Estándar o con otra landing volvían a quedar fijados con la plantilla de Método Mushuu.
+- [x] **Solución y Mejoras Implementadas:**
+  - **En `server.js`:**
+    * Eliminado por completo el bucle de auto-asociación arbitraria en `initDB()`. Los cursos conservan ahora estrictamente la landing elegida por el administrador sin mutaciones en el arranque del servidor.
+    * Nuevo endpoint específico `PATCH /api/admin/cursos/:id/landing`: permite actualizar o desvincular la landing personalizada de un curso de forma atómica y segura sin tener que reenviar el formulario completo de edición.
+  - **En `public/admin.html`:**
+    * **Modal de Asignación Rápida de Landing (`#modalVincularLanding`):** Nuevo modal interactivo que permite cambiar la landing de cualquier curso directamente desde la tabla del panel admin. Opciones seleccionables:
+      1. `📄 Estándar Escuela (Ficha Oficial /curso/:slug)` (Recomendado).
+      2. `🌸 Método Mushuu (/metodo-mushuu/)`.
+      3. `🌳 Terapia Emocional Evolutiva (/TerapiaEmocionalEvolutiva/)`.
+      4. `⚙️ Personalizada / CMS (/p/... o URL externa)`.
+    * **Botón `[⚙️ Cambiar]` en la Tabla de Cursos:** Añadido junto a la insignia de Landing para alternar la landing en 1 clic.
+    * **Botón `[Landing]` inteligente:** Si el curso utiliza la landing oficial Estándar, al hacer clic en `[Landing]` se abre directamente el modal de asignación para facilitar la personalización en vez de un aviso pasivo.
+
+### 🎯 Vinculación Total de la Landing Estándar de Escuela con la URL Amigable (`/curso/:slug`) (`public/curso-crear.html`, `public/detalle.html`, `public/admin.html`, `.htaccess`)
 - [x] **Diagnóstico del Enlace en la Landing Estándar:**
   - **Causa 1 (Previsualización en Formulario de Creación/Edición):** En `public/curso-crear.html`, la función `probarLandingPersonalizada()` abría fijamente `detalle.html?id=` cuando el campo de landing personalizada estaba vacío (modo Estándar). Por ende, al hacer clic en "Previsualizar" en la tarjeta "Estándar Escuela" o "Probar Link", el navegador abría la URL con ID numérico antiguo.
   - **Causa 2 (Bypass de LiteSpeed sobre Node.js para archivos físicos):** Al solicitar directamente `detalle.html` en el navegador, el servidor web LiteSpeed servía el archivo HTML estático de inmediato por coincidencia de archivo físico (`-f`), sin llegar al backend Express donde residía la redirección 301 de `server.js`.

@@ -639,23 +639,6 @@ async function initDB() {
                 ]);
             }
 
-            // Auto-asociar landing en cursos existentes si no tienen landing explícita
-            const [curList] = await pool.query("SELECT id, titulo, ventas_meta FROM cursos");
-            for (const c of curList) {
-                let vm = {};
-                try { vm = typeof c.ventas_meta === 'string' ? JSON.parse(c.ventas_meta) : (c.ventas_meta || {}); } catch(e) {}
-                if (!vm.landing_personalizada_url) {
-                    const tit = (c.titulo || '').toLowerCase();
-                    if (tit.includes('masoterapia') || tit.includes('mushuu')) {
-                        vm.landing_personalizada_url = '/metodo-mushuu/';
-                        await pool.query("UPDATE cursos SET ventas_meta = ? WHERE id = ?", [JSON.stringify(vm), c.id]);
-                    } else if (tit.includes('terapia emocional') || tit.includes('t.e.e.') || tit.includes('evolutiva')) {
-                        vm.landing_personalizada_url = '/TerapiaEmocionalEvolutiva/';
-                        await pool.query("UPDATE cursos SET ventas_meta = ? WHERE id = ?", [JSON.stringify(vm), c.id]);
-                    }
-                }
-            }
-
             // Auto-generar slugs amigables para cursos existentes que no tengan
             try {
                 const [cursosSinSlug] = await pool.query("SELECT id, titulo FROM cursos WHERE slug IS NULL OR slug = ''");
@@ -1410,6 +1393,28 @@ app.delete('/api/cursos/:id', verifyToken, async (req, res) => {
     } catch (e) {
         console.error('DELETE ERROR:', e);
         res.status(500).json({ error: e.message || 'Error al eliminar curso' });
+    }
+});
+
+app.patch('/api/admin/cursos/:id/landing', verifyToken, async (req, res) => {
+    if (req.usuario.rol === 'estudiante') return res.status(403).json({ error: 'Permission denied' });
+    try {
+        const { landing_url } = req.body;
+        const [cursos] = await pool.query('SELECT ventas_meta FROM cursos WHERE id = ?', [req.params.id]);
+        if (!cursos.length) return res.status(404).json({ error: 'Curso no encontrado' });
+        
+        let vm = {};
+        try {
+            vm = typeof cursos[0].ventas_meta === 'string' ? JSON.parse(cursos[0].ventas_meta) : (cursos[0].ventas_meta || {});
+        } catch(e) {}
+        
+        vm.landing_personalizada_url = typeof landing_url === 'string' ? landing_url.trim() : '';
+        
+        await pool.query('UPDATE cursos SET ventas_meta = ? WHERE id = ?', [JSON.stringify(vm), req.params.id]);
+        res.json({ ok: true, landing_url: vm.landing_personalizada_url });
+    } catch (e) {
+        console.error('Error al actualizar landing del curso:', e);
+        res.status(500).json({ error: 'Error al actualizar landing del curso' });
     }
 });
 

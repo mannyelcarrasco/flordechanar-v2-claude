@@ -1729,6 +1729,94 @@ ORDER BY u.user_registered;</pre>
     </div>
 </main>
 
+<!-- Modal Vincular / Cambiar Landing de Curso -->
+<div id="modalVincularLanding" class="modal-bg" style="align-items:center;justify-content:center" onclick="if(event.target===this)cerrarModalVincularLanding()">
+    <div class="modal" style="max-width:540px;width:95%;padding:1.4rem;border-radius:14px;background:#fff;box-shadow:0 20px 40px rgba(0,0,0,0.2);">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:.75rem;border-bottom:1px solid #E2E8F0;margin-bottom:1rem">
+            <div style="display:flex;align-items:center;gap:.6rem">
+                <div style="width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,#7C3AED,#6D28D9);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.15rem">
+                    <i class="ph-bold ph-layout"></i>
+                </div>
+                <div>
+                    <h4 style="margin:0;font-size:1rem;color:#1E293B;font-weight:700">Asignar Landing al Curso</h4>
+                    <span id="mvCursoTitulo" style="font-size:0.75rem;color:#64748B;display:block;max-width:380px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span>
+                </div>
+            </div>
+            <button type="button" class="btn btn-sm" onclick="cerrarModalVincularLanding()" style="padding:4px 8px;border:none;background:#F1F5F9;border-radius:6px;cursor:pointer"><i class="ph ph-x"></i></button>
+        </div>
+
+        <input type="hidden" id="mvCursoId">
+
+        <div style="display:flex;flex-direction:column;gap:0.6rem;margin-bottom:1.1rem">
+            <!-- Opción 1: Estándar Escuela -->
+            <label class="landing-radio-card" style="display:flex;gap:0.75rem;align-items:flex-start;padding:0.75rem;border:1.5px solid #E2E8F0;border-radius:10px;cursor:pointer;transition:all .15s">
+                <input type="radio" name="landingOptRadio" value="" onchange="onRadioLandingChange()" style="margin-top:3px">
+                <div style="flex:1">
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                        <span style="font-weight:700;font-size:0.85rem;color:#1E293B">📄 Estándar Escuela (Ficha Oficial)</span>
+                        <span style="font-size:0.65rem;font-weight:700;background:#DCFCE7;color:#166534;padding:1px 6px;border-radius:4px">RECOMENDADO</span>
+                    </div>
+                    <div style="font-size:0.74rem;color:#64748B;line-height:1.3;margin-top:2px">
+                        Usa la URL limpia <code id="mvSlugPreview" style="background:#F1F5F9;padding:1px 4px;border-radius:3px">/curso/:slug</code> con temario, VSL, SEO y pasarela de pago.
+                    </div>
+                </div>
+            </label>
+
+            <!-- Opción 2: Método Mushuu -->
+            <label class="landing-radio-card" style="display:flex;gap:0.75rem;align-items:flex-start;padding:0.75rem;border:1.5px solid #E2E8F0;border-radius:10px;cursor:pointer;transition:all .15s">
+                <input type="radio" name="landingOptRadio" value="/metodo-mushuu/" onchange="onRadioLandingChange()" style="margin-top:3px">
+                <div style="flex:1">
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                        <span style="font-weight:700;font-size:0.85rem;color:#1E293B">🌸 Método Mushuu (/metodo-mushuu/)</span>
+                        <span style="font-size:0.65rem;font-weight:700;background:#EDE9FE;color:#6B21A8;padding:1px 6px;border-radius:4px">PLANTILLA MASAJES</span>
+                    </div>
+                    <div style="font-size:0.74rem;color:#64748B;line-height:1.3;margin-top:2px">
+                        Landing especializada en Masoterapia Profesional (módulos técnicos, sedes y aranceles).
+                    </div>
+                </div>
+            </label>
+
+            <!-- Opción 3: Terapia Emocional Evolutiva -->
+            <label class="landing-radio-card" style="display:flex;gap:0.75rem;align-items:flex-start;padding:0.75rem;border:1.5px solid #E2E8F0;border-radius:10px;cursor:pointer;transition:all .15s">
+                <input type="radio" name="landingOptRadio" value="/TerapiaEmocionalEvolutiva/" onchange="onRadioLandingChange()" style="margin-top:3px">
+                <div style="flex:1">
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                        <span style="font-weight:700;font-size:0.85rem;color:#1E293B">🌳 Terapia Emocional (/TerapiaEmocionalEvolutiva/)</span>
+                        <span style="font-size:0.65rem;font-weight:700;background:#EDE9FE;color:#6B21A8;padding:1px 6px;border-radius:4px">PLANTILLA T.E.E.</span>
+                    </div>
+                    <div style="font-size:0.74rem;color:#64748B;line-height:1.3;margin-top:2px">
+                        Landing especializada en diplomados de 2 años (árbol transgeneracional, hipnosis y postulación).
+                    </div>
+                </div>
+            </label>
+
+            <!-- Opción 4: Otra / CMS -->
+            <label class="landing-radio-card" style="display:flex;gap:0.75rem;align-items:flex-start;padding:0.75rem;border:1.5px solid #E2E8F0;border-radius:10px;cursor:pointer;transition:all .15s">
+                <input type="radio" name="landingOptRadio" value="custom" onchange="onRadioLandingChange()" style="margin-top:3px">
+                <div style="flex:1">
+                    <span style="font-weight:700;font-size:0.85rem;color:#1E293B">⚙️ Otra página del CMS o URL externa</span>
+                    <div style="font-size:0.74rem;color:#64748B;line-height:1.3;margin-top:2px">
+                        Ingresa una ruta del gestor de páginas (ej. <code>/p/mi-diplomado</code>) o un enlace web externo.
+                    </div>
+                </div>
+            </label>
+        </div>
+
+        <!-- Input personalizado que se muestra si elige custom -->
+        <div id="mvCustomBox" style="display:none;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:0.75rem;margin-bottom:1.1rem">
+            <label style="font-size:0.75rem;font-weight:700;color:#334155;display:block;margin-bottom:0.25rem">Ruta o URL exacta:</label>
+            <input type="text" id="mvCustomInput" class="fc" placeholder="ej: /p/mi-landing o https://..." style="background:#fff;font-size:0.84rem;padding:0.45rem 0.65rem;border-radius:6px;border:1px solid #CBD5E1;width:100%">
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;gap:0.6rem;border-top:1px solid #E2E8F0;padding-top:0.85rem">
+            <button type="button" class="btn bo btn-sm" onclick="cerrarModalVincularLanding()" style="padding:0.5rem 0.9rem">Cancelar</button>
+            <button type="button" class="btn bp btn-sm" id="btnGuardarVincularLanding" onclick="guardarVincularLanding()" style="background:#7C3AED;color:#fff;border-color:#7C3AED;padding:0.5rem 1.1rem;font-weight:700">
+                <i class="ph ph-check"></i> Guardar Landing
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Modal: Clase en Vivo -->
 <div class="modal-bg" id="claseModalBg">
     <div class="modal" style="max-width:520px">
@@ -3747,9 +3835,17 @@ async function renderAdminCourses() {
             } else if (isCustomLanding) {
                 landingLabel = '📄 ' + landingUrl;
             }
+            const badgeColor = isCustomLanding ? '#7C3AED' : '#059669';
+            const badgeBg = isCustomLanding ? '#FAF5FF' : '#ECFDF5';
+            const badgeBorder = isCustomLanding ? '#DDD6FE' : '#A7F3D0';
             const landingBadge = `
-                <div style="margin-top:.3rem;font-size:.72rem;color:#7C3AED;font-weight:700;display:flex;align-items:center;gap:3px">
-                    <i class="ph-fill ph-layout"></i> Landing: ${landingLabel}
+                <div style="margin-top:.35rem;display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+                    <span style="font-size:.72rem;color:${badgeColor};font-weight:700;background:${badgeBg};border:1px solid ${badgeBorder};padding:2px 7px;border-radius:4px;display:inline-flex;align-items:center;gap:3px">
+                        <i class="ph-fill ph-layout"></i> Landing: ${landingLabel}
+                    </span>
+                    <button type="button" class="btn btn-sm" onclick="abrirModalVincularLanding(${c.id}, '${(c.titulo || '').replace(/'/g, "\\'")}', '${isCustomLanding ? landingUrl : ''}', '${c.slug || ''}')" style="padding:1px 6px;font-size:.68rem;background:#F8FAFC;border:1px solid #CBD5E1;color:#475569;border-radius:4px;cursor:pointer;font-weight:600" title="Cambiar la landing asociada a este curso">
+                        <i class="ph ph-gear"></i> Cambiar
+                    </button>
                 </div>`;
 
             tbody.innerHTML += `
@@ -3781,7 +3877,7 @@ async function renderAdminCourses() {
                         <a href="${landingUrl}" target="_blank" class="btn bo btn-sm" title="Ver Landing pública de ventas" style="color:#0284C7;border-color:#BAE6FD">
                             <i class="ph ph-eye"></i> Ver
                         </a>
-                        <button type="button" class="btn bo btn-sm" onclick="editarLandingDeCurso('${landingUrl}')" title="Editar contenido de la Landing vinculada" style="color:#7C3AED;border-color:#DDD6FE;background:#FAF5FF;font-weight:600">
+                        <button type="button" class="btn bo btn-sm" onclick="editarLandingDeCurso('${landingUrl}', ${c.id}, '${(c.titulo || '').replace(/'/g, "\\'")}', '${c.slug || ''}')" title="Editar contenido de la Landing vinculada" style="color:#7C3AED;border-color:#DDD6FE;background:#FAF5FF;font-weight:600">
                             <i class="ph ph-pencil-simple"></i> Landing
                         </button>
                         <a href="curso-crear.html?id=${c.id}" class="btn bo btn-sm" title="Editar curso completo"><i class="ph ph-pencil"></i></a>
@@ -3795,7 +3891,7 @@ async function renderAdminCourses() {
     }
 }
 
-function editarLandingDeCurso(landingUrl) {
+function editarLandingDeCurso(landingUrl, cursoId, cursoTitulo, cursoSlug) {
     if (!landingUrl) return;
     if (landingUrl.includes('metodo-mushuu')) {
         st(null, 'tpag');
@@ -3814,7 +3910,98 @@ function editarLandingDeCurso(landingUrl) {
             else alert('No se encontró la página para editar: ' + slug);
         })();
     } else {
-        alert('Este curso utiliza la landing oficial con URL amigable (/curso/:slug). Si deseas usar o personalizar una Landing Oficial o crear una en el CMS, puedes asignarla editando el curso en la Sección 5.');
+        abrirModalVincularLanding(cursoId, cursoTitulo, '', cursoSlug);
+    }
+}
+
+function abrirModalVincularLanding(id, titulo, landingUrl, slug) {
+    const idEl = document.getElementById('mvCursoId');
+    if (!idEl) return;
+    idEl.value = id;
+    const titEl = document.getElementById('mvCursoTitulo');
+    if (titEl) titEl.textContent = titulo || `Curso #${id}`;
+    const slugPreview = document.getElementById('mvSlugPreview');
+    if (slugPreview) slugPreview.textContent = slug ? `/curso/${slug}` : `/curso/${id}`;
+
+    const radios = document.getElementsByName('landingOptRadio');
+    const customBox = document.getElementById('mvCustomBox');
+    const customInput = document.getElementById('mvCustomInput');
+
+    const normUrl = (landingUrl || '').trim();
+    if (!normUrl) {
+        radios.forEach(r => { r.checked = (r.value === ''); });
+        if (customBox) customBox.style.display = 'none';
+        if (customInput) customInput.value = '';
+    } else if (normUrl.includes('metodo-mushuu')) {
+        radios.forEach(r => { r.checked = (r.value === '/metodo-mushuu/'); });
+        if (customBox) customBox.style.display = 'none';
+        if (customInput) customInput.value = '';
+    } else if (normUrl.includes('TerapiaEmocionalEvolutiva') || normUrl.includes('terapia-emocional')) {
+        radios.forEach(r => { r.checked = (r.value === '/TerapiaEmocionalEvolutiva/'); });
+        if (customBox) customBox.style.display = 'none';
+        if (customInput) customInput.value = '';
+    } else {
+        radios.forEach(r => { r.checked = (r.value === 'custom'); });
+        if (customBox) customBox.style.display = 'block';
+        if (customInput) customInput.value = normUrl;
+    }
+
+    const modal = document.getElementById('modalVincularLanding');
+    if (modal) modal.classList.add('open');
+}
+
+function onRadioLandingChange() {
+    const selected = document.querySelector('input[name="landingOptRadio"]:checked')?.value;
+    const customBox = document.getElementById('mvCustomBox');
+    const customInput = document.getElementById('mvCustomInput');
+    if (selected === 'custom') {
+        if (customBox) customBox.style.display = 'block';
+        if (customInput) customInput.focus();
+    } else {
+        if (customBox) customBox.style.display = 'none';
+    }
+}
+
+function cerrarModalVincularLanding() {
+    const modal = document.getElementById('modalVincularLanding');
+    if (modal) modal.classList.remove('open');
+}
+
+async function guardarVincularLanding() {
+    const cursoId = document.getElementById('mvCursoId')?.value;
+    if (!cursoId) return;
+
+    const selected = document.querySelector('input[name="landingOptRadio"]:checked')?.value;
+    let targetUrl = '';
+    if (selected === 'custom') {
+        targetUrl = document.getElementById('mvCustomInput')?.value.trim() || '';
+    } else if (selected) {
+        targetUrl = selected;
+    }
+
+    const btn = document.getElementById('btnGuardarVincularLanding');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Guardando...'; }
+
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/admin/cursos/${cursoId}/landing`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ landing_url: targetUrl })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error al guardar la landing');
+
+        showToast('Landing actualizada correctamente');
+        cerrarModalVincularLanding();
+        cargarCursosAdmin();
+    } catch (err) {
+        alert('Error: ' + err.message);
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ph ph-check"></i> Guardar Landing'; }
     }
 }
 
