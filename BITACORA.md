@@ -6,7 +6,21 @@
 
 ## ✅ Avances completados
 
-### 🖼️ Compatibilidad Total con Imágenes `.jfif` de Gemini y Google (`server.js`, `public/curso-crear.html`, `public/admin.html`) (NUEVO)
+### 📄 Programa o Dossier del Curso Descargable en PDF en la Landing (`public/curso-crear.html`, `public/detalle.html`, `public/admin.html`) (NUEVO)
+- [x] **Subida y Gestión del PDF en el Formulario del Curso (`public/curso-crear.html`):**
+  - En la Sección 5 (*Página de Ventas / Landing*), se agregó un módulo dedicado para subir el **Programa, Dossier o Brochure del Curso en formato PDF**.
+  - Permite arrastrar y soltar el archivo (Drag & Drop), seleccionarlo desde el equipo o pegar un enlace externo directo (Google Drive, Dropbox, etc.).
+  - Muestra una tarjeta con vista previa del archivo cargado, botón para previsualizar/ver el PDF en pestaña nueva, botón para cambiarlo y botón para eliminarlo.
+  - Permite personalizar el texto del botón que verán los prospectos en la landing (por defecto: *"Descargar Programa Completo (PDF)"*).
+  - Persiste automáticamente dentro de `ventas_meta` (`programa_pdf_url`, `programa_pdf_nombre`, `programa_pdf_btn_text`) sin requerir migraciones de base de datos.
+- [x] **Visualización y Descarga en la Landing del Curso (`public/detalle.html`):**
+  - **En la Barra Lateral (Buy Box):** Tarjeta destacada con insignia de PDF y botón directo de descarga para prospectos que desean revisar la malla antes de comprar.
+  - **En el Contenido Principal:** Banner llamativo ubicado antes del temario con llamada a la acción clara (*"¿Quieres revisar la malla y detalles en calma? Descarga el dossier oficial con el programa completo en PDF"*).
+  - Ambos bloques se ocultan automáticamente si el curso no tiene un PDF asignado.
+- [x] **Insignia Informativa en el Panel de Administración (`public/admin.html`):**
+  - En el catálogo de cursos, se añadió la insignia roja `📄 Programa PDF` que permite al administrador verificar y abrir el documento con un solo clic.
+
+### 🖼️ Compatibilidad Total con Imágenes `.jfif` de Gemini y Google (`server.js`, `public/curso-crear.html`, `public/admin.html`)
 - [x] **Diagnóstico del Rechazo de Archivos `.jfif`:**
   - En navegadores sobre Windows, al descargar imágenes generadas por Google Gemini o AI Studio, el sistema operativo asigna frecuentemente la extensión `.jfif` (JPEG File Interchange Format).
   - **Filtro de Servidor (`server.js`):** El middleware Multer (`fileFilter`) restringía las extensiones a una lista cerrada (`['.jpg', '.jpeg', '.png', '.webp', '.pdf']`). Cualquier intento de subida de un archivo `.jfif` devolvía un error HTTP 400 *"Tipo de archivo no permitido"*.

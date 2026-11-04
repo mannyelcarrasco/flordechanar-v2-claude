@@ -3848,18 +3848,32 @@ async function renderAdminCourses() {
                     </button>
                 </div>`;
 
+            let pdfBadge = '';
+            if (c.ventas_meta) {
+                try {
+                    const vmParsed = typeof c.ventas_meta === 'string' ? JSON.parse(c.ventas_meta) : c.ventas_meta;
+                    if (vmParsed && vmParsed.programa_pdf_url) {
+                        pdfBadge = `
+                            <a href="${vmParsed.programa_pdf_url}" target="_blank" style="font-size:.68rem;color:#DC2626;background:#FEF2F2;border:1px solid #FECACA;padding:2px 6px;border-radius:4px;text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:3px" title="Ver programa descargable en PDF">
+                                <i class="ph-fill ph-file-pdf"></i> Programa PDF
+                            </a>`;
+                    }
+                } catch(e) {}
+            }
+
             tbody.innerHTML += `
                 <tr>
                     <td>
                         <div class="tn">${c.titulo}</div>
                         ${c.subtitulo ? `<div style="font-size:.74rem;color:#64748B;line-height:1.3;margin-top:2px">${c.subtitulo}</div>` : ''}
-                        <div style="margin-top:3px;display:flex;align-items:center;gap:4px">
+                        <div style="margin-top:3px;display:flex;align-items:center;gap:4px;flex-wrap:wrap">
                             <a href="${seoSlugUrl}" target="_blank" style="font-size:.7rem;color:#166534;background:#DCFCE7;padding:2px 6px;border-radius:4px;text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:3px" title="Ver URL amigable del curso">
                                 <i class="ph-bold ph-globe"></i> ${seoSlugUrl}
                             </a>
                             <button type="button" class="btn btn-sm" onclick="navigator.clipboard.writeText('https://flordechanar.cl${seoSlugUrl}'); showToast('URL copiada al portapapeles');" style="padding:1px 5px;font-size:.68rem;background:#F1F5F9;border:1px solid #CBD5E1;cursor:pointer" title="Copiar enlace amigable">
                                 <i class="ph ph-copy"></i>
                             </button>
+                            ${pdfBadge}
                         </div>
                         <div class="ts" style="margin-top:2px">${priceFmt}</div>
                     </td>

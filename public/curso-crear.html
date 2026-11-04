@@ -829,6 +829,70 @@
             </div>
             
             <div class="fg"><label class="fl">Video VSL (URL YouTube/Vimeo)</label><input class="fc" type="url" id="courseVsl" placeholder="Ej: https://www.youtube.com/watch?v=..."></div>
+
+            <!-- Bloque Programa / Folleto Descargable (PDF) -->
+            <div class="fg" style="background:#fff; border:1.5px solid #E2E8F0; border-radius:12px; padding:1.15rem; margin-bottom:1.25rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.65rem; flex-wrap:wrap; gap:0.5rem;">
+                    <div>
+                        <label class="fl" style="color:var(--s); font-size:0.95rem; font-weight:700; display:flex; align-items:center; gap:0.4rem; margin:0;">
+                            <i class="ph-fill ph-file-pdf" style="color:#DC2626; font-size:1.2rem"></i> Programa o Folleto Descargable en PDF
+                        </label>
+                        <div style="font-size:0.76rem; color:var(--l); margin-top:2px;">
+                            Sube la malla curricular, temario completo o brochure en PDF. Se mostrará un botón de descarga destacado en la Landing del curso.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hidden inputs -->
+                <input type="hidden" id="courseProgramaPdfUrl">
+                <input type="hidden" id="courseProgramaPdfNombre">
+
+                <!-- Drop box cuando no hay PDF cargado -->
+                <div id="programaPdfDropBox" style="border:2px dashed #CBD5E1; border-radius:10px; padding:1.35rem 1rem; text-align:center; background:#F8FAFC; cursor:pointer; transition:all .2s;" onclick="document.getElementById('programaPdfInput').click()">
+                    <i class="ph-fill ph-file-pdf" style="font-size:2.2rem; color:#DC2626; margin-bottom:0.35rem; display:inline-block;"></i>
+                    <div style="font-weight:700; font-size:0.88rem; color:#1E293B">Sube el PDF del Programa aquí</div>
+                    <div style="font-size:0.75rem; color:#64748B; margin-top:2px">Arrastra tu archivo PDF o <span style="color:var(--p,#687A61); font-weight:600">haz clic para seleccionarlo</span> (máx. 10MB)</div>
+                </div>
+                <input type="file" id="programaPdfInput" accept=".pdf,application/pdf" style="display:none" onchange="uploadProgramaPdf(this)">
+
+                <!-- Tarjeta cuando sí hay PDF cargado -->
+                <div id="programaPdfLoadedBox" style="display:none; background:#FEF2F2; border:1.5px solid #FECACA; border-radius:10px; padding:0.9rem 1.1rem; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+                    <div style="display:flex; align-items:center; gap:0.75rem; min-width:240px; flex:1;">
+                        <div style="width:42px; height:42px; border-radius:10px; background:#fff; border:1px solid #FCA5A5; display:flex; align-items:center; justify-content:center; color:#DC2626; font-size:1.5rem; flex-shrink:0; box-shadow:0 2px 6px rgba(220,38,38,0.1);">
+                            <i class="ph-fill ph-file-pdf"></i>
+                        </div>
+                        <div style="min-width:0; flex:1;">
+                            <div id="programaPdfFileName" style="font-weight:700; font-size:0.88rem; color:#991B1B; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">programa-curso.pdf</div>
+                            <div style="font-size:0.74rem; color:#059669; font-weight:600; margin-top:2px; display:flex; align-items:center; gap:4px">
+                                <i class="ph-bold ph-check-circle"></i> Activo y disponible para descarga en la Landing
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:0.5rem; align-items:center;">
+                        <a id="programaPdfPreviewBtn" href="#" target="_blank" class="btn bo btn-sm" style="background:#fff; color:#DC2626; border-color:#FECACA; font-weight:700; font-size:0.78rem;">
+                            <i class="ph ph-eye"></i> Ver PDF
+                        </a>
+                        <button type="button" class="btn btn-sm" onclick="document.getElementById('programaPdfInput').click()" style="background:#fff; color:#475569; border:1px solid #CBD5E1; font-weight:600; font-size:0.78rem;">
+                            <i class="ph ph-arrow-counter-clockwise"></i> Cambiar
+                        </button>
+                        <button type="button" class="btn btn-sm" onclick="removeProgramaPdf()" style="background:#fff; color:#DC2626; border:1px solid #FECACA; font-weight:600; font-size:0.78rem;" title="Eliminar PDF">
+                            <i class="ph ph-trash"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Opciones adicionales -->
+                <div style="margin-top:0.85rem; padding-top:0.75rem; border-top:1px solid #F1F5F9; display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:0.75rem;">
+                    <div>
+                        <label class="fl" style="font-size:0.76rem; margin-bottom:0.25rem;">Texto del botón de descarga:</label>
+                        <input type="text" id="courseProgramaPdfBtnText" class="fc" placeholder="Ej: Descargar Programa Completo (PDF)" style="font-size:0.82rem; padding:0.45rem 0.65rem;">
+                    </div>
+                    <div>
+                        <label class="fl" style="font-size:0.76rem; margin-bottom:0.25rem;">O enlace directo al PDF (si ya está en la nube):</label>
+                        <input type="url" id="courseProgramaPdfUrlDirect" class="fc" placeholder="https://ejemplo.com/programa.pdf" onchange="applyDirectPdfUrl(this.value)" style="font-size:0.82rem; padding:0.45rem 0.65rem;">
+                    </div>
+                </div>
+            </div>
             
             <div class="fg">
                 <label class="fl" style="margin-bottom:0.5rem;">Texto de Ventas (Descripción larga)</label>
@@ -1994,6 +2058,9 @@ window.addEventListener('load', async () => {
                             if (vm.funnel_config) {
                                 loadFunnelConfig(vm.funnel_config);
                             }
+                            if (vm.programa_pdf_url) {
+                                setProgramaPdf(vm.programa_pdf_url, vm.programa_pdf_nombre || '', vm.programa_pdf_btn_text || '');
+                            }
                         } catch(e){}
                     }
                     document.getElementById('coursePrice').value = c.precio || '';
@@ -2395,6 +2462,109 @@ function probarLandingPersonalizada() {
     }
 }
 
+function setProgramaPdf(url, nombre, btnText) {
+    const urlInput = document.getElementById('courseProgramaPdfUrl');
+    const nombreInput = document.getElementById('courseProgramaPdfNombre');
+    const directInput = document.getElementById('courseProgramaPdfUrlDirect');
+    const btnTextInput = document.getElementById('courseProgramaPdfBtnText');
+    const dropBox = document.getElementById('programaPdfDropBox');
+    const loadedBox = document.getElementById('programaPdfLoadedBox');
+    const fileNameEl = document.getElementById('programaPdfFileName');
+    const prevBtn = document.getElementById('programaPdfPreviewBtn');
+
+    if (url) {
+        if (urlInput) urlInput.value = url;
+        if (nombreInput) nombreInput.value = nombre || url.split('/').pop().split('?')[0];
+        if (directInput && directInput !== document.activeElement) directInput.value = url;
+        if (btnTextInput && btnText) btnTextInput.value = btnText;
+        if (fileNameEl) fileNameEl.textContent = nombre || url.split('/').pop().split('?')[0];
+        if (prevBtn) prevBtn.href = url;
+        if (dropBox) dropBox.style.display = 'none';
+        if (loadedBox) loadedBox.style.display = 'flex';
+    } else {
+        if (urlInput) urlInput.value = '';
+        if (nombreInput) nombreInput.value = '';
+        if (directInput) directInput.value = '';
+        if (dropBox) dropBox.style.display = 'block';
+        if (loadedBox) loadedBox.style.display = 'none';
+    }
+}
+
+function removeProgramaPdf() {
+    setProgramaPdf('', '', '');
+    const fileInp = document.getElementById('programaPdfInput');
+    if (fileInp) fileInp.value = '';
+    showToast('Programa en PDF removido');
+}
+
+function applyDirectPdfUrl(url) {
+    if (!url || !url.trim()) {
+        removeProgramaPdf();
+        return;
+    }
+    const cleanUrl = url.trim();
+    const name = cleanUrl.split('/').pop().split('?')[0] || 'programa-curso.pdf';
+    setProgramaPdf(cleanUrl, name, document.getElementById('courseProgramaPdfBtnText')?.value);
+    showToast('Enlace de PDF aplicado');
+}
+
+async function uploadProgramaPdf(input) {
+    const file = input && input.files ? input.files[0] : null;
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith('.pdf') && file.type !== 'application/pdf') {
+        alert('Por favor selecciona un archivo PDF válido.');
+        input.value = '';
+        return;
+    }
+
+    showToast('⏳ Subiendo PDF del programa...');
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/upload', {
+            method: 'POST',
+            headers: {'Authorization': 'Bearer ' + token},
+            body: formData
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error al subir PDF');
+
+        setProgramaPdf(data.url, file.name, document.getElementById('courseProgramaPdfBtnText')?.value);
+        showToast('✅ PDF del programa subido correctamente');
+    } catch (e) {
+        showToast('⚠️ ' + e.message);
+    }
+}
+
+// Soporte Drag & Drop para subir PDF del programa
+(() => {
+    const pdfDrop = document.getElementById('programaPdfDropBox');
+    if (!pdfDrop) return;
+    ['dragenter', 'dragover'].forEach(evt => {
+        pdfDrop.addEventListener(evt, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            pdfDrop.style.borderColor = '#DC2626';
+            pdfDrop.style.background = '#FEF2F2';
+        });
+    });
+    ['dragleave', 'drop'].forEach(evt => {
+        pdfDrop.addEventListener(evt, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            pdfDrop.style.borderColor = '#CBD5E1';
+            pdfDrop.style.background = '#F8FAFC';
+        });
+    });
+    pdfDrop.addEventListener('drop', (e) => {
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+            uploadProgramaPdf({ files: e.dataTransfer.files });
+        }
+    });
+})();
+
 function getVentasMeta() {
     const testimoniosNodes = document.querySelectorAll('.testimonio-item');
     const testimonios = Array.from(testimoniosNodes).map(node => ({
@@ -2407,9 +2577,16 @@ function getVentasMeta() {
     const cobra_matricula = document.getElementById('courseCobraMatricula') ? (document.getElementById('courseCobraMatricula').value === '1') : true;
     const landing_personalizada_url = document.getElementById('courseCustomLandingUrl') ? document.getElementById('courseCustomLandingUrl').value.trim() : '';
 
+    const programa_pdf_url = document.getElementById('courseProgramaPdfUrl') ? document.getElementById('courseProgramaPdfUrl').value.trim() : '';
+    const programa_pdf_nombre = document.getElementById('courseProgramaPdfNombre') ? document.getElementById('courseProgramaPdfNombre').value.trim() : '';
+    const programa_pdf_btn_text = document.getElementById('courseProgramaPdfBtnText') ? document.getElementById('courseProgramaPdfBtnText').value.trim() : '';
+
     return {
         vsl_url: document.getElementById('courseVsl') ? document.getElementById('courseVsl').value : '',
         landing_personalizada_url,
+        programa_pdf_url,
+        programa_pdf_nombre,
+        programa_pdf_btn_text,
         testimonios: testimonios,
         funnel_config: getFunnelConfig(),
         matricula_config: {
