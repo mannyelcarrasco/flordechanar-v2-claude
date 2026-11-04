@@ -97,6 +97,204 @@ app.get('/uploads/:filename', (req, res, next) => {
     return res.redirect(302, 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=600&q=80');
 });
 
+// ─── INYECCIÓN DINÁMICA OPEN GRAPH (WHATSAPP, REDES SOCIALES Y SEO) ────────
+let bannerConfigCache = null;
+let bannerConfigCacheTime = 0;
+
+function toAbsoluteUrl(url, fallback = 'https://flordechanar.cl/img/banners/banner-spa-zen.jpg') {
+    if (!url || typeof url !== 'string') return fallback;
+    const clean = url.trim();
+    if (!clean) return fallback;
+    if (clean.startsWith('http://') || clean.startsWith('https://')) return clean;
+    const norm = clean.startsWith('/') ? clean : '/' + clean;
+    return `https://flordechanar.cl${norm}`;
+}
+
+async function getBannerConfig() {
+    const now = Date.now();
+    if (bannerConfigCache && (now - bannerConfigCacheTime < 30000)) {
+        return bannerConfigCache;
+    }
+    const defaults = {
+        escuela_banner_img: '/img/banners/banner-spa-zen.jpg',
+        escuela_banner_titulo: 'Escuela de Terapias y Bienestar | Flor de Chañar',
+        escuela_banner_subtitulo: 'Cursos y diplomados certificados en Terapias Complementarias, Masoterapia Profesional y Bienestar Integral en La Serena, Calama y Online.',
+        terapias_banner_img: '/img/banners/banner-masaje.jpg',
+        terapias_banner_titulo: 'Terapias Complementarias y Sanación | Flor de Chañar',
+        terapias_banner_subtitulo: 'Espacio de bienestar y sanación integral. Masajes terapéuticos, flores de bach y terapias holísticas en La Serena y Calama.',
+        inicio_banner_img: '/img/banners/banner-spa-zen.jpg',
+        inicio_banner_titulo: 'Flor de Chañar | Escuela y Centro de Terapias',
+        inicio_banner_subtitulo: 'Centro de Terapias Holísticas y Escuela de Formación Profesional en Chile. Sedes en La Serena, Calama y Escuela Online.'
+    };
+    if (!pool) return defaults;
+    try {
+        const [rows] = await pool.query(
+            "SELECT clave, valor FROM configuracion WHERE clave IN ('escuela_banner_img','escuela_banner_titulo','escuela_banner_subtitulo','terapias_banner_img','terapias_banner_titulo','terapias_banner_subtitulo','inicio_banner_img','inicio_banner_titulo','inicio_banner_subtitulo')"
+        );
+        const cfg = { ...defaults };
+        rows.forEach(r => { if (r.valor) cfg[r.clave] = r.valor; });
+        bannerConfigCache = cfg;
+        bannerConfigCacheTime = now;
+        return cfg;
+    } catch(e) {
+        return defaults;
+    }
+}
+
+function injectOpenGraphTags(html, { title, description, image, url }) {
+    const absImage = toAbsoluteUrl(image);
+    let output = html;
+    
+    // Inyectar o reemplazar og:image
+    if (output.includes('property="og:image"')) {
+        output = output.replace(/<meta\s+property=["']og:image["'][^>]*>/i, `<meta property="og:image" content="${absImage}">`);
+    } else {
+        output = output.replace('</head>', `    <meta property="og:image" content="${absImage}">\n</head>`);
+    }
+    
+    // Inyectar o reemplazar twitter:image
+    if (output.includes('name="twitter:image"')) {
+        output = output.replace(/<meta\s+name=["']twitter:image["'][^>]*>/i, `<meta name="twitter:image" content="${absImage}">`);
+    } else {
+        output = output.replace('</head>', `    <meta name="twitter:image" content="${absImage}">\n</head>`);
+    }
+
+    // Actualizar Schema.org "image" si existe
+    if (absImage && /"image":\s*"[^"]*"/i.test(output)) {
+        output = output.replace(/"image":\s*"[^"]*"/g, `"image": "${absImage}"`);
+    }
+    
+    // og:title y twitter:title
+    if (title) {
+        if (output.includes('property="og:title"')) {
+            output = output.replace(/<meta\s+property=["']og:title["'][^>]*>/i, `<meta property="og:title" content="${title}">`);
+        }
+        if (output.includes('name="twitter:title"')) {
+            output = output.replace(/<meta\s+name=["']twitter:title["'][^>]*>/i, `<meta name="twitter:title" content="${title}">`);
+        }
+    }
+    
+    // og:description y twitter:description
+    if (description) {
+        if (output.includes('property="og:description"')) {
+            output = output.replace(/<meta\s+property=["']og:description["'][^>]*>/i, `<meta property="og:description" content="${description}">`);
+        }
+        if (output.includes('name="twitter:description"')) {
+            output = output.replace(/<meta\s+name=["']twitter:description["'][^>]*>/i, `<meta name="twitter:description" content="${description}">`);
+        }
+    }
+
+    // og:url
+    if (url) {
+        if (output.includes('property="og:url"')) {
+            output = output.replace(/<meta\s+property=["']og:url["'][^>]*>/i, `<meta property="og:url" content="${url}">`);
+        }
+    }
+
+    return output;
+}
+
+function syncBannerOgToDisk(cfg) {
+    try {
+        const pages = [
+            {
+                file: path.join(__dirname, 'public', 'escuela.html'),
+                img: cfg.escuela_banner_img,
+                title: cfg.escuela_banner_titulo,
+                desc: cfg.escuela_banner_subtitulo,
+                url: 'https://flordechanar.cl/escuela'
+            },
+            {
+                file: path.join(__dirname, 'public', 'terapias.html'),
+                img: cfg.terapias_banner_img,
+                title: cfg.terapias_banner_titulo,
+                desc: cfg.terapias_banner_subtitulo,
+                url: 'https://flordechanar.cl/terapias'
+            },
+            {
+                file: path.join(__dirname, 'public', 'index.html'),
+                img: cfg.inicio_banner_img || cfg.escuela_banner_img,
+                title: cfg.inicio_banner_titulo,
+                desc: cfg.inicio_banner_subtitulo,
+                url: 'https://flordechanar.cl/'
+            }
+        ];
+        
+        for (const p of pages) {
+            if (p.img && fs.existsSync(p.file)) {
+                let content = fs.readFileSync(p.file, 'utf8');
+                content = injectOpenGraphTags(content, {
+                    title: p.title,
+                    description: p.desc,
+                    image: p.img,
+                    url: p.url
+                });
+                fs.writeFileSync(p.file, content, 'utf8');
+            }
+        }
+    } catch(err) {
+        console.warn('Aviso sincronizando OG en disco:', err.message);
+    }
+}
+
+// Rutas dinámicas con Banner & OG actualizado para WhatsApp y Crawlers (antes de express.static)
+app.get(['/escuela', '/escuela/', '/escuela.html'], async (req, res, next) => {
+    try {
+        const filePath = path.join(__dirname, 'public', 'escuela.html');
+        if (!fs.existsSync(filePath)) return next();
+        const cfg = await getBannerConfig();
+        let html = fs.readFileSync(filePath, 'utf8');
+        html = injectOpenGraphTags(html, {
+            title: cfg.escuela_banner_titulo,
+            description: cfg.escuela_banner_subtitulo,
+            image: cfg.escuela_banner_img,
+            url: 'https://flordechanar.cl/escuela'
+        });
+        res.set('Content-Type', 'text/html; charset=utf-8');
+        return res.send(html);
+    } catch (e) {
+        next();
+    }
+});
+
+app.get(['/terapias', '/terapias/', '/terapias.html'], async (req, res, next) => {
+    try {
+        const filePath = path.join(__dirname, 'public', 'terapias.html');
+        if (!fs.existsSync(filePath)) return next();
+        const cfg = await getBannerConfig();
+        let html = fs.readFileSync(filePath, 'utf8');
+        html = injectOpenGraphTags(html, {
+            title: cfg.terapias_banner_titulo,
+            description: cfg.terapias_banner_subtitulo,
+            image: cfg.terapias_banner_img,
+            url: 'https://flordechanar.cl/terapias'
+        });
+        res.set('Content-Type', 'text/html; charset=utf-8');
+        return res.send(html);
+    } catch (e) {
+        next();
+    }
+});
+
+app.get(['/', '/index.html'], async (req, res, next) => {
+    try {
+        const filePath = path.join(__dirname, 'public', 'index.html');
+        if (!fs.existsSync(filePath)) return next();
+        const cfg = await getBannerConfig();
+        let html = fs.readFileSync(filePath, 'utf8');
+        html = injectOpenGraphTags(html, {
+            title: cfg.inicio_banner_titulo,
+            description: cfg.inicio_banner_subtitulo,
+            image: cfg.inicio_banner_img || cfg.escuela_banner_img,
+            url: 'https://flordechanar.cl/'
+        });
+        res.set('Content-Type', 'text/html; charset=utf-8');
+        return res.send(html);
+    } catch (e) {
+        next();
+    }
+});
+
 // Serve static frontend files from 'public' directory with .html extension support
 app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
 
@@ -476,8 +674,14 @@ async function initDB() {
                 ('terapias_banner_img', '/img/banners/banner-masaje.jpg'),
                 ('terapias_banner_overlay', '0.65'),
                 ('terapias_banner_titulo', 'Agenda tu Espacio de Sanación'),
-                ('terapias_banner_subtitulo', 'Selecciona tu servicio. Nuestro nuevo sistema te permite reservar en menos de 1 minuto sin complicaciones ni registros extensos.')
+                ('terapias_banner_subtitulo', 'Selecciona tu servicio. Nuestro nuevo sistema te permite reservar en menos de 1 minuto sin complicaciones ni registros extensos.'),
+                ('inicio_banner_img', '/img/banners/banner-spa-zen.jpg'),
+                ('inicio_banner_overlay', '0.65'),
+                ('inicio_banner_titulo', 'Flor de Chañar | Escuela y Centro de Terapias'),
+                ('inicio_banner_subtitulo', 'Centro de Terapias Holísticas y Escuela de Formación Profesional en Chile. Sedes en La Serena, Calama y Escuela Online.')
             `);
+            const initialCfg = await getBannerConfig();
+            syncBannerOgToDisk(initialCfg);
         } catch (e) { /* ignorar si ya existe */ }
         await pool.query(`
             CREATE TABLE IF NOT EXISTS paginas (
@@ -2710,12 +2914,12 @@ app.delete('/api/admin/planes/:id', verifyToken, async (req, res) => {
     }
 });
 
-// ── Configuración pública (WhatsApp, Banners Escuela y Terapias, etc.) ──────────────────────
+// ── Configuración pública (WhatsApp, Banners Escuela, Terapias, Inicio, etc.) ──────────────────────
 // GET /api/config/publica — sin autenticación, retorna wa_numero, wa_mensaje, y config de banners
 app.get('/api/config/publica', async (req, res) => {
     try {
         const [rows] = await pool.query(
-            "SELECT clave, valor FROM configuracion WHERE clave IN ('wa_numero','wa_mensaje','wa_activo','escuela_banner_img','escuela_banner_overlay','escuela_banner_titulo','escuela_banner_subtitulo','terapias_banner_img','terapias_banner_overlay','terapias_banner_titulo','terapias_banner_subtitulo')"
+            "SELECT clave, valor FROM configuracion WHERE clave IN ('wa_numero','wa_mensaje','wa_activo','escuela_banner_img','escuela_banner_overlay','escuela_banner_titulo','escuela_banner_subtitulo','terapias_banner_img','terapias_banner_overlay','terapias_banner_titulo','terapias_banner_subtitulo','inicio_banner_img','inicio_banner_overlay','inicio_banner_titulo','inicio_banner_subtitulo')"
         );
         const cfg = {};
         rows.forEach(r => { cfg[r.clave] = r.valor; });
@@ -2750,6 +2954,12 @@ app.post('/api/admin/config', verifyToken, async (req, res) => {
                 );
             }
         }
+        
+        // Sincronizar OpenGraph en memoria y en archivos HTML físicos para WhatsApp y crawlers
+        bannerConfigCache = null;
+        const latestCfg = await getBannerConfig();
+        syncBannerOgToDisk(latestCfg);
+
         res.json({ ok: true });
     } catch (e) { res.status(500).json({ error: 'Error al guardar config' }); }
 });

@@ -6,6 +6,26 @@
 
 ## ✅ Avances completados
 
+### 🔗 Sincronización Automática de Banners con Open Graph / WhatsApp (`server.js`, `public/admin.html`, `public/metodo-mushuu/`, `public/TerapiaEmocionalEvolutiva/`) (NUEVO)
+- [x] **Diagnóstico de Previsualización en WhatsApp:**
+  - WhatsApp, Facebook y Twitter/X no ejecutan JavaScript al rastrear una URL compartida; leen exclusivamente las etiquetas estáticas `<meta property="og:image">` en el HTML crudo retornado por el servidor.
+  - Al compartir `https://flordechanar.cl/escuela.html#catalogo`, el HTML contenía la imagen por defecto `banner-spa-zen.jpg` quemada en el código, por lo que los cambios del banner en el panel de administración no se reflejaban en WhatsApp.
+  - Además, páginas como `/metodo-mushuu/` y `/TerapiaEmocionalEvolutiva/` tenían rutas de imagen relativas (`img/hero.jpg` y `assets/img/hero-arbol.jpg`), las cuales WhatsApp ignora por requerir URLs absolutas con `https://`.
+- [x] **Inyección Dinámica en Servidor (`server.js`):**
+  - Se implementó un interceptor dinámico previo a `express.static` para las rutas principales (`/escuela`, `/escuela.html`, `/terapias`, `/terapias.html`, `/`, `/index.html`).
+  - Obtiene en tiempo real de la base de datos (`configuracion`) la imagen, título y subtítulo vigentes del banner configurado.
+  - Inyecta dinámicamente las etiquetas `<meta property="og:image">`, `<meta property="og:title">`, `<meta property="og:description">`, Twitter Cards y Schema.org con URLs absolutas seguras (`https://flordechanar.cl/...`).
+  - Incluye caché en memoria ultra-rápida (30s) para evitar consultas redundantes a la base de datos en tráfico alto.
+- [x] **Sincronización Bidireccional en Disco:**
+  - En `POST /api/admin/config`, cada vez que el administrador guarda un banner (Escuela, Terapias o Inicio), se sincronizan automáticamente los archivos HTML físicos en disco (`escuela.html`, `terapias.html`, `index.html`), garantizando persistencia ante cualquier método de entrega estática.
+  - Durante `initDB()`, se ejecuta una verificación inicial al arranque para mantener sincronizado el disco con la base de datos.
+- [x] **Nuevo Módulo "Banner Inicio (Home)" e Indicadores en el Panel de Administración (`public/admin.html`):**
+  - Se añadió la pestaña `🏡 Banner Inicio` en la sección Ajustes de `admin.html` para personalizar la portada y vista previa de `https://flordechanar.cl/`.
+  - Se incluyeron selectores de presets visuales, subida de imágenes propias y previsualización en vivo.
+  - Se añadieron insignias verdes informativas en cada sub-panel de banner notificando al usuario que la imagen guardada se sincroniza en automático con WhatsApp y redes sociales.
+- [x] **Corrección de URLs Relativas a Absolutas en Landings:**
+  - Se actualizaron las etiquetas Open Graph y Twitter Cards en `public/metodo-mushuu/index.html` y `public/TerapiaEmocionalEvolutiva/index.html` a URLs absolutas (`https://flordechanar.cl/...`) para que WhatsApp siempre renderice sus portadas con total nitidez.
+
 ### 🛡️ Corrección de Sobrescritura de Portadas en Arranque del Servidor y Persistencia de Imágenes (`server.js`, `public/curso-crear.html`) (NUEVO)
 - [x] **Diagnóstico de la Reversión de la Portada en Cursos (ej. Drenaje Linfático):**
   - **Causa Raíz Principal en `server.js` (`initDB()`):** Existían consultas SQL `UPDATE cursos SET portada_url = ...` de migraciones antiguas que se ejecutaban forzosamente en cada arranque o reinicio del contenedor (por ejemplo tras cada despliegue de Git en EasyPanel).

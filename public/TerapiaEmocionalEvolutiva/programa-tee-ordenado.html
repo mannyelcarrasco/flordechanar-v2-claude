@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Programa Oficial - Terapia Emocional Evolutiva (T.E.E.)</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: #1e293b;
+      background: #e2e8f0;
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.45;
+      font-size: 10.5pt;
+    }
+
+    .page {
+      width: 210mm;
+      height: 297mm;
+      max-height: 297mm;
+      margin: 0 auto 20px auto;
+      background: #ffffff;
+      padding: 12mm 18mm 12mm 18mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      page-break-after: always;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    @media print {
+      body {
+        background: transparent;
+      }
+      .page {
+        margin: 0;
+        box-shadow: none;
+        page-break-after: always;
+      }
+    }
+
+    /* ================= Top Banner Page 1 ================= */
+    .top-banner {
+      background: #0b132b;
+      color: #ffffff;
+      padding: 18px 24px 16px 24px;
+      border-radius: 6px;
+      border-bottom: 4px solid #f5a623;
+      text-align: center;
+      margin-bottom: 14px;
+    }
+
+    .top-banner__eyebrow {
+      font-size: 11pt;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: #f8fafc;
+      margin-bottom: 4px;
+    }
+
+    .top-banner__title {
+      font-size: 12.5pt;
+      font-weight: 500;
+      color: #f5a623;
+      letter-spacing: 0.3px;
+    }
+
+    /* ================= Running Mini-Header Pages 2-5 ================= */
+    .mini-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 7px;
+      border-bottom: 1.5px solid #e2e8f0;
+      margin-bottom: 14px;
+      font-size: 8pt;
+      color: #64748b;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .mini-header__tag {
+      color: #d97706;
+      font-weight: 700;
+    }
+
+    /* ================= Typography & Section Titles ================= */
+    .section-title {
+      font-size: 12pt;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title::after {
+      content: "";
+      flex: 1;
+      height: 1.5px;
+      background: #f5a623;
+    }
+
+    .lead-text {
+      font-size: 9.8pt;
+      color: #334155;
+      text-align: justify;
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+
+    .lead-text strong {
+      color: #0b132b;
+      font-weight: 700;
+    }
+
+    /* ================= Hero Image ================= */
+    .hero-container {
+      width: 100%;
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 10px 0 14px 0;
+      border: 1px solid #cbd5e1;
+      box-shadow: 0 3px 8px rgba(11, 19, 43, 0.08);
+      max-height: 175px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0b132b;
+    }
+
+    .hero-container img {
+      width: 100%;
+      height: 175px;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* ================= Bullet List & Requirements ================= */
+    .requirements-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-left: 4px solid #f5a623;
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin-top: 6px;
+    }
+
+    .requirements-intro {
+      font-weight: 700;
+      font-size: 9.8pt;
+      color: #0f172a;
+      margin-bottom: 8px;
+    }
+
+    .styled-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .styled-list li {
+      position: relative;
+      padding-left: 18px;
+      font-size: 9.3pt;
+      color: #334155;
+      margin-bottom: 7px;
+      line-height: 1.45;
+    }
+
+    .styled-list li:last-child {
+      margin-bottom: 0;
+    }
+
+    .styled-list li::before {
+      content: "•";
+      position: absolute;
+      left: 3px;
+      top: -1px;
+      color: #d97706;
+      font-size: 14pt;
+      line-height: 1;
+    }
+
+    .styled-list li strong {
+      color: #0b132b;
+    }
+
+    /* ================= Page 2 Structure Cards ================= */
+    .structure-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 10px 0 14px 0;
+    }
+
+    .cert-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px 14px;
+      position: relative;
+      border-top: 3.5px solid #0b132b;
+    }
+
+    .cert-card--gold {
+      border-top-color: #f5a623;
+    }
+
+    .cert-card__title {
+      font-size: 10pt;
+      font-weight: 800;
+      color: #0b132b;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .cert-card__desc {
+      font-size: 8.8pt;
+      color: #475569;
+      line-height: 1.45;
+    }
+
+    /* ================= Visual Malla Map Image Frame ================= */
+    .malla-visual-frame {
+      width: 100%;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1.5px solid #cbd5e1;
+      box-shadow: 0 4px 12px rgba(11, 19, 43, 0.09);
+      background: #091024;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-top: 6px;
+    }
+
+    .malla-visual-frame img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .malla-caption {
+      width: 100%;
+      background: #0b132b;
+      color: #cbd5e1;
+      padding: 6px 12px;
+      font-size: 8pt;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid #1e293b;
+    }
+
+    .malla-caption strong {
+      color: #f5a623;
+    }
+
+    /* ================= 2-Column Modules Grid (Pages 3 & 4) ================= */
+    .modules-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .semester-col {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .module-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 7px;
+      padding: 10px 12px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+      position: relative;
+    }
+
+    .semester-badge {
+      display: inline-block;
+      font-size: 7.5pt;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 2.5px 8px;
+      border-radius: 4px;
+      margin-bottom: 5px;
+    }
+
+    .badge--sem1 {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fde68a;
+    }
+
+    .badge--sem2 {
+      background: #e0e7ff;
+      color: #3730a3;
+      border: 1px solid #c7d2fe;
+    }
+
+    .badge--sem3 {
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+
+    .badge--sem4 {
+      background: #fff1f2;
+      color: #9f1239;
+      border: 1px solid #fecdd3;
+    }
+
+    .module-header {
+      font-size: 9.8pt;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.25;
+      margin-bottom: 2px;
+    }
+
+    .module-meta {
+      font-size: 8pt;
+      color: #64748b;
+      font-style: italic;
+      margin-bottom: 6px;
+      padding-bottom: 4px;
+      border-bottom: 1px dashed #e2e8f0;
+    }
+
+    .module-bullets {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .module-bullets li {
+      position: relative;
+      padding-left: 14px;
+      font-size: 8.4pt;
+      color: #334155;
+      margin-bottom: 4px;
+      line-height: 1.35;
+    }
+
+    .module-bullets li:last-child {
+      margin-bottom: 0;
+    }
+
+    .module-bullets li::before {
+      content: "•";
+      position: absolute;
+      left: 2px;
+      top: -1px;
+      color: #0b132b;
+      font-size: 11pt;
+    }
+
+    /* ================= Hito Box ================= */
+    .hito-box {
+      background: #f8fafc;
+      border: 1.5px solid #0b132b;
+      border-left: 5px solid #f5a623;
+      border-radius: 6px;
+      padding: 9px 14px;
+      margin-top: 10px;
+      font-size: 8.8pt;
+      color: #1e293b;
+      line-height: 1.4;
+    }
+
+    .hito-box strong {
+      color: #0b132b;
+      font-weight: 800;
+    }
+
+    /* ================= Full Width Card Semestre 4 ================= */
+    .semestre4-card {
+      background: #fdfefe;
+      border: 1px solid #cbd5e1;
+      border-left: 4px solid #0b132b;
+      border-radius: 7px;
+      padding: 10px 14px;
+      margin-top: 10px;
+    }
+
+    .semestre4-card__title {
+      font-size: 10pt;
+      font-weight: 800;
+      color: #0b132b;
+      margin-bottom: 2px;
+    }
+
+    .semestre4-card__meta {
+      font-size: 8.2pt;
+      color: #d97706;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .semestre4-card__desc {
+      font-size: 8.6pt;
+      color: #334155;
+      line-height: 1.45;
+      text-align: justify;
+    }
+
+    /* ================= Metodología 2x2 Grid (Page 4) ================= */
+    .method-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+      margin: 8px 0;
+    }
+
+    .method-item {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 8px 10px;
+    }
+
+    .method-item__num {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      background: #0b132b;
+      color: #ffffff;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 18px;
+      font-size: 7.5pt;
+      font-weight: 800;
+      margin-right: 5px;
+    }
+
+    .method-item__title {
+      font-size: 8.6pt;
+      font-weight: 800;
+      color: #0f172a;
+      display: inline;
+    }
+
+    .method-item__desc {
+      font-size: 8pt;
+      color: #475569;
+      margin-top: 3px;
+      line-height: 1.35;
+    }
+
+    /* ================= FAQs Page 5 ================= */
+    .faqs-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .faq-item {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-left: 3px solid #0b132b;
+      border-radius: 6px;
+      padding: 8px 12px;
+    }
+
+    .faq-q {
+      font-size: 8.9pt;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 3px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .faq-q::before {
+      content: "¿";
+      display: inline-block;
+      color: #f5a623;
+      font-weight: 900;
+      font-size: 10pt;
+    }
+
+    .faq-a {
+      font-size: 8.2pt;
+      color: #475569;
+      line-height: 1.4;
+      text-align: justify;
+    }
+
+    /* ================= Footer ================= */
+    .page-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 8px;
+      border-top: 1px solid #e2e8f0;
+      font-size: 8pt;
+      color: #64748b;
+      margin-top: auto;
+    }
+
+    .page-footer__brand {
+      font-weight: 600;
+      color: #0b132b;
+    }
+
+    .page-footer__num {
+      font-weight: 700;
+      color: #f5a623;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==========================================
+       PÁGINA 1: PRESENTACIÓN Y PERFIL DE INGRESO
+       ========================================== -->
+  <div class="page">
+    <div>
+      <div class="top-banner">
+        <div class="top-banner__eyebrow">Programa Oficial de Formación Profesional 2027-2028</div>
+        <div class="top-banner__title">Descodificando el Camino hacia la Sanación</div>
+      </div>
+
+      <div class="section-title">Una Nueva Realidad Terapéutica</div>
+      <p class="lead-text">
+        Reunir hoy una terapia que una los nuevos descubrimientos de la plasticidad cerebral y la física cuántica, con herramientas terapéuticas profundas y la fuerza de tus orígenes familiares, suele ser una complejidad. La <strong>Terapia Emocional Evolutiva (T.E.E.)</strong> nace como una respuesta integral a esta necesidad.
+      </p>
+      <p class="lead-text">
+        Esta formación profesional de 2 años está diseñada para sumergir al alumno en un proceso experiencial profundo. No solo aprenderás a tratar a otros, sino que iniciarás sanando tu propia historia. La T.E.E. se fundamenta en tres pilares potentes: la comprensión del <strong>Árbol Transgeneracional</strong>, las <strong>BioCorrelaciones</strong> (la relación indisociable entre psique, cerebro y órgano), y la <strong>Hipnosis Clínica</strong>.
+      </p>
+
+      <div class="hero-container">
+        <img src="assets/img/hero-arbol.jpg" alt="Terapia Emocional Evolutiva - Cerebro Cuántico y Árbol">
+      </div>
+
+      <div class="section-title" style="margin-top: 14px;">Perfil del Estudiante y Requisitos de Ingreso</div>
+      <div class="requirements-box">
+        <div class="requirements-intro">Este programa de alta exigencia emocional y académica está dirigido a:</div>
+        <ul class="styled-list">
+          <li><strong>Toda persona mayor de 18 años</strong> con un deseo profundo de resolver su historia familiar o conflictos personales.</li>
+          <li><strong>Profesionales de la salud, terapeutas holísticos</strong>, o cualquier individuo que sienta el llamado a formarse profesionalmente para ayudar a otros.</li>
+          <li><strong>Requisito fundamental:</strong> Disposición para el trabajo personal. El programa exige que el alumno desarrolle su propio genograma y trabaje en su propia historia para poder resolver la de futuros consultantes.</li>
+          <li><strong>Sin conocimientos previos:</strong> No se exigen conocimientos previos en psicología o biología, el programa cubre desde las bases hasta el nivel avanzado.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <span class="page-footer__brand">Escuela de Terapias Internacional | Formación T.E.E.</span>
+      <span class="page-footer__num">Página 1 de 5</span>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       PÁGINA 2: ESTRUCTURA GENERAL Y MAPA CURRICULAR
+       ========================================== -->
+  <div class="page">
+    <div>
+      <div class="mini-header">
+        <span>Escuela de Terapias Internacional · Formación T.E.E.</span>
+        <span class="mini-header__tag">Estructura & Malla Curricular</span>
+      </div>
+
+      <div class="section-title">Estructura General del Programa</div>
+      <p class="lead-text">
+        El programa se extiende a lo largo de <strong>4 semestres (2 años académicos)</strong>, comprendiendo un total de <strong>116 clases estructuradas</strong>. Está dividido en dos grandes certificaciones progresivas que otorgan al estudiante logros tangibles y herramientas prácticas desde el primer año:
+      </p>
+
+      <div class="structure-grid">
+        <div class="cert-card cert-card--gold">
+          <div class="cert-card__title">AÑO 1: Certificación Practitioner T.E.E.</div>
+          <div class="cert-card__desc">
+            Enfocado en las bases teóricas, la construcción del árbol genealógico y la adquisición de herramientas complementarias de aplicación inmediata.
+          </div>
+        </div>
+        <div class="cert-card">
+          <div class="cert-card__title">AÑO 2: Terapeuta Emocional Avanzado</div>
+          <div class="cert-card__desc">
+            Dedicado a la profundización en la biología (Las 5 Leyes), la cuántica, y un semestre íntegro de prácticas clínicas reales y tesina de grado.
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title" style="margin-top: 10px;">Malla Curricular: Mapa Visual del Programa</div>
+      <p class="lead-text" style="margin-bottom: 6px;">
+        A continuación se presenta la infografía oficial con la distribución modular completa de los 4 semestres de cursada:
+      </p>
+
+      <div class="malla-visual-frame">
+        <img src="assets/img/malla-curricular-116.jpg" alt="Malla Curricular Visual T.E.E. - 116 Clases">
+        <div class="malla-caption">
+          <span><strong>Malla Curricular Oficial</strong> · Duración: 2 Años (116 Clases)</span>
+          <span>Modalidad 100% Online en Vivo vía Google Meet</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <span class="page-footer__brand">Escuela de Terapias Internacional | Formación T.E.E.</span>
+      <span class="page-footer__num">Página 2 de 5</span>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       PÁGINA 3: DETALLE CURRICULAR AÑO 1
+       ========================================== -->
+  <div class="page">
+    <div>
+      <div class="mini-header">
+        <span>Escuela de Terapias Internacional · Formación T.E.E.</span>
+        <span class="mini-header__tag">Año 1 · Practitioner</span>
+      </div>
+
+      <div class="section-title">Malla Curricular: Año 1 (Nivel Practitioner)</div>
+      <p class="lead-text">
+        Durante el primer año, el objetivo es asimilar las bases del esquema terapéutico, dominar la psicogenealogía e incorporar herramientas de intervención complementarias.
+      </p>
+
+      <div class="modules-grid">
+        <!-- Columna Semestre 1 -->
+        <div class="semester-col">
+          <!-- Módulo 1 -->
+          <div class="module-card">
+            <span class="semester-badge badge--sem1">Semestre 1</span>
+            <div class="module-header">Módulo 1: Árbol Transgeneracional</div>
+            <div class="module-meta">15 Clases | Teórico-Práctico</div>
+            <ul class="module-bullets">
+              <li>Construcción del genograma personal.</li>
+              <li>Identificación de lealtades invisibles y secretos.</li>
+              <li>El doble por fechas, nombre y características.</li>
+              <li>Proyecto sentido y etapas del nacimiento.</li>
+            </ul>
+          </div>
+
+          <!-- Módulo 2 -->
+          <div class="module-card">
+            <span class="semester-badge badge--sem1">Semestre 1</span>
+            <div class="module-header">Módulo 2: Fundamentos T.E.E.</div>
+            <div class="module-meta">12 Clases | Teórico</div>
+            <ul class="module-bullets">
+              <li>Conceptos generales y bio-emociones.</li>
+              <li>La biología de la creencia (Bruce Lipton).</li>
+              <li>Identificación del conflicto desencadenante.</li>
+              <li>Elaboración de pauta de entrevista inicial.</li>
+            </ul>
+          </div>
+
+          <!-- Módulo 3 -->
+          <div class="module-card">
+            <span class="semester-badge badge--sem1">Semestre 1</span>
+            <div class="module-header">Módulo 3: Hipnosis Clínica Inicial</div>
+            <div class="module-meta">12 Clases | Teórico-Práctico</div>
+            <ul class="module-bullets">
+              <li>¿Qué es y qué no es la hipnosis? Mitos.</li>
+              <li>Lenguaje del inconsciente e inducción.</li>
+              <li>Recursos de profundización del trance.</li>
+              <li>Regresiones a la niñez y vidas pasadas.</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Columna Semestre 2 -->
+        <div class="semester-col">
+          <!-- Módulo 4 -->
+          <div class="module-card">
+            <span class="semester-badge badge--sem2">Semestre 2</span>
+            <div class="module-header">Módulo 4: Constelaciones y Árbol Avanzado</div>
+            <div class="module-meta">10 Clases | Avanzado</div>
+            <ul class="module-bullets">
+              <li>Importancia del Padre y la Madre (Edipo/Electra).</li>
+              <li>Reconocer a los ancestros y parejas anteriores.</li>
+              <li>El impacto transgeneracional de los abortos.</li>
+              <li>Actos psicomágicos de reparación.</li>
+            </ul>
+          </div>
+
+          <!-- Módulo 5 -->
+          <div class="module-card">
+            <span class="semester-badge badge--sem2">Semestre 2</span>
+            <div class="module-header">Módulo 5: Complementos a la Terapia</div>
+            <div class="module-meta">20 Clases | Herramientas Prácticas</div>
+            <ul class="module-bullets">
+              <li>Ft Taping y liberación de emociones atrapadas.</li>
+              <li>Terapia Floral y de Plantas.</li>
+              <li>Masaje emocional y Cuerpo BioEnergy A.L.</li>
+              <li>Setting terapéutico y ética en consulta.</li>
+            </ul>
+          </div>
+
+          <!-- Módulo 6 -->
+          <div class="module-card">
+            <span class="semester-badge badge--sem2">Semestre 2</span>
+            <div class="module-header">Módulo 6: Hipnosis Clínica Avanzada</div>
+            <div class="module-meta">10 Clases | Avanzado</div>
+            <ul class="module-bullets">
+              <li>Estados profundos de la hipnosis.</li>
+              <li>Enfoque de Milton Erickson y metáforas.</li>
+              <li>Programación e instalación de recursos.</li>
+              <li>Reprogramación de traumas arraigados.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="hito-box">
+        <strong>Hito Académico:</strong> Al aprobar estos 6 módulos, el alumno obtiene la <strong>Certificación T.E.E. Practitioner</strong>, validando su capacidad para realizar atenciones preliminares y aplicar herramientas complementarias.
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <span class="page-footer__brand">Escuela de Terapias Internacional | Formación T.E.E.</span>
+      <span class="page-footer__num">Página 3 de 5</span>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       PÁGINA 4: DETALLE CURRICULAR AÑO 2, PRÁCTICA Y METODOLOGÍA
+       ========================================== -->
+  <div class="page">
+    <div>
+      <div class="mini-header">
+        <span>Escuela de Terapias Internacional · Formación T.E.E.</span>
+        <span class="mini-header__tag">Año 2 · Terapeuta Avanzado</span>
+      </div>
+
+      <div class="section-title">Malla Curricular: Año 2 (Terapeuta Emocional)</div>
+      <p class="lead-text">
+        El segundo año eleva la formación integrando la biología médica germánica (Leyes de Hamer), la física cuántica, y un riguroso semestre de práctica clínica supervisada.
+      </p>
+
+      <div class="modules-grid">
+        <!-- Módulo 7 -->
+        <div class="module-card">
+          <span class="semester-badge badge--sem3">Semestre 3</span>
+          <div class="module-header">Módulo 7: Bio Emo Energy Cuántica Aplicada</div>
+          <div class="module-meta">20 Clases | Teórico-Práctico</div>
+          <ul class="module-bullets">
+            <li>Epigenética y el Doble Cuántico (JPG).</li>
+            <li>Universo holográfico y sincronicidad.</li>
+            <li>Alba Emoting y Bioenergética (A. Lowen).</li>
+            <li>Tratamiento Aplicado: La Línea de la Vida.</li>
+          </ul>
+        </div>
+
+        <!-- Módulo 8 -->
+        <div class="module-card">
+          <span class="semester-badge badge--sem3">Semestre 3</span>
+          <div class="module-header">Módulo 8: Bio Correlaciones (Las 5 Leyes)</div>
+          <div class="module-meta">17 Clases | Especialización Biológica</div>
+          <ul class="module-bullets">
+            <li>La tríada indisociable: Psique - Cerebro - Órgano.</li>
+            <li>Las 5 Leyes Biológicas del Dr. Hamer.</li>
+            <li>Capas embrionarias y anatomía general.</li>
+            <li>Análisis de casos: Conflictos de territorio, desvalorización y supervivencia.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Semestre 4 -->
+      <div class="semestre4-card">
+        <span class="semester-badge badge--sem4">Semestre 4</span>
+        <div class="semestre4-card__title">Prácticas Clínicas Supervisadas y Tesina</div>
+        <div class="semestre4-card__meta">5 Meses | 100% Práctico (Sin clases teóricas)</div>
+        <div class="semestre4-card__desc">
+          El último semestre está liberado de carga teórica. Los alumnos se dedican exclusivamente a la atención de consultantes reales bajo estricta supervisión de los docentes. Finaliza con la elaboración y defensa de una <strong>Tesina de grado</strong>, requisito indispensable para la titulación de <strong>Terapeuta Emocional Evolutivo Avanzado</strong>.
+        </div>
+      </div>
+
+      <!-- Metodología de Estudio -->
+      <div class="section-title" style="margin-top: 14px;">Metodología de Estudio</div>
+      <div class="method-grid">
+        <div class="method-item">
+          <div><span class="method-item__num">1</span><div class="method-item__title">Clases Sincrónicas en Vivo</div></div>
+          <div class="method-item__desc">Dos sesiones semanales (ej. Lunes y Jueves) de 2 horas cada una a través de Google Meet / Zoom. Fomenta el aprendizaje espaciado sin saturación cognitiva.</div>
+        </div>
+        <div class="method-item">
+          <div><span class="method-item__num">2</span><div class="method-item__title">Plataforma y Respaldo Asincrónico</div></div>
+          <div class="method-item__desc">Todas las clases quedan grabadas semanalmente. Acceso 24/7 a presentaciones, material de lectura y foros de participación continua.</div>
+        </div>
+        <div class="method-item">
+          <div><span class="method-item__num">3</span><div class="method-item__title">Ayudantías y Seguimiento</div></div>
+          <div class="method-item__desc">Se destinan clases especiales exclusivas para el seguimiento de casos clínicos, resolución de dudas, revisión de tareas y apoyo continuo del alumno.</div>
+        </div>
+        <div class="method-item">
+          <div><span class="method-item__num">4</span><div class="method-item__title">Desarrollo del Propio Proceso</div></div>
+          <div class="method-item__desc">Estructura experiencial. Es requisito fundamental sumergirte en tu propio proceso terapéutico, trabajando tu historia personal y genograma.</div>
+        </div>
+      </div>
+
+      <!-- Proyección Profesional -->
+      <div class="section-title" style="margin-top: 10px;">Proyección Profesional</div>
+      <p class="lead-text" style="margin-bottom: 0;">
+        La Terapia Emocional es una de las disciplinas más demandadas y respetadas en el ámbito de la salud integrativa actual. Al titularte, estarás capacitado para trabajar de forma independiente en consulta privada (online o presencial) o integrarte a centros médicos y holísticos multidisciplinarios.
+      </p>
+    </div>
+
+    <div class="page-footer">
+      <span class="page-footer__brand">Escuela de Terapias Internacional | Formación T.E.E.</span>
+      <span class="page-footer__num">Página 4 de 5</span>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       PÁGINA 5: PREGUNTAS FRECUENTES Y MAPA CURRICULAR
+       ========================================== -->
+  <div class="page">
+    <div>
+      <div class="mini-header">
+        <span>Escuela de Terapias Internacional · Formación T.E.E.</span>
+        <span class="mini-header__tag">FAQ & Mapa Curricular</span>
+      </div>
+
+      <div class="section-title">Preguntas Frecuentes</div>
+      <div class="faqs-container">
+        <div class="faq-item">
+          <div class="faq-q">¿En el curso puedo exponer mi propio caso para obtener soluciones?</div>
+          <div class="faq-a">
+            Absolutamente. El programa es experiencial. Verás constantemente la posibilidad de trabajar tu caso, ya sea en grupo o individualmente. De hecho, es un requisito ético y académico sanar tu propia historia familiar para poder guiar a otros en su proceso de sanación.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q">¿Qué pasa si por fuerza mayor no puedo seguir el programa continuo?</div>
+          <div class="faq-a">
+            La escuela ofrece flexibilidad. Puedes congelar tus estudios hasta por dos años consecutivos y retomar donde lo dejaste sin penalización. Además, las certificaciones intermedias (Practitioner) respaldan tu avance parcial.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q">¿Cuáles son las modalidades de inscripción y pago?</div>
+          <div class="faq-a">
+            Ofrecemos matrícula y facilidades directas con la escuela a través de mensualidades (sin necesidad de tarjetas de crédito para alumnos locales), así como plataformas de pago seguro internacional para alumnos de otros países.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q">¿Tengo alguna garantía al inscribirme?</div>
+          <div class="faq-a">
+            Sí, la Escuela de Terapias Internacional otorga una garantía de satisfacción total durante los primeros días del curso. Si sientes que el enfoque del programa no resuena contigo, se procesa el reembolso completo de tu mensualidad.
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title" style="margin-top: 10px;">Mapa Curricular de la Formación</div>
+      <p class="lead-text" style="margin-bottom: 6px;">
+        <strong>Malla Curricular Visual T.E.E.</strong> — Esquema global de formación profesional:
+      </p>
+
+      <div class="malla-visual-frame">
+        <img src="assets/img/malla-curricular-116.jpg" alt="Malla Curricular Visual T.E.E. - Programa 116 Clases">
+        <div class="malla-caption">
+          <span><strong>Malla Curricular Oficial</strong> · 116 Clases · 4 Semestres</span>
+          <span>Escuela de Terapias Internacional</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <span class="page-footer__brand">Escuela de Terapias Internacional | Formación T.E.E.</span>
+      <span class="page-footer__num">Página 5 de 5</span>
+    </div>
+  </div>
+
+</body>
+</html>

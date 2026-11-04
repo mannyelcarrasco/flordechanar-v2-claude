@@ -682,6 +682,9 @@
             <button id="stab-banner-terapias" class="stab" onclick="switchStab('banner-terapias')">
                 <i class="ph ph-flower-lotus"></i> 💆 Banner Terapias
             </button>
+            <button id="stab-banner-inicio" class="stab" onclick="switchStab('banner-inicio')">
+                <i class="ph ph-house"></i> 🏡 Banner Inicio
+            </button>
             <button id="stab-integraciones" class="stab" onclick="switchStab('integraciones')">
                 <i class="ph ph-plugs-connected"></i> Integraciones
             </button>
@@ -725,6 +728,11 @@
                             <i class="ph ph-arrow-square-out"></i> Ver en vivo
                         </a>
                     </div>
+                </div>
+
+                <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:.75rem 1rem;font-size:.82rem;color:#166534;margin-bottom:1.25rem;display:flex;align-items:center;gap:.5rem">
+                    <i class="ph-bold ph-whatsapp-logo" style="font-size:1.1rem"></i>
+                    <span><strong>Sincronización Automática con WhatsApp:</strong> La foto configurada aquí se vincula de inmediato a la vista previa al compartir <code>https://flordechanar.cl/escuela</code> por WhatsApp, Facebook y Twitter.</span>
                 </div>
 
                 <!-- Live Preview Card -->
@@ -841,6 +849,11 @@
                     </div>
                 </div>
 
+                <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:.75rem 1rem;font-size:.82rem;color:#166534;margin-bottom:1.25rem;display:flex;align-items:center;gap:.5rem">
+                    <i class="ph-bold ph-whatsapp-logo" style="font-size:1.1rem"></i>
+                    <span><strong>Sincronización Automática con WhatsApp:</strong> La foto configurada aquí se vincula de inmediato a la vista previa al compartir <code>https://flordechanar.cl/terapias</code> por WhatsApp, Facebook y Twitter.</span>
+                </div>
+
                 <!-- Live Preview Card -->
                 <div style="margin-bottom:1.5rem">
                     <label class="fl" style="font-weight:700;margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem">
@@ -929,6 +942,97 @@
                 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.75rem;padding-top:1rem;border-top:1px solid #E2E8F0">
                     <button class="btn bo" onclick="restoreDefaultTerapiasBanner()"><i class="ph ph-arrow-counter-clockwise"></i> Restaurar Valores Originales</button>
                     <button class="btn bp" id="btnSaveTerapiasBanner" onclick="saveTerapiasBannerSettings()"><i class="ph ph-floppy-disk"></i> Guardar Cambios del Banner</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SUB-PANEL: Banner Inicio -->
+        <div id="spanel-banner-inicio" style="display:none;max-width:920px">
+            <div class="tw" style="padding:1.75rem;margin-bottom:1.5rem">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;margin-bottom:1.25rem">
+                    <div>
+                        <h3 style="font-size:1.15rem;margin:0;display:flex;align-items:center;gap:.5rem;color:var(--color-secondary,#1e293b)">
+                            <i class="ph ph-house" style="color:var(--p,#687A61)"></i> Imagen y Portada Principal de Inicio (Home)
+                        </h3>
+                        <p style="font-size:.84rem;color:var(--l,#64748b);margin:.3rem 0 0">
+                            Personaliza la imagen y portada que se muestra al compartir <a href="/" target="_blank" style="color:var(--p,#687A61);font-weight:600;text-decoration:underline">https://flordechanar.cl/ ↗</a> por WhatsApp y redes sociales.
+                        </p>
+                    </div>
+                    <div style="display:flex;gap:.5rem">
+                        <a href="/" target="_blank" class="btn bo btn-sm">
+                            <i class="ph ph-arrow-square-out"></i> Ver en vivo
+                        </a>
+                    </div>
+                </div>
+
+                <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:.75rem 1rem;font-size:.82rem;color:#166534;margin-bottom:1.25rem;display:flex;align-items:center;gap:.5rem">
+                    <i class="ph-bold ph-whatsapp-logo" style="font-size:1.1rem"></i>
+                    <span><strong>Sincronización Automática con WhatsApp:</strong> La foto configurada aquí se vincula de inmediato a la vista previa de la página principal al compartirla por WhatsApp, Facebook y Twitter.</span>
+                </div>
+
+                <!-- Live Preview Card -->
+                <div style="margin-bottom:1.5rem">
+                    <label class="fl" style="font-weight:700;margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem">
+                        <i class="ph ph-eye"></i> Vista Previa en Tiempo Real (WhatsApp y Redes)
+                    </label>
+                    <div id="inicioBannerPreviewContainer" style="position:relative;border-radius:16px;overflow:hidden;padding:2.5rem 1.5rem;text-align:center;color:#fff;background-color:#2D3A2C;background-size:cover;background-position:center center;background-repeat:no-repeat;box-shadow:0 10px 30px rgba(0,0,0,.15);min-height:220px;display:flex;flex-direction:column;justify-content:center;align-items:center;transition:background 0.3s ease">
+                        <div id="inicioBannerPreviewOverlay" style="position:absolute;inset:0;background:linear-gradient(180deg, rgba(28,38,29,0.65) 0%, rgba(15,22,16,0.83) 100%);z-index:1;transition:background 0.2s"></div>
+                        <div style="position:relative;z-index:2;max-width:620px">
+                            <span style="display:inline-flex;align-items:center;gap:.35rem;background:rgba(255,255,255,0.2);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:.25rem .8rem;border-radius:999px;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.75rem">
+                                <i class="ph-fill ph-sparkle" style="color:#FDE047"></i> Escuela y Centro de Terapias Holísticas
+                            </span>
+                            <h2 id="inicioBannerPreviewTitle" style="font-family:'Playfair Display',serif;font-size:2rem;color:#fff;margin:0 0 .5rem;text-shadow:0 4px 16px rgba(0,0,0,0.6)">Flor de Chañar</h2>
+                            <p id="inicioBannerPreviewSubtitle" style="font-size:.88rem;color:rgba(255,255,255,0.92);margin:0 auto 1.1rem;line-height:1.5;text-shadow:0 2px 8px rgba(0,0,0,0.6)">Centro de Terapias Holísticas y Escuela de Formación Profesional en Chile. Sedes en La Serena, Calama y Escuela Online.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Presets recomendados -->
+                <div style="margin-bottom:1.5rem">
+                    <label class="fl" style="font-weight:700;margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem">
+                        <i class="ph ph-sparkle"></i> Seleccionar una Imagen Recomendada
+                    </label>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.75rem" id="inicioBannerPresetsGrid">
+                        <!-- Renderizado dinámico desde JS -->
+                    </div>
+                </div>
+
+                <!-- Subir imagen propia -->
+                <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:1.25rem;margin-bottom:1.5rem">
+                    <label class="fl" style="font-weight:700;margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem">
+                        <i class="ph ph-upload-simple"></i> Cambiar Imagen de la Portada
+                    </label>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:center">
+                        <div style="border:1.5px dashed #CBD5E1;border-radius:10px;padding:1.2rem;text-align:center;background:#fff;cursor:pointer;transition:border-color .2s" onclick="document.getElementById('inicioBannerFileInput').click()" onmouseover="this.style.borderColor='var(--p,#687A61)'" onmouseout="this.style.borderColor='#CBD5E1'">
+                            <i class="ph ph-cloud-arrow-up" style="font-size:1.8rem;color:var(--p,#687A61);margin-bottom:.3rem"></i>
+                            <div style="font-size:.82rem;font-weight:600;color:var(--color-secondary,#1e293b)">Subir desde tu equipo</div>
+                            <div style="font-size:.72rem;color:var(--l,#64748b)">JPG, PNG, WebP o JFIF (Recomendado 1200x630 px)</div>
+                            <input type="file" id="inicioBannerFileInput" accept="image/*,.jfif" style="display:none" onchange="uploadInicioBannerImage(this)">
+                            <div id="inicioBannerUploadStatus" style="font-size:.78rem;color:var(--p,#687A61);font-weight:600;margin-top:.4rem;display:none"></div>
+                        </div>
+                        <div>
+                            <label class="fl" style="font-size:.78rem">O ingresa la URL de la imagen:</label>
+                            <input type="text" id="cfg-inicio-banner-img" class="fc" placeholder="https://ejemplo.com/imagen.jpg o /img/..." oninput="updateInicioBannerPreviewFromInputs()">
+                            <span style="font-size:.72rem;color:var(--l,#64748b);display:block;margin-top:.3rem">Ruta relativa (/img/...) o URL completa con https://</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Textos -->
+                <div class="fg" style="margin-bottom:1rem">
+                    <label class="fl">Título Principal (WhatsApp y Redes)</label>
+                    <input type="text" id="cfg-inicio-banner-titulo" class="fc" placeholder="Flor de Chañar | Escuela y Centro de Terapias" value="Flor de Chañar | Escuela y Centro de Terapias" oninput="updateInicioBannerPreviewFromInputs()">
+                </div>
+
+                <div class="fg" style="margin-bottom:1.5rem">
+                    <label class="fl">Subtítulo / Bajada descriptiva (WhatsApp y Redes)</label>
+                    <textarea id="cfg-inicio-banner-subtitulo" class="fc" style="height:65px;resize:vertical" placeholder="Centro de Terapias Holísticas y Escuela de Formación Profesional en Chile..." oninput="updateInicioBannerPreviewFromInputs()"></textarea>
+                </div>
+
+                <!-- Botones de Acción -->
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.75rem;padding-top:1rem;border-top:1px solid #E2E8F0">
+                    <button class="btn bo" onclick="restoreDefaultInicioBanner()"><i class="ph ph-arrow-counter-clockwise"></i> Restaurar Valores Originales</button>
+                    <button class="btn bp" id="btnSaveInicioBanner" onclick="saveInicioBannerSettings()"><i class="ph ph-floppy-disk"></i> Guardar Cambios de la Portada</button>
                 </div>
             </div>
         </div>
@@ -2368,6 +2472,8 @@ function switchStab(id) {
     if (id === 'banner') loadBannerSettings();
     // Si banner terapias, cargar datos del banner de terapias
     if (id === 'banner-terapias') loadTerapiasBannerSettings();
+    // Si banner inicio, cargar datos del banner de la portada principal
+    if (id === 'banner-inicio') loadInicioBannerSettings();
     // Si SEO, cargar diagnóstico y auditoría SEO
     if (id === 'seo') cargarSeoStatus();
 }
@@ -2886,6 +2992,184 @@ async function restoreDefaultTerapiasBanner() {
     updateTerapiasBannerPreviewFromInputs();
     renderTerapiasBannerPresets();
     await saveTerapiasBannerSettings();
+}
+
+// ── Banner Página de Inicio (Home) ──────────────────────────
+const BANNER_INICIO_PRESETS = [
+    {
+        id: 'zen',
+        nombre: '🌸 Spa Zen & Toallas',
+        url: '/img/banners/banner-spa-zen.jpg',
+        desc: 'Flores, velas y toalla'
+    },
+    {
+        id: 'sanacion',
+        nombre: '🌿 Cuencos & Sanación',
+        url: '/img/banners/banner-sanacion.jpg',
+        desc: 'Paz, cuencos y naturaleza'
+    },
+    {
+        id: 'aromaterapia',
+        nombre: '🍃 Botánica & Óleos',
+        url: '/img/banners/banner-aromaterapia.jpg',
+        desc: 'Infusiones y aromaterapia'
+    },
+    {
+        id: 'masaje',
+        nombre: '💆 Masoterapia & Relax',
+        url: '/img/banners/banner-masaje.jpg',
+        desc: 'Camilla y bienestar'
+    },
+    {
+        id: 'meditacion',
+        nombre: '🧘 Meditación & Calma',
+        url: '/img/banners/banner-meditacion.jpg',
+        desc: 'Luz y serenidad'
+    },
+    {
+        id: 'arbol',
+        nombre: '🌳 Árbol & Conciencia',
+        url: '/TerapiaEmocionalEvolutiva/assets/img/hero-arbol.jpg',
+        desc: 'Evolución y raíces'
+    }
+];
+
+function renderInicioBannerPresets() {
+    const grid = document.getElementById('inicioBannerPresetsGrid');
+    if (!grid) return;
+    const currentUrl = (document.getElementById('cfg-inicio-banner-img')?.value || '').trim();
+    
+    grid.innerHTML = BANNER_INICIO_PRESETS.map(p => {
+        const isSelected = currentUrl === p.url;
+        return `
+            <div style="border:${isSelected ? '2px solid var(--p,#687A61)' : '1px solid #E2E8F0'};border-radius:10px;overflow:hidden;background:#fff;cursor:pointer;transition:transform .15s, border-color .15s;position:relative" onclick="selectInicioBannerPreset('${p.url}')" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                ${isSelected ? '<span style="position:absolute;top:6px;right:6px;background:var(--p,#687A61);color:#fff;border-radius:99px;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;z-index:2;box-shadow:0 2px 5px rgba(0,0,0,0.2)"><i class="ph-bold ph-check"></i></span>' : ''}
+                <div style="height:70px;background-image:url('${p.url}');background-size:cover;background-position:center;background-repeat:no-repeat"></div>
+                <div style="padding:.5rem .6rem">
+                    <div style="font-weight:700;font-size:.78rem;color:var(--color-secondary,#1e293b);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.nombre}</div>
+                    <div style="font-size:.7rem;color:var(--l,#64748b);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.desc}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function selectInicioBannerPreset(url) {
+    const input = document.getElementById('cfg-inicio-banner-img');
+    if (input) {
+        input.value = url;
+        updateInicioBannerPreviewFromInputs();
+        renderInicioBannerPresets();
+    }
+}
+
+function updateInicioBannerPreviewFromInputs() {
+    const imgUrl = (document.getElementById('cfg-inicio-banner-img')?.value || '').trim() || '/img/banners/banner-spa-zen.jpg';
+    const titulo = (document.getElementById('cfg-inicio-banner-titulo')?.value || '').trim() || 'Flor de Chañar';
+    const subtitulo = (document.getElementById('cfg-inicio-banner-subtitulo')?.value || '').trim() || 'Centro de Terapias Holísticas y Escuela de Formación Profesional en Chile. Sedes en La Serena, Calama y Escuela Online.';
+    
+    const container = document.getElementById('inicioBannerPreviewContainer');
+    if (container) {
+        container.style.backgroundImage = `url('${imgUrl}')`;
+    }
+    
+    const t = document.getElementById('inicioBannerPreviewTitle');
+    if (t) t.textContent = titulo;
+    
+    const st = document.getElementById('inicioBannerPreviewSubtitle');
+    if (st) st.textContent = subtitulo;
+}
+
+async function uploadInicioBannerImage(input) {
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    const status = document.getElementById('inicioBannerUploadStatus');
+    if (status) { status.style.display = 'block'; status.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Subiendo imagen...'; }
+    
+    const fd = new FormData();
+    fd.append('imagen', file);
+    try {
+        const res = await fetch('/api/upload', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+            body: fd
+        });
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        if (status) { status.style.display = 'block'; status.innerHTML = '<i class="ph ph-check-circle" style="color:#16A34A"></i> ¡Imagen subida!'; }
+        document.getElementById('cfg-inicio-banner-img').value = data.url;
+        updateInicioBannerPreviewFromInputs();
+        renderInicioBannerPresets();
+        showT('✅ Imagen de portada subida correctamente. Recuerda guardar cambios.');
+    } catch(e) {
+        if (status) { status.style.display = 'block'; status.style.color = '#DC2626'; status.textContent = 'Error al subir la imagen'; }
+        showT('⚠️ No se pudo subir el archivo');
+    }
+}
+
+async function loadInicioBannerSettings() {
+    renderInicioBannerPresets();
+    try {
+        const res = await fetch('/api/admin/config', {
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        if (!res.ok) throw new Error();
+        const cfg = await res.json();
+        
+        const img = cfg.inicio_banner_img || '/img/banners/banner-spa-zen.jpg';
+        const titulo = cfg.inicio_banner_titulo || 'Flor de Chañar | Escuela y Centro de Terapias';
+        const subtitulo = cfg.inicio_banner_subtitulo || 'Centro de Terapias Holísticas y Escuela de Formación Profesional en Chile. Sedes en La Serena, Calama y Escuela Online.';
+        
+        if (document.getElementById('cfg-inicio-banner-img')) document.getElementById('cfg-inicio-banner-img').value = img;
+        if (document.getElementById('cfg-inicio-banner-titulo')) document.getElementById('cfg-inicio-banner-titulo').value = titulo;
+        if (document.getElementById('cfg-inicio-banner-subtitulo')) document.getElementById('cfg-inicio-banner-subtitulo').value = subtitulo;
+        
+        updateInicioBannerPreviewFromInputs();
+        renderInicioBannerPresets();
+    } catch(e) {
+        updateInicioBannerPreviewFromInputs();
+    }
+}
+
+async function saveInicioBannerSettings() {
+    const btn = document.getElementById('btnSaveInicioBanner');
+    const oldHtml = btn ? btn.innerHTML : '';
+    if (btn) { btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Guardando...'; btn.disabled = true; }
+    
+    const img = (document.getElementById('cfg-inicio-banner-img')?.value || '').trim() || '/img/banners/banner-spa-zen.jpg';
+    const titulo = (document.getElementById('cfg-inicio-banner-titulo')?.value || '').trim() || 'Flor de Chañar | Escuela y Centro de Terapias';
+    const subtitulo = (document.getElementById('cfg-inicio-banner-subtitulo')?.value || '').trim();
+    
+    try {
+        const res = await fetch('/api/admin/config', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('token')
+            },
+            body: JSON.stringify({
+                inicio_banner_img: img,
+                inicio_banner_titulo: titulo,
+                inicio_banner_subtitulo: subtitulo
+            })
+        });
+        if (!res.ok) throw new Error();
+        showT('✅ Portada y vista previa de WhatsApp guardadas correctamente');
+    } catch(e) {
+        showT('⚠️ Error al guardar los cambios de la portada');
+    } finally {
+        if (btn) { btn.innerHTML = oldHtml; btn.disabled = false; }
+    }
+}
+
+async function restoreDefaultInicioBanner() {
+    if (!confirm('¿Deseas restaurar la imagen y textos originales de la portada de Inicio?')) return;
+    document.getElementById('cfg-inicio-banner-img').value = '/img/banners/banner-spa-zen.jpg';
+    document.getElementById('cfg-inicio-banner-titulo').value = 'Flor de Chañar | Escuela y Centro de Terapias';
+    document.getElementById('cfg-inicio-banner-subtitulo').value = 'Centro de Terapias Holísticas y Escuela de Formación Profesional en Chile. Sedes en La Serena, Calama y Escuela Online.';
+    updateInicioBannerPreviewFromInputs();
+    renderInicioBannerPresets();
+    await saveInicioBannerSettings();
 }
 
 // ── WhatsApp Click-to-Chat ────────────────────────────────
