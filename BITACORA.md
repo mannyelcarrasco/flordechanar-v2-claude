@@ -6,7 +6,21 @@
 
 ## ✅ Avances completados
 
-### 🛡️ Corrección de Sobrescritura Involuntaria de Landings en Cursos y Modal de Asignación Rápida (`server.js`, `public/admin.html`) (NUEVO)
+### 🖼️ Compatibilidad Total con Imágenes `.jfif` de Gemini y Google (`server.js`, `public/curso-crear.html`, `public/admin.html`) (NUEVO)
+- [x] **Diagnóstico del Rechazo de Archivos `.jfif`:**
+  - En navegadores sobre Windows, al descargar imágenes generadas por Google Gemini o AI Studio, el sistema operativo asigna frecuentemente la extensión `.jfif` (JPEG File Interchange Format).
+  - **Filtro de Servidor (`server.js`):** El middleware Multer (`fileFilter`) restringía las extensiones a una lista cerrada (`['.jpg', '.jpeg', '.png', '.webp', '.pdf']`). Cualquier intento de subida de un archivo `.jfif` devolvía un error HTTP 400 *"Tipo de archivo no permitido"*.
+  - **Filtro de Navegador (`public/curso-crear.html`, `public/admin.html`):** Los inputs de subida de portadas y banners contenían `accept=".jpg,.jpeg,.png,.webp"`, ocultando automáticamente los archivos `.jfif` en la ventana de selección de archivos de Windows.
+- [x] **Solución y Normalización Automática Implementadas:**
+  - **Backend (`server.js`):**
+    * Inclusión de `.jfif` en `allowedExts` y comprobación ampliada de tipos MIME (`image/jpeg`, `image/jfif`, `image/pjpeg`).
+    * **Normalización Automática a `.jpg`:** Al guardar en el disco (`storage.filename`), si la extensión original es `.jfif`, se renombra transparentemente a `.jpg`. Esto garantiza 100% de compatibilidad con todos los navegadores, etiquetas `<img>`, previsualizaciones de WhatsApp, OpenGraph y servidores sin problemas de MIME types.
+  - **Frontend (`public/curso-crear.html`, `public/admin.html`):**
+    * Actualizado el atributo `accept` en selector de portadas de cursos y banners a `.jpg,.jpeg,.png,.webp,.jfif,image/*` para que los archivos `.jfif` sean visibles y seleccionables de inmediato.
+    * Indicadores de texto actualizados para reflejar compatibilidad con JFIF / Gemini.
+    * Incorporado soporte completo de **Drag & Drop** en el área de portada del curso (`#coverDrop`), permitiendo arrastrar imágenes `.jfif` directamente desde el explorador de archivos.
+
+### 🛡️ Corrección de Sobrescritura Involuntaria de Landings en Cursos y Modal de Asignación Rápida (`server.js`, `public/admin.html`)
 - [x] **Diagnóstico del Fallo (Reversión persistente a "Landing: 🌸 Método Mushuu"):**
   - **Causa Raíz en `server.js` (`initDB`):** Existía un bucle residual de auto-asociación que se ejecutaba en el arranque del servidor (`initDB()`). Al iterar sobre los cursos, si `!vm.landing_personalizada_url` (condición que se cumple cuando el usuario elige la landing "Estándar Escuela" o deja el campo vacío), el script evaluaba el título del curso: si contenía la palabra `"masoterapia"` o `"mushuu"`, ejecutaba automáticamente `UPDATE cursos SET ventas_meta = ?` asignando forzosamente `/metodo-mushuu/`. Lo mismo ocurría para cursos con `"terapia emocional"` asignándoles `/TerapiaEmocionalEvolutiva/`.
   - Cada vez que el servidor se reiniciaba (por redeploy, EasyPanel, o recarga del proceso), los cursos de masoterapia que el usuario había configurado como Estándar o con otra landing volvían a quedar fijados con la plantilla de Método Mushuu.

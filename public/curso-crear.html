@@ -317,9 +317,9 @@
                 </div>
                 <div class="cover-drop" id="coverDrop" onclick="document.getElementById('coverInput').click()">
                     <i class="ph ph-image"></i>
-                    <p>Arrastra una imagen o <span>selecciona un archivo desde tu equipo</span><br><small>JPG, PNG, WEBP · Recomendado 1280×720 px</small></p>
+                    <p>Arrastra una imagen o <span>selecciona un archivo desde tu equipo</span><br><small>JPG, PNG, WEBP, JFIF (Gemini) · Recomendado 1280×720 px</small></p>
                 </div>
-                <input type="file" id="coverInput" style="display:none" accept=".jpg,.jpeg,.png,.webp" onchange="uploadCover(this)">
+                <input type="file" id="coverInput" style="display:none" accept=".jpg,.jpeg,.png,.webp,.jfif,image/*" onchange="uploadCover(this)">
                 <div style="margin-top:0.65rem;display:flex;gap:0.5rem;align-items:center;">
                     <span style="font-size:0.78rem;color:var(--l);white-space:nowrap"><i class="ph ph-link"></i> O enlace directo:</span>
                     <input type="url" id="coverUrlInput" placeholder="https://ejemplo.com/imagen.jpg" style="flex:1;padding:0.4rem 0.65rem;border:1px solid #CBD5E1;border-radius:8px;font-size:0.82rem;" onchange="applyDirectCoverUrl(this.value)" oninput="if(this.value.startsWith('http'))applyDirectCoverUrl(this.value)">
@@ -1542,8 +1542,8 @@ function removeCoverImage() {
 }
 
 async function uploadCover(input) {
-    if (!input.files[0]) return;
-    const file = input.files[0];
+    const file = input && input.files ? input.files[0] : null;
+    if (!file) return;
 
     // Show local preview immediately
     syncCoverUI(URL.createObjectURL(file));
@@ -1569,6 +1569,33 @@ async function uploadCover(input) {
         syncCoverUI(currentCoverUrl);
     }
 }
+
+// Soporte Drag & Drop para portada (acepta arrastrar .jfif, .jpg, .png, etc.)
+(() => {
+    const dropZone = document.getElementById('coverDrop');
+    if (!dropZone) return;
+    ['dragenter', 'dragover'].forEach(evt => {
+        dropZone.addEventListener(evt, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.style.borderColor = 'var(--p, #687A61)';
+            dropZone.style.background = 'rgba(104,122,97,.08)';
+        });
+    });
+    ['dragleave', 'drop'].forEach(evt => {
+        dropZone.addEventListener(evt, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.style.borderColor = '#D1D5DB';
+            dropZone.style.background = '';
+        });
+    });
+    dropZone.addEventListener('drop', (e) => {
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+            uploadCover({ files: e.dataTransfer.files });
+        }
+    });
+})();
 
 function toggleMatriculaUI() {
     const tiene = document.getElementById('courseTieneMatricula') && document.getElementById('courseTieneMatricula').checked;

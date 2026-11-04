@@ -688,7 +688,10 @@ function normalizePortadaUrl(url) {
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, uploadsDir),
     filename: (req, file, cb) => {
-        const ext = path.extname(file.originalname).toLowerCase();
+        let ext = path.extname(file.originalname).toLowerCase();
+        // Si el archivo viene con extensión .jfif (típico al descargar imágenes de Gemini/Google en Windows),
+        // se normaliza automáticamente a .jpg para compatibilidad universal en navegadores, redes sociales y servidores.
+        if (ext === '.jfif') ext = '.jpg';
         cb(null, Date.now() + '-' + Math.round(Math.random() * 1e6) + ext);
     }
 });
@@ -697,10 +700,11 @@ const upload = multer({
     storage,
     limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
     fileFilter: (req, file, cb) => {
-        const allowed = ['.jpg', '.jpeg', '.png', '.webp', '.pdf'];
+        const allowedExts = ['.jpg', '.jpeg', '.png', '.webp', '.jfif', '.pdf'];
+        const allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/jfif', 'image/pjpeg', 'application/pdf'];
         const ext = path.extname(file.originalname).toLowerCase();
-        if (allowed.includes(ext)) return cb(null, true);
-        cb(new Error('Tipo de archivo no permitido. Solo JPG, PNG, WEBP y PDF.'));
+        if (allowedExts.includes(ext) || allowedMimes.includes(file.mimetype)) return cb(null, true);
+        cb(new Error('Tipo de archivo no permitido. Solo JPG, PNG, WEBP, JFIF y PDF.'));
     }
 });
 
